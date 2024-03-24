@@ -1,7 +1,19 @@
 import { fail, type ActionFailure } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
-import { db } from './db/db.server'
-import { crags, type Ascent, type Boulder, type Crag } from './db/schema'
+import { type Area, type Ascent, type Boulder, type Crag } from './db/schema'
+
+export type AreaActionValues = Pick<Area, 'name'>
+export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
+
+export const validateAreaForm = async (data: FormData): Promise<AreaActionValues> => {
+  const name = data.get('name')
+  const values = { name } as CragActionValues
+
+  if (typeof name !== 'string' || name.length === 0) {
+    throw fail(400, { ...values, error: 'name is required' })
+  }
+
+  return values
+}
 
 export type CragActionValues = Pick<Crag, 'name'>
 export type CragActionFailure = ActionFailure<CragActionValues & { error: string }>
@@ -17,16 +29,14 @@ export const validateCragForm = async (data: FormData): Promise<CragActionValues
   return values
 }
 
-export type BoulderActionValues = Pick<Boulder, 'name' | 'gradingScale' | 'grade' | 'parent'>
+export type BoulderActionValues = Pick<Boulder, 'name' | 'gradingScale' | 'grade'>
 export type BoulderActionFailure = ActionFailure<BoulderActionValues & { error: string }>
 
 export const validateBoulderForm = async (data: FormData): Promise<BoulderActionValues> => {
   const name = data.get('name')
   const gradingScale = data.get('gradingScale')
   const grade = data.get('grade')
-  const rawParent = data.get('parent')
-  const parent = typeof rawParent === 'string' ? Number(rawParent) : NaN
-  const values = { name, gradingScale, grade, parent } as BoulderActionValues
+  const values = { name, gradingScale, grade } as BoulderActionValues
 
   if (typeof name !== 'string' || name.length === 0) {
     throw fail(400, { ...values, error: 'name is required' })
@@ -38,16 +48,6 @@ export const validateBoulderForm = async (data: FormData): Promise<BoulderAction
 
   if (grade != null && typeof grade !== 'string') {
     throw fail(400, { ...values, error: 'grade must be a valid string' })
-  }
-
-  if (rawParent == null || Number.isNaN(parent)) {
-    throw fail(400, { ...values, error: 'parent is required' })
-  } else {
-    const result = await db.select().from(crags).where(eq(crags.id, parent))
-
-    if (result.length === 0) {
-      throw fail(400, { ...values, error: "crag with id '${parent}' does not exist is required" })
-    }
   }
 
   return values

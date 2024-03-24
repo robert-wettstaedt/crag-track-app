@@ -1,12 +1,10 @@
 <script lang="ts">
-  import type { Boulder, Crag } from '$lib/db/schema'
+  import type { Boulder } from '$lib/db/schema'
   import type { ChangeEventHandler } from 'svelte/elements'
 
   export let name: Boulder['name']
   export let grade: Boulder['grade']
   export let gradingScale: Boulder['gradingScale']
-  export let parent: Boulder['parent'] | null
-  export let crags: Crag[]
 
   const onChangeGradingScale: ChangeEventHandler<HTMLSelectElement> = (event) => {
     gradingScale = event.currentTarget.value as Boulder['gradingScale']
@@ -65,14 +63,5 @@
     {:else}
       <option disabled>Select grading scale first...</option>
     {/if}
-  </select>
-</label>
-
-<label class="label mt-4">
-  <span>Crag</span>
-  <select class="select" name="parent" size="8" value={parent}>
-    {#each crags as crag}
-      <option value={crag.id}>{crag.name}</option>
-    {/each}
   </select>
 </label>
