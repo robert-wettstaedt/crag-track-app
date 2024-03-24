@@ -40,22 +40,6 @@
         Areas
       </AppRailAnchor>
 
-      <AppRailAnchor href="/crags" selected={$page.url.pathname.startsWith('/crags')}>
-        <svelte:fragment slot="lead">
-          <i class="fa-solid fa-mountain" />
-        </svelte:fragment>
-
-        Crags
-      </AppRailAnchor>
-
-      <AppRailAnchor href="/boulders" selected={$page.url.pathname.startsWith('/boulders')}>
-        <svelte:fragment slot="lead">
-          <i class="fa-solid fa-route" />
-        </svelte:fragment>
-
-        Boulders
-      </AppRailAnchor>
-
       <AppRailAnchor href="/ascents" selected={$page.url.pathname.startsWith('/ascents')}>
         <svelte:fragment slot="lead">
           <i class="fa-solid fa-check-double" />

@@ -1,32 +1,34 @@
 import { db } from '$lib/db/db.server'
-import { crags, areas, users } from '$lib/db/schema'
+import { areas } from '$lib/db/schema'
+import type { InferResultType } from '$lib/db/types'
 import { error } from '@sveltejs/kit'
-import { eq, or } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ params }) => {
   const path = params.slugs.split('/')
-
-  const areasResult = await db
-    .select()
-    .from(areas)
-    .where(or(...path.map((slug) => eq(areas.slug, slug))))
-
   const slug = path.at(-1)
-  const area = areasResult.at(-1)
 
-  if (slug == null || area == null || area.slug !== slug) {
+  if (slug == null) {
     error(404)
   }
 
-  const usersResult = await db.select().from(users).where(eq(users.id, areasResult[0].createdBy))
-  const cragsResult = await db.select().from(crags).where(eq(crags.parent, area.id))
-  const childrenResult = await db.select().from(areas).where(eq(areas.parent, area.id))
+  const areasResult = await db.query.areas.findMany({
+    where: eq(areas.slug, slug),
+    with: {
+      author: true,
+      crags: true,
+      areas: true,
+    },
+  })
+
+  const area = areasResult.at(-1)
+
+  if (area == null) {
+    error(404)
+  }
 
   return {
-    area,
-    author: usersResult.at(0),
-    crags: cragsResult,
-    children: childrenResult,
+    area: area as InferResultType<'areas', { areas: true; author: true; crags: true }>,
   }
 }) satisfies PageServerLoad

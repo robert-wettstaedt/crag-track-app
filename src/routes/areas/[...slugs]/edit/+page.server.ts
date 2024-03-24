@@ -13,7 +13,7 @@ export const load = (async ({ params }) => {
     error(404)
   }
 
-  const areasResult = await db.select({ name: areas.name }).from(areas).where(eq(areas.slug, slug))
+  const areasResult = await db.query.areas.findMany({ where: eq(areas.slug, slug) })
   const area = areasResult.at(0)
 
   if (area == null) {

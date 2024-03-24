@@ -1,23 +1,22 @@
 <script lang="ts">
-  import type { Ascent, Boulder } from '$lib/db/schema'
+  import type { InferResultType } from '$lib/db/types'
   import { Table } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
-  export let ascents: Array<{ ascent: Ascent; boulder: Boulder }>
+  export let ascents: InferResultType<'ascents', { author: true; parentBoulder: true }>[]
 
-  $: body = ascents.map((item) => {
-    const { dateTime, id, type } = item.ascent
+  $: body = ascents.map((ascent) => {
+    const { dateTime, parentBoulder, type } = ascent
+    const name = `${ascent.author.firstName} ${ascent.author.lastName}`
 
     const formattedDateTime = DateTime.fromSQL(dateTime).toLocaleString(DateTime.DATE_FULL)
-    const boulderName = item.boulder.name
+    const boulderName = parentBoulder.name
     const boulderGrade =
-      item.boulder.gradingScale == null || item.boulder.grade == null
+      parentBoulder.gradingScale == null || parentBoulder.grade == null
         ? ''
-        : `${item.boulder.gradingScale} ${item.boulder.grade}`
+        : `${parentBoulder.gradingScale} ${parentBoulder.grade}`
     const personalGrade =
-      item.boulder.gradingScale == null || item.ascent.grade == null
-        ? ''
-        : `${item.boulder.gradingScale} ${item.ascent.grade}`
+      parentBoulder.gradingScale == null || ascent.grade == null ? '' : `${parentBoulder.gradingScale} ${ascent.grade}`
 
     const formattedType =
       type === 'flash'
@@ -26,7 +25,7 @@
           ? '<i class="fa-solid fa-circle text-red-500 me-2"></i> Send'
           : '<i class="fa-solid fa-person-falling text-blue-300 me-2"></i> Attempt'
 
-    return [String(id), formattedDateTime, boulderName, boulderGrade, personalGrade, formattedType]
+    return [name, formattedDateTime, boulderName, boulderGrade, personalGrade, formattedType]
   })
 </script>
 
@@ -34,7 +33,7 @@
 <Table
   interactive
   source={{
-    head: ['ID', 'Date time', 'Boulder name', 'Boulder grade', 'Personal grade', 'Type'],
+    head: ['Climber', 'Date time', 'Boulder name', 'Boulder grade', 'Personal grade', 'Type'],
     body,
   }}
 />

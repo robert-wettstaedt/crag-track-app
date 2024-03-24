@@ -1,15 +1,18 @@
 import { db } from '$lib/db/db.server'
-import { ascents, boulders } from '$lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { ascents } from '$lib/db/schema'
+import { desc } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async () => {
-  const result = await db.select().from(ascents).innerJoin(boulders, eq(ascents.boulder, boulders.id))
+  const result = await db.query.ascents.findMany({
+    orderBy: desc(ascents.dateTime),
+    with: {
+      author: true,
+      parentBoulder: true,
+    },
+  })
 
   return {
-    ascents: result.map((item) => ({
-      ascent: item.ascents,
-      boulder: item.boulders,
-    })),
+    ascents: result,
   }
 }) satisfies PageServerLoad

@@ -4,6 +4,7 @@
   import { DateTime } from 'luxon'
 
   export let data
+
   $: basePath = `/areas/${$page.params.slugs}`
 </script>
 
@@ -21,14 +22,12 @@
         </span>
       </div>
 
-      {#if data.author != null}
-        <div>
-          <span class="flex-auto">
-            <dt>Author</dt>
-            <dd>{data.author.firstName} {data.author.lastName}</dd>
-          </span>
-        </div>
-      {/if}
+      <div>
+        <span class="flex-auto">
+          <dt>Author</dt>
+          <dd>{data.area.author.firstName} {data.area.author.lastName}</dd>
+        </span>
+      </div>
     </dl>
   </svelte:fragment>
 
@@ -43,11 +42,11 @@
   <div class="card-header">Areas</div>
 
   <section class="p-4">
-    {#if data.children.length === 0}
+    {#if data.area.areas.length === 0}
       No areas yet
     {:else}
       <div class="flex gap-2">
-        {#each data.children as area}
+        {#each data.area.areas as area}
           <a class="card card-hover variant-ghost p-4" href={`${basePath}/${area.slug}`}>
             <dt>Name</dt>
             <dd>
@@ -68,11 +67,11 @@
   <div class="card-header">Crags</div>
 
   <section class="p-4">
-    {#if data.crags.length === 0}
+    {#if data.area.crags.length === 0}
       No crags yet
     {:else}
       <div class="flex gap-2">
-        {#each data.crags as crag}
+        {#each data.area.crags as crag}
           <a class="card card-hover variant-ghost p-4" href={`${basePath}/_/crags/${crag.slug}`}>
             <dt>Name</dt>
             <dd>

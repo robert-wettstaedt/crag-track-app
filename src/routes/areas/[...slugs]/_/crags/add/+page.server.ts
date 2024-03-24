@@ -8,8 +8,7 @@ import type { PageServerLoad } from './$types'
 export const load = (async ({ params }) => {
   const path = params.slugs.split('/')
   const parentSlug = path.at(-1)
-  const parentsResult =
-    parentSlug == null ? [] : await db.select({ name: areas.name }).from(areas).where(eq(areas.slug, parentSlug))
+  const parentsResult = parentSlug == null ? [] : await db.query.areas.findMany({ where: eq(areas.slug, parentSlug) })
 
   const parent = parentsResult.at(0)
 

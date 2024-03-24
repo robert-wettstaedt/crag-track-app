@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ params }) => {
-  const cragsResult = await db.select({ name: crags.name }).from(crags).where(eq(crags.slug, params.cragSlug))
+  const cragsResult = await db.query.crags.findMany({ where: eq(crags.slug, params.cragSlug) })
   const crag = cragsResult.at(0)
 
   if (crag == null) {

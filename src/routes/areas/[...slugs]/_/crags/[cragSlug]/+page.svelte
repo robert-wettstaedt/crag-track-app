@@ -21,14 +21,12 @@
         </span>
       </div>
 
-      {#if data.author != null}
-        <div>
-          <span class="flex-auto">
-            <dt>Author</dt>
-            <dd>{data.author.firstName} {data.author.lastName}</dd>
-          </span>
-        </div>
-      {/if}
+      <div>
+        <span class="flex-auto">
+          <dt>Author</dt>
+          <dd>{data.crag.author.firstName} {data.crag.author.lastName}</dd>
+        </span>
+      </div>
     </dl>
   </svelte:fragment>
 
@@ -43,11 +41,11 @@
   <div class="card-header">Boulders</div>
 
   <section class="p-4">
-    {#if data.boulders.length === 0}
+    {#if data.crag.boulders.length === 0}
       No boulders yet
     {:else}
       <div class="flex gap-2">
-        {#each data.boulders as boulder}
+        {#each data.crag.boulders as boulder}
           <a class="card card-hover variant-ghost p-4" href={`${basePath}/boulders/${boulder.slug}`}>
             <dt>Name</dt>
             <dd>

@@ -42,8 +42,8 @@ export const validateBoulderForm = async (data: FormData): Promise<BoulderAction
     throw fail(400, { ...values, error: 'name is required' })
   }
 
-  if (gradingScale != null && typeof gradingScale !== 'string') {
-    throw fail(400, { ...values, error: 'gradingScale must be a valid string' })
+  if (typeof gradingScale !== 'string' || gradingScale.length === 0) {
+    throw fail(400, { ...values, error: 'gradingScale is required' })
   }
 
   if (grade != null && typeof grade !== 'string') {

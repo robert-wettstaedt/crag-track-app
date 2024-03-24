@@ -22,14 +22,12 @@
         </span>
       </div>
 
-      {#if data.author != null}
-        <div>
-          <span class="flex-auto">
-            <dt>Author</dt>
-            <dd>{data.author.firstName} {data.author.lastName}</dd>
-          </span>
-        </div>
-      {/if}
+      <div>
+        <span class="flex-auto">
+          <dt>Author</dt>
+          <dd>{data.boulder.author.firstName} {data.boulder.author.lastName}</dd>
+        </span>
+      </div>
 
       <div>
         <span class="flex-auto">
@@ -57,10 +55,10 @@
   <div class="card-header">Ascents</div>
 
   <section class="p-4">
-    {#if data.ascents.length === 0}
+    {#if data.boulder.ascents.length === 0}
       No ascents yet
     {:else}
-      <AscentsTable ascents={data.ascents} />
+      <AscentsTable ascents={data.boulder.ascents} />
     {/if}
 
     <div class="flex justify-center mt-4">

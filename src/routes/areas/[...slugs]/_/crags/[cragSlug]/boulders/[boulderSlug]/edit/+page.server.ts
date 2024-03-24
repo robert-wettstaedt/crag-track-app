@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ params }) => {
-  const bouldersResult = await db.select().from(boulders).where(eq(boulders.slug, params.boulderSlug))
+  const bouldersResult = await db.query.boulders.findMany({ where: eq(boulders.slug, params.boulderSlug) })
   const boulder = bouldersResult.at(0)
 
   if (boulder == null) {

@@ -3,9 +3,8 @@ CREATE TABLE `areas` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`created_by` integer NOT NULL,
 	`name` text NOT NULL,
-	`slug` text,
+	`slug` text NOT NULL,
 	`parent` integer,
-	FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`parent`) REFERENCES `areas`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -18,7 +17,6 @@ CREATE TABLE `ascents` (
 	`grade` text,
 	`notes` text,
 	`type` text NOT NULL,
-	FOREIGN KEY (`boulder`) REFERENCES `boulders`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -27,12 +25,10 @@ CREATE TABLE `boulders` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`created_by` integer NOT NULL,
 	`name` text NOT NULL,
-	`slug` text,
+	`slug` text NOT NULL,
 	`grade` text,
 	`grading_scale` text,
-	`parent` integer NOT NULL,
-	FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`parent`) REFERENCES `crags`(`id`) ON UPDATE no action ON DELETE no action
+	`parent` integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `crags` (
@@ -40,12 +36,10 @@ CREATE TABLE `crags` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`created_by` integer NOT NULL,
 	`name` text NOT NULL,
-	`slug` text,
-	`lat` text,
-	`long` text,
-	`parent` integer NOT NULL,
-	FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`parent`) REFERENCES `areas`(`id`) ON UPDATE no action ON DELETE no action
+	`slug` text NOT NULL,
+	`lat` real,
+	`long` real,
+	`parent` integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `users` (

@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "cfc60a3b-de18-42f1-8b02-46ea13b88994",
+  "id": "ab100d5e-61f3-4643-881f-e3c30f6d003e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "areas": {
@@ -40,7 +40,7 @@
           "name": "slug",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "parent": {
@@ -53,19 +53,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "areas_created_by_users_id_fk": {
-          "name": "areas_created_by_users_id_fk",
-          "tableFrom": "areas",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "areas_parent_areas_id_fk": {
           "name": "areas_parent_areas_id_fk",
           "tableFrom": "areas",
@@ -147,19 +134,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "ascents_boulder_boulders_id_fk": {
-          "name": "ascents_boulder_boulders_id_fk",
-          "tableFrom": "ascents",
-          "tableTo": "boulders",
-          "columnsFrom": [
-            "boulder"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "ascents_created_by_users_id_fk": {
           "name": "ascents_created_by_users_id_fk",
           "tableFrom": "ascents",
@@ -213,7 +187,7 @@
           "name": "slug",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "grade": {
@@ -239,34 +213,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "boulders_created_by_users_id_fk": {
-          "name": "boulders_created_by_users_id_fk",
-          "tableFrom": "boulders",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "boulders_parent_crags_id_fk": {
-          "name": "boulders_parent_crags_id_fk",
-          "tableFrom": "boulders",
-          "tableTo": "crags",
-          "columnsFrom": [
-            "parent"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
@@ -306,19 +253,19 @@
           "name": "slug",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "lat": {
           "name": "lat",
-          "type": "text",
+          "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "long": {
           "name": "long",
-          "type": "text",
+          "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -332,34 +279,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "crags_created_by_users_id_fk": {
-          "name": "crags_created_by_users_id_fk",
-          "tableFrom": "crags",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "crags_parent_areas_id_fk": {
-          "name": "crags_parent_areas_id_fk",
-          "tableFrom": "crags",
-          "tableTo": "areas",
-          "columnsFrom": [
-            "parent"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
