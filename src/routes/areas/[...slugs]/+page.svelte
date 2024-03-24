@@ -38,30 +38,34 @@
   </svelte:fragment>
 </AppBar>
 
-<div class="card mt-4">
-  <div class="card-header">Areas</div>
+{#if data.canAddArea || data.area.areas.length > 0}
+  <div class="card mt-4">
+    <div class="card-header">Areas</div>
 
-  <section class="p-4">
-    {#if data.area.areas.length === 0}
-      No areas yet
-    {:else}
-      <div class="flex gap-2">
-        {#each data.area.areas as area}
-          <a class="card card-hover variant-ghost p-4" href={`${basePath}/${area.slug}`}>
-            <dt>Name</dt>
-            <dd>
-              {area.name}
-            </dd>
-          </a>
-        {/each}
-      </div>
-    {/if}
+    <section class="p-4">
+      {#if data.area.areas.length === 0}
+        No areas yet
+      {:else}
+        <div class="flex gap-2">
+          {#each data.area.areas as area}
+            <a class="card card-hover variant-ghost p-4" href={`${basePath}/${area.slug}`}>
+              <dt>Name</dt>
+              <dd>
+                {area.name}
+              </dd>
+            </a>
+          {/each}
+        </div>
+      {/if}
 
-    <div class="flex justify-center mt-4">
-      <a class="btn variant-filled-primary" href={`${basePath}/add`}>Add area</a>
-    </div>
-  </section>
-</div>
+      {#if data.canAddArea}
+        <div class="flex justify-center mt-4">
+          <a class="btn variant-filled-primary" href={`${basePath}/add`}>Add area</a>
+        </div>
+      {/if}
+    </section>
+  </div>
+{/if}
 
 <div class="card mt-4">
   <div class="card-header">Crags</div>

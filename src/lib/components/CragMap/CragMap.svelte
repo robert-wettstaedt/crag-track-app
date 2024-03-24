@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { InferResultType } from '$lib/db/types'
+  import type { EnrichedCrag } from '$lib/db/utils'
   import L from 'leaflet'
   import 'leaflet/dist/leaflet.css'
   import CragMarkerPopup from './components/CragMarkerPopup'
 
-  export let crags: InferResultType<'crags', { parentArea: true }>[]
+  export let crags: EnrichedCrag[]
 
   let element: HTMLDivElement | null = null
   let map: L.Map | null = null

@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { InferResultType } from '$lib/db/types'
+  import type { EnrichedCrag } from '$lib/db/utils'
 
-  export let crag: InferResultType<'crags', { parentArea: true }>
+  export let crag: EnrichedCrag
 
   const areaSlugs = [] as string[]
 
@@ -14,10 +15,8 @@
   }
 
   recursive(crag.parentArea as InferResultType<'areas', { parentArea: true }>)
-
-  $: basePath = `/areas/${areaSlugs.join('/')}/_/crags/${crag.slug}`
 </script>
 
 <div style="width:100%;text-align:center;font-weight:600">
-  <a class="anchor" href={basePath}>{crag.name}</a>
+  <a class="anchor" href={crag.pathname}>{crag.name}</a>
 </div>

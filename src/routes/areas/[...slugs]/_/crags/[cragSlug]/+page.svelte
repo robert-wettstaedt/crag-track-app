@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import BoulderName from '$lib/components/BoulderName'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
@@ -44,17 +45,17 @@
     {#if data.crag.boulders.length === 0}
       No boulders yet
     {:else}
-      <div class="flex gap-2">
-        {#each data.crag.boulders as boulder}
-          <a class="card card-hover variant-ghost p-4" href={`${basePath}/boulders/${boulder.slug}`}>
-            <dt>Name</dt>
-            <dd>
-              {boulder.name}
-              {#if boulder.grade != null}({boulder.gradingScale} {boulder.grade}){/if}
-            </dd>
-          </a>
-        {/each}
-      </div>
+      <nav class="nav-list">
+        <ul>
+          {#each data.crag.boulders as boulder}
+            <li class="px-4 py-2 hover:bg-primary-500/10 flex justify-between">
+              <a class="text-primary-500" href={`${basePath}/boulders/${boulder.slug}`}>
+                <BoulderName {boulder} />
+              </a>
+            </li>
+          {/each}
+        </ul>
+      </nav>
     {/if}
 
     <div class="flex justify-center mt-4">

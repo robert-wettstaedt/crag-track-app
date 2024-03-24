@@ -4,6 +4,7 @@ import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from 
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
+import { MAX_AREA_NESTING_DEPTH } from '$lib/db/utils'
 
 export const load = (async ({ params }) => {
   const path = params.slugs.split('/')
@@ -13,6 +14,10 @@ export const load = (async ({ params }) => {
 
   if (parentsResult.length > 1) {
     error(400, `Multiple areas with slug ${parentSlug} found`)
+  }
+
+  if (path.length >= MAX_AREA_NESTING_DEPTH) {
+    error(400, 'Max depth reached')
   }
 
   return {
