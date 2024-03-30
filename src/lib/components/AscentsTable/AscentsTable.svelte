@@ -7,16 +7,18 @@
 
   $: body = ascents.map((ascent) => {
     const { dateTime, parentBoulder, type } = ascent
-    const name = `${ascent.author.firstName} ${ascent.author.lastName}`
+    const name = ascent.author.userName
 
     const formattedDateTime = DateTime.fromSQL(dateTime).toLocaleString(DateTime.DATE_FULL)
     const boulderName = parentBoulder.name
     const boulderGrade =
       parentBoulder.gradingScale == null || parentBoulder.grade == null
         ? ''
-        : `${parentBoulder.gradingScale} ${parentBoulder.grade}`
+        : `<span class="badge variant-filled">${parentBoulder.gradingScale} ${parentBoulder.grade}</span>`
     const personalGrade =
-      parentBoulder.gradingScale == null || ascent.grade == null ? '' : `${parentBoulder.gradingScale} ${ascent.grade}`
+      parentBoulder.gradingScale == null || ascent.grade == null
+        ? ''
+        : `<span class="badge variant-filled">${parentBoulder.gradingScale} ${ascent.grade}</span>`
 
     const formattedType =
       type === 'flash'

@@ -24,8 +24,7 @@ const baseContentFields = {
 export const users = sqliteTable('users', {
   ...baseFields,
   email: text('email').notNull(),
-  firstName: text('first_name').notNull(),
-  lastName: text('last_name').notNull(),
+  userName: text('user_name').notNull(),
 })
 export type User = InferSelectModel<typeof users>
 export type InsertUser = InferInsertModel<typeof users>

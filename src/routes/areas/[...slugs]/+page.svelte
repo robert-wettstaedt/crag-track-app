@@ -25,7 +25,7 @@
       <div>
         <span class="flex-auto">
           <dt>Author</dt>
-          <dd>{data.area.author.firstName} {data.area.author.lastName}</dd>
+          <dd>{data.area.author.userName}</dd>
         </span>
       </div>
     </dl>

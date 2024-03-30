@@ -39,7 +39,7 @@ export const load = (async ({ url }) => {
   })
 
   const usersResult = await db.query.users.findMany({
-    where: or(like(users.email, searchString), like(users.firstName, searchString), like(users.lastName, searchString)),
+    where: or(like(users.email, searchString), like(users.userName, searchString)),
   })
 
   return {

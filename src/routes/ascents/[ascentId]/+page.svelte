@@ -20,7 +20,7 @@
       <div>
         <span class="flex-auto">
           <dt>Ascentionist</dt>
-          <dd>{data.author.firstName} {data.author.lastName}</dd>
+          <dd>{data.author.userName}</dd>
         </span>
       </div>
 

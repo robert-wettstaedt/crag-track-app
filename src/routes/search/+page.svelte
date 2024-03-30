@@ -93,7 +93,7 @@
           <nav class="list-nav">
             <ul>
               {#each data.searchResults.users as user}
-                <li>{user.firstName} {user.lastName} {user.email}</li>
+                <li>{user.userName} {user.email}</li>
               {/each}
             </ul>
           </nav>

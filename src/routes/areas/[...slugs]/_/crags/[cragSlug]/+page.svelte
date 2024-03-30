@@ -25,7 +25,7 @@
       <div>
         <span class="flex-auto">
           <dt>Author</dt>
-          <dd>{data.crag.author.firstName} {data.crag.author.lastName}</dd>
+          <dd>{data.crag.author.userName}</dd>
         </span>
       </div>
     </dl>

@@ -1,9 +1,10 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import Breadcrumb from '$lib/components/Breadcrumb'
+  import { SignIn, SignOut } from '@auth/sveltekit/components'
   import { arrow, autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom'
   import '@fortawesome/fontawesome-free/css/all.css'
-  import { AppBar, AppRail, AppRailAnchor, AppShell, storePopup } from '@skeletonlabs/skeleton'
+  import { AppBar, AppRail, AppRailAnchor, AppShell, popup, storePopup } from '@skeletonlabs/skeleton'
   import '../app.postcss'
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
@@ -16,6 +17,31 @@
     <AppBar>
       <svelte:fragment slot="lead">
         <strong class="text-xl uppercase">Skeleton</strong>
+      </svelte:fragment>
+
+      <svelte:fragment slot="trail">
+        {#if $page.data.session == null}
+          <SignIn>
+            <div slot="submitButton" class="buttonPrimary">Sign in</div>
+          </SignIn>
+        {:else}
+          <i
+            class="fa-solid fa-circle-user text-3xl"
+            use:popup={{ event: 'click', target: 'popup-user', placement: 'bottom-end' }}
+          />
+
+          <div class="card p-4 w-72 shadow-xl" data-popup="popup-user">
+            <div class="mb-4">
+              {$page.data.session.user?.name}
+            </div>
+
+            <SignOut>
+              <button slot="submitButton" class="btn variant-filled-primary">Sign out</button>
+            </SignOut>
+
+            <div class="arrow bg-surface-100-800-token" />
+          </div>
+        {/if}
       </svelte:fragment>
     </AppBar>
   </svelte:fragment>

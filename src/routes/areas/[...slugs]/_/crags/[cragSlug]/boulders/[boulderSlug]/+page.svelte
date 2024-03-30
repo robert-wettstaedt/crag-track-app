@@ -25,7 +25,7 @@
       <div>
         <span class="flex-auto">
           <dt>Author</dt>
-          <dd>{data.boulder.author.firstName} {data.boulder.author.lastName}</dd>
+          <dd>{data.boulder.author.userName}</dd>
         </span>
       </div>
 
