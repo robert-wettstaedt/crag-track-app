@@ -67,29 +67,43 @@
       {:else}
         <div class="flex gap-3">
           {#each files as file}
-            <FileViewer
-              content={file.content ?? ''}
-              file={file.info}
-              on:delete={() => {
-                files = files.filter((_file) => file.info.id !== _file.info.id)
-              }}
-            >
-              {#if file.info.type === 'send'}
-                <i class="fa-solid fa-circle text-red-500 me-2" />
-              {:else if file.info.type === 'attempt'}
-                <i class="fa-solid fa-person-falling text-blue-300 me-2"></i>
-              {:else if file.info.type === 'beta'}
-                Beta
-              {:else if file.info.type === 'topo'}
-                Topo
-              {:else if file.info.type === 'other'}
-                Other
-              {/if}
-              &nbsp;
-              {file.info.ascent == null
-                ? ''
-                : DateTime.fromSQL(file.info.ascent.createdAt).toLocaleString(DateTime.DATE_FULL)}
-            </FileViewer>
+            {#if file.error == null}
+              <FileViewer
+                content={file.content ?? ''}
+                file={file.info}
+                on:delete={() => {
+                  files = files.filter((_file) => file.info.id !== _file.info.id)
+                }}
+              >
+                {#if file.info.type === 'send'}
+                  <i class="fa-solid fa-circle text-red-500 me-2" />
+                {:else if file.info.type === 'attempt'}
+                  <i class="fa-solid fa-person-falling text-blue-300 me-2"></i>
+                {:else if file.info.type === 'beta'}
+                  Beta
+                {:else if file.info.type === 'topo'}
+                  Topo
+                {:else if file.info.type === 'other'}
+                  Other
+                {/if}
+                &nbsp;
+                {file.info.ascent == null
+                  ? ''
+                  : DateTime.fromSQL(file.info.ascent.createdAt).toLocaleString(DateTime.DATE_FULL)}
+              </FileViewer>
+            {:else}
+              <div class="alert variant-filled-error">
+                <div class="alert-message">
+                  <p>
+                    {file.error}
+                  </p>
+
+                  <p>
+                    {file.info.path}
+                  </p>
+                </div>
+              </div>
+            {/if}
           {/each}
         </div>
       {/if}

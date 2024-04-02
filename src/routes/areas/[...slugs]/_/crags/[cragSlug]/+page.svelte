@@ -71,15 +71,29 @@
       {:else}
         <div class="flex flex-wrap gap-3">
           {#each files as file}
-            <FileViewer
-              content={file.content ?? ''}
-              file={file.info}
-              on:delete={() => {
-                files = files.filter((_file) => file.info.id !== _file.info.id)
-              }}
-            >
-              <BoulderName boulder={data.crag.boulders.find((boulder) => file.info.boulderFk === boulder.id)} />
-            </FileViewer>
+            {#if file.error == null}
+              <FileViewer
+                content={file.content ?? ''}
+                file={file.info}
+                on:delete={() => {
+                  files = files.filter((_file) => file.info.id !== _file.info.id)
+                }}
+              >
+                <BoulderName boulder={data.crag.boulders.find((boulder) => file.info.boulderFk === boulder.id)} />
+              </FileViewer>
+            {:else}
+              <div class="alert variant-filled-error">
+                <div class="alert-message">
+                  <p>
+                    {file.error}
+                  </p>
+
+                  <p>
+                    {file.info.path}
+                  </p>
+                </div>
+              </div>
+            {/if}
           {/each}
         </div>
       {/if}

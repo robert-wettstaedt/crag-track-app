@@ -1,4 +1,4 @@
-export const grades = [
+const _grades = [
   {
     FB: '5A',
     V: 'V1',
@@ -84,3 +84,8 @@ export const grades = [
     V: 'V16',
   },
 ]
+
+export const grades = _grades.map((grade, index) => {
+  const color = index < 6 ? '#f59e0b' : index < 14 ? '#b91c1c' : '#581c87'
+  return { ...grade, color }
+})

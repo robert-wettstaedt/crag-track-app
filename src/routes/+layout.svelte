@@ -16,11 +16,11 @@
     <!-- App Bar -->
     <AppBar>
       <svelte:fragment slot="lead">
-        <strong class="text-xl uppercase">Skeleton</strong>
+        <strong class="text-xl uppercase">Climbing Log</strong>
       </svelte:fragment>
 
       <svelte:fragment slot="trail">
-        {#if $page.data.session == null}
+        {#if $page.data.session?.user == null}
           <SignIn>
             <div slot="submitButton" class="buttonPrimary">Sign in</div>
           </SignIn>
@@ -32,12 +32,22 @@
 
           <div class="card p-4 w-72 shadow-xl" data-popup="popup-user">
             <div class="mb-4">
-              {$page.data.session.user?.name}
+              Hi, {$page.data.session.user.name}
             </div>
 
-            <SignOut>
-              <button slot="submitButton" class="btn variant-filled-primary">Sign out</button>
-            </SignOut>
+            <nav class="list-nav">
+              <ul>
+                <li>
+                  <a href={`/users/${$page.data.session.user.name}`}>Profile</a>
+                </li>
+
+                <li class="list-item-sign-out">
+                  <SignOut>
+                    <span slot="submitButton">Sign out</span>
+                  </SignOut>
+                </li>
+              </ul>
+            </nav>
 
             <div class="arrow bg-surface-100-800-token" />
           </div>

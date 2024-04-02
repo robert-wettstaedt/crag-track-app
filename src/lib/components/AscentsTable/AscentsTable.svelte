@@ -17,9 +17,8 @@
         return ''
       }
 
-      const index = grades.findIndex((grade) => grade[parentBoulder.gradingScale] === parentBoulder.grade)
-      const color = index < 6 ? 'bg-amber-500' : index < 14 ? 'bg-red-700' : 'bg-purple-900'
-      return `<span class="badge text-white ${color}">${parentBoulder.gradingScale} ${parentBoulder.grade}</span>`
+      const grade = grades.find((grade) => grade[parentBoulder.gradingScale] === parentBoulder.grade)
+      return `<span class="badge text-white" style="background: ${grade?.color}">${parentBoulder.gradingScale} ${parentBoulder.grade}</span>`
     })()
 
     const personalGrade = (() => {
@@ -27,9 +26,8 @@
         return ''
       }
 
-      const index = grades.findIndex((grade) => grade[parentBoulder.gradingScale] === ascent.grade)
-      const color = index < 6 ? 'bg-amber-500' : index < 14 ? 'bg-red-700' : 'bg-purple-900'
-      return `<span class="badge text-white ${color}">${parentBoulder.gradingScale} ${ascent.grade}</span>`
+      const grade = grades.find((grade) => grade[parentBoulder.gradingScale] === ascent.grade)
+      return `<span class="badge text-white" style="background: ${grade?.color}">${parentBoulder.gradingScale} ${ascent.grade}</span>`
     })()
 
     const boulderName = parentBoulder.name

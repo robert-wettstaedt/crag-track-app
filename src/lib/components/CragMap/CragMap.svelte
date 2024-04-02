@@ -82,8 +82,8 @@
   const mapAction = (el: HTMLDivElement) => {
     element = el
     map = createMap(el)
-    createMarkers(map)
     resizeMap()
+    createMarkers(map)
 
     dispatch('action', map)
 
@@ -111,4 +111,4 @@
 
 <svelte:window on:resize={resizeMap} />
 
-<div class="map w-full" use:mapAction />
+<div class="map w-full -z-0" use:mapAction />

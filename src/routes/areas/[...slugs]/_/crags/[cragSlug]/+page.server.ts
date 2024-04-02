@@ -34,10 +34,19 @@ export const load = (async ({ locals, params }) => {
     },
   })
 
-  const filePromises = crag.files.map(async (file) => ({
-    info: file,
-    content: await getFileContents(session, file),
-  }))
+  const filePromises = crag.files.map(async (file) => {
+    try {
+      return {
+        content: await getFileContents(session, file),
+        info: file,
+      }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : String(error),
+        info: file,
+      }
+    }
+  })
 
   return {
     crag: crag,

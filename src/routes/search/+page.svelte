@@ -107,7 +107,11 @@
           <nav class="list-nav">
             <ul>
               {#each data.searchResults.users as user}
-                <li>{user.userName} {user.email}</li>
+                <li>
+                  <a href={`/users/${user.userName}`}>
+                    {user.userName}
+                  </a>
+                </li>
               {/each}
             </ul>
           </nav>

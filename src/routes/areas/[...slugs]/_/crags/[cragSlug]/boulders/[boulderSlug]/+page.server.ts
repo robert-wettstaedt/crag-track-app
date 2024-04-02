@@ -36,10 +36,19 @@ export const load = (async ({ locals, params }) => {
     error(400, `Multiple boulders with slug ${params.boulderSlug} found`)
   }
 
-  const filePromises = boulder.files.map(async (file) => ({
-    info: file,
-    content: await getFileContents(session, file),
-  }))
+  const filePromises = boulder.files.map(async (file) => {
+    try {
+      return {
+        content: await getFileContents(session, file),
+        info: file,
+      }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : String(error),
+        info: file,
+      }
+    }
+  })
 
   return {
     boulder,
