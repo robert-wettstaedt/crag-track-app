@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { crags } from '$lib/db/schema'
+import { boulders, crags } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichCrag } from '$lib/db/utils'
 import { getFileContents } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
@@ -13,7 +13,9 @@ export const load = (async ({ locals, params }) => {
     where: eq(crags.slug, params.cragSlug),
     with: {
       author: true,
-      boulders: true,
+      boulders: {
+        orderBy: boulders.grade,
+      },
       files: true,
     },
   })

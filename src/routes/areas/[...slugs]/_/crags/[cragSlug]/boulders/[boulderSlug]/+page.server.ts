@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { ascents, boulders } from '$lib/db/schema'
+import { ascents, boulders, crags } from '$lib/db/schema'
 import { getFileContents } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { desc, eq } from 'drizzle-orm'
@@ -8,31 +8,37 @@ import type { PageServerLoad } from './$types'
 export const load = (async ({ locals, params }) => {
   const session = await locals.auth()
 
-  const bouldersResult = await db.query.boulders.findMany({
-    where: eq(boulders.slug, params.boulderSlug),
+  const crag = await db.query.crags.findFirst({
+    where: eq(crags.slug, params.cragSlug),
     with: {
-      author: true,
-      ascents: {
-        orderBy: desc(ascents.dateTime),
+      boulders: {
+        where: eq(boulders.slug, params.boulderSlug),
         with: {
           author: true,
-          boulder: true,
-        },
-      },
-      files: {
-        with: {
-          ascent: true,
+          ascents: {
+            orderBy: desc(ascents.dateTime),
+            with: {
+              author: true,
+              boulder: true,
+            },
+          },
+          files: {
+            with: {
+              ascent: true,
+            },
+          },
         },
       },
     },
   })
-  const boulder = bouldersResult.at(0)
+
+  const boulder = crag?.boulders?.at(0)
 
   if (boulder == null) {
     error(404)
   }
 
-  if (bouldersResult.length > 1) {
+  if (crag != null && crag.boulders.length > 1) {
     error(400, `Multiple boulders with slug ${params.boulderSlug} found`)
   }
 

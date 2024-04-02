@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { areas } from '$lib/db/schema'
+import { areas, crags } from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -18,8 +18,12 @@ export const load = (async ({ params }) => {
     where: eq(areas.slug, slug),
     with: {
       author: true,
-      crags: true,
-      areas: true,
+      crags: {
+        orderBy: crags.name,
+      },
+      areas: {
+        orderBy: areas.name,
+      },
     },
   })
 

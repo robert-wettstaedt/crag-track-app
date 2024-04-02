@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server.js'
-import { ascents, boulders, files, users, type Ascent, type Boulder, type File } from '$lib/db/schema'
+import { ascents, boulders, crags, files, users, type Ascent, type File } from '$lib/db/schema'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -13,14 +13,22 @@ export const load = (async ({ locals, params }) => {
     error(401)
   }
 
-  const bouldersResult = await db.query.boulders.findMany({ where: eq(boulders.slug, params.boulderSlug) })
-  const boulder = bouldersResult.at(0)
+  const crag = await db.query.crags.findFirst({
+    where: eq(crags.slug, params.cragSlug),
+    with: {
+      boulders: {
+        where: eq(boulders.slug, params.boulderSlug),
+      },
+    },
+  })
+
+  const boulder = crag?.boulders?.at(0)
 
   if (boulder == null) {
     error(404)
   }
 
-  if (bouldersResult.length > 1) {
+  if (crag != null && crag.boulders.length > 1) {
     error(400, `Multiple boulders with slug ${params.boulderSlug} found`)
   }
 
@@ -45,33 +53,28 @@ export const actions = {
       return error as AscentActionFailure
     }
 
-    const parentsResult = await db.select().from(boulders).where(eq(boulders.slug, params.boulderSlug))
-    const parent = parentsResult.at(0)
+    const crag = await db.query.crags.findFirst({
+      where: eq(crags.slug, params.cragSlug),
+      with: {
+        boulders: {
+          where: eq(boulders.slug, params.boulderSlug),
+        },
+      },
+    })
 
-    if (parent == null) {
+    const boulder = crag?.boulders?.at(0)
+
+    if (boulder == null) {
       return fail(400, { ...values, error: `Unable to find boulder ${params.boulderSlug}` })
     }
 
+    if (crag != null && crag.boulders.length > 1) {
+      return fail(400, { ...values, error: `Multiple boulders with slug ${params.boulderSlug} found` })
+    }
+
     let stat: FileStat | undefined = undefined
-    let boulder: Boulder | undefined = undefined
 
     if (values.filePath !== `/${session.user?.email}/`) {
-      const bouldersResult = await db.query.boulders.findMany({
-        where: eq(boulders.slug, params.boulderSlug),
-        with: {
-          files: true,
-        },
-      })
-      boulder = bouldersResult.at(0)
-
-      if (boulder == null) {
-        return fail(404, values)
-      }
-
-      if (bouldersResult.length > 1) {
-        return fail(400, { error: `Multiple boulders with slug ${params.boulderSlug} found` })
-      }
-
       try {
         stat = (await getNextcloud(session)?.stat(values.filePath)) as FileStat | undefined
       } catch (error) {
@@ -100,7 +103,7 @@ export const actions = {
 
       const results = await db
         .insert(ascents)
-        .values({ ...values, boulderFk: parent.id, createdBy: user.id })
+        .values({ ...values, boulderFk: boulder.id, createdBy: user.id })
         .returning()
       ascent = results[0]
     } catch (error) {

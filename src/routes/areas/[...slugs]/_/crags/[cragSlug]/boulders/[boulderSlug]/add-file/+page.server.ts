@@ -12,21 +12,27 @@ export const load = (async ({ locals, params }) => {
     error(401)
   }
 
-  const bouldersResult = await db.query.boulders.findMany({
-    where: eq(boulders.slug, params.boulderSlug),
+  const crag = await db.query.crags.findFirst({
+    where: eq(crags.slug, params.cragSlug),
     with: {
-      files: {
-        where: eq(files.type, 'topo'),
+      boulders: {
+        where: eq(boulders.slug, params.boulderSlug),
+        with: {
+          files: {
+            where: eq(files.type, 'topo'),
+          },
+        },
       },
     },
   })
-  const boulder = bouldersResult.at(0)
+
+  const boulder = crag?.boulders?.at(0)
 
   if (boulder == null) {
     error(404)
   }
 
-  if (bouldersResult.length > 1) {
+  if (crag != null && crag.boulders.length > 1) {
     error(400, `Multiple boulders with slug ${params.boulderSlug} found`)
   }
 
@@ -49,20 +55,23 @@ export const actions = {
 
     const values = { path, type }
 
-    const bouldersResult = await db.query.boulders.findMany({
-      where: eq(boulders.slug, params.boulderSlug),
+    const crag = await db.query.crags.findFirst({
+      where: eq(crags.slug, params.cragSlug),
       with: {
-        files: true,
+        boulders: {
+          where: eq(boulders.slug, params.boulderSlug),
+        },
       },
     })
-    const boulder = bouldersResult.at(0)
+
+    const boulder = crag?.boulders?.at(0)
 
     if (boulder == null) {
       return fail(404, values)
     }
 
-    if (bouldersResult.length > 1) {
-      return fail(400, { error: `Multiple boulders with slug ${params.boulderSlug} found` })
+    if (crag != null && crag.boulders.length > 1) {
+      return fail(400, { ...values, error: `Multiple boulders with slug ${params.boulderSlug} found` })
     }
 
     if (typeof path !== 'string' || path.length === 0) {
@@ -92,25 +101,14 @@ export const actions = {
       return fail(400, { ...values, error: 'path must be a file not a directory' })
     }
 
-    let crag: Crag | undefined
-
-    if (type === 'topo') {
-      const cragsResult = await db.query.crags.findMany({ where: eq(crags.slug, params.cragSlug) })
-      crag = cragsResult.at(0)
-
-      if (crag == null) {
-        return fail(404, values)
-      }
-
-      if (cragsResult.length > 1) {
-        return fail(400, { error: `Multiple crags with slug ${params.cragSlug} found` })
-      }
-    }
-
     try {
-      await db
-        .insert(files)
-        .values({ boulderFk: boulder.id, cragFk: crag?.id, mime: stat.mime, path, type: type as File['type'] })
+      await db.insert(files).values({
+        boulderFk: boulder.id,
+        cragFk: type === 'topo' ? crag?.id : undefined,
+        mime: stat.mime,
+        path,
+        type: type as File['type'],
+      })
     } catch (error) {
       if (error instanceof Error) {
         return fail(404, { ...values, error: error.message })

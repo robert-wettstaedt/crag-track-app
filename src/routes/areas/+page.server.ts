@@ -4,7 +4,7 @@ import { isNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async () => {
-  const result = await db.select().from(areas).where(isNull(areas.parentFk))
+  const result = await db.query.areas.findMany({ where: isNull(areas.parentFk), orderBy: areas.name })
 
   return {
     areas: result,
