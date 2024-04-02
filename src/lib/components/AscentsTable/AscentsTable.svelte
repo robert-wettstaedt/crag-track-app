@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { InferResultType } from '$lib/db/types'
+  import { grades } from '$lib/grades'
   import { Table } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
@@ -10,15 +11,28 @@
     const name = ascent.author.userName
 
     const formattedDateTime = DateTime.fromSQL(dateTime).toLocaleString(DateTime.DATE_FULL)
+
+    const boulderGrade = (() => {
+      if (parentBoulder.gradingScale == null || parentBoulder.grade == null) {
+        return ''
+      }
+
+      const index = grades.findIndex((grade) => grade[parentBoulder.gradingScale] === parentBoulder.grade)
+      const color = index < 6 ? 'bg-amber-500' : index < 14 ? 'bg-red-700' : 'bg-purple-900'
+      return `<span class="badge text-white ${color}">${parentBoulder.gradingScale} ${parentBoulder.grade}</span>`
+    })()
+
+    const personalGrade = (() => {
+      if (parentBoulder.gradingScale == null || ascent.grade == null) {
+        return ''
+      }
+
+      const index = grades.findIndex((grade) => grade[parentBoulder.gradingScale] === ascent.grade)
+      const color = index < 6 ? 'bg-amber-500' : index < 14 ? 'bg-red-700' : 'bg-purple-900'
+      return `<span class="badge text-white ${color}">${parentBoulder.gradingScale} ${ascent.grade}</span>`
+    })()
+
     const boulderName = parentBoulder.name
-    const boulderGrade =
-      parentBoulder.gradingScale == null || parentBoulder.grade == null
-        ? ''
-        : `<span class="badge variant-filled">${parentBoulder.gradingScale} ${parentBoulder.grade}</span>`
-    const personalGrade =
-      parentBoulder.gradingScale == null || ascent.grade == null
-        ? ''
-        : `<span class="badge variant-filled">${parentBoulder.gradingScale} ${ascent.grade}</span>`
 
     const formattedType =
       type === 'flash'

@@ -1,5 +1,5 @@
 import { fail, type ActionFailure } from '@sveltejs/kit'
-import { type Area, type Ascent, type Boulder, type Crag } from './db/schema'
+import { type Area, type Ascent, type Boulder, type Crag, type File } from './db/schema'
 
 export type AreaActionValues = Pick<Area, 'name'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
@@ -53,7 +53,9 @@ export const validateBoulderForm = async (data: FormData): Promise<BoulderAction
   return values
 }
 
-export type AscentActionValues = Pick<Ascent, 'dateTime' | 'grade' | 'notes' | 'type'>
+export type AscentActionValues = Pick<Ascent, 'dateTime' | 'grade' | 'notes' | 'type'> & {
+  filePath: File['path']
+}
 export type AscentActionFailure = ActionFailure<AscentActionValues & { error: string }>
 
 export const validateAscentForm = async (data: FormData): Promise<AscentActionValues> => {
@@ -61,7 +63,8 @@ export const validateAscentForm = async (data: FormData): Promise<AscentActionVa
   const grade = data.get('grade')
   const notes = data.get('notes')
   const type = data.get('type')
-  const values = { dateTime, grade, notes, type } as AscentActionValues
+  const filePath = data.get('file.path')
+  const values = { dateTime, grade, notes, type, filePath } as AscentActionValues
 
   if (typeof dateTime !== 'string' || dateTime.length === 0) {
     throw fail(400, { ...values, error: 'dateTime is required' })
@@ -77,6 +80,10 @@ export const validateAscentForm = async (data: FormData): Promise<AscentActionVa
 
   if (notes != null && typeof notes !== 'string') {
     throw fail(400, { ...values, error: 'notes must be a valid string' })
+  }
+
+  if (filePath != null && typeof filePath !== 'string') {
+    throw fail(400, { ...values, error: 'file.path must be a valid string' })
   }
 
   return values

@@ -1,10 +1,13 @@
 import { db } from '$lib/db/db.server'
 import { ascents, boulders } from '$lib/db/schema'
+import { getFileContents } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { desc, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+
   const bouldersResult = await db.query.boulders.findMany({
     where: eq(boulders.slug, params.boulderSlug),
     with: {
@@ -14,6 +17,11 @@ export const load = (async ({ params }) => {
         with: {
           author: true,
           parentBoulder: true,
+        },
+      },
+      files: {
+        with: {
+          ascent: true,
         },
       },
     },
@@ -28,7 +36,13 @@ export const load = (async ({ params }) => {
     error(400, `Multiple boulders with slug ${params.boulderSlug} found`)
   }
 
+  const filePromises = boulder.files.map(async (file) => ({
+    info: file,
+    content: await getFileContents(session, file),
+  }))
+
   return {
     boulder,
+    files: Promise.all(filePromises),
   }
 }) satisfies PageServerLoad

@@ -37,10 +37,10 @@ export const actions = {
       await db.update(boulders).set(values).where(eq(boulders.slug, params.boulderSlug))
     } catch (error) {
       if (error instanceof Error) {
-        fail(404, { ...values, error: error.message })
+        return fail(404, { ...values, error: error.message })
       }
 
-      fail(404, { ...values, error: String(error) })
+      return fail(404, { ...values, error: String(error) })
     }
 
     redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}/boulders/${params.boulderSlug}`)

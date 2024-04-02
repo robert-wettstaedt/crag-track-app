@@ -1,11 +1,14 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import BoulderName from '$lib/components/BoulderName'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import FileViewer from '$lib/components/FileViewer'
+  import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}`
+
+  $: files = data.files
 </script>
 
 <AppBar>
@@ -35,8 +38,58 @@
     <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
       <i class="fa-solid fa-pen me-2" />Edit crag
     </a>
+
+    {#if data.crag.lat == null || data.crag.long == null}
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-location`}>
+        <i class="fa-solid fa-location-dot me-2" />Add geolocation
+      </a>
+    {/if}
   </svelte:fragment>
 </AppBar>
+
+<div class="card mt-4">
+  <div class="card-header">Location</div>
+
+  <section class="pt-4">
+    {#await import('$lib/components/CragMap') then CragMap}
+      <CragMap.default crags={data.crags} height={400} selectedCrag={data.crag} />
+    {/await}
+  </section>
+</div>
+
+<div class="card mt-4">
+  <div class="card-header">Topos</div>
+
+  <section class="p-4">
+    {#await files}
+      <div class="flex justify-center">
+        <ProgressRadial width="w-16" />
+      </div>
+    {:then files}
+      {#if files.length === 0}
+        No topos yet
+      {:else}
+        <div class="flex flex-wrap gap-3">
+          {#each files as file}
+            <FileViewer
+              content={file.content ?? ''}
+              file={file.info}
+              on:delete={() => {
+                files = files.filter((_file) => file.info.id !== _file.info.id)
+              }}
+            >
+              <BoulderName boulder={data.crag.boulders.find((boulder) => file.info.boulderFk === boulder.id)} />
+            </FileViewer>
+          {/each}
+        </div>
+      {/if}
+
+      <div class="flex justify-center mt-4">
+        <a class="btn variant-filled-primary" href={`${basePath}/add-topo`}> Add topos </a>
+      </div>
+    {/await}
+  </section>
+</div>
 
 <div class="card mt-4">
   <div class="card-header">Boulders</div>

@@ -1,10 +1,17 @@
 <script lang="ts">
+  import type { Crag } from '$lib/db/schema'
   import type { EnrichedCrag } from '$lib/db/utils'
   import L from 'leaflet'
   import 'leaflet/dist/leaflet.css'
+  import { createEventDispatcher } from 'svelte'
   import CragMarkerPopup from './components/CragMarkerPopup'
 
   export let crags: EnrichedCrag[]
+  export let selectedCrag: Crag | null = null
+  export let heightSubtrahend = 0
+  export let height: number | null = null
+
+  const dispatch = createEventDispatcher<{ action: L.Map }>()
 
   let element: HTMLDivElement | null = null
   let map: L.Map | null = null
@@ -47,7 +54,12 @@
     const markers = crags
       .map((crag) => {
         if (crag.lat != null && crag.long != null) {
-          const marker = L.marker([crag.lat, crag.long], { alt: crag.name })
+          const icon = L.divIcon({
+            className: crag.id === selectedCrag?.id ? 'text-4xl text-blue-400' : 'text-3xl text-red-500',
+            html: '<i class="fa-solid fa-mountain"></i>',
+            iconSize: [36, 36],
+          })
+          const marker = L.marker([crag.lat, crag.long], { alt: crag.name, icon })
 
           bindPopup(marker, (el) => {
             return new CragMarkerPopup({
@@ -73,6 +85,8 @@
     createMarkers(map)
     resizeMap()
 
+    dispatch('action', map)
+
     return {
       destroy: () => {
         map?.remove()
@@ -84,7 +98,11 @@
 
   function resizeMap() {
     if (element != null) {
-      element.style.height = `${window.innerHeight - element.getBoundingClientRect().top - 16}px`
+      if (height == null) {
+        element.style.height = `${window.innerHeight - element.getBoundingClientRect().top - 16 - heightSubtrahend}px`
+      } else {
+        element.style.height = `${height}px`
+      }
     }
 
     map?.invalidateSize()

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Ascent, Boulder } from '$lib/db/schema'
+  import type { Ascent, Boulder, File } from '$lib/db/schema'
   import { DateTime } from 'luxon'
 
   export let dateTime: Ascent['dateTime']
@@ -7,6 +7,7 @@
   export let grade: Ascent['grade']
   export let notes: Ascent['notes']
   export let type: Ascent['type'] | null
+  export let filePath: File['path'] | null
 </script>
 
 <label class="label mt-4">
@@ -76,3 +77,10 @@
   <span>Notes</span>
   <textarea class="textarea" name="notes" rows="4" placeholder="Enter some long form content." value={notes} />
 </label>
+
+<div class="mt-4">
+  <label class="label">
+    <span>File</span>
+    <input class="input" name="file.path" type="text" placeholder="Path" value={filePath} />
+  </label>
+</div>

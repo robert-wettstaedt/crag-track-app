@@ -14,17 +14,25 @@
     "generate": "drizzle-kit generate:sqlite --config drizzle.config.ts",
     "migrate": "drizzle-kit push:sqlite --config drizzle.config.ts"
   },
-  "devDependencies": {
+  "dependencies": {
     "@auth/sveltekit": "^0.14.1",
     "@floating-ui/dom": "^1.6.3",
     "@fortawesome/fontawesome-free": "^6.5.1",
     "@skeletonlabs/skeleton": "2.9.0",
     "@skeletonlabs/tw-plugin": "0.3.1",
+    "@tailwindcss/forms": "0.5.7",
+    "@tailwindcss/typography": "0.5.10",
+    "better-sqlite3": "^9.4.3",
+    "leaflet": "^1.9.4",
+    "luxon": "^3.4.4",
+    "svelte-pdf": "^1.0.20",
+    "tailwindcss": "3.4.1",
+    "webdav": "^5.5.0"
+  },
+  "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
-    "@tailwindcss/forms": "0.5.7",
-    "@tailwindcss/typography": "0.5.10",
     "@types/better-sqlite3": "^7.6.9",
     "@types/eslint": "^8.56.0",
     "@types/leaflet": "^1.9.8",
@@ -33,28 +41,21 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "autoprefixer": "10.4.19",
-    "better-sqlite3": "^9.4.3",
-    "bun-types": "^1.0.35",
     "drizzle-kit": "^0.20.14",
     "drizzle-orm": "^0.30.4",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-drizzle": "^0.2.3",
     "eslint-plugin-svelte": "^2.35.1",
-    "leaflet": "^1.9.4",
-    "luxon": "^3.4.4",
     "postcss": "8.4.38",
     "prettier": "^3.1.1",
     "prettier-plugin-svelte": "^3.1.2",
     "svelte": "^4.2.7",
-    "svelte-adapter-bun": "^0.5.2",
     "svelte-check": "^3.6.0",
-    "tailwindcss": "3.4.1",
     "tslib": "^2.4.1",
     "typescript": "^5.0.0",
     "vite": "^5.0.3",
-    "vite-plugin-tailwind-purgecss": "0.2.0",
-    "webdav": "^5.5.0"
+    "vite-plugin-tailwind-purgecss": "0.2.0"
   },
   "type": "module"
 }

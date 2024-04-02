@@ -1,16 +1,20 @@
 import { db } from '$lib/db/db.server'
 import { crags } from '$lib/db/schema'
-import type { InferResultType } from '$lib/db/types'
+import { buildNestedAreaQuery, enrichCrag } from '$lib/db/utils'
+import { getFileContents } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+
   const cragsResult = await db.query.crags.findMany({
     where: eq(crags.slug, params.cragSlug),
     with: {
       author: true,
       boulders: true,
+      files: true,
     },
   })
   const crag = cragsResult.at(0)
@@ -23,7 +27,21 @@ export const load = (async ({ params }) => {
     error(400, `Multiple crags with slug ${params.cragSlug} found`)
   }
 
+  const result = await db.query.crags.findMany({
+    where: and(isNotNull(crags.lat), isNotNull(crags.long)),
+    with: {
+      parentArea: buildNestedAreaQuery(),
+    },
+  })
+
+  const filePromises = crag.files.map(async (file) => ({
+    info: file,
+    content: await getFileContents(session, file),
+  }))
+
   return {
-    crag: crag as InferResultType<'crags', { author: true; boulders: true }>,
+    crag: crag,
+    crags: result.map(enrichCrag),
+    files: Promise.all(filePromises),
   }
 }) satisfies PageServerLoad

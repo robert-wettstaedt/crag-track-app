@@ -1,11 +1,13 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import AscentsTable from '$lib/components/AscentsTable'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import FileViewer from '$lib/components/FileViewer'
+  import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/boulders/${$page.params.boulderSlug}`
+  $: files = data.files
 </script>
 
 <AppBar>
@@ -50,6 +52,54 @@
     </a>
   </svelte:fragment>
 </AppBar>
+
+<div class="card mt-4">
+  <div class="card-header">Files</div>
+
+  <section class="p-4">
+    {#await files}
+      <div class="flex justify-center">
+        <ProgressRadial width="w-16" />
+      </div>
+    {:then files}
+      {#if files.length === 0}
+        No files yet
+      {:else}
+        <div class="flex gap-3">
+          {#each files as file}
+            <FileViewer
+              content={file.content ?? ''}
+              file={file.info}
+              on:delete={() => {
+                files = files.filter((_file) => file.info.id !== _file.info.id)
+              }}
+            >
+              {#if file.info.type === 'send'}
+                <i class="fa-solid fa-circle text-red-500 me-2" />
+              {:else if file.info.type === 'attempt'}
+                <i class="fa-solid fa-person-falling text-blue-300 me-2"></i>
+              {:else if file.info.type === 'beta'}
+                Beta
+              {:else if file.info.type === 'topo'}
+                Topo
+              {:else if file.info.type === 'other'}
+                Other
+              {/if}
+              &nbsp;
+              {file.info.ascent == null
+                ? ''
+                : DateTime.fromSQL(file.info.ascent.createdAt).toLocaleString(DateTime.DATE_FULL)}
+            </FileViewer>
+          {/each}
+        </div>
+      {/if}
+
+      <div class="flex justify-center mt-4">
+        <a class="btn variant-filled-primary" href={`${basePath}/add-file`}>Add file</a>
+      </div>
+    {/await}
+  </section>
+</div>
 
 <div class="card mt-4">
   <div class="card-header">Ascents</div>

@@ -65,6 +65,7 @@ export const cragsRelations = relations(crags, ({ one, many }) => ({
   author: one(users, { fields: [crags.createdBy], references: [users.id] }),
   parentArea: one(areas, { fields: [crags.parent], references: [areas.id] }),
   boulders: many(boulders),
+  files: many(files),
 }))
 
 export const boulders = sqliteTable('boulders', {
@@ -81,14 +82,13 @@ export const bouldersRelations = relations(boulders, ({ one, many }) => ({
   author: one(users, { fields: [boulders.createdBy], references: [users.id] }),
   parentCrag: one(crags, { fields: [boulders.parent], references: [crags.id] }),
   ascents: many(ascents),
+  files: many(files),
 }))
 
 export const ascents = sqliteTable('ascents', {
   ...baseFields,
   boulder: integer('boulder').notNull(),
-  createdBy: integer('created_by')
-    .notNull()
-    .references(() => users.id),
+  createdBy: integer('created_by').notNull(),
   dateTime: text('date_time')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -103,3 +103,22 @@ export const ascentsRelations = relations(ascents, ({ one }) => ({
   author: one(users, { fields: [ascents.createdBy], references: [users.id] }),
   parentBoulder: one(boulders, { fields: [ascents.boulder], references: [boulders.id] }),
 }))
+
+export const files = sqliteTable('files', {
+  id: baseFields.id,
+  path: text('path').notNull(),
+  mime: text('mime'),
+  type: text('type', { enum: ['topo', 'beta', 'attempt', 'send', 'other'] }).notNull(),
+
+  ascentFk: integer('ascent_fk'),
+  boulderFk: integer('boulder_fk'),
+  cragFk: integer('crag_fk'),
+})
+
+export const filesRelations = relations(files, ({ one }) => ({
+  ascent: one(ascents, { fields: [files.ascentFk], references: [ascents.id] }),
+  boulder: one(boulders, { fields: [files.boulderFk], references: [boulders.id] }),
+  crag: one(crags, { fields: [files.cragFk], references: [crags.id] }),
+}))
+export type File = InferSelectModel<typeof files>
+export type InsertFile = InferInsertModel<typeof files>

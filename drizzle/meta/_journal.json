@@ -15,6 +15,27 @@
       "when": 1711818142589,
       "tag": "0001_amazing_tenebrous",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1711963385928,
+      "tag": "0002_sudden_hellcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1712045742853,
+      "tag": "0003_violet_william_stryker",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1712046121771,
+      "tag": "0004_ambiguous_risque",
+      "breakpoints": true
     }
   ]
 }

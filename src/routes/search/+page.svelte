@@ -2,9 +2,23 @@
   import { page } from '$app/stores'
   import BoulderName from '$lib/components/BoulderName'
   import { AppBar, Tab, TabGroup, focusTrap } from '@skeletonlabs/skeleton'
+  import type { Snapshot } from './$types.js'
 
   export let data
 
+  export const snapshot: Snapshot = {
+    capture: () => {
+      console.log('snapshot capture', searchQuery)
+      return searchQuery
+    },
+    restore: (value) => {
+      console.log('snapshot restore', value)
+
+      searchQuery = value
+    },
+  }
+
+  let searchQuery = $page.url.searchParams.get('q') ?? ''
   let tabSet: 'boulders' | 'crags' | 'areas' | 'users' = 'boulders'
   let element: HTMLFormElement | null = null
 
@@ -25,7 +39,7 @@
       on:keypress={(event) => event.key === 'Enter' && element?.submit()}
       placeholder="Search..."
       type="search"
-      value={$page.url.searchParams.get('q') ?? ''}
+      bind:value={searchQuery}
     />
   </label>
 </form>
