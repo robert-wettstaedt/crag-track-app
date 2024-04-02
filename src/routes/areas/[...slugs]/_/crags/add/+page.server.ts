@@ -1,11 +1,16 @@
 import { db } from '$lib/db/db.server.js'
-import { areas, crags, generateSlug } from '$lib/db/schema'
+import { areas, crags, generateSlug, users } from '$lib/db/schema'
 import { validateCragForm, type CragActionFailure, type CragActionValues } from '$lib/forms.server.js'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+  if (session?.user == null) {
+    error(401)
+  }
+
   const path = params.slugs.split('/')
   const parentSlug = path.at(-1)
   const parentsResult = parentSlug == null ? [] : await db.query.areas.findMany({ where: eq(areas.slug, parentSlug) })
@@ -26,7 +31,12 @@ export const load = (async ({ params }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ params, request }) => {
+  default: async ({ locals, params, request }) => {
+    const session = await locals.auth()
+    if (session?.user == null) {
+      error(401)
+    }
+
     const data = await request.formData()
     let values: CragActionValues
 
@@ -63,7 +73,12 @@ export const actions = {
     }
 
     try {
-      await db.insert(crags).values({ ...values, createdBy: 1, parent: parent.id, slug })
+      const user = await db.query.users.findFirst({ where: eq(users, session.user.email) })
+      if (user == null) {
+        throw new Error('User not found')
+      }
+
+      await db.insert(crags).values({ ...values, createdBy: user.id, parent: parent.id, slug })
     } catch (error) {
       if (error instanceof Error) {
         return fail(400, { ...values, error: error.message })

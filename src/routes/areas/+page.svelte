@@ -8,9 +8,11 @@
   <svelte:fragment slot="lead">Areas</svelte:fragment>
 
   <svelte:fragment slot="trail">
-    <a class="btn btn-sm variant-soft-primary" href="/areas/add">
-      <i class="fa-solid fa-plus me-2" /> Add area
-    </a>
+    {#if data.session?.user != null}
+      <a class="btn btn-sm variant-soft-primary" href="/areas/add">
+        <i class="fa-solid fa-plus me-2" /> Add area
+      </a>
+    {/if}
   </svelte:fragment>
 </AppBar>
 

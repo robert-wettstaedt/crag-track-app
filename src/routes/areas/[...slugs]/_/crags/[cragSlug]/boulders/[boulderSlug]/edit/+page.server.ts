@@ -5,7 +5,12 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+  if (session?.user == null) {
+    error(401)
+  }
+
   const bouldersResult = await db.query.boulders.findMany({ where: eq(boulders.slug, params.boulderSlug) })
   const boulder = bouldersResult.at(0)
 
@@ -23,7 +28,12 @@ export const load = (async ({ params }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ params, request }) => {
+  default: async ({ locals, params, request }) => {
+    const session = await locals.auth()
+    if (session?.user == null) {
+      error(401)
+    }
+
     const data = await request.formData()
     let values: BoulderActionValues
 

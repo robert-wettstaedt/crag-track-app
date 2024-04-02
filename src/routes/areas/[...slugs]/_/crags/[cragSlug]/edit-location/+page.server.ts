@@ -6,7 +6,12 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+  if (session?.user == null) {
+    error(401)
+  }
+
   const cragsResult = await db.query.crags.findMany({
     where: eq(crags.slug, params.cragSlug),
   })
@@ -34,7 +39,12 @@ export const load = (async ({ params }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ params, request }) => {
+  default: async ({ locals, params, request }) => {
+    const session = await locals.auth()
+    if (session?.user == null) {
+      error(401)
+    }
+
     const data = await request.formData()
 
     const rawLat = data.get('lat')

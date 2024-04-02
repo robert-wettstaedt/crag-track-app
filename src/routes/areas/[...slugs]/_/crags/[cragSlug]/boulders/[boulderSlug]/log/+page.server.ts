@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server.js'
-import { ascents, boulders, files, type Ascent, type Boulder, type File } from '$lib/db/schema'
+import { ascents, boulders, files, users, type Ascent, type Boulder, type File } from '$lib/db/schema'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -7,7 +7,12 @@ import { eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+  if (session?.user == null) {
+    error(401)
+  }
+
   const bouldersResult = await db.query.boulders.findMany({ where: eq(boulders.slug, params.boulderSlug) })
   const boulder = bouldersResult.at(0)
 
@@ -27,6 +32,10 @@ export const load = (async ({ params }) => {
 export const actions = {
   default: async ({ locals, params, request }) => {
     const session = await locals.auth()
+    if (session?.user == null) {
+      error(401)
+    }
+
     const data = await request.formData()
     let values: AscentActionValues
 
@@ -46,7 +55,7 @@ export const actions = {
     let stat: FileStat | undefined = undefined
     let boulder: Boulder | undefined = undefined
 
-    if (values.filePath !== `/${session?.user?.email}/`) {
+    if (values.filePath !== `/${session.user?.email}/`) {
       const bouldersResult = await db.query.boulders.findMany({
         where: eq(boulders.slug, params.boulderSlug),
         with: {
@@ -84,9 +93,14 @@ export const actions = {
 
     let ascent: Ascent
     try {
+      const user = await db.query.users.findFirst({ where: eq(users, session.user.email) })
+      if (user == null) {
+        throw new Error('User not found')
+      }
+
       const results = await db
         .insert(ascents)
-        .values({ ...values, boulder: parent.id, createdBy: 1 })
+        .values({ ...values, boulder: parent.id, createdBy: user.id })
         .returning()
       ascent = results[0]
     } catch (error) {

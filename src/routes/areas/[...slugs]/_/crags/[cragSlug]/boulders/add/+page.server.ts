@@ -1,11 +1,16 @@
 import { db } from '$lib/db/db.server.js'
-import { boulders, crags, generateSlug } from '$lib/db/schema'
+import { boulders, crags, generateSlug, users } from '$lib/db/schema'
 import { validateBoulderForm, type BoulderActionFailure, type BoulderActionValues } from '$lib/forms.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+  if (session?.user == null) {
+    error(401)
+  }
+
   const parentsResult = await db.query.crags.findMany({ where: eq(crags.slug, params.cragSlug) })
   const parent = parentsResult.at(0)
 
@@ -23,7 +28,12 @@ export const load = (async ({ params }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ params, request }) => {
+  default: async ({ locals, params, request }) => {
+    const session = await locals.auth()
+    if (session?.user == null) {
+      error(401)
+    }
+
     const data = await request.formData()
     let values: BoulderActionValues
     const path = params.slugs.split('/')
@@ -59,7 +69,12 @@ export const actions = {
     }
 
     try {
-      await db.insert(boulders).values({ ...values, createdBy: 1, parent: parent.id, slug })
+      const user = await db.query.users.findFirst({ where: eq(users, session.user.email) })
+      if (user == null) {
+        throw new Error('User not found')
+      }
+
+      await db.insert(boulders).values({ ...values, createdBy: user.id, parent: parent.id, slug })
     } catch (error) {
       if (error instanceof Error) {
         return fail(400, { ...values, error: error.message })

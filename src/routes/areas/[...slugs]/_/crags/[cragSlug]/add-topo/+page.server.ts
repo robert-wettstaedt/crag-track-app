@@ -1,12 +1,17 @@
 import { db } from '$lib/db/db.server'
 import { crags, files } from '$lib/db/schema'
+import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
-import type { PageServerLoad } from './$types'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import type { FileStat } from 'webdav'
+import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+  if (session?.user == null) {
+    error(401)
+  }
+
   const cragsResult = await db.query.crags.findMany({
     where: eq(crags.slug, params.cragSlug),
     with: {
@@ -32,6 +37,11 @@ export const load = (async ({ params }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    const session = await locals.auth()
+    if (session?.user == null) {
+      error(401)
+    }
+
     const cragsResult = await db.query.crags.findMany({
       where: eq(crags.slug, params.cragSlug),
       with: {
@@ -50,11 +60,8 @@ export const actions = {
       error(400, `Multiple crags with slug ${params.cragSlug} found`)
     }
 
-    const session = await locals.auth()
     const data = await request.formData()
-
     const path = data.get('path')
-
     const values = { path }
 
     if (typeof path !== 'string' || path.length === 0) {

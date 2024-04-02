@@ -6,6 +6,10 @@ import { eq } from 'drizzle-orm'
 
 export async function DELETE({ locals, params }) {
   const session = await locals.auth()
+  if (session?.user?.email == null) {
+    error(401)
+  }
+
   const fileId = Number(params.id)
 
   let file: InferResultType<'files', { boulder: true; crag: true }> | undefined = undefined
@@ -24,10 +28,6 @@ export async function DELETE({ locals, params }) {
   }
 
   try {
-    if (session?.user?.email == null) {
-      throw new Error('Unable to verify user permissions')
-    }
-
     user = await db.query.users.findFirst({
       where: eq(users.email, session.user.email),
     })

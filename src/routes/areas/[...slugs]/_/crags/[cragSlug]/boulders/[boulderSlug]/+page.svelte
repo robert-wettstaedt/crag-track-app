@@ -47,9 +47,11 @@
   </svelte:fragment>
 
   <svelte:fragment slot="trail">
-    <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
-      <i class="fa-solid fa-pen me-2" />Edit boulder
-    </a>
+    {#if data.session?.user != null}
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
+        <i class="fa-solid fa-pen me-2" />Edit boulder
+      </a>
+    {/if}
   </svelte:fragment>
 </AppBar>
 
@@ -108,9 +110,11 @@
         </div>
       {/if}
 
-      <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/add-file`}>Add file</a>
-      </div>
+      {#if data.session?.user != null}
+        <div class="flex justify-center mt-4">
+          <a class="btn variant-filled-primary" href={`${basePath}/add-file`}>Add file</a>
+        </div>
+      {/if}
     {/await}
   </section>
 </div>
@@ -125,8 +129,10 @@
       <AscentsTable ascents={data.boulder.ascents} />
     {/if}
 
-    <div class="flex justify-center mt-4">
-      <a class="btn variant-filled-primary" href={`${basePath}/log`}>Log ascent</a>
-    </div>
+    {#if data.session?.user != null}
+      <div class="flex justify-center mt-4">
+        <a class="btn variant-filled-primary" href={`${basePath}/log`}>Log ascent</a>
+      </div>
+    {/if}
   </section>
 </div>

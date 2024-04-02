@@ -32,9 +32,11 @@
   </svelte:fragment>
 
   <svelte:fragment slot="trail">
-    <a class="btn btn-sm variant-ghost" href={`/areas/${$page.params.slugs}/edit`}>
-      <i class="fa-solid fa-pen me-2" />Edit area
-    </a>
+    {#if data.session?.user != null}
+      <a class="btn btn-sm variant-ghost" href={`/areas/${$page.params.slugs}/edit`}>
+        <i class="fa-solid fa-pen me-2" />Edit area
+      </a>
+    {/if}
   </svelte:fragment>
 </AppBar>
 
@@ -58,7 +60,7 @@
         </div>
       {/if}
 
-      {#if data.canAddArea}
+      {#if data.session?.user != null && data.canAddArea}
         <div class="flex justify-center mt-4">
           <a class="btn variant-filled-primary" href={`${basePath}/add`}>Add area</a>
         </div>
@@ -86,8 +88,10 @@
       </div>
     {/if}
 
-    <div class="flex justify-center mt-4">
-      <a class="btn variant-filled-primary" href={`${basePath}/_/crags/add`}>Add crag</a>
-    </div>
+    {#if data.session?.user != null}
+      <div class="flex justify-center mt-4">
+        <a class="btn variant-filled-primary" href={`${basePath}/_/crags/add`}>Add crag</a>
+      </div>
+    {/if}
   </section>
 </div>

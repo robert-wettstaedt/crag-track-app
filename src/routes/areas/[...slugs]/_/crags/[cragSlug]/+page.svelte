@@ -35,14 +35,16 @@
   </svelte:fragment>
 
   <svelte:fragment slot="trail">
-    <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
-      <i class="fa-solid fa-pen me-2" />Edit crag
-    </a>
-
-    {#if data.crag.lat == null || data.crag.long == null}
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-location`}>
-        <i class="fa-solid fa-location-dot me-2" />Add geolocation
+    {#if data.session?.user != null}
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
+        <i class="fa-solid fa-pen me-2" />Edit crag
       </a>
+
+      {#if data.crag.lat == null || data.crag.long == null}
+        <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-location`}>
+          <i class="fa-solid fa-location-dot me-2" />Add geolocation
+        </a>
+      {/if}
     {/if}
   </svelte:fragment>
 </AppBar>
@@ -98,9 +100,11 @@
         </div>
       {/if}
 
-      <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/add-topo`}> Add topos </a>
-      </div>
+      {#if data.session?.user != null}
+        <div class="flex justify-center mt-4">
+          <a class="btn variant-filled-primary" href={`${basePath}/add-topo`}> Add topos </a>
+        </div>
+      {/if}
     {/await}
   </section>
 </div>
@@ -125,8 +129,10 @@
       </nav>
     {/if}
 
-    <div class="flex justify-center mt-4">
-      <a class="btn variant-filled-primary" href={`${basePath}/boulders/add`}>Add boulder</a>
-    </div>
+    {#if data.session?.user != null}
+      <div class="flex justify-center mt-4">
+        <a class="btn variant-filled-primary" href={`${basePath}/boulders/add`}>Add boulder</a>
+      </div>
+    {/if}
   </section>
 </div>
