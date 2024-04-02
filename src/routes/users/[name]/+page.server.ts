@@ -11,7 +11,7 @@ export const load = (async ({ params }) => {
       ascents: {
         where: not(eq(ascents.type, 'attempt')),
         with: {
-          parentBoulder: true,
+          boulder: true,
         },
       },
     },

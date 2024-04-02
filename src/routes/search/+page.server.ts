@@ -16,23 +16,23 @@ export const load = (async ({ url }) => {
   const areasResult = await db.query.areas.findMany({
     where: like(areas.name, searchString),
     with: {
-      parentArea: buildNestedAreaQuery(),
+      parent: buildNestedAreaQuery(),
     },
   })
 
   const cragsResult = await db.query.crags.findMany({
     where: like(crags.name, searchString),
     with: {
-      parentArea: buildNestedAreaQuery(),
+      area: buildNestedAreaQuery(),
     },
   })
 
   const bouldersResult = await db.query.boulders.findMany({
     where: like(boulders.name, searchString),
     with: {
-      parentCrag: {
+      crag: {
         with: {
-          parentArea: buildNestedAreaQuery(),
+          area: buildNestedAreaQuery(),
         },
       },
     },

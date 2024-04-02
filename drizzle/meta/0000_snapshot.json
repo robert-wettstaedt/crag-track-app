@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "ab100d5e-61f3-4643-881f-e3c30f6d003e",
+  "id": "f1e70e5b-1dab-46aa-95c0-fe08d9634673",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "areas": {
@@ -88,13 +88,6 @@
           "notNull": true,
           "autoincrement": true
         },
-        "boulder": {
-          "name": "boulder",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "created_by": {
           "name": "created_by",
           "type": "integer",
@@ -130,24 +123,17 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "boulder": {
+          "name": "boulder",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "ascents_created_by_users_id_fk": {
-          "name": "ascents_created_by_users_id_fk",
-          "tableFrom": "ascents",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
@@ -201,7 +187,7 @@
           "name": "grading_scale",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "parent": {
@@ -283,6 +269,64 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
+    "files": {
+      "name": "files",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "mime": {
+          "name": "mime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ascent_fk": {
+          "name": "ascent_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "boulder_fk": {
+          "name": "boulder_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "crag_fk": {
+          "name": "crag_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
     "users": {
       "name": "users",
       "columns": {
@@ -308,15 +352,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "first_name": {
-          "name": "first_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "last_name": {
-          "name": "last_name",
+        "user_name": {
+          "name": "user_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true,

@@ -8,7 +8,7 @@ export const load = (async () => {
     orderBy: desc(ascents.dateTime),
     with: {
       author: true,
-      parentBoulder: true,
+      boulder: true,
     },
   })
 

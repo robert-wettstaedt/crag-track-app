@@ -7,7 +7,7 @@
 
   const ascents = data.user.ascents.map((ascent) => ({
     ...ascent,
-    color: grades.find((grade) => grade[ascent.parentBoulder.gradingScale] === ascent.grade)?.color,
+    color: grades.find((grade) => grade[ascent.boulder.gradingScale] === ascent.grade)?.color,
   }))
 </script>
 

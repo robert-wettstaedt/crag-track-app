@@ -32,7 +32,7 @@ export const load = (async ({ locals, params }) => {
 export const actions = {
   default: async ({ locals, params, request }) => {
     const session = await locals.auth()
-    if (session?.user == null) {
+    if (session?.user?.email == null) {
       error(401)
     }
 
@@ -93,14 +93,14 @@ export const actions = {
 
     let ascent: Ascent
     try {
-      const user = await db.query.users.findFirst({ where: eq(users, session.user.email) })
+      const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
       if (user == null) {
         throw new Error('User not found')
       }
 
       const results = await db
         .insert(ascents)
-        .values({ ...values, boulder: parent.id, createdBy: user.id })
+        .values({ ...values, boulderFk: parent.id, createdBy: user.id })
         .returning()
       ascent = results[0]
     } catch (error) {

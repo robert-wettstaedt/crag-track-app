@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CragMap from '$lib/components/CragMap'
-
   export let data
 </script>
 
-<CragMap crags={data.crags} />
+{#await import('$lib/components/CragMap') then CragMap}
+  <CragMap.default crags={data.crags} />
+{/await}

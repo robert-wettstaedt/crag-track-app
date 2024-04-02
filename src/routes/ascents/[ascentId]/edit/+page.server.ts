@@ -15,7 +15,7 @@ export const load = (async ({ locals, params }) => {
     .select()
     .from(ascents)
     .where(eq(ascents.id, Number(params.ascentId)))
-    .innerJoin(boulders, eq(ascents.boulder, boulders.id))
+    .innerJoin(boulders, eq(ascents.boulderFk, boulders.id))
 
   if (ascentsResult.length === 0) {
     error(404)

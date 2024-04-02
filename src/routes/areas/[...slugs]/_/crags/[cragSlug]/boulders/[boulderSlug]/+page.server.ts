@@ -16,7 +16,7 @@ export const load = (async ({ locals, params }) => {
         orderBy: desc(ascents.dateTime),
         with: {
           author: true,
-          parentBoulder: true,
+          boulder: true,
         },
       },
       files: {

@@ -33,7 +33,7 @@ export const load = (async ({ locals, params }) => {
 export const actions = {
   default: async ({ locals, params, request }) => {
     const session = await locals.auth()
-    if (session?.user == null) {
+    if (session?.user?.email == null) {
       error(401)
     }
 
@@ -50,35 +50,31 @@ export const actions = {
 
     const path = params.slugs.split('/')
     const parentSlug = path.at(-1)
-    const parentsResult =
-      parentSlug == null
-        ? []
-        : await db.select({ id: areas.id, name: areas.name }).from(areas).where(eq(areas.slug, parentSlug))
+    const parentsResult = parentSlug == null ? [] : await db.query.areas.findMany({ where: eq(areas.slug, parentSlug) })
     const parent = parentsResult.at(0)
 
     if (parent == null) {
       return fail(400, { ...values, error: `Unable to find parent ${parentSlug}` })
     }
 
-    const existingCragsResult = await db
-      .select()
-      .from(crags)
-      .where(and(eq(crags.slug, slug), eq(crags.parent, parent.id)))
+    const existingCragsResult = await db.query.crags.findFirst({
+      where: and(eq(crags.slug, slug), eq(crags.areaFk, parent.id)),
+    })
 
-    if (existingCragsResult.length > 0) {
+    if (existingCragsResult != null) {
       return fail(400, {
         ...values,
-        error: `Crag with name "${existingCragsResult[0].name}" already exists in area "${parent.name}"`,
+        error: `Crag with name "${existingCragsResult.name}" already exists in area "${parent.name}"`,
       })
     }
 
     try {
-      const user = await db.query.users.findFirst({ where: eq(users, session.user.email) })
+      const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
       if (user == null) {
         throw new Error('User not found')
       }
 
-      await db.insert(crags).values({ ...values, createdBy: user.id, parent: parent.id, slug })
+      await db.insert(crags).values({ ...values, createdBy: user.id, areaFk: parent.id, slug })
     } catch (error) {
       if (error instanceof Error) {
         return fail(400, { ...values, error: error.message })

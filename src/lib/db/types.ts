@@ -26,6 +26,6 @@ export type InferResultType<
   }
 >
 
-export type NestedArea = InferResultType<'areas', { parentArea: true }>
-export type NestedCrag = InferResultType<'crags', { parentArea: true }>
-export type NestedBoulder = InferResultType<'boulders', { parentCrag: true }>
+export type NestedArea = InferResultType<'areas', { parent: true }>
+export type NestedCrag = InferResultType<'crags', { area: true }>
+export type NestedBoulder = InferResultType<'boulders', { crag: true }>

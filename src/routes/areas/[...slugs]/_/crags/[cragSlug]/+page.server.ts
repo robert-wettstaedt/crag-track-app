@@ -30,7 +30,7 @@ export const load = (async ({ locals, params }) => {
   const result = await db.query.crags.findMany({
     where: and(isNotNull(crags.lat), isNotNull(crags.long)),
     with: {
-      parentArea: buildNestedAreaQuery(),
+      area: buildNestedAreaQuery(),
     },
   })
 

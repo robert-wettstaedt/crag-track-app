@@ -6,14 +6,14 @@ export const MAX_AREA_NESTING_DEPTH = 4
 export const buildNestedAreaQuery = () => {
   let nestedAreaQuery: Parameters<typeof db.query.areas.findMany>[0] = {
     with: {
-      parentArea: true,
+      parent: true,
     },
   }
 
   for (let i = 0; i < MAX_AREA_NESTING_DEPTH; i++) {
     nestedAreaQuery = {
       with: {
-        parentArea: nestedAreaQuery,
+        parent: nestedAreaQuery,
       },
     }
   }
@@ -30,17 +30,17 @@ export const enrichArea = (area: NestedArea): EnrichedArea => {
   const slugs: string[] = []
 
   const recursive = (area: NestedArea): EnrichedArea => {
-    let parentArea = area.parentArea
-    if (parentArea != null) {
-      parentArea = recursive(parentArea as NestedArea)
+    let parent = area.parent
+    if (parent != null) {
+      parent = recursive(parent as NestedArea)
     }
 
     slugs.push(area.slug)
     const pathname = ['areas', ...slugs].join('/')
-    return { ...area, parentArea, pathname }
+    return { ...area, parent, pathname }
   }
 
-  if (area.parentArea == null) {
+  if (area.parent == null) {
     return { ...area, pathname: ['areas', area.slug].join('/') }
   } else {
     return recursive(area)
@@ -49,16 +49,16 @@ export const enrichArea = (area: NestedArea): EnrichedArea => {
 
 export interface EnrichedCrag extends NestedCrag, WithPathname {}
 export const enrichCrag = (crag: NestedCrag): EnrichedCrag => {
-  const parentArea = enrichArea(crag.parentArea as NestedArea)
+  const area = enrichArea(crag.area as NestedArea)
 
-  const pathname = parentArea.pathname + ['', '_', 'crags', crag.slug].join('/')
-  return { ...crag, parentArea, pathname }
+  const pathname = area.pathname + ['', '_', 'crags', crag.slug].join('/')
+  return { ...crag, area, pathname }
 }
 
 export interface EnrichedBoulder extends NestedBoulder, WithPathname {}
 export const enrichBoulder = (boulder: NestedBoulder): EnrichedBoulder => {
-  const parentCrag = enrichCrag(boulder.parentCrag as NestedCrag)
+  const crag = enrichCrag(boulder.crag as NestedCrag)
 
-  const pathname = parentCrag.pathname + ['', 'boulders', boulder.slug].join('/')
-  return { ...boulder, parentCrag, pathname }
+  const pathname = crag.pathname + ['', 'boulders', boulder.slug].join('/')
+  return { ...boulder, crag, pathname }
 }

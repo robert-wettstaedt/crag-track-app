@@ -23,6 +23,7 @@ const baseContentFields = {
 
 export const users = sqliteTable('users', {
   ...baseFields,
+
   email: text('email').notNull(),
   userName: text('user_name').notNull(),
 })
@@ -39,14 +40,16 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const areas = sqliteTable('areas', {
   ...baseFields,
   ...baseContentFields,
-  parent: integer('parent').references((): AnySQLiteColumn => areas.id),
+
+  parentFk: integer('parent').references((): AnySQLiteColumn => areas.id),
 })
 export type Area = InferSelectModel<typeof areas>
 export type InsertArea = InferInsertModel<typeof areas>
 
 export const areasRelations = relations(areas, ({ one, many }) => ({
   author: one(users, { fields: [areas.createdBy], references: [users.id] }),
-  parentArea: one(areas, { fields: [areas.parent], references: [areas.id], relationName: 'area-to-area' }),
+  parent: one(areas, { fields: [areas.parentFk], references: [areas.id], relationName: 'area-to-area' }),
+
   areas: many(areas, { relationName: 'area-to-area' }),
   crags: many(crags),
 }))
@@ -54,16 +57,19 @@ export const areasRelations = relations(areas, ({ one, many }) => ({
 export const crags = sqliteTable('crags', {
   ...baseFields,
   ...baseContentFields,
+
   lat: real('lat'),
   long: real('long'),
-  parent: integer('parent').notNull(),
+
+  areaFk: integer('parent').notNull(),
 })
 export type Crag = InferSelectModel<typeof crags>
 export type InsertCrag = InferInsertModel<typeof crags>
 
 export const cragsRelations = relations(crags, ({ one, many }) => ({
+  area: one(areas, { fields: [crags.areaFk], references: [areas.id] }),
   author: one(users, { fields: [crags.createdBy], references: [users.id] }),
-  parentArea: one(areas, { fields: [crags.parent], references: [areas.id] }),
+
   boulders: many(boulders),
   files: many(files),
 }))
@@ -71,43 +77,49 @@ export const cragsRelations = relations(crags, ({ one, many }) => ({
 export const boulders = sqliteTable('boulders', {
   ...baseFields,
   ...baseContentFields,
+
   grade: text('grade'),
   gradingScale: text('grading_scale', { enum: ['FB', 'V'] }).notNull(),
-  parent: integer('parent').notNull(),
+
+  cragFk: integer('parent').notNull(),
 })
 export type Boulder = InferSelectModel<typeof boulders>
 export type InsertBoulder = InferInsertModel<typeof boulders>
 
 export const bouldersRelations = relations(boulders, ({ one, many }) => ({
   author: one(users, { fields: [boulders.createdBy], references: [users.id] }),
-  parentCrag: one(crags, { fields: [boulders.parent], references: [crags.id] }),
+  crag: one(crags, { fields: [boulders.cragFk], references: [crags.id] }),
+
   ascents: many(ascents),
   files: many(files),
 }))
 
 export const ascents = sqliteTable('ascents', {
   ...baseFields,
-  boulder: integer('boulder').notNull(),
-  createdBy: integer('created_by').notNull(),
+  createdBy: baseContentFields.createdBy,
+
   dateTime: text('date_time')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
   grade: text('grade'),
   notes: text('notes'),
   type: text('type', { enum: ['flash', 'send', 'attempt'] }).notNull(),
+
+  boulderFk: integer('boulder').notNull(),
 })
 export type Ascent = InferSelectModel<typeof ascents>
 export type InsertAscent = InferInsertModel<typeof ascents>
 
 export const ascentsRelations = relations(ascents, ({ one }) => ({
   author: one(users, { fields: [ascents.createdBy], references: [users.id] }),
-  parentBoulder: one(boulders, { fields: [ascents.boulder], references: [boulders.id] }),
+  boulder: one(boulders, { fields: [ascents.boulderFk], references: [boulders.id] }),
 }))
 
 export const files = sqliteTable('files', {
   id: baseFields.id,
-  path: text('path').notNull(),
+
   mime: text('mime'),
+  path: text('path').notNull(),
   type: text('type', { enum: ['topo', 'beta', 'attempt', 'send', 'other'] }).notNull(),
 
   ascentFk: integer('ascent_fk'),

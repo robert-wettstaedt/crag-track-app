@@ -32,6 +32,7 @@
       gradingScale={data.boulder.gradingScale}
       notes={form?.notes ?? data.ascent.notes}
       type={form?.type ?? data.ascent.type}
+      filePath={form?.filePath ?? (data.session?.user?.email == null ? '' : `/${data.session.user.email}/`)}
     />
 
     <div class="flex justify-between mt-4">

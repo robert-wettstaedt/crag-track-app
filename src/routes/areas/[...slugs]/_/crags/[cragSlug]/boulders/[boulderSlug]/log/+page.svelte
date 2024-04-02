@@ -36,7 +36,7 @@
       gradingScale={data.boulder.gradingScale}
       notes={form?.notes ?? null}
       type={form?.type ?? null}
-      filePath={data.session?.user?.email == null ? '' : `/${data.session.user.email}/`}
+      filePath={form?.filePath ?? (data.session?.user?.email == null ? '' : `/${data.session.user.email}/`)}
     />
   </div>
 

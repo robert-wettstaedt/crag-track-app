@@ -4,33 +4,33 @@
   import { Table } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
-  export let ascents: InferResultType<'ascents', { author: true; parentBoulder: true }>[]
+  export let ascents: InferResultType<'ascents', { author: true; boulder: true }>[]
 
   $: body = ascents.map((ascent) => {
-    const { dateTime, parentBoulder, type } = ascent
+    const { dateTime, boulder, type } = ascent
     const name = ascent.author.userName
 
     const formattedDateTime = DateTime.fromSQL(dateTime).toLocaleString(DateTime.DATE_FULL)
 
     const boulderGrade = (() => {
-      if (parentBoulder.gradingScale == null || parentBoulder.grade == null) {
+      if (boulder.gradingScale == null || boulder.grade == null) {
         return ''
       }
 
-      const grade = grades.find((grade) => grade[parentBoulder.gradingScale] === parentBoulder.grade)
-      return `<span class="badge text-white" style="background: ${grade?.color}">${parentBoulder.gradingScale} ${parentBoulder.grade}</span>`
+      const grade = grades.find((grade) => grade[boulder.gradingScale] === boulder.grade)
+      return `<span class="badge text-white" style="background: ${grade?.color}">${boulder.gradingScale} ${boulder.grade}</span>`
     })()
 
     const personalGrade = (() => {
-      if (parentBoulder.gradingScale == null || ascent.grade == null) {
+      if (boulder.gradingScale == null || ascent.grade == null) {
         return ''
       }
 
-      const grade = grades.find((grade) => grade[parentBoulder.gradingScale] === ascent.grade)
-      return `<span class="badge text-white" style="background: ${grade?.color}">${parentBoulder.gradingScale} ${ascent.grade}</span>`
+      const grade = grades.find((grade) => grade[boulder.gradingScale] === ascent.grade)
+      return `<span class="badge text-white" style="background: ${grade?.color}">${boulder.gradingScale} ${ascent.grade}</span>`
     })()
 
-    const boulderName = parentBoulder.name
+    const boulderName = boulder.name
 
     const formattedType =
       type === 'flash'

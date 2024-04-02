@@ -86,6 +86,6 @@ const _grades = [
 ]
 
 export const grades = _grades.map((grade, index) => {
-  const color = index < 6 ? '#f59e0b' : index < 14 ? '#b91c1c' : '#581c87'
+  const color = index < 7 ? '#f59e0b' : index < 14 ? '#b91c1c' : '#581c87'
   return { ...grade, color }
 })
