@@ -6,8 +6,6 @@ import type { LayoutServerLoad } from './$types'
 export const load: LayoutServerLoad = async (event) => {
   const session = await event.locals.auth()
 
-  console.log(session)
-
   let user: User | undefined
 
   if (session?.user?.email != null && session.user.name != null) {
