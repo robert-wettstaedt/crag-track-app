@@ -48,7 +48,7 @@
       {#if data.area.areas.length === 0}
         No areas yet
       {:else}
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           {#each data.area.areas as area}
             <a class="card card-hover variant-ghost p-4" href={`${basePath}/${area.slug}`}>
               <dt>Name</dt>
@@ -76,7 +76,7 @@
     {#if data.area.crags.length === 0}
       No crags yet
     {:else}
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         {#each data.area.crags as crag}
           <a class="card card-hover variant-ghost p-4" href={`${basePath}/_/crags/${crag.slug}`}>
             <dt>Name</dt>
