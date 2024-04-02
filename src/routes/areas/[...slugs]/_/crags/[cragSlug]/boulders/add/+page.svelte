@@ -26,7 +26,7 @@
   {/if}
 
   <div class="mt-8">
-    <BoulderFormFields grade={form?.grade ?? null} gradingScale={form?.gradingScale ?? null} name={form?.name ?? ''} />
+    <BoulderFormFields grade={form?.grade ?? null} gradingScale={form?.gradingScale} name={form?.name ?? ''} />
   </div>
 
   <div class="flex justify-between mt-8">

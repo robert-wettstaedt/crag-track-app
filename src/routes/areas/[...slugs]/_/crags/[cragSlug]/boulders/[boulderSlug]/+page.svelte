@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import AscentsTable from '$lib/components/AscentsTable'
+  import BoulderName from '$lib/components/BoulderName'
   import FileViewer from '$lib/components/FileViewer'
   import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
@@ -12,7 +13,7 @@
 
 <AppBar>
   <svelte:fragment slot="lead">
-    {data.boulder.name}
+    <BoulderName boulder={data.boulder} />
   </svelte:fragment>
 
   <svelte:fragment slot="headline">
@@ -28,19 +29,6 @@
         <span class="flex-auto">
           <dt>Author</dt>
           <dd>{data.boulder.author.userName}</dd>
-        </span>
-      </div>
-
-      <div>
-        <span class="flex-auto">
-          <dt>Grade</dt>
-          <dd>
-            {#if data.boulder.grade == null}
-              n/A
-            {:else}
-              {data.boulder.gradingScale} {data.boulder.grade}
-            {/if}
-          </dd>
         </span>
       </div>
     </dl>
