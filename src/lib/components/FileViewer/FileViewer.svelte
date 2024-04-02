@@ -18,6 +18,8 @@
   }
 </script>
 
+<svelte:window on:keyup={(event) => event.key === 'Escape' && goto($page.url.pathname)} />
+
 <a class="card bg-initial card-hover" href={`${$page.url.pathname}/?${search}`}>
   {#if file.mime?.includes('image')}
     <img alt={file.path} class="h-80" src={`data:${file.mime};base64,${content}`} height={300} />
