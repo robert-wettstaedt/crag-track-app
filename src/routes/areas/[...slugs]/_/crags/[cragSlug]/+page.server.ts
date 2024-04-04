@@ -1,14 +1,11 @@
 import { db } from '$lib/db/db.server'
 import { boulders, crags } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichCrag } from '$lib/db/utils'
-import { getFileContents } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
-  const session = await locals.auth()
-
+export const load = (async ({ params }) => {
   const cragsResult = await db.query.crags.findMany({
     where: eq(crags.slug, params.cragSlug),
     with: {
@@ -36,23 +33,8 @@ export const load = (async ({ locals, params }) => {
     },
   })
 
-  const filePromises = crag.files.map(async (file) => {
-    try {
-      return {
-        content: await getFileContents(session, file),
-        info: file,
-      }
-    } catch (error) {
-      return {
-        error: error instanceof Error ? error.message : String(error),
-        info: file,
-      }
-    }
-  })
-
   return {
     crag: crag,
     crags: result.map(enrichCrag),
-    files: Promise.all(filePromises),
   }
 }) satisfies PageServerLoad

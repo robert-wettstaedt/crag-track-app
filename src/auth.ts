@@ -28,11 +28,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
   providers: [nextcloudProvider],
   secret: NEXTCLOUD_SECRET,
   callbacks: {
-    async session(params) {
-      console.log('session', params)
-
-      const { session, token } = params
-
+    async session({ session, token }) {
       return {
         ...session,
         accessToken: token.accessToken as string,
@@ -41,10 +37,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
         refreshToken: token.refreshToken as string,
       }
     },
-    async jwt(params) {
-      const { token, account } = params
-      console.log('jwt', params)
-
+    async jwt({ account, token }) {
       if (account != null) {
         return {
           ...token,
@@ -57,8 +50,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
       if (Date.now() < (token.expiresAt as number) * 1000) {
         return token
       }
-
-      console.log('Token expired, refreshing...')
 
       try {
         const searchParams = new URLSearchParams({
@@ -75,8 +66,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
         if (!response.ok || tokens.expires_in == null) {
           throw tokens
         }
-
-        console.log('New token:', tokens)
 
         return {
           ...token, // Keep the previous token properties

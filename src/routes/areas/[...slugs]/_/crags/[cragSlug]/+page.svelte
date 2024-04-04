@@ -2,13 +2,13 @@
   import { page } from '$app/stores'
   import BoulderName from '$lib/components/BoulderName'
   import FileViewer from '$lib/components/FileViewer'
-  import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
+  import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}`
 
-  $: files = data.files
+  $: files = data.crag.files
 </script>
 
 <AppBar>
@@ -63,49 +63,28 @@
   <div class="card-header">Topos</div>
 
   <section class="p-4">
-    {#await files}
-      <div class="flex justify-center">
-        <ProgressRadial width="w-16" />
+    {#if files.length === 0}
+      No topos yet
+    {:else}
+      <div class="flex flex-wrap gap-3">
+        {#each files as file}
+          <FileViewer
+            {file}
+            on:delete={() => {
+              files = files.filter((_file) => file.id !== _file.id)
+            }}
+          >
+            <BoulderName boulder={data.crag.boulders.find((boulder) => file.boulderFk === boulder.id)} />
+          </FileViewer>
+        {/each}
       </div>
-    {:then files}
-      {#if files.length === 0}
-        No topos yet
-      {:else}
-        <div class="flex flex-wrap gap-3">
-          {#each files as file}
-            {#if file.error == null}
-              <FileViewer
-                content={file.content ?? ''}
-                file={file.info}
-                on:delete={() => {
-                  files = files.filter((_file) => file.info.id !== _file.info.id)
-                }}
-              >
-                <BoulderName boulder={data.crag.boulders.find((boulder) => file.info.boulderFk === boulder.id)} />
-              </FileViewer>
-            {:else}
-              <div class="alert variant-filled-error">
-                <div class="alert-message">
-                  <p>
-                    {file.error}
-                  </p>
+    {/if}
 
-                  <p>
-                    {file.info.path}
-                  </p>
-                </div>
-              </div>
-            {/if}
-          {/each}
-        </div>
-      {/if}
-
-      {#if data.session?.user != null}
-        <div class="flex justify-center mt-4">
-          <a class="btn variant-filled-primary" href={`${basePath}/add-topo`}> Add topos </a>
-        </div>
-      {/if}
-    {/await}
+    {#if data.session?.user != null}
+      <div class="flex justify-center mt-4">
+        <a class="btn variant-filled-primary" href={`${basePath}/add-topo`}> Add topos </a>
+      </div>
+    {/if}
   </section>
 </div>
 

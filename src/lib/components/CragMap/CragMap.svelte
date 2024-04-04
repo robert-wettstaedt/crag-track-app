@@ -75,7 +75,7 @@
 
     if (markers.length > 0) {
       const featureGroup = L.featureGroup(markers).addTo(map)
-      map.fitBounds(featureGroup.getBounds(), { maxZoom: 10 })
+      map.fitBounds(featureGroup.getBounds().pad(0.05), { maxZoom: 10 })
     }
   }
 
