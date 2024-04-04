@@ -1,3 +1,4 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
 import { crags } from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
@@ -73,12 +74,8 @@ export const actions = {
 
     try {
       await db.update(crags).set({ lat, long }).where(eq(crags.slug, params.cragSlug))
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(404, { ...values, error: error.message })
-      }
-
-      return fail(404, { ...values, error: String(error) })
+    } catch (exception) {
+      return fail(404, { ...values, error: convertException(exception) })
     }
 
     redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}`)

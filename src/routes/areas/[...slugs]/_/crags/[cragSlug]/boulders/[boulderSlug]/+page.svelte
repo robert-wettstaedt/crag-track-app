@@ -8,7 +8,7 @@
 
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/boulders/${$page.params.boulderSlug}`
-  $: files = data.boulder.files
+  $: files = data.files
 </script>
 
 <AppBar>
@@ -52,26 +52,36 @@
     {:else}
       <div class="flex gap-3">
         {#each files as file}
-          <FileViewer
-            {file}
-            on:delete={() => {
-              files = files.filter((_file) => file.id !== _file.id)
-            }}
-          >
-            {#if file.type === 'send'}
-              <i class="fa-solid fa-circle text-red-500 me-2" />
-            {:else if file.type === 'attempt'}
-              <i class="fa-solid fa-person-falling text-blue-300 me-2"></i>
-            {:else if file.type === 'beta'}
-              Beta
-            {:else if file.type === 'topo'}
-              Topo
-            {:else if file.type === 'other'}
-              Other
-            {/if}
-            &nbsp;
-            {file.ascent == null ? '' : DateTime.fromSQL(file.ascent.createdAt).toLocaleString(DateTime.DATE_FULL)}
-          </FileViewer>
+          {#if file.stat != null}
+            <FileViewer
+              {file}
+              stat={file.stat}
+              on:delete={() => {
+                files = files.filter((_file) => file.id !== _file.id)
+              }}
+            >
+              {#if file.type === 'send'}
+                <i class="fa-solid fa-circle text-red-500 me-2" />
+              {:else if file.type === 'attempt'}
+                <i class="fa-solid fa-person-falling text-blue-300 me-2"></i>
+              {:else if file.type === 'beta'}
+                Beta
+              {:else if file.type === 'topo'}
+                Topo
+              {:else if file.type === 'other'}
+                Other
+              {/if}
+              &nbsp;
+              {file.ascent == null ? '' : DateTime.fromSQL(file.ascent.createdAt).toLocaleString(DateTime.DATE_FULL)}
+            </FileViewer>
+          {:else if file.error != null}
+            <aside class="alert variant-filled-error">
+              <div class="alert-message">
+                <h3 class="h3">Error</h3>
+                <p>{file.error}</p>
+              </div>
+            </aside>
+          {/if}
         {/each}
       </div>
     {/if}

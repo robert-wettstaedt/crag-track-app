@@ -1,3 +1,4 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { boulders, crags } from '$lib/db/schema'
 import { validateBoulderForm, type BoulderActionFailure, type BoulderActionValues } from '$lib/forms.server'
@@ -47,8 +48,8 @@ export const actions = {
 
     try {
       values = await validateBoulderForm(data)
-    } catch (error) {
-      return error as BoulderActionFailure
+    } catch (exception) {
+      return exception as BoulderActionFailure
     }
 
     const crag = await db.query.crags.findFirst({
@@ -72,12 +73,8 @@ export const actions = {
 
     try {
       await db.update(boulders).set(values).where(eq(boulders.id, boulder.id))
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(404, { ...values, error: error.message })
-      }
-
-      return fail(404, { ...values, error: String(error) })
+    } catch (exception) {
+      return fail(404, { ...values, error: convertException(exception) })
     }
 
     redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}/boulders/${params.boulderSlug}`)

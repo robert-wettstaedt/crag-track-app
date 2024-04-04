@@ -1,3 +1,4 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
 import { crags, files } from '$lib/db/schema'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
@@ -71,12 +72,8 @@ export const actions = {
     let stat: FileStat | undefined = undefined
     try {
       stat = (await getNextcloud(session)?.stat(path)) as FileStat | undefined
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(400, { ...values, error: error.message })
-      }
-
-      return fail(400, { ...values, error: String(error) })
+    } catch (exception) {
+      return fail(400, { ...values, error: convertException(exception) })
     }
 
     if (stat == null) {
@@ -89,12 +86,8 @@ export const actions = {
 
     try {
       await db.insert(files).values({ cragFk: crag.id, mime: stat.mime, path, type: 'topo' })
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(404, { ...values, error: error.message })
-      }
-
-      return fail(404, { ...values, error: String(error) })
+    } catch (exception) {
+      return fail(404, { ...values, error: convertException(exception) })
     }
 
     redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}`)

@@ -1,3 +1,4 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { ascents, boulders, crags, files, users, type Ascent, type File } from '$lib/db/schema'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
@@ -49,8 +50,8 @@ export const actions = {
 
     try {
       values = await validateAscentForm(data)
-    } catch (error) {
-      return error as AscentActionFailure
+    } catch (exception) {
+      return exception as AscentActionFailure
     }
 
     const crag = await db.query.crags.findFirst({
@@ -77,12 +78,8 @@ export const actions = {
     if (values.filePath !== `/${session.user?.email}/`) {
       try {
         stat = (await getNextcloud(session)?.stat(values.filePath)) as FileStat | undefined
-      } catch (error) {
-        if (error instanceof Error) {
-          return fail(400, { ...values, error: error.message })
-        }
-
-        return fail(400, { ...values, error: String(error) })
+      } catch (exception) {
+        return fail(400, { ...values, error: convertException(exception) })
       }
 
       if (stat == null) {
@@ -106,12 +103,8 @@ export const actions = {
         .values({ ...values, boulderFk: boulder.id, createdBy: user.id })
         .returning()
       ascent = results[0]
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(400, { ...values, error: error.message })
-      }
-
-      return fail(400, { ...values, error: JSON.stringify(error) })
+    } catch (exception) {
+      return fail(400, { ...values, error: convertException(exception) })
     }
 
     if (stat != null && boulder != null) {
@@ -125,12 +118,8 @@ export const actions = {
           path: values.filePath,
           type: fileType,
         })
-      } catch (error) {
-        if (error instanceof Error) {
-          return fail(400, { ...values, error: error.message })
-        }
-
-        return fail(400, { ...values, error: JSON.stringify(error) })
+      } catch (exception) {
+        return fail(400, { ...values, error: convertException(exception) })
       }
     }
 

@@ -1,3 +1,4 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { areas, crags, generateSlug, users } from '$lib/db/schema'
 import { validateCragForm, type CragActionFailure, type CragActionValues } from '$lib/forms.server.js'
@@ -42,8 +43,8 @@ export const actions = {
 
     try {
       values = await validateCragForm(data)
-    } catch (error) {
-      return error as CragActionFailure
+    } catch (exception) {
+      return exception as CragActionFailure
     }
 
     const slug = generateSlug(values.name)
@@ -75,12 +76,8 @@ export const actions = {
       }
 
       await db.insert(crags).values({ ...values, createdBy: user.id, areaFk: parent.id, slug })
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(400, { ...values, error: error.message })
-      }
-
-      return fail(400, { ...values, error: JSON.stringify(error) })
+    } catch (exception) {
+      return fail(400, { ...values, error: convertException(exception) })
     }
 
     const mergedPath = ['areas', ...path, '_', 'crags', slug].join('/')

@@ -118,7 +118,6 @@ export const ascentsRelations = relations(ascents, ({ one }) => ({
 export const files = sqliteTable('files', {
   id: baseFields.id,
 
-  mime: text('mime'),
   path: text('path').notNull(),
   type: text('type', { enum: ['topo', 'beta', 'attempt', 'send', 'other'] }).notNull(),
 

@@ -8,7 +8,7 @@
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}`
 
-  $: files = data.crag.files
+  $: files = data.files
 </script>
 
 <AppBar>
@@ -71,14 +71,24 @@
       {:else}
         <div class="flex flex-wrap gap-3">
           {#each files as file}
-            <FileViewer
-              {file}
-              on:delete={() => {
-                files = files.filter((_file) => file.id !== _file.id)
-              }}
-            >
-              <BoulderName boulder={data.crag.boulders.find((boulder) => file.boulderFk === boulder.id)} />
-            </FileViewer>
+            {#if file.stat != null}
+              <FileViewer
+                {file}
+                stat={file.stat}
+                on:delete={() => {
+                  files = files.filter((_file) => file.id !== _file.id)
+                }}
+              >
+                <BoulderName boulder={data.crag.boulders.find((boulder) => file.boulderFk === boulder.id)} />
+              </FileViewer>
+            {:else}
+              <aside class="alert variant-filled-error">
+                <div class="alert-message">
+                  <h3 class="h3">Error</h3>
+                  <p>{file.error}</p>
+                </div>
+              </aside>
+            {/if}
           {/each}
         </div>
       {/if}

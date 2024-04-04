@@ -75,8 +75,8 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
           // many providers may only allow using a refresh token once.
           refreshToken: tokens.refresh_token ?? token.refresh_token,
         }
-      } catch (error) {
-        console.error('Error refreshing access token', error)
+      } catch (exception) {
+        console.error('Error refreshing access token', exception)
         // The error property will be used client-side to handle the refresh token error
         return { ...token, error: 'RefreshAccessTokenError' as const }
       }

@@ -1,3 +1,4 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { crags } from '$lib/db/schema'
 import { validateCragForm, type CragActionFailure, type CragActionValues } from '$lib/forms.server'
@@ -39,18 +40,14 @@ export const actions = {
 
     try {
       values = await validateCragForm(data)
-    } catch (error) {
-      return error as CragActionFailure
+    } catch (exception) {
+      return exception as CragActionFailure
     }
 
     try {
       await db.update(crags).set(values).where(eq(crags.slug, params.cragSlug))
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(404, { ...values, error: error.message })
-      }
-
-      return fail(404, { ...values, error: String(error) })
+    } catch (exception) {
+      return fail(404, { ...values, error: convertException(exception) })
     }
 
     redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}`)

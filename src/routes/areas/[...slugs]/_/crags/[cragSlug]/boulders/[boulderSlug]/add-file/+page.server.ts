@@ -1,5 +1,6 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { boulders, crags, files, type Crag, type File } from '$lib/db/schema'
+import { boulders, crags, files, type File } from '$lib/db/schema'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -85,12 +86,8 @@ export const actions = {
     let stat: FileStat | undefined = undefined
     try {
       stat = (await getNextcloud(session)?.stat(path)) as FileStat | undefined
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(400, { ...values, error: error.message })
-      }
-
-      return fail(400, { ...values, error: String(error) })
+    } catch (exception) {
+      return fail(400, { ...values, error: convertException(exception) })
     }
 
     if (stat == null) {
@@ -109,12 +106,8 @@ export const actions = {
         path,
         type: type as File['type'],
       })
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(404, { ...values, error: error.message })
-      }
-
-      return fail(404, { ...values, error: String(error) })
+    } catch (exception) {
+      return fail(404, { ...values, error: convertException(exception) })
     }
 
     redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}/boulders/${boulder.slug}`)

@@ -1,1 +1,13 @@
-// place files you want to import through the `$lib` alias in this folder.
+import { isHttpError } from '@sveltejs/kit'
+
+export const convertException = (exception: unknown): string => {
+  if (isHttpError(exception)) {
+    return exception.body.message
+  }
+
+  if (exception instanceof Error) {
+    return exception.message
+  }
+
+  return String(exception)
+}

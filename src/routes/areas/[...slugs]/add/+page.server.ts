@@ -1,3 +1,4 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { areas, generateSlug, users } from '$lib/db/schema'
 import { MAX_AREA_NESTING_DEPTH } from '$lib/db/utils'
@@ -42,8 +43,8 @@ export const actions = {
 
     try {
       values = await validateAreaForm(data)
-    } catch (error) {
-      return error as AreaActionFailure
+    } catch (exception) {
+      return exception as AreaActionFailure
     }
 
     const slug = generateSlug(values.name)
@@ -64,12 +65,8 @@ export const actions = {
       }
 
       await db.insert(areas).values({ ...values, createdBy: user.id, parentFk: parent?.id, slug })
-    } catch (error) {
-      if (error instanceof Error) {
-        return fail(400, { ...values, error: error.message })
-      }
-
-      return fail(400, { ...values, error: JSON.stringify(error) })
+    } catch (exception) {
+      return fail(400, { ...values, error: convertException(exception) })
     }
 
     const mergedPath = ['areas', ...path, slug].join('/')

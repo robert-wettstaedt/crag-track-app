@@ -39,8 +39,8 @@ export const actions = {
 
     try {
       values = await validateAscentForm(data)
-    } catch (error) {
-      return error as AscentActionFailure
+    } catch (exception) {
+      return exception as AscentActionFailure
     }
 
     const result = await db

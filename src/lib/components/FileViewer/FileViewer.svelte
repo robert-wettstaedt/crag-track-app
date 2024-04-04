@@ -4,13 +4,15 @@
   import type { File } from '$lib/db/schema'
   import { ProgressRadial } from '@skeletonlabs/skeleton'
   import { createEventDispatcher } from 'svelte'
+  import type { FileStat } from 'webdav'
 
   const dispatcher = createEventDispatcher<{ delete: void }>()
 
   export let file: File
+  export let stat: FileStat
 
-  const search = new URLSearchParams({ file: file.path }).toString()
-  const resourcePath = `/nextcloud${file.path}`
+  const search = new URLSearchParams({ file: stat.basename }).toString()
+  const resourcePath = `/nextcloud${stat.filename}`
 
   const onDelete = async () => {
     await fetch(`/api/files/${file.id}`, { method: 'DELETE' })
@@ -18,7 +20,7 @@
     dispatcher('delete')
   }
 
-  let mediaIsLoading = file.mime?.includes('image') ?? false
+  let mediaIsLoading = stat.mime?.includes('image') ?? false
   let mediaHasError = false
   const mediaAction = (el: HTMLElement) => {
     const onError = () => (mediaHasError = true)
@@ -49,7 +51,7 @@
       <aside class="alert variant-filled-error">
         <div class="alert-message">
           <h3 class="h3">Unable to play video</h3>
-          <p>{file.path}</p>
+          <p>{stat.basename}</p>
         </div>
       </aside>
     {:else}
@@ -58,14 +60,14 @@
           <ProgressRadial />
         </div>
       {/if}
-      {#if file.mime?.includes('image')}
-        <img alt={file.path} class="h-80" src={resourcePath} height={300} use:mediaAction />
-      {:else if file.mime?.includes('video')}
+      {#if stat.mime?.includes('image')}
+        <img alt={stat.filename} class="h-80" src={resourcePath} height={300} use:mediaAction />
+      {:else if stat.mime?.includes('video')}
         <video class="h-80" disablepictureinpicture disableremoteplayback muted use:mediaAction>
-          <source src={resourcePath} type={file.mime} />
+          <source src={resourcePath} type={stat.mime} />
           <track kind="captions" />
         </video>
-      {:else if file.mime?.includes('pdf')}
+      {:else if stat.mime?.includes('pdf')}
         {#await import('svelte-pdf') then PdfViewer}
           <div class="pdf-wrapper thumbnail">
             <PdfViewer.default data={undefined} url={resourcePath} showBorder={false} showButtons={[]} />
@@ -82,13 +84,13 @@
   {/if}
 </a>
 
-{#if $page.url.searchParams.get('file') === file.path}
+{#if $page.url.searchParams.get('file') === stat.basename}
   <div class="fixed top-0 left-0 right-0 bottom-0 z-[5000] p-16 bg-black/90">
     {#if mediaHasError}
       <aside class="alert variant-filled-error">
         <div class="alert-message">
           <h3 class="h3">Unable to play video</h3>
-          <p>{file.path}</p>
+          <p>{stat.filename}</p>
         </div>
       </aside>
     {:else}
@@ -97,14 +99,14 @@
           <ProgressRadial />
         </div>
       {/if}
-      {#if file.mime?.includes('image')}
-        <img alt={file.path} class="h-full w-full object-contain" src={resourcePath} />
-      {:else if file.mime?.includes('video')}
+      {#if stat.mime?.includes('image')}
+        <img alt={stat.filename} class="h-full w-full object-contain" src={resourcePath} />
+      {:else if stat.mime?.includes('video')}
         <video autoplay class="h-full w-full" controls disablepictureinpicture loop>
-          <source src={resourcePath} type={file.mime} />
+          <source src={resourcePath} type={stat.mime} />
           <track kind="captions" />
         </video>
-      {:else if file.mime?.includes('pdf')}
+      {:else if stat.mime?.includes('pdf')}
         {#await import('svelte-pdf') then PdfViewer}
           <div class="pdf-wrapper">
             <PdfViewer.default data={undefined} url={resourcePath} showButtons={['navigation', 'zoom', 'pageInfo']} />
