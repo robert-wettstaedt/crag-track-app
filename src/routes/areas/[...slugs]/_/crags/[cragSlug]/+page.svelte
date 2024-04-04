@@ -54,7 +54,9 @@
 
   <section class="pt-4">
     {#await import('$lib/components/CragMap') then CragMap}
-      <CragMap.default crags={data.crags} height={400} selectedCrag={data.crag} />
+      {#key data.crag.id}
+        <CragMap.default crags={data.crags} height={400} selectedCrag={data.crag} />
+      {/key}
     {/await}
   </section>
 </div>
@@ -63,22 +65,24 @@
   <div class="card-header">Topos</div>
 
   <section class="p-4">
-    {#if files.length === 0}
-      No topos yet
-    {:else}
-      <div class="flex flex-wrap gap-3">
-        {#each files as file}
-          <FileViewer
-            {file}
-            on:delete={() => {
-              files = files.filter((_file) => file.id !== _file.id)
-            }}
-          >
-            <BoulderName boulder={data.crag.boulders.find((boulder) => file.boulderFk === boulder.id)} />
-          </FileViewer>
-        {/each}
-      </div>
-    {/if}
+    {#key data.crag.id}
+      {#if files.length === 0}
+        No topos yet
+      {:else}
+        <div class="flex flex-wrap gap-3">
+          {#each files as file}
+            <FileViewer
+              {file}
+              on:delete={() => {
+                files = files.filter((_file) => file.id !== _file.id)
+              }}
+            >
+              <BoulderName boulder={data.crag.boulders.find((boulder) => file.boulderFk === boulder.id)} />
+            </FileViewer>
+          {/each}
+        </div>
+      {/if}
+    {/key}
 
     {#if data.session?.user != null}
       <div class="flex justify-center mt-4">
