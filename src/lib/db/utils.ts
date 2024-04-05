@@ -36,12 +36,12 @@ export const enrichArea = (area: NestedArea): EnrichedArea => {
     }
 
     slugs.push(area.slug)
-    const pathname = ['areas', ...slugs].join('/')
+    const pathname = ['', 'areas', ...slugs].join('/')
     return { ...area, parent, pathname }
   }
 
   if (area.parent == null) {
-    return { ...area, pathname: ['areas', area.slug].join('/') }
+    return { ...area, pathname: ['', 'areas', area.slug].join('/') }
   } else {
     return recursive(area)
   }

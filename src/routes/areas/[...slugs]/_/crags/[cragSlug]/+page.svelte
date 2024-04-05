@@ -123,12 +123,10 @@
     {#if data.crag.boulders.length === 0}
       No boulders yet
     {:else}
-      <nav class="nav-list">
+      <nav class="list-nav">
         <ul>
           {#each data.crag.boulders as boulder}
-            <li
-              class={`px-4 py-2 flex justify-between hover:bg-primary-500/10 ${highlightedBoulders.includes(boulder.id) ? 'bg-primary-500/20' : ''}`}
-            >
+            <li class={highlightedBoulders.includes(boulder.id) ? 'bg-primary-500/20' : ''}>
               <a class="text-primary-500" href={`${basePath}/boulders/${boulder.slug}`}>
                 <BoulderName {boulder} />
               </a>
