@@ -64,7 +64,7 @@ export const actions = {
     const boulder = crag?.boulders?.at(0)
 
     if (boulder == null) {
-      return fail(404, values)
+      return fail(404, { ...values, error: `Boulder not found ${params.boulderSlug}` })
     }
 
     if (crag != null && crag.boulders.length > 1) {

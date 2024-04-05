@@ -71,7 +71,7 @@ export const actions = {
 
     let stat: FileStat | undefined = undefined
     try {
-      stat = (await getNextcloud(session)?.stat(path)) as FileStat | undefined
+      stat = (await getNextcloud(session)?.stat(session.user.email + path)) as FileStat | undefined
     } catch (exception) {
       return fail(400, { ...values, error: convertException(exception) })
     }
@@ -85,7 +85,7 @@ export const actions = {
     }
 
     try {
-      await db.insert(files).values({ cragFk: crag.id, mime: stat.mime, path, type: 'topo' })
+      await db.insert(files).values({ cragFk: crag.id, path, type: 'topo' })
     } catch (exception) {
       return fail(404, { ...values, error: convertException(exception) })
     }

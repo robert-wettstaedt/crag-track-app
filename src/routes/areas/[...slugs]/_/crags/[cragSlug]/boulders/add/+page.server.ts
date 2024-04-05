@@ -54,7 +54,7 @@ export const actions = {
     const parent = parentsResult.at(0)
 
     if (parent == null) {
-      return fail(400, { ...values, error: `Unable to find parent ${params.cragSlug}` })
+      return fail(400, { ...values, error: `Parent not found ${params.cragSlug}` })
     }
 
     const existingBouldersResult = await db

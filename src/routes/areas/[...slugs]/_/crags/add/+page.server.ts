@@ -55,7 +55,7 @@ export const actions = {
     const parent = parentsResult.at(0)
 
     if (parent == null) {
-      return fail(400, { ...values, error: `Unable to find parent ${parentSlug}` })
+      return fail(400, { ...values, error: `Parent not found ${parentSlug}` })
     }
 
     const existingCragsResult = await db.query.crags.findFirst({

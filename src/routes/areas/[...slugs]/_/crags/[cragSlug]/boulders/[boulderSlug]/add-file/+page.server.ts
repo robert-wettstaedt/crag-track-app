@@ -68,7 +68,7 @@ export const actions = {
     const boulder = crag?.boulders?.at(0)
 
     if (boulder == null) {
-      return fail(404, values)
+      return fail(404, { ...values, error: `Boulder not found ${params.boulderSlug}` })
     }
 
     if (crag != null && crag.boulders.length > 1) {
@@ -85,7 +85,7 @@ export const actions = {
 
     let stat: FileStat | undefined = undefined
     try {
-      stat = (await getNextcloud(session)?.stat(path)) as FileStat | undefined
+      stat = (await getNextcloud(session)?.stat(session.user.email + path)) as FileStat | undefined
     } catch (exception) {
       return fail(400, { ...values, error: convertException(exception) })
     }
@@ -102,7 +102,6 @@ export const actions = {
       await db.insert(files).values({
         boulderFk: boulder.id,
         cragFk: type === 'topo' ? crag?.id : undefined,
-        mime: stat.mime,
         path,
         type: type as File['type'],
       })

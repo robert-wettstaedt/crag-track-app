@@ -5,8 +5,6 @@
   export let data
   export let form
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}`
-
-  let path = form?.path ?? (data.session?.user?.email == null ? '' : `/${data.session.user.email}/`)
 </script>
 
 <AppBar>
@@ -29,7 +27,7 @@
   <div class="mt-8 flex gap-2">
     <label class="label grow">
       <span>New file</span>
-      <input class="input" name="path" type="text" placeholder="Path" bind:value={path} />
+      <input class="input" name="path" type="text" placeholder="Path" value={form?.path ?? ''} />
     </label>
 
     <label class="label">
