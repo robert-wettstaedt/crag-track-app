@@ -2,13 +2,25 @@
   import { page } from '$app/stores'
   import BoulderName from '$lib/components/BoulderName'
   import FileViewer from '$lib/components/FileViewer'
+  import type { File } from '$lib/db/schema'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}`
-
   $: files = data.files
+
+  let highlightedBoulders: number[] = []
+  const onMouseEnterFile = (file: File) => () => {
+    if (file.boulderFk == null) {
+      highlightedBoulders = data.crag.boulders.map((boulder) => boulder.id)
+    } else {
+      highlightedBoulders = [file.boulderFk]
+    }
+  }
+  const onMouseLeaveFile = () => {
+    highlightedBoulders = []
+  }
 </script>
 
 <AppBar>
@@ -71,24 +83,26 @@
       {:else}
         <div class="flex flex-wrap gap-3">
           {#each files as file}
-            {#if file.stat != null}
-              <FileViewer
-                {file}
-                stat={file.stat}
-                on:delete={() => {
-                  files = files.filter((_file) => file.id !== _file.id)
-                }}
-              >
-                <BoulderName boulder={data.crag.boulders.find((boulder) => file.boulderFk === boulder.id)} />
-              </FileViewer>
-            {:else}
-              <aside class="alert variant-filled-error">
-                <div class="alert-message">
-                  <h3 class="h3">Error</h3>
-                  <p>{file.error}</p>
-                </div>
-              </aside>
-            {/if}
+            <div class="flex" on:mouseenter={onMouseEnterFile(file)} on:mouseleave={onMouseLeaveFile} role="figure">
+              {#if file.stat != null}
+                <FileViewer
+                  {file}
+                  stat={file.stat}
+                  on:delete={() => {
+                    files = files.filter((_file) => file.id !== _file.id)
+                  }}
+                >
+                  <BoulderName boulder={data.crag.boulders.find((boulder) => file.boulderFk === boulder.id)} />
+                </FileViewer>
+              {:else if file.error != null}
+                <aside class="alert variant-filled-error">
+                  <div class="alert-message">
+                    <h3 class="h3">Error</h3>
+                    <p>{file.error}</p>
+                  </div>
+                </aside>
+              {/if}
+            </div>
           {/each}
         </div>
       {/if}
@@ -112,7 +126,9 @@
       <nav class="nav-list">
         <ul>
           {#each data.crag.boulders as boulder}
-            <li class="px-4 py-2 hover:bg-primary-500/10 flex justify-between">
+            <li
+              class={`px-4 py-2 flex justify-between hover:bg-primary-500/10 ${highlightedBoulders.includes(boulder.id) ? 'bg-primary-500/20' : ''}`}
+            >
               <a class="text-primary-500" href={`${basePath}/boulders/${boulder.slug}`}>
                 <BoulderName {boulder} />
               </a>
