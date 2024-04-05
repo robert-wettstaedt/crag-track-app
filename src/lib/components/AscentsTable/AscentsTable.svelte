@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { InferResultType } from '$lib/db/types'
+  import type { EnrichedBoulder } from '$lib/db/utils'
   import { grades } from '$lib/grades'
   import { Table } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
@@ -8,7 +9,8 @@
 
   $: body = ascents.map((ascent) => {
     const { dateTime, boulder, type } = ascent
-    const name = ascent.author.userName
+
+    const climber = `<a class="anchor" href="/users/${ascent.author.userName}">${ascent.author.userName}</a>`
 
     const formattedDateTime = DateTime.fromSQL(dateTime).toLocaleString(DateTime.DATE_FULL)
 
@@ -30,7 +32,8 @@
       return `<span class="badge text-white" style="background: ${grade?.color}">${boulder.gradingScale} ${ascent.grade}</span>`
     })()
 
-    const boulderName = boulder.name
+    const enrichedBoulder = boulder as EnrichedBoulder
+    const boulderName = `<a class="anchor" href="${enrichedBoulder.pathname}">${boulder.name}</a>`
 
     const formattedType =
       type === 'flash'
@@ -39,13 +42,11 @@
           ? '<i class="fa-solid fa-circle text-red-500 me-2"></i> Send'
           : '<i class="fa-solid fa-person-falling text-blue-300 me-2"></i> Attempt'
 
-    return [name, formattedDateTime, boulderName, boulderGrade, personalGrade, formattedType]
+    return [climber, formattedDateTime, boulderName, boulderGrade, personalGrade, formattedType]
   })
 </script>
 
-<!-- on:selected={(event) => goto(`/ascents/${event.detail[0]}`)} -->
 <Table
-  interactive
   source={{
     head: ['Climber', 'Date time', 'Boulder name', 'Boulder grade', 'Personal grade', 'Type'],
     body,
