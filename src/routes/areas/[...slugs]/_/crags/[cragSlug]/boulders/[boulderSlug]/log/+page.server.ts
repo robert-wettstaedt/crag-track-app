@@ -75,9 +75,9 @@ export const actions = {
 
     let stat: FileStat | undefined = undefined
 
-    if (values.filePath !== `/${session.user?.email}/`) {
+    if (values.filePath != null && values.filePath.trim().length > 0) {
       try {
-        stat = (await getNextcloud(session)?.stat(values.filePath)) as FileStat | undefined
+        stat = (await getNextcloud(session)?.stat(session.user.email + values.filePath)) as FileStat | undefined
       } catch (exception) {
         return fail(400, { ...values, error: convertException(exception) })
       }
@@ -114,7 +114,6 @@ export const actions = {
         await db.insert(files).values({
           ascentFk: ascent.id,
           boulderFk: boulder.id,
-          mime: stat.mime,
           path: values.filePath,
           type: fileType,
         })

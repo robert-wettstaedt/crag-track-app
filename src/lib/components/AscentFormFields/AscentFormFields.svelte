@@ -1,6 +1,11 @@
 <script lang="ts">
   import type { Ascent, Boulder, File } from '$lib/db/schema'
+  import { Tab, TabGroup } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
+  import remarkHtml from 'remark-html'
+  import remarkParse from 'remark-parse'
+  import type { ChangeEventHandler } from 'svelte/elements'
+  import { unified } from 'unified'
 
   export let dateTime: Ascent['dateTime']
   export let gradingScale: Boulder['gradingScale']
@@ -8,6 +13,15 @@
   export let notes: Ascent['notes']
   export let type: Ascent['type'] | null
   export let filePath: File['path'] | null
+
+  let notesTabSet: number = 0
+  let notesValue = notes
+  let notesHtml = ''
+  const onChangeNotes: ChangeEventHandler<HTMLTextAreaElement> = async (event) => {
+    notesValue = event.currentTarget.value
+    const result = await unified().use(remarkParse).use(remarkHtml).process(notesValue)
+    notesHtml = result.value as string
+  }
 </script>
 
 <label class="label mt-4">
@@ -73,14 +87,35 @@
   />
 </label>
 
-<label class="label mt-4">
-  <span>Notes</span>
-  <textarea class="textarea" name="notes" rows="4" placeholder="Enter some long form content." value={notes} />
-</label>
-
 <div class="mt-4">
   <label class="label">
     <span>File</span>
     <input class="input" name="file.path" type="text" placeholder="Path" value={filePath} />
   </label>
 </div>
+
+<label class="label mt-4">
+  <span>Notes</span>
+  <textarea hidden name="notes" value={notesValue} />
+
+  <TabGroup>
+    <Tab bind:group={notesTabSet} name="Write" value={0}>Write</Tab>
+    <Tab bind:group={notesTabSet} name="Preview" value={1}>Preview</Tab>
+
+    <svelte:fragment slot="panel">
+      {#if notesTabSet === 0}
+        <textarea
+          class="textarea"
+          on:keyup={onChangeNotes}
+          placeholder="Enter some long form content."
+          rows="10"
+          value={notesValue}
+        />
+      {:else if notesTabSet === 1}
+        <div class="rendered-markdown min-h-64 bg-surface-700 px-3 py-2">
+          {@html notesHtml}
+        </div>
+      {/if}
+    </svelte:fragment>
+  </TabGroup>
+</label>

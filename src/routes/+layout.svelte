@@ -10,6 +10,10 @@
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
 </script>
 
+<svelte:head>
+  <title>Climbing log</title>
+</svelte:head>
+
 <!-- App Shell -->
 <AppShell>
   <svelte:fragment slot="header">

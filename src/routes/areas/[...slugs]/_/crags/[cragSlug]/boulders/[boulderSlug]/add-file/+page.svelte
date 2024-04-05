@@ -1,5 +1,6 @@
 <script>
   import { page } from '$app/stores'
+  import BoulderName from '$lib/components/BoulderName'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let data
@@ -11,7 +12,9 @@
   <svelte:fragment slot="lead">
     <span>Edit files of</span>
     &nbsp;
-    <a class="anchor" href={basePath}>{data.boulder.name}</a>
+    <a class="anchor" href={basePath}>
+      <BoulderName boulder={data.boulder} />
+    </a>
   </svelte:fragment>
 </AppBar>
 

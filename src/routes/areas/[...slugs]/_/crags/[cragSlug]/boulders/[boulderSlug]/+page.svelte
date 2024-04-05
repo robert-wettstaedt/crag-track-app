@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import AscentsTable from '$lib/components/AscentsTable'
+  import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import BoulderName from '$lib/components/BoulderName'
   import FileViewer from '$lib/components/FileViewer'
   import { AppBar } from '@skeletonlabs/skeleton'
@@ -98,10 +98,35 @@
   <div class="card-header">Ascents</div>
 
   <section class="p-4">
-    {#if data.boulder.ascents.length === 0}
+    {#if data.ascents.length === 0}
       No ascents yet
     {:else}
-      <AscentsTable ascents={data.boulder.ascents} />
+      {#each data.ascents as ascent, index}
+        <div>
+          <div>
+            <a class="anchor" href={`/users/${ascent.author.userName}`}>{ascent.author.userName}</a>
+            ticked this route on {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
+          </div>
+
+          <div class="ms-8 mt-2">
+            <AscentTypeLabel {ascent} />
+
+            {#if ascent.grade != null}
+              <BoulderName boulder={data.boulder} {ascent} />
+            {/if}
+          </div>
+
+          {#if ascent.notes != null}
+            <div class="rendered-markdown bg-surface-700 p-4 ms-8 mt-4">
+              {@html ascent.notes}
+            </div>
+          {/if}
+        </div>
+
+        {#if index < data.ascents.length - 1}
+          <hr class="!border-t-2 my-8 mx-2" />
+        {/if}
+      {/each}
     {/if}
 
     {#if data.session?.user != null}

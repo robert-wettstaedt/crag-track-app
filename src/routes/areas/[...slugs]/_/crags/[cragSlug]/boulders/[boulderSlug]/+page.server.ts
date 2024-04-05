@@ -5,6 +5,9 @@ import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { desc, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
+import { unified } from 'unified'
+import remarkParse from 'remark-parse'
+import remarkHtml from 'remark-html'
 
 export const load = (async ({ locals, params }) => {
   const session = await locals.auth()
@@ -55,7 +58,23 @@ export const load = (async ({ locals, params }) => {
     }),
   )
 
+  const enrichedAscents = await Promise.all(
+    boulder.ascents.map(async (ascent) => {
+      if (ascent.notes == null) {
+        return ascent
+      }
+
+      const result = await unified().use(remarkParse).use(remarkHtml).process(ascent.notes)
+
+      return {
+        ...ascent,
+        notes: result.value as string,
+      }
+    }),
+  )
+
   return {
+    ascents: enrichedAscents,
     boulder,
     files,
   }

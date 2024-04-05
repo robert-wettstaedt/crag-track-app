@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import AscentFormFields from '$lib/components/AscentFormFields'
+  import BoulderName from '$lib/components/BoulderName'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
@@ -14,8 +15,7 @@
     <span>Log ascent of</span>
     &nbsp;
     <a class="anchor" href={basePath}>
-      {data.boulder.name}
-      {#if data.boulder.gradingScale != null}({data.boulder.gradingScale} {data.boulder.grade}){/if}
+      <BoulderName boulder={data.boulder} />
     </a>
   </svelte:fragment>
 </AppBar>
@@ -36,7 +36,7 @@
       gradingScale={data.boulder.gradingScale}
       notes={form?.notes ?? null}
       type={form?.type ?? null}
-      filePath={form?.filePath ?? (data.session?.user?.email == null ? '' : `/${data.session.user.email}/`)}
+      filePath={form?.filePath ?? ''}
     />
   </div>
 
