@@ -101,7 +101,7 @@
                   </dd>
                 </a>
 
-                <ol class="breadcrumb w-auto">
+                <ol class="breadcrumb w-auto pe-4">
                   <li class="crumb">
                     <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.area.pathname}>
                       {attempt.boulder.crag.area.name}
@@ -139,7 +139,7 @@
                   </dd>
                 </a>
 
-                <ol class="breadcrumb w-auto">
+                <ol class="breadcrumb w-auto pe-4">
                   <li class="crumb">
                     <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.area.pathname}>
                       {attempt.boulder.crag.area.name}
