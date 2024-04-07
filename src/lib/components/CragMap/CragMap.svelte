@@ -17,7 +17,12 @@
   let map: L.Map | null = null
 
   const createMap = (element: HTMLDivElement): L.Map => {
-    const map = L.map(element, { preferCanvas: true }).setView([0, 0], 0)
+    const center = {
+      lat: selectedCrag?.lat ?? 0,
+      lng: selectedCrag?.long ?? 0,
+    }
+
+    const map = L.map(element, { preferCanvas: true }).setView(center, 10)
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -75,7 +80,10 @@
 
     if (markers.length > 0) {
       const featureGroup = L.featureGroup(markers).addTo(map)
-      map.fitBounds(featureGroup.getBounds().pad(0.05), { maxZoom: 10 })
+
+      if (selectedCrag == null) {
+        map.fitBounds(featureGroup.getBounds().pad(0.05), { maxZoom: 10 })
+      }
     }
   }
 
