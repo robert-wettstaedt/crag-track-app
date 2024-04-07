@@ -73,21 +73,27 @@ export const actions = {
       return fail(400, { ...values, error: `Multiple boulders with slug ${params.boulderSlug} found` })
     }
 
-    let stat: FileStat | undefined = undefined
-
-    if (values.filePath != null && values.filePath.trim().length > 0) {
+    let hasFiles = false
+    if (values.filePaths != null) {
       try {
-        stat = (await getNextcloud(session)?.stat(session.user.email + values.filePath)) as FileStat | undefined
+        await Promise.all(
+          values.filePaths
+            .filter((filePath) => filePath.trim().length > 0)
+            .map(async (filePath) => {
+              hasFiles = true
+              const stat = (await getNextcloud(session)?.stat(session.user!.email + filePath)) as FileStat | undefined
+
+              if (stat == null) {
+                throw `Unable to read file: "${filePath}"`
+              }
+
+              if (stat.type === 'directory') {
+                throw `path must be a file not a directory: "${filePath}"`
+              }
+            }),
+        )
       } catch (exception) {
         return fail(400, { ...values, error: convertException(exception) })
-      }
-
-      if (stat == null) {
-        return fail(400, { ...values, error: 'Unable to read file' })
-      }
-
-      if (stat.type === 'directory') {
-        return fail(400, { ...values, error: 'path must be a file not a directory' })
       }
     }
 
@@ -107,16 +113,19 @@ export const actions = {
       return fail(400, { ...values, error: convertException(exception) })
     }
 
-    if (stat != null && boulder != null) {
+    if (hasFiles) {
       try {
         const fileType: File['type'] = values.type === 'flash' ? 'send' : values.type
 
-        await db.insert(files).values({
-          ascentFk: ascent.id,
-          boulderFk: boulder.id,
-          path: values.filePath,
-          type: fileType,
-        })
+        await db.insert(files).values(
+          values
+            .filePaths!.filter((filePath) => filePath.trim().length > 0)
+            .map((filePath) => ({
+              ascentFk: ascent.id,
+              path: filePath,
+              type: fileType,
+            })),
+        )
       } catch (exception) {
         return fail(400, { ...values, error: convertException(exception) })
       }

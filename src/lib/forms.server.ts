@@ -54,7 +54,7 @@ export const validateBoulderForm = async (data: FormData): Promise<BoulderAction
 }
 
 export type AscentActionValues = Pick<Ascent, 'dateTime' | 'grade' | 'notes' | 'type'> & {
-  filePath: File['path']
+  filePaths: File['path'][] | null
 }
 export type AscentActionFailure = ActionFailure<AscentActionValues & { error: string }>
 
@@ -63,8 +63,9 @@ export const validateAscentForm = async (data: FormData): Promise<AscentActionVa
   const grade = data.get('grade')
   const notes = data.get('notes')
   const type = data.get('type')
-  const filePath = data.get('file.path')
-  const values = { dateTime, grade, notes, type, filePath } as AscentActionValues
+  const filePaths = data.getAll('file.path')
+
+  const values = { dateTime, grade, notes, type, filePaths } as AscentActionValues
 
   if (typeof dateTime !== 'string' || dateTime.length === 0) {
     throw fail(400, { ...values, error: 'dateTime is required' })
@@ -82,7 +83,7 @@ export const validateAscentForm = async (data: FormData): Promise<AscentActionVa
     throw fail(400, { ...values, error: 'notes must be a valid string' })
   }
 
-  if (filePath != null && typeof filePath !== 'string') {
+  if (!Array.isArray(filePaths) || filePaths.some((filePath) => typeof filePath !== 'string')) {
     throw fail(400, { ...values, error: 'file.path must be a valid string' })
   }
 

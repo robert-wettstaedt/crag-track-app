@@ -3,7 +3,7 @@
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import BoulderName from '$lib/components/BoulderName'
   import FileViewer from '$lib/components/FileViewer'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { Accordion, AccordionItem, AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
@@ -50,7 +50,7 @@
     {#if files.length === 0}
       No files yet
     {:else}
-      <div class="flex gap-3">
+      <div class="flex flex-wrap gap-3">
         {#each files as file}
           {#if file.stat != null}
             <FileViewer
@@ -72,7 +72,6 @@
                 Other
               {/if}
               &nbsp;
-              {file.ascent == null ? '' : DateTime.fromSQL(file.ascent.createdAt).toLocaleString(DateTime.DATE_FULL)}
             </FileViewer>
           {:else if file.error != null}
             <aside class="alert variant-filled-error">
@@ -103,22 +102,63 @@
     {:else}
       {#each data.ascents as ascent, index}
         <div>
-          <div>
-            <a class="anchor" href={`/users/${ascent.author.userName}`}>{ascent.author.userName}</a>
-            ticked this route on {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
+          <div class="flex justify-between">
+            <span>
+              <a class="anchor" href={`/users/${ascent.author.userName}`}>{ascent.author.userName}</a>
+              ticked this route on {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
+            </span>
+
+            {#if data.session?.user?.email === ascent.author.email}
+              <a class="btn btn-sm variant-ghost" href={`${basePath}/ascents/${ascent.id}/edit`}>
+                <i class="fa-solid fa-pen me-2" />Edit ascent
+              </a>
+            {/if}
           </div>
 
           <div class="ms-8 mt-2">
-            <AscentTypeLabel {ascent} />
+            <AscentTypeLabel type={ascent.type} />
 
             {#if ascent.grade != null}
               <BoulderName boulder={data.boulder} {ascent} />
             {/if}
           </div>
 
-          {#if ascent.notes != null}
+          {#if ascent.notes != null && ascent.notes.length > 0}
             <div class="rendered-markdown bg-surface-700 p-4 ms-8 mt-4">
               {@html ascent.notes}
+            </div>
+          {/if}
+
+          {#if ascent.files.length > 0}
+            <div class="ms-5 mt-4">
+              <Accordion>
+                <AccordionItem>
+                  <svelte:fragment slot="lead"><i class="fa-solid fa-file" /></svelte:fragment>
+                  <svelte:fragment slot="summary">{ascent.files.length} files</svelte:fragment>
+                  <svelte:fragment slot="content">
+                    <div class="flex flex-wrap gap-3">
+                      {#each ascent.files as file}
+                        {#if file.stat != null}
+                          <FileViewer
+                            {file}
+                            stat={file.stat}
+                            on:delete={() => {
+                              ascent.files = ascent.files.filter((_file) => file.id !== _file.id)
+                            }}
+                          />
+                        {:else if file.error != null}
+                          <aside class="alert variant-filled-error">
+                            <div class="alert-message">
+                              <h3 class="h3">Error</h3>
+                              <p>{file.error}</p>
+                            </div>
+                          </aside>
+                        {/if}
+                      {/each}
+                    </div>
+                  </svelte:fragment>
+                </AccordionItem>
+              </Accordion>
             </div>
           {/if}
         </div>
@@ -131,7 +171,7 @@
 
     {#if data.session?.user != null}
       <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/log`}>Log ascent</a>
+        <a class="btn variant-filled-primary" href={`${basePath}/ascents/add`}>Log ascent</a>
       </div>
     {/if}
   </section>

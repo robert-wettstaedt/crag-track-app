@@ -24,13 +24,10 @@ export const load = (async ({ locals, params }) => {
             with: {
               author: true,
               boulder: true,
+              files: true,
             },
           },
-          files: {
-            with: {
-              ascent: true,
-            },
-          },
+          files: true,
         },
       },
     },
@@ -60,15 +57,31 @@ export const load = (async ({ locals, params }) => {
 
   const enrichedAscents = await Promise.all(
     boulder.ascents.map(async (ascent) => {
-      if (ascent.notes == null) {
-        return ascent
+      let notes = ascent.notes
+
+      if (ascent.notes != null) {
+        const result = await unified().use(remarkParse).use(remarkHtml).process(ascent.notes)
+        notes = result.value as string
       }
 
-      const result = await unified().use(remarkParse).use(remarkHtml).process(ascent.notes)
+      const files = await Promise.all(
+        ascent.files
+          .toSorted((a, b) => a.path.localeCompare(b.path))
+          .map(async (file) => {
+            try {
+              const stat = await searchNextcloudFile(session, file)
+
+              return { ...file, error: undefined, stat }
+            } catch (exception) {
+              return { ...file, error: convertException(exception), stat: undefined }
+            }
+          }),
+      )
 
       return {
         ...ascent,
-        notes: result.value as string,
+        notes,
+        files,
       }
     }),
   )

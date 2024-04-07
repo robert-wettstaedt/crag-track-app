@@ -73,8 +73,8 @@
                   <BoulderName {boulder} />
                 </a>
 
-                <a class="text-primary-500" href={boulder.parentCrag.pathname}>
-                  {boulder.parentCrag.name}
+                <a class="text-primary-500" href={boulder.crag.pathname}>
+                  {boulder.crag.name}
                 </a>
               </li>
             {/each}

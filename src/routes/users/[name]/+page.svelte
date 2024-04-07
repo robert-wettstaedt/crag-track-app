@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { page } from '$app/stores'
   import BoulderName from '$lib/components/BoulderName'
   import Vega from '$lib/components/Vega'
   import { grades } from '$lib/grades.js'
-  import { AppBar, Tab, TabGroup } from '@skeletonlabs/skeleton'
+  import { AppBar, TabAnchor, TabGroup } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
@@ -12,8 +13,6 @@
     grade: ascent.grade ?? ascent.boulder.grade,
     color: grades.find((grade) => grade[ascent.boulder.gradingScale] === ascent.grade)?.color,
   }))
-
-  let tabSet: number = 0
 </script>
 
 <AppBar>
@@ -24,12 +23,18 @@
 
 <div class="card mt-4 p-4">
   <TabGroup>
-    <Tab bind:group={tabSet} name="tab1" value={0}>Sends</Tab>
-    <Tab bind:group={tabSet} name="tab2" value={1}>Open projects</Tab>
-    <Tab bind:group={tabSet} name="tab3" value={2}>Finished projects</Tab>
+    <TabAnchor href={$page.url.pathname} selected={$page.url.hash === ''}>Sends</TabAnchor>
+
+    <TabAnchor href={$page.url.pathname + '#open-projects'} selected={$page.url.hash === '#open-projects'}>
+      Open projects
+    </TabAnchor>
+
+    <TabAnchor href={$page.url.pathname + '#finished-projects'} selected={$page.url.hash === '#finished-projects'}>
+      Finished projects
+    </TabAnchor>
 
     <svelte:fragment slot="panel">
-      {#if tabSet === 0}
+      {#if $page.url.hash === ''}
         <Vega
           spec={{
             background: 'transparent',
@@ -80,7 +85,7 @@
             theme: 'dark',
           }}
         />
-      {:else if tabSet === 1}
+      {:else if $page.url.hash === '#open-projects'}
         <nav class="list-nav">
           <ul>
             {#each data.openProjects as attempt}
@@ -96,21 +101,36 @@
                   </dd>
                 </a>
 
-                <a class="hover:!bg-transparent" href={attempt.boulder.crag.pathname}>
-                  {attempt.boulder.crag.name}
-                </a>
+                <ol class="breadcrumb w-auto">
+                  <li class="crumb">
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.area.pathname}>
+                      {attempt.boulder.crag.area.name}
+                    </a>
+                  </li>
+
+                  <li class="crumb-separator" aria-hidden>&rsaquo;</li>
+
+                  <li class="crumb">
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.pathname}>
+                      {attempt.boulder.crag.name}
+                    </a>
+                  </li>
+                </ol>
               </li>
             {/each}
           </ul>
         </nav>
-      {:else if tabSet === 2}
+      {:else if $page.url.hash === '#finished-projects'}
         <nav class="list-nav">
           <ul>
             {#each data.finishedProjects as attempt}
               <li class="flex justify-between w-full hover:bg-primary-500/10">
                 <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.boulder.pathname}>
                   <dt>
-                    <BoulderName boulder={attempt.boulder} />
+                    <BoulderName
+                      boulder={attempt.boulder}
+                      ascent={attempt.ascents.find((ascent) => ascent.type === 'send')}
+                    />
                   </dt>
 
                   <dd class="text-sm opacity-50">Sessions: {attempt.ascents.length}</dd>
@@ -119,9 +139,21 @@
                   </dd>
                 </a>
 
-                <a class="hover:!bg-transparent" href={attempt.boulder.crag.pathname}>
-                  {attempt.boulder.crag.name}
-                </a>
+                <ol class="breadcrumb w-auto">
+                  <li class="crumb">
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.area.pathname}>
+                      {attempt.boulder.crag.area.name}
+                    </a>
+                  </li>
+
+                  <li class="crumb-separator" aria-hidden>&rsaquo;</li>
+
+                  <li class="crumb">
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.pathname}>
+                      {attempt.boulder.crag.name}
+                    </a>
+                  </li>
+                </ol>
               </li>
             {/each}
           </ul>

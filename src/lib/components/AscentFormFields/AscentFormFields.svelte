@@ -6,13 +6,14 @@
   import remarkParse from 'remark-parse'
   import type { ChangeEventHandler } from 'svelte/elements'
   import { unified } from 'unified'
+  import AscentTypeLabel from '../AscentTypeLabel/AscentTypeLabel.svelte'
 
   export let dateTime: Ascent['dateTime']
   export let gradingScale: Boulder['gradingScale']
   export let grade: Ascent['grade']
   export let notes: Ascent['notes']
   export let type: Ascent['type'] | null
-  export let filePath: File['path'] | null
+  export let filePaths: File['path'][] = ['']
 
   let notesTabSet: number = 0
   let notesValue = notes
@@ -22,6 +23,22 @@
     const result = await unified().use(remarkParse).use(remarkHtml).process(notesValue)
     notesHtml = result.value as string
   }
+
+  const onChangeFile =
+    (index: number): ChangeEventHandler<HTMLInputElement> =>
+    (event) => {
+      filePaths[index] = event.currentTarget.value
+
+      const lastFile = filePaths.at(-1)
+      if (lastFile != null && lastFile.length > 0) {
+        return filePaths.push('')
+      }
+
+      const secondToLastFile = filePaths.at(-2)
+      if (secondToLastFile != null && secondToLastFile.length === 0) {
+        return filePaths.splice(-1, 1)
+      }
+    }
 </script>
 
 <label class="label mt-4">
@@ -68,10 +85,11 @@
 
 <label class="label mt-4">
   <span>Type</span>
-  <select class="select" name="type" size="3" value={type}>
-    <option value="flash"><i class="fa-solid fa-bolt-lightning text-yellow-300 me-2" />Flash</option>
-    <option value="send"><i class="fa-solid fa-circle text-red-500 me-2" />Send</option>
-    <option value="attempt"><i class="fa-solid fa-person-falling text-blue-300 me-2" />Attempt</option>
+  <select class="select" name="type" size="4" value={type}>
+    <option value="flash"><AscentTypeLabel type="flash" /></option>
+    <option value="send"><AscentTypeLabel type="send" /></option>
+    <option value="repeat"><AscentTypeLabel type="repeat" /></option>
+    <option value="attempt"><AscentTypeLabel type="attempt" /></option>
   </select>
 </label>
 
@@ -87,12 +105,21 @@
   />
 </label>
 
-<div class="mt-4">
-  <label class="label">
-    <span>File</span>
-    <input class="input" name="file.path" type="text" placeholder="Path" value={filePath} />
-  </label>
-</div>
+{#each filePaths as file, index}
+  <div class="mt-4">
+    <label class="label">
+      <span>File {filePaths.length > 1 ? index + 1 : ''}</span>
+      <input
+        class="input"
+        name="file.path"
+        on:change={onChangeFile(index)}
+        placeholder="Path"
+        type="text"
+        value={file}
+      />
+    </label>
+  </div>
+{/each}
 
 <label class="label mt-4">
   <span>Notes</span>

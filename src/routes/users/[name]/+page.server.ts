@@ -62,7 +62,7 @@ export const load = (async ({ params }) => {
   const finishedProjects = boulderIds
     .flatMap((boulderId) => {
       const ascents = ascentsResult
-        .filter((ascent) => ascent.boulderFk === boulderId)
+        .filter((ascent) => ascent.boulderFk === boulderId && ascent.type !== 'repeat')
         .toSorted((a, b) => b.dateTime.localeCompare(a.dateTime))
 
       if (ascents.every((ascent) => ascent.type === 'attempt') || ascents.length < 2) {

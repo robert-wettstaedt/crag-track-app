@@ -4,9 +4,10 @@
   import BoulderName from '$lib/components/BoulderName'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
+  import type { ActionData, PageData } from './$types'
 
-  export let data
-  export let form
+  export let data: PageData
+  export let form: ActionData
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/boulders/${$page.params.boulderSlug}`
 </script>
 
@@ -36,7 +37,7 @@
       gradingScale={data.boulder.gradingScale}
       notes={form?.notes ?? null}
       type={form?.type ?? null}
-      filePath={form?.filePath ?? ''}
+      filePaths={form?.filePaths ?? undefined}
     />
   </div>
 

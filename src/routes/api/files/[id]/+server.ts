@@ -7,18 +7,19 @@ import { eq } from 'drizzle-orm'
 export async function DELETE({ locals, params }) {
   const session = await locals.auth()
   if (session?.user?.email == null) {
-    error(401)
+    error(401, 'You are not logged in')
   }
 
   const fileId = Number(params.id)
 
-  let file: InferResultType<'files', { boulder: true; crag: true }> | undefined = undefined
+  let file: InferResultType<'files', { ascent: true; boulder: true; crag: true }> | undefined = undefined
   let user: User | undefined
 
   try {
     file = await db.query.files.findFirst({
       where: eq(files.id, fileId),
       with: {
+        ascent: true,
         boulder: true,
         crag: true,
       },
@@ -32,13 +33,13 @@ export async function DELETE({ locals, params }) {
       where: eq(users.email, session.user.email),
     })
   } catch (exception) {
-    error(401)
+    error(401, 'User not found')
   }
 
-  const authorId = file?.boulder?.createdBy ?? file?.crag?.createdBy
+  const authorId = file?.boulder?.createdBy ?? file?.crag?.createdBy ?? file?.ascent?.createdBy
 
   if (authorId !== user?.id) {
-    error(401)
+    error(401, 'You do not have permissions to delete this file')
   }
 
   await db.delete(files).where(eq(files.id, fileId))

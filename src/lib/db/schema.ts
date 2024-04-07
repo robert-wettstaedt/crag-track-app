@@ -103,16 +103,18 @@ export const ascents = sqliteTable('ascents', {
     .default(sql`CURRENT_TIMESTAMP`),
   grade: text('grade'),
   notes: text('notes'),
-  type: text('type', { enum: ['flash', 'send', 'attempt'] }).notNull(),
+  type: text('type', { enum: ['flash', 'send', 'repeat', 'attempt'] }).notNull(),
 
   boulderFk: integer('boulder').notNull(),
 })
 export type Ascent = InferSelectModel<typeof ascents>
 export type InsertAscent = InferInsertModel<typeof ascents>
 
-export const ascentsRelations = relations(ascents, ({ one }) => ({
+export const ascentsRelations = relations(ascents, ({ one, many }) => ({
   author: one(users, { fields: [ascents.createdBy], references: [users.id] }),
   boulder: one(boulders, { fields: [ascents.boulderFk], references: [boulders.id] }),
+
+  files: many(files),
 }))
 
 export const files = sqliteTable('files', {

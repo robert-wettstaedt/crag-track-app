@@ -3,7 +3,7 @@
   import { grades } from '$lib/grades'
 
   export let boulder: Boulder | undefined
-  export let ascent: Ascent | undefined
+  export let ascent: Ascent | undefined = undefined
 
   const boulderGradeConfig = grades.find((grade) =>
     boulder == null ? false : grade[boulder.gradingScale] === boulder.grade,
