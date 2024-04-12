@@ -28,7 +28,40 @@
       <div>
         <span class="flex-auto">
           <dt>Author</dt>
-          <dd>{data.boulder.author.userName}</dd>
+          <dd>
+            <a class="anchor" href={`/users/${data.boulder.author.userName}`}>
+              {data.boulder.author.userName}
+            </a>
+          </dd>
+        </span>
+      </div>
+
+      <div>
+        <span class="flex-auto">
+          <dt>FA</dt>
+          <dd class="flex justify-between items-center">
+            <span>
+              {#if data.boulder.firstAscent?.climber != null}
+                <a class="anchor" href={`/users/${data.boulder.firstAscent.climber.userName}`}>
+                  {data.boulder.firstAscent.climber.userName}
+                </a>
+
+                &nbsp;
+              {:else if data.boulder.firstAscent?.climberName != null}
+                {data.boulder.firstAscent.climberName}
+
+                &nbsp;
+              {/if}
+
+              {data.boulder.firstAscent?.year ?? ''}
+            </span>
+
+            {#if data.session?.user != null}
+              <a class="btn btn-sm variant-ghost ms-4" href={`${basePath}/edit-first-ascent`}>
+                <i class="fa-solid fa-pen me-2" />Edit FA
+              </a>
+            {/if}
+          </dd>
         </span>
       </div>
     </dl>

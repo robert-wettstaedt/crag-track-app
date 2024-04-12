@@ -1,5 +1,5 @@
 import { fail, type ActionFailure } from '@sveltejs/kit'
-import { type Area, type Ascent, type Boulder, type Crag, type File } from './db/schema'
+import { type Area, type Ascent, type Boulder, type Crag, type File, type FirstAscent } from './db/schema'
 
 export type AreaActionValues = Pick<Area, 'name'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
@@ -48,6 +48,35 @@ export const validateBoulderForm = async (data: FormData): Promise<BoulderAction
 
   if (grade != null && typeof grade !== 'string') {
     throw fail(400, { ...values, error: 'grade must be a valid string' })
+  }
+
+  return values
+}
+
+export type FirstAscentActionValues = Pick<FirstAscent, 'climberName' | 'year'>
+export type FirstAscentActionFailure = ActionFailure<FirstAscentActionValues & { error: string }>
+
+export const validateFirstAscentForm = async (data: FormData): Promise<FirstAscentActionValues> => {
+  const climberName = data.get('climberName')
+  const rawYear = data.get('year')
+  const values = { climberName, year: rawYear } as FirstAscentActionValues
+
+  const year = Number(rawYear)
+
+  if (climberName != null && typeof climberName !== 'string') {
+    throw fail(400, { ...values, error: 'climberName must be a valid string' })
+  }
+
+  if (rawYear != null && typeof rawYear !== 'string') {
+    throw fail(400, { ...values, error: 'year must be a valid string' })
+  }
+
+  if (rawYear != null && Number.isNaN(year)) {
+    throw fail(400, { ...values, error: 'year is not a valid number' })
+  }
+
+  if ((climberName == null || climberName.trim().length === 0) && (rawYear == null || rawYear.trim().length === 0)) {
+    throw fail(400, { ...values, error: 'Either climberName or year must be set' })
   }
 
   return values

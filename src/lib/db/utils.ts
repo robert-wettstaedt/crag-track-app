@@ -57,8 +57,13 @@ export const enrichCrag = (crag: NestedCrag): EnrichedCrag => {
 
 export interface EnrichedBoulder extends NestedBoulder, WithPathname {}
 export const enrichBoulder = (boulder: NestedBoulder): EnrichedBoulder => {
-  const crag = enrichCrag(boulder.crag as NestedCrag)
+  try {
+    const crag = enrichCrag(boulder.crag as NestedCrag)
 
-  const pathname = crag.pathname + ['', 'boulders', boulder.slug].join('/')
-  return { ...boulder, crag, pathname }
+    const pathname = crag.pathname + ['', 'boulders', boulder.slug].join('/')
+    return { ...boulder, crag, pathname }
+  } catch (error) {
+    console.log('Unable to enrich boulder: ', boulder)
+    throw error
+  }
 }

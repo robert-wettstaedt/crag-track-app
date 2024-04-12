@@ -28,6 +28,11 @@ export const load = (async ({ locals, params }) => {
             },
           },
           files: true,
+          firstAscent: {
+            with: {
+              climber: true,
+            },
+          },
         },
       },
     },

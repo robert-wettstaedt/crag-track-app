@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "75d458bc-d3ac-4176-a7cc-b58b6feb0f17",
-  "prevId": "f1e70e5b-1dab-46aa-95c0-fe08d9634673",
+  "id": "109f48f0-a936-4ed8-bda6-dfc2d5773d44",
+  "prevId": "ef64b7c9-3bda-4984-bbb7-f269ffadfc06",
   "tables": {
     "areas": {
       "name": "areas",
@@ -196,6 +196,13 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "first_ascent_fk": {
+          "name": "first_ascent_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -279,13 +286,6 @@
           "notNull": true,
           "autoincrement": true
         },
-        "nextcloud_id": {
-          "name": "nextcloud_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "path": {
           "name": "path",
           "type": "text",
@@ -316,6 +316,50 @@
         },
         "crag_fk": {
           "name": "crag_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "first_ascents": {
+      "name": "first_ascents",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "climber_name": {
+          "name": "climber_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "boulder_fk": {
+          "name": "boulder_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "climber_fk": {
+          "name": "climber_fk",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -370,8 +414,6 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {
-      "\"files\".\"mime\"": "\"files\".\"nextcloud_id\""
-    }
+    "columns": {}
   }
 }

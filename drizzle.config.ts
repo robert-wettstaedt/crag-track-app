@@ -7,4 +7,5 @@ export default {
   dbCredentials: {
     url: './sqlite.db',
   },
+  verbose: true,
 } satisfies Config

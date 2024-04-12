@@ -82,6 +82,7 @@ export const boulders = sqliteTable('boulders', {
   gradingScale: text('grading_scale', { enum: ['FB', 'V'] }).notNull(),
 
   cragFk: integer('parent').notNull(),
+  firstAscentFk: integer('first_ascent_fk'),
 })
 export type Boulder = InferSelectModel<typeof boulders>
 export type InsertBoulder = InferInsertModel<typeof boulders>
@@ -89,9 +90,28 @@ export type InsertBoulder = InferInsertModel<typeof boulders>
 export const bouldersRelations = relations(boulders, ({ one, many }) => ({
   author: one(users, { fields: [boulders.createdBy], references: [users.id] }),
   crag: one(crags, { fields: [boulders.cragFk], references: [crags.id] }),
+  firstAscent: one(firstAscents, { fields: [boulders.firstAscentFk], references: [firstAscents.id] }),
 
   ascents: many(ascents),
   files: many(files),
+}))
+
+export const firstAscents = sqliteTable('first_ascents', {
+  id: baseFields.id,
+
+  climberName: text('climber_name'),
+  year: integer('year'),
+
+  boulderFk: integer('boulder_fk').notNull(),
+  climberFk: integer('climber_fk'),
+})
+
+export type FirstAscent = InferSelectModel<typeof firstAscents>
+export type InsertFirstAscent = InferInsertModel<typeof firstAscents>
+
+export const firstAscentsRelations = relations(firstAscents, ({ one }) => ({
+  boulder: one(boulders, { fields: [firstAscents.boulderFk], references: [boulders.id] }),
+  climber: one(users, { fields: [firstAscents.climberFk], references: [users.id] }),
 }))
 
 export const ascents = sqliteTable('ascents', {
