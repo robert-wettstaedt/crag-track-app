@@ -3,17 +3,19 @@ import { db } from '$lib/db/db.server'
 import { ascents, boulders, crags } from '$lib/db/schema'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
-import { desc, eq } from 'drizzle-orm'
-import type { PageServerLoad } from './$types'
-import { unified } from 'unified'
-import remarkParse from 'remark-parse'
+import { and, desc, eq } from 'drizzle-orm'
 import remarkHtml from 'remark-html'
+import remarkParse from 'remark-parse'
+import { unified } from 'unified'
+import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, params, parent }) => {
+  const { areaId } = await parent()
+
   const session = await locals.auth()
 
   const crag = await db.query.crags.findFirst({
-    where: eq(crags.slug, params.cragSlug),
+    where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
     with: {
       boulders: {
         where: eq(boulders.slug, params.boulderSlug),

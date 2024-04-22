@@ -50,7 +50,7 @@
       {:else}
         <div class="flex flex-wrap gap-2">
           {#each data.area.areas as area}
-            <a class="card card-hover variant-ghost p-4" href={`${basePath}/${area.slug}`}>
+            <a class="card card-hover variant-ghost p-4" href={`${basePath}/${area.slug}-${area.id}`}>
               <dt>Name</dt>
               <dd>
                 {area.name}

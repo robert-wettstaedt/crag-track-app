@@ -2,34 +2,41 @@ import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { boulders, crags, generateSlug, users } from '$lib/db/schema'
 import { validateBoulderForm, type BoulderActionFailure, type BoulderActionValues } from '$lib/forms.server'
+import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, params, parent }) => {
+  const { areaId, areaSlug } = await parent()
+
   const session = await locals.auth()
   if (session?.user == null) {
     error(401)
   }
 
-  const parentsResult = await db.query.crags.findMany({ where: eq(crags.slug, params.cragSlug) })
-  const parent = parentsResult.at(0)
+  const cragsResult = await db.query.crags.findMany({
+    where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
+  })
+  const crag = cragsResult.at(0)
 
-  if (parent == null) {
+  if (crag == null) {
     error(404)
   }
 
-  if (parentsResult.length > 1) {
-    error(400, `Multiple crags with slug ${params.cragSlug} found`)
+  if (cragsResult.length > 1) {
+    error(400, `Multiple crags with slug ${params.cragSlug} in ${areaSlug} found`)
   }
 
   return {
-    parent,
+    crag,
   }
 }) satisfies PageServerLoad
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    const { areaId } = convertAreaSlug(params)
+
     const session = await locals.auth()
     if (session?.user?.email == null) {
       error(401)
@@ -37,7 +44,7 @@ export const actions = {
 
     const data = await request.formData()
     let values: BoulderActionValues
-    const path = params.slugs.split('/')
+    const { path } = convertAreaSlug(params)
 
     try {
       values = await validateBoulderForm(data)
@@ -47,25 +54,23 @@ export const actions = {
 
     const slug = generateSlug(values.name)
 
-    const parentsResult = await db
-      .select({ id: crags.id, name: crags.name })
-      .from(crags)
-      .where(eq(crags.slug, params.cragSlug))
-    const parent = parentsResult.at(0)
+    const crag = await db.query.crags.findFirst({
+      where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
+    })
 
-    if (parent == null) {
+    if (crag == null) {
       return fail(400, { ...values, error: `Parent not found ${params.cragSlug}` })
     }
 
     const existingBouldersResult = await db
       .select()
       .from(boulders)
-      .where(and(eq(boulders.slug, slug), eq(boulders.cragFk, parent.id)))
+      .where(and(eq(boulders.slug, slug), eq(boulders.cragFk, crag.id)))
 
     if (existingBouldersResult.length > 0) {
       return fail(400, {
         ...values,
-        error: `Boulder with name "${existingBouldersResult[0].name}" already exists in crag "${parent.name}"`,
+        error: `Boulder with name "${existingBouldersResult[0].name}" already exists in crag "${crag.name}"`,
       })
     }
 
@@ -75,7 +80,7 @@ export const actions = {
         throw new Error('User not found')
       }
 
-      await db.insert(boulders).values({ ...values, createdBy: user.id, cragFk: parent.id, slug })
+      await db.insert(boulders).values({ ...values, createdBy: user.id, cragFk: crag.id, slug })
     } catch (exception) {
       return fail(400, { ...values, error: convertException(exception) })
     }

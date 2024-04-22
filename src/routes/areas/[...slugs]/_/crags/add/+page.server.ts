@@ -2,32 +2,27 @@ import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { areas, crags, generateSlug, users } from '$lib/db/schema'
 import { validateCragForm, type CragActionFailure, type CragActionValues } from '$lib/forms.server.js'
+import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, parent }) => {
+  const { areaId } = await parent()
+
   const session = await locals.auth()
   if (session?.user == null) {
     error(401)
   }
 
-  const path = params.slugs.split('/')
-  const parentSlug = path.at(-1)
-  const parentsResult = parentSlug == null ? [] : await db.query.areas.findMany({ where: eq(areas.slug, parentSlug) })
+  const areaResult = await db.query.areas.findFirst({ where: eq(areas.id, areaId) })
 
-  const parent = parentsResult.at(0)
-
-  if (parent == null) {
+  if (areaResult == null) {
     error(404)
   }
 
-  if (parentsResult.length > 1) {
-    error(400, `Multiple areas with slug ${parentSlug} found`)
-  }
-
   return {
-    parent,
+    area: areaResult,
   }
 }) satisfies PageServerLoad
 
@@ -49,17 +44,10 @@ export const actions = {
 
     const slug = generateSlug(values.name)
 
-    const path = params.slugs.split('/')
-    const parentSlug = path.at(-1)
-    const parentsResult = parentSlug == null ? [] : await db.query.areas.findMany({ where: eq(areas.slug, parentSlug) })
-    const parent = parentsResult.at(0)
-
-    if (parent == null) {
-      return fail(400, { ...values, error: `Parent not found ${parentSlug}` })
-    }
+    const { areaId, path } = convertAreaSlug(params)
 
     const existingCragsResult = await db.query.crags.findFirst({
-      where: and(eq(crags.slug, slug), eq(crags.areaFk, parent.id)),
+      where: and(eq(crags.slug, slug), eq(crags.areaFk, areaId)),
     })
 
     if (existingCragsResult != null) {
@@ -75,7 +63,7 @@ export const actions = {
         throw new Error('User not found')
       }
 
-      await db.insert(crags).values({ ...values, createdBy: user.id, areaFk: parent.id, slug })
+      await db.insert(crags).values({ ...values, createdBy: user.id, areaFk: areaId, slug })
     } catch (exception) {
       return fail(400, { ...values, error: convertException(exception) })
     }

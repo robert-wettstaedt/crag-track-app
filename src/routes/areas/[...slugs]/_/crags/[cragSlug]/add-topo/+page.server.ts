@@ -2,19 +2,22 @@ import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
 import { crags, files } from '$lib/db/schema'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
+import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, params, parent }) => {
+  const { areaId, areaSlug } = await parent()
+
   const session = await locals.auth()
   if (session?.user == null) {
     error(401)
   }
 
   const cragsResult = await db.query.crags.findMany({
-    where: eq(crags.slug, params.cragSlug),
+    where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
     with: {
       files: {
         where: eq(files.type, 'topo'),
@@ -28,7 +31,7 @@ export const load = (async ({ locals, params }) => {
   }
 
   if (cragsResult.length > 1) {
-    error(400, `Multiple crags with slug ${params.cragSlug} found`)
+    error(400, `Multiple crags with slug ${params.cragSlug} in ${areaSlug} found`)
   }
 
   return {
@@ -38,27 +41,24 @@ export const load = (async ({ locals, params }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    const { areaId } = convertAreaSlug(params)
+
     const session = await locals.auth()
     if (session?.user == null) {
       error(401)
     }
 
-    const cragsResult = await db.query.crags.findMany({
-      where: eq(crags.slug, params.cragSlug),
+    const crag = await db.query.crags.findFirst({
+      where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
       with: {
         files: {
           where: eq(files.type, 'topo'),
         },
       },
     })
-    const crag = cragsResult.at(0)
 
     if (crag == null) {
       error(404)
-    }
-
-    if (cragsResult.length > 1) {
-      error(400, `Multiple crags with slug ${params.cragSlug} found`)
     }
 
     const data = await request.formData()

@@ -24,7 +24,7 @@
       <ul>
         {#each data.areas as area}
           <li>
-            <a href={`/areas/${area.slug}`}>
+            <a href={`/areas/${area.slug}-${area.id}`}>
               <span class="flex-auto">
                 {area.name}
               </span>

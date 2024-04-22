@@ -2,19 +2,22 @@ import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
 import { boulders, crags, files, type File } from '$lib/db/schema'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
+import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, params, parent }) => {
+  const { areaId } = await parent()
+
   const session = await locals.auth()
   if (session?.user == null) {
     error(401)
   }
 
   const crag = await db.query.crags.findFirst({
-    where: eq(crags.slug, params.cragSlug),
+    where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
     with: {
       boulders: {
         where: eq(boulders.slug, params.boulderSlug),
@@ -44,6 +47,8 @@ export const load = (async ({ locals, params }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    const { areaId } = convertAreaSlug(params)
+
     const session = await locals.auth()
     if (session?.user == null) {
       error(401)
@@ -57,7 +62,7 @@ export const actions = {
     const values = { path, type }
 
     const crag = await db.query.crags.findFirst({
-      where: eq(crags.slug, params.cragSlug),
+      where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
       with: {
         boulders: {
           where: eq(boulders.slug, params.boulderSlug),

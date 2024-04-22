@@ -1,17 +1,18 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
 import { boulders, crags } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichCrag } from '$lib/db/utils'
+import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
-import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
-import { convertException } from '$lib'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, params, parent }) => {
+  const { areaId, areaSlug } = await parent()
   const session = await locals.auth()
 
   const cragsResult = await db.query.crags.findMany({
-    where: eq(crags.slug, params.cragSlug),
+    where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
     with: {
       author: true,
       boulders: {
@@ -27,7 +28,7 @@ export const load = (async ({ locals, params }) => {
   }
 
   if (cragsResult.length > 1) {
-    error(400, `Multiple crags with slug ${params.cragSlug} found`)
+    error(400, `Multiple crags with slug ${params.cragSlug} in ${areaSlug} found`)
   }
 
   const geolocationCragsResults = await db.query.crags.findMany({

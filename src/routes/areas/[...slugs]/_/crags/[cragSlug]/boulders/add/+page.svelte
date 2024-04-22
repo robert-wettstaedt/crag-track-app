@@ -12,7 +12,7 @@
   <svelte:fragment slot="lead">
     <span>Create boulder in</span>
     &nbsp;
-    <a class="anchor" href={basePath}>{data.parent.name}</a>
+    <a class="anchor" href={basePath}>{data.crag.name}</a>
   </svelte:fragment>
 </AppBar>
 

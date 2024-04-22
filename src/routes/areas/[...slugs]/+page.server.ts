@@ -1,21 +1,14 @@
 import { db } from '$lib/db/db.server'
 import { areas, crags } from '$lib/db/schema'
-import type { InferResultType } from '$lib/db/types'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
-import { MAX_AREA_NESTING_DEPTH } from '$lib/db/utils'
 
-export const load = (async ({ params }) => {
-  const path = params.slugs.split('/')
-  const slug = path.at(-1)
-
-  if (slug == null) {
-    error(404)
-  }
+export const load = (async ({ parent }) => {
+  const { areaId } = await parent()
 
   const areasResult = await db.query.areas.findMany({
-    where: eq(areas.slug, slug),
+    where: eq(areas.id, areaId),
     with: {
       author: true,
       crags: {
@@ -34,7 +27,6 @@ export const load = (async ({ params }) => {
   }
 
   return {
-    area: area as InferResultType<'areas', { areas: true; author: true; crags: true }>,
-    canAddArea: path.length < MAX_AREA_NESTING_DEPTH,
+    area,
   }
 }) satisfies PageServerLoad

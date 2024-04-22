@@ -1,33 +1,28 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { areas, generateSlug, users } from '$lib/db/schema'
-import { MAX_AREA_NESTING_DEPTH } from '$lib/db/utils'
+import { areas, generateSlug, users, type Area } from '$lib/db/schema'
 import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server.js'
+import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, parent }) => {
+  const { areaId, canAddArea } = await parent()
+
   const session = await locals.auth()
   if (session?.user == null) {
     error(401)
   }
 
-  const path = params.slugs.split('/')
-  const parentSlug = path.at(-1)
-  const parentsResult = parentSlug == null ? [] : await db.query.areas.findMany({ where: eq(areas.slug, parentSlug) })
-  const parent = parentsResult.at(0)
+  const parentAreaResult = await db.query.areas.findFirst({ where: eq(areas.id, areaId) })
 
-  if (parentsResult.length > 1) {
-    error(400, `Multiple areas with slug ${parentSlug} found`)
-  }
-
-  if (path.length >= MAX_AREA_NESTING_DEPTH) {
+  if (!canAddArea) {
     error(400, 'Max depth reached')
   }
 
   return {
-    parent,
+    parent: parentAreaResult,
   }
 }) satisfies PageServerLoad
 
@@ -49,27 +44,40 @@ export const actions = {
 
     const slug = generateSlug(values.name)
 
-    const path = params.slugs.split('/')
-    const parentSlug = path.at(-1)
-    const parent = parentSlug == null ? null : await db.query.areas.findFirst({ where: eq(areas.slug, parentSlug) })
+    let parentArea: Area | undefined
+    let path: string[]
+    try {
+      const { areaId, path: areaPath } = convertAreaSlug(params)
+      parentArea = await db.query.areas.findFirst({ where: eq(areas.id, areaId) })
+      path = areaPath
+    } catch (error) {
+      parentArea = undefined
+      path = []
+    }
 
     const existingAreasResult = await db.query.areas.findMany({ where: eq(areas.slug, slug) })
     if (existingAreasResult.length > 0) {
       return fail(400, { ...values, error: `Area with name "${existingAreasResult[0].name}" already exists` })
     }
 
+    let createdArea: Area
     try {
       const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
       if (user == null) {
         throw new Error('User not found')
       }
 
-      await db.insert(areas).values({ ...values, createdBy: user.id, parentFk: parent?.id, slug })
+      createdArea = (
+        await db
+          .insert(areas)
+          .values({ ...values, createdBy: user.id, parentFk: parentArea?.id, slug })
+          .returning()
+      )[0]
     } catch (exception) {
       return fail(400, { ...values, error: convertException(exception) })
     }
 
-    const mergedPath = ['areas', ...path, slug].join('/')
+    const mergedPath = ['areas', ...path, `${slug}-${createdArea?.id}`].join('/')
     redirect(303, '/' + mergedPath)
   },
 }

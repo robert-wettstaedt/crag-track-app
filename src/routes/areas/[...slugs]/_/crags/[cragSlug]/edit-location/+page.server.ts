@@ -1,20 +1,22 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
 import { crags } from '$lib/db/schema'
-import type { InferResultType } from '$lib/db/types'
 import { buildNestedAreaQuery, enrichCrag } from '$lib/db/utils'
+import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, params, parent }) => {
+  const { areaId, areaSlug } = await parent()
+
   const session = await locals.auth()
   if (session?.user == null) {
     error(401)
   }
 
   const cragsResult = await db.query.crags.findMany({
-    where: eq(crags.slug, params.cragSlug),
+    where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
   })
   const crag = cragsResult.at(0)
 
@@ -23,7 +25,7 @@ export const load = (async ({ locals, params }) => {
   }
 
   if (cragsResult.length > 1) {
-    error(400, `Multiple crags with slug ${params.cragSlug} found`)
+    error(400, `Multiple crags with slug ${params.cragSlug} in ${areaSlug} found`)
   }
 
   const result = await db.query.crags.findMany({
@@ -34,13 +36,15 @@ export const load = (async ({ locals, params }) => {
   })
 
   return {
-    crag: crag as InferResultType<'crags', { author: true; boulders: true }>,
+    crag,
     crags: result.map(enrichCrag),
   }
 }) satisfies PageServerLoad
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    const { areaId } = convertAreaSlug(params)
+
     const session = await locals.auth()
     if (session?.user == null) {
       error(401)
@@ -73,7 +77,10 @@ export const actions = {
     }
 
     try {
-      await db.update(crags).set({ lat, long }).where(eq(crags.slug, params.cragSlug))
+      await db
+        .update(crags)
+        .set({ lat, long })
+        .where(and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)))
     } catch (exception) {
       return fail(404, { ...values, error: convertException(exception) })
     }

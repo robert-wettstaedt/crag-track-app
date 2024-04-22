@@ -2,17 +2,22 @@ import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { crags } from '$lib/db/schema'
 import { validateCragForm, type CragActionFailure, type CragActionValues } from '$lib/forms.server'
+import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, params, parent }) => {
+  const { areaId, areaSlug } = await parent()
+
   const session = await locals.auth()
   if (session?.user == null) {
     error(401)
   }
 
-  const cragsResult = await db.query.crags.findMany({ where: eq(crags.slug, params.cragSlug) })
+  const cragsResult = await db.query.crags.findMany({
+    where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
+  })
   const crag = cragsResult.at(0)
 
   if (crag == null) {
@@ -20,7 +25,7 @@ export const load = (async ({ locals, params }) => {
   }
 
   if (cragsResult.length > 1) {
-    error(400, `Multiple crags with slug ${params.cragSlug} found`)
+    error(400, `Multiple crags with slug ${params.cragSlug} in ${areaSlug} found`)
   }
 
   return {
@@ -30,6 +35,8 @@ export const load = (async ({ locals, params }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    const { areaId } = convertAreaSlug(params)
+
     const session = await locals.auth()
     if (session?.user == null) {
       error(401)
@@ -45,7 +52,10 @@ export const actions = {
     }
 
     try {
-      await db.update(crags).set(values).where(eq(crags.slug, params.cragSlug))
+      await db
+        .update(crags)
+        .set(values)
+        .where(and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)))
     } catch (exception) {
       return fail(404, { ...values, error: convertException(exception) })
     }
