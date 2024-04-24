@@ -86,14 +86,19 @@ export const actions = {
             .filter((filePath) => filePath.trim().length > 0)
             .map(async (filePath) => {
               hasFiles = true
-              const stat = (await getNextcloud(session)?.stat(session.user!.email + filePath)) as FileStat | undefined
 
-              if (stat == null) {
+              try {
+                const stat = (await getNextcloud(session)?.stat(session.user!.email + filePath)) as FileStat | undefined
+
+                if (stat == null) {
+                  throw `Unable to read file: "${filePath}"`
+                }
+
+                if (stat.type === 'directory') {
+                  throw `path must be a file not a directory: "${filePath}"`
+                }
+              } catch (error) {
                 throw `Unable to read file: "${filePath}"`
-              }
-
-              if (stat.type === 'directory') {
-                throw `path must be a file not a directory: "${filePath}"`
               }
             }),
         )
