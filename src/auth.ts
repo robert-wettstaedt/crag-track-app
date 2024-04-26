@@ -27,6 +27,7 @@ const nextcloudProvider: Provider = {
 export const { handle, signIn, signOut } = SvelteKitAuth({
   providers: [nextcloudProvider],
   secret: NEXTCLOUD_SECRET,
+  trustHost: true,
   callbacks: {
     async session({ session, token }) {
       return {
