@@ -1,30 +1,48 @@
 <script lang="ts">
   import CragMap from '$lib/components/CragMap'
   import type { EnrichedCrag } from '$lib/db/utils'
-  import L from 'leaflet'
+  import Feature from 'ol/Feature.js'
+  import Map from 'ol/Map.js'
+  import type { Coordinate } from 'ol/coordinate'
+  import Point from 'ol/geom/Point.js'
+  import { Vector as VectorLayer } from 'ol/layer.js'
+  import { toLonLat } from 'ol/proj'
+  import { Vector as VectorSource } from 'ol/source.js'
   import { createEventDispatcher } from 'svelte'
 
   export let crags: EnrichedCrag[]
 
-  const dispatch = createEventDispatcher<{ change: L.LatLng }>()
+  const dispatch = createEventDispatcher<{ change: Coordinate }>()
 
-  const onAction = ({ detail: map }: CustomEvent<L.Map>) => {
-    let marker: L.Marker | null = null
+  const onAction = ({ detail: map }: CustomEvent<Map>) => {
+    let marker: Feature<Point> | null = null
 
     map.on('click', (event) => {
-      latlng = event.latlng
+      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature)
 
-      if (marker == null) {
-        marker = L.marker(event.latlng).addTo(map)
-      } else {
-        marker.setLatLng(event.latlng)
+      if (feature == null) {
+        if (marker == null) {
+          marker = new Feature({
+            geometry: new Point(event.coordinate),
+          })
+
+          const vectorSource = new VectorSource({
+            features: [marker],
+          })
+
+          const vectorLayer = new VectorLayer({
+            source: vectorSource as any,
+          })
+
+          map.addLayer(vectorLayer)
+        } else {
+          marker.getGeometry()?.setCoordinates(event.coordinate)
+        }
       }
 
-      dispatch('change', latlng)
+      dispatch('change', toLonLat(event.coordinate))
     })
   }
-
-  let latlng: L.LatLng | null = null
 </script>
 
 <CragMap {crags} heightSubtrahend={74} on:action={onAction} />

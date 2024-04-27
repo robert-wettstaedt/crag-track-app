@@ -1,15 +1,15 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import { AppBar } from '@skeletonlabs/skeleton'
-  import type { LatLng } from 'leaflet'
+  import type { Coordinate } from 'ol/coordinate'
 
   export let data
   export let form
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}`
 
-  let latlng: LatLng | null = null
+  let coordinate: Coordinate | null = null
 
-  const onChange = ({ detail }: CustomEvent<LatLng>) => (latlng = detail)
+  const onChange = ({ detail }: CustomEvent<Coordinate>) => (coordinate = detail)
 </script>
 
 <AppBar>
@@ -34,12 +34,12 @@
       <CragMap.default crags={data.crags} on:change={onChange} />
     {/await}
 
-    <input hidden name="lat" value={form?.lat ?? latlng?.lat} />
-    <input hidden name="long" value={form?.long ?? latlng?.lng} />
+    <input hidden name="lat" value={form?.lat ?? coordinate?.at(1)} />
+    <input hidden name="long" value={form?.long ?? coordinate?.at(0)} />
   </div>
 
   <div class="flex justify-between mt-8">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary" disabled={latlng == null}>Update geolocation</button>
+    <button class="btn variant-filled-primary" disabled={coordinate == null}>Update geolocation</button>
   </div>
 </form>
