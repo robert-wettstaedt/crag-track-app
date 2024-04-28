@@ -1,5 +1,5 @@
 import type { db } from './db.server'
-import type { NestedArea, NestedBoulder, NestedCrag } from './types'
+import type { NestedArea, NestedRoute, NestedCrag } from './types'
 
 export const MAX_AREA_NESTING_DEPTH = 4
 
@@ -55,15 +55,15 @@ export const enrichCrag = (crag: NestedCrag): EnrichedCrag => {
   return { ...crag, area, pathname }
 }
 
-export interface EnrichedBoulder extends NestedBoulder, WithPathname {}
-export const enrichBoulder = (boulder: NestedBoulder): EnrichedBoulder => {
+export interface EnrichedRoute extends NestedRoute, WithPathname {}
+export const enrichRoute = (route: NestedRoute): EnrichedRoute => {
   try {
-    const crag = enrichCrag(boulder.crag as NestedCrag)
+    const crag = enrichCrag(route.crag as NestedCrag)
 
-    const pathname = crag.pathname + ['', 'boulders', boulder.slug].join('/')
-    return { ...boulder, crag, pathname }
+    const pathname = crag.pathname + ['', 'routes', route.slug].join('/')
+    return { ...route, crag, pathname }
   } catch (error) {
-    console.log('Unable to enrich boulder: ', boulder)
+    console.log('Unable to enrich route: ', route)
     throw error
   }
 }

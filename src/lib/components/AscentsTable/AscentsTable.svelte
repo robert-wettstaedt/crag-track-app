@@ -1,39 +1,39 @@
 <script lang="ts">
   import type { InferResultType } from '$lib/db/types'
-  import type { EnrichedBoulder } from '$lib/db/utils'
+  import type { EnrichedRoute } from '$lib/db/utils'
   import { grades } from '$lib/grades'
   import { Table } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
-  export let ascents: InferResultType<'ascents', { author: true; boulder: true }>[]
+  export let ascents: InferResultType<'ascents', { author: true; route: true }>[]
 
   $: body = ascents.map((ascent) => {
-    const { dateTime, boulder, type } = ascent
+    const { dateTime, route, type } = ascent
 
     const climber = `<a class="anchor" href="/users/${ascent.author.userName}">${ascent.author.userName}</a>`
 
     const formattedDateTime = DateTime.fromSQL(dateTime).toLocaleString(DateTime.DATE_FULL)
 
-    const boulderGrade = (() => {
-      if (boulder.gradingScale == null || boulder.grade == null) {
+    const routeGrade = (() => {
+      if (route.gradingScale == null || route.grade == null) {
         return ''
       }
 
-      const grade = grades.find((grade) => grade[boulder.gradingScale] === boulder.grade)
-      return `<span class="badge text-white" style="background: ${grade?.color}">${boulder.gradingScale} ${boulder.grade}</span>`
+      const grade = grades.find((grade) => grade[route.gradingScale] === route.grade)
+      return `<span class="badge text-white" style="background: ${grade?.color}">${route.gradingScale} ${route.grade}</span>`
     })()
 
     const personalGrade = (() => {
-      if (boulder.gradingScale == null || ascent.grade == null) {
+      if (route.gradingScale == null || ascent.grade == null) {
         return ''
       }
 
-      const grade = grades.find((grade) => grade[boulder.gradingScale] === ascent.grade)
-      return `<span class="badge text-white" style="background: ${grade?.color}">${boulder.gradingScale} ${ascent.grade}</span>`
+      const grade = grades.find((grade) => grade[route.gradingScale] === ascent.grade)
+      return `<span class="badge text-white" style="background: ${grade?.color}">${route.gradingScale} ${ascent.grade}</span>`
     })()
 
-    const enrichedBoulder = boulder as EnrichedBoulder
-    const boulderName = `<a class="anchor" href="${enrichedBoulder.pathname}">${boulder.name}</a>`
+    const enrichedRoute = route as EnrichedRoute
+    const routeName = `<a class="anchor" href="${enrichedRoute.pathname}">${route.name}</a>`
 
     const formattedType =
       type === 'flash'
@@ -42,13 +42,13 @@
           ? '<i class="fa-solid fa-circle text-red-500 me-2"></i> Send'
           : '<i class="fa-solid fa-person-falling text-blue-300 me-2"></i> Attempt'
 
-    return [climber, formattedDateTime, boulderName, boulderGrade, personalGrade, formattedType]
+    return [climber, formattedDateTime, routeName, routeGrade, personalGrade, formattedType]
   })
 </script>
 
 <Table
   source={{
-    head: ['Climber', 'Date time', 'Boulder name', 'Boulder grade', 'Personal grade', 'Type'],
+    head: ['Climber', 'Date time', 'Route name', 'Route grade', 'Personal grade', 'Type'],
     body,
   }}
 />

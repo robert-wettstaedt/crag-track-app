@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { boulders, crags, files, type File } from '$lib/db/schema'
+import { routes, crags, files, type File } from '$lib/db/schema'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -19,8 +19,8 @@ export const load = (async ({ locals, params, parent }) => {
   const crag = await db.query.crags.findFirst({
     where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
     with: {
-      boulders: {
-        where: eq(boulders.slug, params.boulderSlug),
+      routes: {
+        where: eq(routes.slug, params.routeSlug),
         with: {
           files: {
             where: eq(files.type, 'topo'),
@@ -30,18 +30,18 @@ export const load = (async ({ locals, params, parent }) => {
     },
   })
 
-  const boulder = crag?.boulders?.at(0)
+  const route = crag?.routes?.at(0)
 
-  if (boulder == null) {
+  if (route == null) {
     error(404)
   }
 
-  if (crag != null && crag.boulders.length > 1) {
-    error(400, `Multiple boulders with slug ${params.boulderSlug} found`)
+  if (crag != null && crag.routes.length > 1) {
+    error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
   return {
-    boulder: boulder,
+    route,
   }
 }) satisfies PageServerLoad
 
@@ -64,20 +64,20 @@ export const actions = {
     const crag = await db.query.crags.findFirst({
       where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
       with: {
-        boulders: {
-          where: eq(boulders.slug, params.boulderSlug),
+        routes: {
+          where: eq(routes.slug, params.routeSlug),
         },
       },
     })
 
-    const boulder = crag?.boulders?.at(0)
+    const route = crag?.routes?.at(0)
 
-    if (boulder == null) {
-      return fail(404, { ...values, error: `Boulder not found ${params.boulderSlug}` })
+    if (route == null) {
+      return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
     }
 
-    if (crag != null && crag.boulders.length > 1) {
-      return fail(400, { ...values, error: `Multiple boulders with slug ${params.boulderSlug} found` })
+    if (crag != null && crag.routes.length > 1) {
+      return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
     }
 
     if (typeof path !== 'string' || path.length === 0) {
@@ -105,7 +105,7 @@ export const actions = {
 
     try {
       await db.insert(files).values({
-        boulderFk: boulder.id,
+        routeFk: route.id,
         cragFk: type === 'topo' ? crag?.id : undefined,
         path,
         type: type as File['type'],
@@ -114,6 +114,6 @@ export const actions = {
       return fail(404, { ...values, error: convertException(exception) })
     }
 
-    redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}/boulders/${boulder.slug}`)
+    redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}/routes/${route.slug}`)
   },
 }

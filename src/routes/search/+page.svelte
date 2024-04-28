@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import BoulderName from '$lib/components/BoulderName'
+  import RouteName from '$lib/components/RouteName'
   import { AppBar, Tab, TabGroup, focusTrap } from '@skeletonlabs/skeleton'
   import type { Snapshot } from './$types.js'
 
@@ -19,7 +19,7 @@
   }
 
   let searchQuery = $page.url.searchParams.get('q') ?? ''
-  let tabSet: 'boulders' | 'crags' | 'areas' | 'users' = 'boulders'
+  let tabSet: 'routes' | 'crags' | 'areas' | 'users' = 'routes'
   let element: HTMLFormElement | null = null
 
   const formAction = (el: HTMLFormElement) => {
@@ -47,9 +47,9 @@
 {#if data.searchResults != null}
   <div class="mt-8">
     <TabGroup>
-      <Tab bind:group={tabSet} name="boulders" value="boulders">
+      <Tab bind:group={tabSet} name="routes" value="routes">
         <svelte:fragment slot="lead"><i class="fa-solid fa-route" /></svelte:fragment>
-        Boulders ({data.searchResults.boulders.length})
+        Routes ({data.searchResults.routes.length})
       </Tab>
       <Tab bind:group={tabSet} name="crags" value="crags">
         <svelte:fragment slot="lead"><i class="fa-solid fa-mountain" /></svelte:fragment>
@@ -65,16 +65,16 @@
       </Tab>
 
       <svelte:fragment slot="panel">
-        {#if tabSet === 'boulders'}
+        {#if tabSet === 'routes'}
           <ul class="list">
-            {#each data.searchResults.boulders as boulder}
+            {#each data.searchResults.routes as route}
               <li class="px-4 py-2 hover:bg-primary-500/10 flex justify-between">
-                <a class="text-primary-500" href={boulder.pathname}>
-                  <BoulderName {boulder} />
+                <a class="text-primary-500" href={route.pathname}>
+                  <RouteName {route} />
                 </a>
 
-                <a class="text-primary-500" href={boulder.crag.pathname}>
-                  {boulder.crag.name}
+                <a class="text-primary-500" href={route.crag.pathname}>
+                  {route.crag.name}
                 </a>
               </li>
             {/each}

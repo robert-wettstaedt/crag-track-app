@@ -1,6 +1,6 @@
 import { db } from '$lib/db/db.server'
 import { ascents, type Ascent } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichBoulder } from '$lib/db/utils'
+import { buildNestedAreaQuery, enrichRoute } from '$lib/db/utils'
 import { count, desc } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
@@ -15,7 +15,7 @@ export const load = (async ({ url }) => {
     limit: pageSize,
     with: {
       author: true,
-      boulder: {
+      route: {
         with: {
           crag: {
             with: {
@@ -28,7 +28,7 @@ export const load = (async ({ url }) => {
   })
 
   const countResults = await db.select({ count: count() }).from(ascents)
-  const enrichedAscents = ascentsResults.map((ascent) => ({ ...ascent, boulder: enrichBoulder(ascent.boulder) }))
+  const enrichedAscents = ascentsResults.map((ascent) => ({ ...ascent, route: enrichRoute(ascent.route) }))
 
   return {
     ascents: enrichedAscents,

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import BoulderName from '$lib/components/BoulderName'
+  import RouteName from '$lib/components/RouteName'
   import Vega from '$lib/components/Vega'
   import { grades } from '$lib/grades.js'
   import { AppBar, TabAnchor, TabGroup } from '@skeletonlabs/skeleton'
@@ -10,8 +10,8 @@
 
   const ascents = data.sends.map((ascent) => ({
     ...ascent,
-    grade: ascent.grade ?? ascent.boulder.grade,
-    color: grades.find((grade) => grade[ascent.boulder.gradingScale] === ascent.grade)?.color,
+    grade: ascent.grade ?? ascent.route.grade,
+    color: grades.find((grade) => grade[ascent.route.gradingScale] === ascent.grade)?.color,
   }))
 </script>
 
@@ -90,9 +90,9 @@
           <ul>
             {#each data.openProjects as attempt}
               <li class="flex justify-between w-full hover:bg-primary-500/10">
-                <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.boulder.pathname}>
+                <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
                   <dt>
-                    <BoulderName boulder={attempt.boulder} />
+                    <RouteName route={attempt.route} />
                   </dt>
 
                   <dd class="text-sm opacity-50">Sessions: {attempt.ascents.length}</dd>
@@ -103,16 +103,16 @@
 
                 <ol class="breadcrumb w-auto pe-4">
                   <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.area.pathname}>
-                      {attempt.boulder.crag.area.name}
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.crag.area.pathname}>
+                      {attempt.route.crag.area.name}
                     </a>
                   </li>
 
                   <li class="crumb-separator" aria-hidden>&rsaquo;</li>
 
                   <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.pathname}>
-                      {attempt.boulder.crag.name}
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.crag.pathname}>
+                      {attempt.route.crag.name}
                     </a>
                   </li>
                 </ol>
@@ -125,10 +125,10 @@
           <ul>
             {#each data.finishedProjects as attempt}
               <li class="flex justify-between w-full hover:bg-primary-500/10">
-                <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.boulder.pathname}>
+                <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
                   <dt>
-                    <BoulderName
-                      boulder={attempt.boulder}
+                    <RouteName
+                      route={attempt.route}
                       ascent={attempt.ascents.find((ascent) => ascent.type === 'send')}
                     />
                   </dt>
@@ -141,16 +141,16 @@
 
                 <ol class="breadcrumb w-auto pe-4">
                   <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.area.pathname}>
-                      {attempt.boulder.crag.area.name}
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.crag.area.pathname}>
+                      {attempt.route.crag.area.name}
                     </a>
                   </li>
 
                   <li class="crumb-separator" aria-hidden>&rsaquo;</li>
 
                   <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.boulder.crag.pathname}>
-                      {attempt.boulder.crag.name}
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.crag.pathname}>
+                      {attempt.route.crag.name}
                     </a>
                   </li>
                 </ol>

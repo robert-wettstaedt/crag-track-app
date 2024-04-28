@@ -1,8 +1,8 @@
 import { db } from '$lib/db/db.server'
 import { like, or } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
-import { areas, boulders, crags, users } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichArea, enrichBoulder, enrichCrag } from '$lib/db/utils'
+import { areas, routes, crags, users } from '$lib/db/schema'
+import { buildNestedAreaQuery, enrichArea, enrichRoute, enrichCrag } from '$lib/db/utils'
 
 export const load = (async ({ url }) => {
   const query = url.searchParams.get('q')
@@ -27,8 +27,8 @@ export const load = (async ({ url }) => {
     },
   })
 
-  const bouldersResult = await db.query.boulders.findMany({
-    where: like(boulders.name, searchString),
+  const routesResult = await db.query.routes.findMany({
+    where: like(routes.name, searchString),
     with: {
       crag: {
         with: {
@@ -44,7 +44,7 @@ export const load = (async ({ url }) => {
 
   return {
     searchResults: {
-      boulders: bouldersResult.map(enrichBoulder),
+      routes: routesResult.map(enrichRoute),
       crags: cragsResult.map(enrichCrag),
       areas: areasResult.map(enrichArea),
       users: usersResult,

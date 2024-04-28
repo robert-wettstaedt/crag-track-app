@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import BoulderName from '$lib/components/BoulderName'
+  import RouteName from '$lib/components/RouteName'
   import FileViewer from '$lib/components/FileViewer'
   import type { File } from '$lib/db/schema'
   import { AppBar } from '@skeletonlabs/skeleton'
@@ -10,16 +10,16 @@
   $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}`
   $: files = data.files
 
-  let highlightedBoulders: number[] = []
+  let highlightedRoutes: number[] = []
   const onMouseEnterFile = (file: File) => () => {
-    if (file.boulderFk == null) {
-      highlightedBoulders = data.crag.boulders.map((boulder) => boulder.id)
+    if (file.routeFk == null) {
+      highlightedRoutes = data.crag.routes.map((route) => route.id)
     } else {
-      highlightedBoulders = [file.boulderFk]
+      highlightedRoutes = [file.routeFk]
     }
   }
   const onMouseLeaveFile = () => {
-    highlightedBoulders = []
+    highlightedRoutes = []
   }
 </script>
 
@@ -92,7 +92,7 @@
                     files = files.filter((_file) => file.id !== _file.id)
                   }}
                 >
-                  <BoulderName boulder={data.crag.boulders.find((boulder) => file.boulderFk === boulder.id)} />
+                  <RouteName route={data.crag.routes.find((route) => file.routeFk === route.id)} />
                 </FileViewer>
               {:else if file.error != null}
                 <aside class="alert variant-filled-error">
@@ -117,18 +117,18 @@
 </div>
 
 <div class="card mt-4">
-  <div class="card-header">Boulders</div>
+  <div class="card-header">Routes</div>
 
   <section class="p-4">
-    {#if data.crag.boulders.length === 0}
-      No boulders yet
+    {#if data.crag.routes.length === 0}
+      No routes yet
     {:else}
       <nav class="list-nav">
         <ul>
-          {#each data.crag.boulders as boulder}
-            <li class={highlightedBoulders.includes(boulder.id) ? 'bg-primary-500/20' : ''}>
-              <a class="text-primary-500" href={`${basePath}/boulders/${boulder.slug}`}>
-                <BoulderName {boulder} />
+          {#each data.crag.routes as route}
+            <li class={highlightedRoutes.includes(route.id) ? 'bg-primary-500/20' : ''}>
+              <a class="text-primary-500" href={`${basePath}/routes/${route.slug}`}>
+                <RouteName {route} />
               </a>
             </li>
           {/each}
@@ -138,7 +138,7 @@
 
     {#if data.session?.user != null}
       <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/boulders/add`}>Add boulder</a>
+        <a class="btn variant-filled-primary" href={`${basePath}/routes/add`}>Add route</a>
       </div>
     {/if}
   </section>

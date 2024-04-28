@@ -1,14 +1,14 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import AscentFormFields from '$lib/components/AscentFormFields'
-  import BoulderName from '$lib/components/BoulderName'
+  import RouteName from '$lib/components/RouteName'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
   import type { ActionData, PageData } from './$types'
 
   export let data: PageData
   export let form: ActionData
-  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/boulders/${$page.params.boulderSlug}`
+  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/routes/${$page.params.routeSlug}`
 </script>
 
 <AppBar>
@@ -16,7 +16,7 @@
     <span>Log ascent of</span>
     &nbsp;
     <a class="anchor" href={basePath}>
-      <BoulderName boulder={data.boulder} />
+      <RouteName route={data.route} />
     </a>
   </svelte:fragment>
 </AppBar>
@@ -34,7 +34,7 @@
     <AscentFormFields
       dateTime={form?.dateTime ?? DateTime.now().toSQLDate()}
       grade={form?.grade ?? null}
-      gradingScale={data.boulder.gradingScale}
+      gradingScale={data.route.gradingScale}
       notes={form?.notes ?? null}
       type={form?.type ?? null}
       filePaths={form?.filePaths ?? undefined}

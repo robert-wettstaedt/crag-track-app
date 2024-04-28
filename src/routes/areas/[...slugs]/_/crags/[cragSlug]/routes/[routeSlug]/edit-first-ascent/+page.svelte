@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import RouteName from '$lib/components/RouteName'
   import FirstAscentFormFields from '$lib/components/FirstAscentFormFields'
-  import BoulderName from '$lib/components/BoulderName'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let data
   export let form
-  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/boulders/${$page.params.boulderSlug}`
+  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/routes/${$page.params.routeSlug}`
 </script>
 
 <AppBar>
@@ -14,7 +14,7 @@
     <span>Edit FA of</span>
     &nbsp;
     <a class="anchor" href={basePath}>
-      <BoulderName boulder={data.boulder} />
+      <RouteName route={data.route} />
     </a>
   </svelte:fragment>
 </AppBar>
@@ -31,10 +31,10 @@
   <div class="mt-8">
     <FirstAscentFormFields
       climberName={form?.climberName ??
-        data.boulder.firstAscent?.climber?.userName ??
-        data.boulder.firstAscent?.climberName}
+        data.route.firstAscent?.climber?.userName ??
+        data.route.firstAscent?.climberName}
       users={data.users}
-      year={form?.year ?? data.boulder.firstAscent?.year}
+      year={form?.year ?? data.route.firstAscent?.year}
     />
   </div>
 

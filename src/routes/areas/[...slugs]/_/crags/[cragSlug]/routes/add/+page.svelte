@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import BoulderFormFields from '$lib/components/BoulderFormFields'
+  import RouteFormFields from '$lib/components/RouteFormFields'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let form
@@ -10,7 +10,7 @@
 
 <AppBar>
   <svelte:fragment slot="lead">
-    <span>Create boulder in</span>
+    <span>Create route in</span>
     &nbsp;
     <a class="anchor" href={basePath}>{data.crag.name}</a>
   </svelte:fragment>
@@ -26,11 +26,11 @@
   {/if}
 
   <div class="mt-8">
-    <BoulderFormFields grade={form?.grade ?? null} gradingScale={form?.gradingScale} name={form?.name ?? ''} />
+    <RouteFormFields grade={form?.grade ?? null} gradingScale={form?.gradingScale} name={form?.name ?? ''} />
   </div>
 
   <div class="flex justify-between mt-8">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary">Save boulder</button>
+    <button class="btn variant-filled-primary">Save route</button>
   </div>
 </form>

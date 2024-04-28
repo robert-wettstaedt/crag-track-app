@@ -1,7 +1,7 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { boulders, crags, generateSlug, users } from '$lib/db/schema'
-import { validateBoulderForm, type BoulderActionFailure, type BoulderActionValues } from '$lib/forms.server'
+import { routes, crags, generateSlug, users } from '$lib/db/schema'
+import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
@@ -43,13 +43,13 @@ export const actions = {
     }
 
     const data = await request.formData()
-    let values: BoulderActionValues
+    let values: RouteActionValues
     const { path } = convertAreaSlug(params)
 
     try {
-      values = await validateBoulderForm(data)
+      values = await validateRouteForm(data)
     } catch (exception) {
-      return exception as BoulderActionFailure
+      return exception as RouteActionFailure
     }
 
     const slug = generateSlug(values.name)
@@ -62,15 +62,15 @@ export const actions = {
       return fail(400, { ...values, error: `Parent not found ${params.cragSlug}` })
     }
 
-    const existingBouldersResult = await db
+    const existingRoutesResult = await db
       .select()
-      .from(boulders)
-      .where(and(eq(boulders.slug, slug), eq(boulders.cragFk, crag.id)))
+      .from(routes)
+      .where(and(eq(routes.slug, slug), eq(routes.cragFk, crag.id)))
 
-    if (existingBouldersResult.length > 0) {
+    if (existingRoutesResult.length > 0) {
       return fail(400, {
         ...values,
-        error: `Boulder with name "${existingBouldersResult[0].name}" already exists in crag "${crag.name}"`,
+        error: `Route with name "${existingRoutesResult[0].name}" already exists in crag "${crag.name}"`,
       })
     }
 
@@ -80,12 +80,12 @@ export const actions = {
         throw new Error('User not found')
       }
 
-      await db.insert(boulders).values({ ...values, createdBy: user.id, cragFk: crag.id, slug })
+      await db.insert(routes).values({ ...values, createdBy: user.id, cragFk: crag.id, slug })
     } catch (exception) {
       return fail(400, { ...values, error: convertException(exception) })
     }
 
-    const mergedPath = ['areas', ...path, '_', 'crags', params.cragSlug, 'boulders', slug].join('/')
+    const mergedPath = ['areas', ...path, '_', 'crags', params.cragSlug, 'routes', slug].join('/')
     redirect(303, '/' + mergedPath)
   },
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Ascent, Boulder, File } from '$lib/db/schema'
+  import type { Ascent, Route, File } from '$lib/db/schema'
   import { Tab, TabGroup } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
   import remarkHtml from 'remark-html'
@@ -9,7 +9,7 @@
   import AscentTypeLabel from '../AscentTypeLabel/AscentTypeLabel.svelte'
 
   export let dateTime: Ascent['dateTime']
-  export let gradingScale: Boulder['gradingScale']
+  export let gradingScale: Route['gradingScale']
   export let grade: Ascent['grade']
   export let notes: Ascent['notes']
   export let type: Ascent['type'] | null

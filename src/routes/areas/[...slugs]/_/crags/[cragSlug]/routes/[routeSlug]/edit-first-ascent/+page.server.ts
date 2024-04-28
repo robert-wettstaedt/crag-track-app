@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { boulders, crags, firstAscents, users, type InsertFirstAscent } from '$lib/db/schema'
+import { crags, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
 import { validateFirstAscentForm, type FirstAscentActionFailure, type FirstAscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -18,8 +18,8 @@ export const load = (async ({ locals, params, parent }) => {
   const crag = await db.query.crags.findFirst({
     where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
     with: {
-      boulders: {
-        where: eq(boulders.slug, params.boulderSlug),
+      routes: {
+        where: eq(routes.slug, params.routeSlug),
         with: {
           firstAscent: {
             with: {
@@ -31,20 +31,20 @@ export const load = (async ({ locals, params, parent }) => {
     },
   })
 
-  const boulder = crag?.boulders?.at(0)
+  const route = crag?.routes?.at(0)
 
-  if (boulder == null) {
+  if (route == null) {
     error(404)
   }
 
-  if (crag != null && crag.boulders.length > 1) {
-    error(400, `Multiple boulders with slug ${params.boulderSlug} found`)
+  if (crag != null && crag.routes.length > 1) {
+    error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
   const usersResult = await db.query.users.findMany()
 
   return {
-    boulder,
+    route,
     users: usersResult,
   }
 }) satisfies PageServerLoad
@@ -67,7 +67,7 @@ export const actions = {
       return exception as FirstAscentActionFailure
     }
 
-    const firstAscentValue: Omit<InsertFirstAscent, 'boulderFk'> = {
+    const firstAscentValue: Omit<InsertFirstAscent, 'routeFk'> = {
       climberFk: null,
       climberName: null,
       year: null,
@@ -92,36 +92,36 @@ export const actions = {
     const crag = await db.query.crags.findFirst({
       where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
       with: {
-        boulders: {
-          where: eq(boulders.slug, params.boulderSlug),
+        routes: {
+          where: eq(routes.slug, params.routeSlug),
         },
       },
     })
 
-    const boulder = crag?.boulders?.at(0)
+    const route = crag?.routes?.at(0)
 
-    if (boulder == null) {
-      return fail(404, { ...values, error: `Boulder not found ${params.boulderSlug}` })
+    if (route == null) {
+      return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
     }
 
-    if (crag != null && crag.boulders.length > 1) {
-      return fail(400, { ...values, error: `Multiple boulders with slug ${params.boulderSlug} found` })
+    if (crag != null && crag.routes.length > 1) {
+      return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
     }
 
     try {
-      if (boulder.firstAscentFk == null) {
+      if (route.firstAscentFk == null) {
         const firstAscentResult = await db
           .insert(firstAscents)
-          .values({ ...firstAscentValue, boulderFk: boulder.id })
+          .values({ ...firstAscentValue, routeFk: route.id })
           .returning()
-        await db.update(boulders).set({ firstAscentFk: firstAscentResult[0].id }).where(eq(boulders.id, boulder.id))
+        await db.update(routes).set({ firstAscentFk: firstAscentResult[0].id }).where(eq(routes.id, route.id))
       } else {
-        await db.update(firstAscents).set(firstAscentValue).where(eq(firstAscents.id, boulder.firstAscentFk))
+        await db.update(firstAscents).set(firstAscentValue).where(eq(firstAscents.id, route.firstAscentFk))
       }
     } catch (exception) {
       return fail(404, { ...values, error: convertException(exception) })
     }
 
-    redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}/boulders/${params.boulderSlug}`)
+    redirect(303, `/areas/${params.slugs}/_/crags/${params.cragSlug}/routes/${params.routeSlug}`)
   },
 }

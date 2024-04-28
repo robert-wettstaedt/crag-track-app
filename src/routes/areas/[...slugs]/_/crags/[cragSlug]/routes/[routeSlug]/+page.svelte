@@ -1,19 +1,19 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
-  import BoulderName from '$lib/components/BoulderName'
+  import RouteName from '$lib/components/RouteName'
   import FileViewer from '$lib/components/FileViewer'
   import { Accordion, AccordionItem, AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
-  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/boulders/${$page.params.boulderSlug}`
+  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/routes/${$page.params.routeSlug}`
   $: files = data.files
 </script>
 
 <AppBar>
   <svelte:fragment slot="lead">
-    <BoulderName boulder={data.boulder} />
+    <RouteName route={data.route} />
   </svelte:fragment>
 
   <svelte:fragment slot="headline">
@@ -21,7 +21,7 @@
       <div>
         <span class="flex-auto">
           <dt>Created at</dt>
-          <dd>{DateTime.fromSQL(data.boulder.createdAt).toLocaleString(DateTime.DATETIME_MED)}</dd>
+          <dd>{DateTime.fromSQL(data.route.createdAt).toLocaleString(DateTime.DATETIME_MED)}</dd>
         </span>
       </div>
 
@@ -29,8 +29,8 @@
         <span class="flex-auto">
           <dt>Author</dt>
           <dd>
-            <a class="anchor" href={`/users/${data.boulder.author.userName}`}>
-              {data.boulder.author.userName}
+            <a class="anchor" href={`/users/${data.route.author.userName}`}>
+              {data.route.author.userName}
             </a>
           </dd>
         </span>
@@ -41,19 +41,19 @@
           <dt>FA</dt>
           <dd class="flex justify-between items-center">
             <span>
-              {#if data.boulder.firstAscent?.climber != null}
-                <a class="anchor" href={`/users/${data.boulder.firstAscent.climber.userName}`}>
-                  {data.boulder.firstAscent.climber.userName}
+              {#if data.route.firstAscent?.climber != null}
+                <a class="anchor" href={`/users/${data.route.firstAscent.climber.userName}`}>
+                  {data.route.firstAscent.climber.userName}
                 </a>
 
                 &nbsp;
-              {:else if data.boulder.firstAscent?.climberName != null}
-                {data.boulder.firstAscent.climberName}
+              {:else if data.route.firstAscent?.climberName != null}
+                {data.route.firstAscent.climberName}
 
                 &nbsp;
               {/if}
 
-              {data.boulder.firstAscent?.year ?? ''}
+              {data.route.firstAscent?.year ?? ''}
             </span>
 
             {#if data.session?.user != null}
@@ -70,7 +70,7 @@
   <svelte:fragment slot="trail">
     {#if data.session?.user != null}
       <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
-        <i class="fa-solid fa-pen me-2" />Edit boulder
+        <i class="fa-solid fa-pen me-2" />Edit route
       </a>
     {/if}
   </svelte:fragment>
@@ -152,7 +152,7 @@
             <AscentTypeLabel type={ascent.type} />
 
             {#if ascent.grade != null}
-              <BoulderName boulder={data.boulder} {ascent} />
+              <RouteName route={data.route} {ascent} />
             {/if}
           </div>
 

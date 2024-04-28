@@ -1,20 +1,20 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import BoulderFormFields from '$lib/components/BoulderFormFields'
-  import BoulderName from '$lib/components/BoulderName'
+  import RouteFormFields from '$lib/components/RouteFormFields'
+  import RouteName from '$lib/components/RouteName'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let data
   export let form
-  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/boulders/${$page.params.boulderSlug}`
+  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/routes/${$page.params.routeSlug}`
 </script>
 
 <AppBar>
   <svelte:fragment slot="lead">
-    <span>Edit boulder</span>
+    <span>Edit route</span>
     &nbsp;
     <a class="anchor" href={basePath}>
-      <BoulderName boulder={data.boulder} />
+      <RouteName route={data.route} />
     </a>
   </svelte:fragment>
 </AppBar>
@@ -29,15 +29,15 @@
   {/if}
 
   <div class="mt-8">
-    <BoulderFormFields
-      grade={form?.grade ?? data.boulder.grade}
-      gradingScale={form?.gradingScale ?? data.boulder.gradingScale}
-      name={form?.name ?? data.boulder.name}
+    <RouteFormFields
+      grade={form?.grade ?? data.route.grade}
+      gradingScale={form?.gradingScale ?? data.route.gradingScale}
+      name={form?.name ?? data.route.name}
     />
   </div>
 
   <div class="flex justify-between mt-4">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary">Update boulder</button>
+    <button class="btn variant-filled-primary">Update route</button>
   </div>
 </form>

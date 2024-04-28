@@ -1,14 +1,13 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import BoulderName from '$lib/components/BoulderName'
+  import AscentFormFields from '$lib/components/AscentFormFields'
+  import RouteName from '$lib/components/RouteName'
   import { AppBar } from '@skeletonlabs/skeleton'
   import type { ActionData, PageData } from './$types'
-  import AscentFormFields from '$lib/components/AscentFormFields'
-  import { DateTime } from 'luxon'
 
   export let data: PageData
   export let form: ActionData
-  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/boulders/${$page.params.boulderSlug}`
+  $: basePath = `/areas/${$page.params.slugs}/_/crags/${$page.params.cragSlug}/routes/${$page.params.routeSlug}`
 </script>
 
 <AppBar>
@@ -16,7 +15,7 @@
     <span>Edit ascent of</span>
     &nbsp;
     <a class="anchor" href={basePath}>
-      <BoulderName boulder={data.boulder} />
+      <RouteName route={data.route} />
     </a>
   </svelte:fragment>
 </AppBar>
@@ -34,7 +33,7 @@
     <AscentFormFields
       dateTime={form?.dateTime ?? data.ascent.dateTime}
       grade={form?.grade ?? data.ascent.grade}
-      gradingScale={data.boulder.gradingScale}
+      gradingScale={data.route.gradingScale}
       notes={form?.notes ?? data.ascent.notes}
       type={form?.type ?? data.ascent.type}
       filePaths={form?.filePaths ?? data.ascent.files.map((file) => file.path)}

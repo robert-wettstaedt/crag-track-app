@@ -1,14 +1,14 @@
 <script lang="ts">
-  import type { Boulder } from '$lib/db/schema'
+  import type { Route } from '$lib/db/schema'
   import { grades } from '$lib/grades'
   import type { ChangeEventHandler } from 'svelte/elements'
 
-  export let name: Boulder['name']
-  export let grade: Boulder['grade']
-  export let gradingScale: Boulder['gradingScale'] | undefined
+  export let name: Route['name']
+  export let grade: Route['grade']
+  export let gradingScale: Route['gradingScale'] | undefined
 
   const onChangeGradingScale: ChangeEventHandler<HTMLSelectElement> = (event) => {
-    gradingScale = event.currentTarget.value as Boulder['gradingScale']
+    gradingScale = event.currentTarget.value as Route['gradingScale']
   }
 </script>
 

@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { ascents, boulders, crags } from '$lib/db/schema'
+import { ascents, routes, crags } from '$lib/db/schema'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { and, desc, eq } from 'drizzle-orm'
@@ -17,15 +17,15 @@ export const load = (async ({ locals, params, parent }) => {
   const crag = await db.query.crags.findFirst({
     where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
     with: {
-      boulders: {
-        where: eq(boulders.slug, params.boulderSlug),
+      routes: {
+        where: eq(routes.slug, params.routeSlug),
         with: {
           author: true,
           ascents: {
             orderBy: desc(ascents.dateTime),
             with: {
               author: true,
-              boulder: true,
+              route: true,
               files: true,
             },
           },
@@ -40,18 +40,18 @@ export const load = (async ({ locals, params, parent }) => {
     },
   })
 
-  const boulder = crag?.boulders?.at(0)
+  const route = crag?.routes?.at(0)
 
-  if (boulder == null) {
+  if (route == null) {
     error(404)
   }
 
-  if (crag != null && crag.boulders.length > 1) {
-    error(400, `Multiple boulders with slug ${params.boulderSlug} found`)
+  if (crag != null && crag.routes.length > 1) {
+    error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
   const files = await Promise.all(
-    boulder.files.map(async (file) => {
+    route.files.map(async (file) => {
       try {
         const stat = await searchNextcloudFile(session, file)
 
@@ -63,7 +63,7 @@ export const load = (async ({ locals, params, parent }) => {
   )
 
   const enrichedAscents = await Promise.all(
-    boulder.ascents.map(async (ascent) => {
+    route.ascents.map(async (ascent) => {
       let notes = ascent.notes
 
       if (ascent.notes != null) {
@@ -95,7 +95,7 @@ export const load = (async ({ locals, params, parent }) => {
 
   return {
     ascents: enrichedAscents,
-    boulder,
+    route,
     files,
   }
 }) satisfies PageServerLoad

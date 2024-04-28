@@ -1,5 +1,5 @@
 import { fail, type ActionFailure } from '@sveltejs/kit'
-import { type Area, type Ascent, type Boulder, type Crag, type File, type FirstAscent } from './db/schema'
+import { type Area, type Ascent, type Route, type Crag, type File, type FirstAscent } from './db/schema'
 
 export type AreaActionValues = Pick<Area, 'name'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
@@ -29,14 +29,14 @@ export const validateCragForm = async (data: FormData): Promise<CragActionValues
   return values
 }
 
-export type BoulderActionValues = Pick<Boulder, 'name' | 'gradingScale' | 'grade'>
-export type BoulderActionFailure = ActionFailure<BoulderActionValues & { error: string }>
+export type RouteActionValues = Pick<Route, 'name' | 'gradingScale' | 'grade'>
+export type RouteActionFailure = ActionFailure<RouteActionValues & { error: string }>
 
-export const validateBoulderForm = async (data: FormData): Promise<BoulderActionValues> => {
+export const validateRouteForm = async (data: FormData): Promise<RouteActionValues> => {
   const name = data.get('name')
   const gradingScale = data.get('gradingScale')
   const grade = data.get('grade')
-  const values = { name, gradingScale, grade } as BoulderActionValues
+  const values = { name, gradingScale, grade } as RouteActionValues
 
   if (typeof name !== 'string' || name.length === 0) {
     throw fail(400, { ...values, error: 'name is required' })

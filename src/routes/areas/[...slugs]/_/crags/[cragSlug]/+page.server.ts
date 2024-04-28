@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { boulders, crags } from '$lib/db/schema'
+import { routes, crags } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichCrag } from '$lib/db/utils'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
@@ -15,8 +15,8 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(crags.slug, params.cragSlug), eq(crags.areaFk, areaId)),
     with: {
       author: true,
-      boulders: {
-        orderBy: boulders.grade,
+      routes: {
+        orderBy: routes.grade,
       },
       files: true,
     },
