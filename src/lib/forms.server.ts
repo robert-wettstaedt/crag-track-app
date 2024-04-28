@@ -1,12 +1,12 @@
 import { fail, type ActionFailure } from '@sveltejs/kit'
-import { type Area, type Ascent, type Route, type Crag, type File, type FirstAscent } from './db/schema'
+import { type Area, type Ascent, type Block, type File, type FirstAscent, type Route } from './db/schema'
 
 export type AreaActionValues = Pick<Area, 'name'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
 
 export const validateAreaForm = async (data: FormData): Promise<AreaActionValues> => {
   const name = data.get('name')
-  const values = { name } as CragActionValues
+  const values = { name } as BlockActionValues
 
   if (typeof name !== 'string' || name.length === 0) {
     throw fail(400, { ...values, error: 'name is required' })
@@ -15,12 +15,12 @@ export const validateAreaForm = async (data: FormData): Promise<AreaActionValues
   return values
 }
 
-export type CragActionValues = Pick<Crag, 'name'>
-export type CragActionFailure = ActionFailure<CragActionValues & { error: string }>
+export type BlockActionValues = Pick<Block, 'name'>
+export type BlockActionFailure = ActionFailure<BlockActionValues & { error: string }>
 
-export const validateCragForm = async (data: FormData): Promise<CragActionValues> => {
+export const validateBlockForm = async (data: FormData): Promise<BlockActionValues> => {
   const name = data.get('name')
-  const values = { name } as CragActionValues
+  const values = { name } as BlockActionValues
 
   if (typeof name !== 'string' || name.length === 0) {
     throw fail(400, { ...values, error: 'name is required' })

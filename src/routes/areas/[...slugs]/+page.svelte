@@ -70,18 +70,18 @@
 {/if}
 
 <div class="card mt-4">
-  <div class="card-header">Crags</div>
+  <div class="card-header">Blocks</div>
 
   <section class="p-4">
-    {#if data.area.crags.length === 0}
-      No crags yet
+    {#if data.area.blocks.length === 0}
+      No blocks yet
     {:else}
       <div class="flex flex-wrap gap-2">
-        {#each data.area.crags as crag}
-          <a class="card card-hover variant-ghost p-4" href={`${basePath}/_/crags/${crag.slug}`}>
+        {#each data.area.blocks as block}
+          <a class="card card-hover variant-ghost p-4" href={`${basePath}/_/blocks/${block.slug}`}>
             <dt>Name</dt>
             <dd>
-              {crag.name}
+              {block.name}
             </dd>
           </a>
         {/each}
@@ -90,7 +90,7 @@
 
     {#if data.session?.user != null}
       <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/_/crags/add`}>Add crag</a>
+        <a class="btn variant-filled-primary" href={`${basePath}/_/blocks/add`}>Add block</a>
       </div>
     {/if}
   </section>

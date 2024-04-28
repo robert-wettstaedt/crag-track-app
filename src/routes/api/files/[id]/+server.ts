@@ -12,7 +12,7 @@ export async function DELETE({ locals, params }) {
 
   const fileId = Number(params.id)
 
-  let file: InferResultType<'files', { ascent: true; route: true; crag: true }> | undefined = undefined
+  let file: InferResultType<'files', { ascent: true; route: true; block: true }> | undefined = undefined
   let user: User | undefined
 
   try {
@@ -21,7 +21,7 @@ export async function DELETE({ locals, params }) {
       with: {
         ascent: true,
         route: true,
-        crag: true,
+        block: true,
       },
     })
   } catch (exception) {
@@ -36,7 +36,7 @@ export async function DELETE({ locals, params }) {
     error(401, 'User not found')
   }
 
-  const authorId = file?.route?.createdBy ?? file?.crag?.createdBy ?? file?.ascent?.createdBy
+  const authorId = file?.route?.createdBy ?? file?.block?.createdBy ?? file?.ascent?.createdBy
 
   if (authorId !== user?.id) {
     error(401, 'You do not have permissions to delete this file')

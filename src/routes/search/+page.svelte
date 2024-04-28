@@ -19,7 +19,7 @@
   }
 
   let searchQuery = $page.url.searchParams.get('q') ?? ''
-  let tabSet: 'routes' | 'crags' | 'areas' | 'users' = 'routes'
+  let tabSet: 'routes' | 'blocks' | 'areas' | 'users' = 'routes'
   let element: HTMLFormElement | null = null
 
   const formAction = (el: HTMLFormElement) => {
@@ -51,9 +51,9 @@
         <svelte:fragment slot="lead"><i class="fa-solid fa-route" /></svelte:fragment>
         Routes ({data.searchResults.routes.length})
       </Tab>
-      <Tab bind:group={tabSet} name="crags" value="crags">
+      <Tab bind:group={tabSet} name="blocks" value="blocks">
         <svelte:fragment slot="lead"><i class="fa-solid fa-mountain" /></svelte:fragment>
-        Crags ({data.searchResults.crags.length})
+        Blocks ({data.searchResults.blocks.length})
       </Tab>
       <Tab bind:group={tabSet} name="areas" value="areas">
         <svelte:fragment slot="lead"><i class="fa-solid fa-layer-group" /></svelte:fragment>
@@ -73,19 +73,19 @@
                   <RouteName {route} />
                 </a>
 
-                <a class="text-primary-500" href={route.crag.pathname}>
-                  {route.crag.name}
+                <a class="text-primary-500" href={route.block.pathname}>
+                  {route.block.name}
                 </a>
               </li>
             {/each}
           </ul>
-        {:else if tabSet === 'crags'}
+        {:else if tabSet === 'blocks'}
           <nav class="list-nav">
             <ul>
-              {#each data.searchResults.crags as crag}
+              {#each data.searchResults.blocks as block}
                 <li>
-                  <a href={crag.pathname}>
-                    {crag.name}
+                  <a href={block.pathname}>
+                    {block.name}
                   </a>
                 </li>
               {/each}

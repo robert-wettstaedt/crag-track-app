@@ -1,18 +1,18 @@
-<script>
+<script lang="ts">
   import { page } from '$app/stores'
-  import BlockFormFields from '$lib/components/BlockFormFields'
+  import RouteFormFields from '$lib/components/RouteFormFields'
   import { AppBar } from '@skeletonlabs/skeleton'
 
-  export let data
   export let form
-  $: basePath = `/areas/${$page.params.slugs}`
+  export let data
+  $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`
 </script>
 
 <AppBar>
   <svelte:fragment slot="lead">
-    <span>Edit area</span>
+    <span>Create route in</span>
     &nbsp;
-    <a class="anchor" href={basePath}>{data.name}</a>
+    <a class="anchor" href={basePath}>{data.block.name}</a>
   </svelte:fragment>
 </AppBar>
 
@@ -26,11 +26,11 @@
   {/if}
 
   <div class="mt-8">
-    <BlockFormFields name={form?.name ?? data.name} />
+    <RouteFormFields grade={form?.grade ?? null} gradingScale={form?.gradingScale} name={form?.name ?? ''} />
   </div>
 
   <div class="flex justify-between mt-8">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary">Update area</button>
+    <button class="btn variant-filled-primary">Save route</button>
   </div>
 </form>

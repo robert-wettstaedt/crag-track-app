@@ -2,6 +2,6 @@
   export let data
 </script>
 
-{#await import('$lib/components/CragMap') then CragMap}
-  <CragMap.default crags={data.crags} />
+{#await import('$lib/components/BlocksMap') then BlocksMap}
+  <BlocksMap.default blocks={data.blocks} />
 {/await}

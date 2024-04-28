@@ -17,7 +17,7 @@ export const load = (async ({ url }) => {
       author: true,
       route: {
         with: {
-          crag: {
+          block: {
             with: {
               area: buildNestedAreaQuery(),
             },

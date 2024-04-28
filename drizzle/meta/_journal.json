@@ -15,6 +15,13 @@
       "when": 1714297250138,
       "tag": "0004_melted_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1714300809550,
+      "tag": "0005_redundant_white_tiger",
+      "breakpoints": true
     }
   ]
 }

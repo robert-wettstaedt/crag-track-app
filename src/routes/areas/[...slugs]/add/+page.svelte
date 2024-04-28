@@ -1,6 +1,6 @@
 <script>
   import { page } from '$app/stores'
-  import CragFormFields from '$lib/components/CragFormFields'
+  import BlockFormFields from '$lib/components/BlockFormFields'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let data
@@ -30,7 +30,7 @@
   {/if}
 
   <div class="mt-8">
-    <CragFormFields name={form?.name ?? ''} />
+    <BlockFormFields name={form?.name ?? ''} />
   </div>
 
   <div class="flex justify-between mt-8">

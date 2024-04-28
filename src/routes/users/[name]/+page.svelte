@@ -103,16 +103,16 @@
 
                 <ol class="breadcrumb w-auto pe-4">
                   <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.crag.area.pathname}>
-                      {attempt.route.crag.area.name}
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.block.area.pathname}>
+                      {attempt.route.block.area.name}
                     </a>
                   </li>
 
                   <li class="crumb-separator" aria-hidden>&rsaquo;</li>
 
                   <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.crag.pathname}>
-                      {attempt.route.crag.name}
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.block.pathname}>
+                      {attempt.route.block.name}
                     </a>
                   </li>
                 </ol>
@@ -141,16 +141,16 @@
 
                 <ol class="breadcrumb w-auto pe-4">
                   <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.crag.area.pathname}>
-                      {attempt.route.crag.area.name}
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.block.area.pathname}>
+                      {attempt.route.block.area.name}
                     </a>
                   </li>
 
                   <li class="crumb-separator" aria-hidden>&rsaquo;</li>
 
                   <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.crag.pathname}>
-                      {attempt.route.crag.name}
+                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.block.pathname}>
+                      {attempt.route.block.name}
                     </a>
                   </li>
                 </ol>
