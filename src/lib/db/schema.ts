@@ -32,9 +32,9 @@ export type InsertUser = InferInsertModel<typeof users>
 
 export const usersRelations = relations(users, ({ many }) => ({
   areas: many(areas),
+  ascents: many(ascents),
   blocks: many(blocks),
   routes: many(routes),
-  ascents: many(ascents),
 }))
 
 export const areas = sqliteTable('areas', {
@@ -52,6 +52,7 @@ export const areasRelations = relations(areas, ({ one, many }) => ({
 
   areas: many(areas, { relationName: 'area-to-area' }),
   blocks: many(blocks),
+  files: many(files),
 }))
 
 export const blocks = sqliteTable('blocks', {
@@ -110,8 +111,8 @@ export type FirstAscent = InferSelectModel<typeof firstAscents>
 export type InsertFirstAscent = InferInsertModel<typeof firstAscents>
 
 export const firstAscentsRelations = relations(firstAscents, ({ one }) => ({
-  route: one(routes, { fields: [firstAscents.routeFk], references: [routes.id] }),
   climber: one(users, { fields: [firstAscents.climberFk], references: [users.id] }),
+  route: one(routes, { fields: [firstAscents.routeFk], references: [routes.id] }),
 }))
 
 export const ascents = sqliteTable('ascents', {
@@ -143,15 +144,17 @@ export const files = sqliteTable('files', {
   path: text('path').notNull(),
   type: text('type', { enum: ['topo', 'beta', 'attempt', 'send', 'other'] }).notNull(),
 
+  areaFk: integer('area_fk'),
   ascentFk: integer('ascent_fk'),
   routeFk: integer('route_fk'),
   blockFk: integer('block_fk'),
 })
 
 export const filesRelations = relations(files, ({ one }) => ({
+  area: one(areas, { fields: [files.areaFk], references: [areas.id] }),
   ascent: one(ascents, { fields: [files.ascentFk], references: [ascents.id] }),
-  route: one(routes, { fields: [files.routeFk], references: [routes.id] }),
   block: one(blocks, { fields: [files.blockFk], references: [blocks.id] }),
+  route: one(routes, { fields: [files.routeFk], references: [routes.id] }),
 }))
 export type File = InferSelectModel<typeof files>
 export type InsertFile = InferInsertModel<typeof files>

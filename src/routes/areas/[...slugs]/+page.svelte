@@ -1,11 +1,13 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import FileViewer from '$lib/components/FileViewer'
+  import type { File } from '$lib/db/schema.js'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
-
   $: basePath = `/areas/${$page.params.slugs}`
+  $: files = data.files
 </script>
 
 <AppBar>
@@ -39,6 +41,47 @@
     {/if}
   </svelte:fragment>
 </AppBar>
+
+<div class="card mt-4">
+  <div class="card-header">Topos</div>
+
+  <section class="p-4">
+    {#key data.area.id}
+      {#if files.length === 0}
+        No topos yet
+      {:else}
+        <div class="flex flex-wrap gap-3">
+          {#each files as file}
+            <div class="flex" role="figure">
+              {#if file.stat != null}
+                <FileViewer
+                  {file}
+                  stat={file.stat}
+                  on:delete={() => {
+                    files = files.filter((_file) => file.id !== _file.id)
+                  }}
+                />
+              {:else if file.error != null}
+                <aside class="alert variant-filled-error">
+                  <div class="alert-message">
+                    <h3 class="h3">Error</h3>
+                    <p>{file.error}</p>
+                  </div>
+                </aside>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
+    {/key}
+
+    {#if data.session?.user != null}
+      <div class="flex justify-center mt-4">
+        <a class="btn variant-filled-primary" href={`${basePath}/add-topo`}> Add topos </a>
+      </div>
+    {/if}
+  </section>
+</div>
 
 {#if data.canAddArea || data.area.areas.length > 0}
   <div class="card mt-4">
