@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { routes, blocks, generateSlug, users } from '$lib/db/schema'
+import { blocks, generateSlug, routes, users } from '$lib/db/schema'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'

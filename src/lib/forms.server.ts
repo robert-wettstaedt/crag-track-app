@@ -29,14 +29,19 @@ export const validateBlockForm = async (data: FormData): Promise<BlockActionValu
   return values
 }
 
-export type RouteActionValues = Pick<Route, 'name' | 'gradingScale' | 'grade'>
+export type RouteActionValues = Pick<Route, 'description' | 'name' | 'gradingScale' | 'grade'>
 export type RouteActionFailure = ActionFailure<RouteActionValues & { error: string }>
 
 export const validateRouteForm = async (data: FormData): Promise<RouteActionValues> => {
+  const description = data.get('description')
   const name = data.get('name')
   const gradingScale = data.get('gradingScale')
   const grade = data.get('grade')
-  const values = { name, gradingScale, grade } as RouteActionValues
+  const values = { description, name, gradingScale, grade } as RouteActionValues
+
+  if (description != null && typeof description !== 'string') {
+    throw fail(400, { ...values, error: 'description must be a valid string' })
+  }
 
   if (typeof name !== 'string' || name.length === 0) {
     throw fail(400, { ...values, error: 'name is required' })

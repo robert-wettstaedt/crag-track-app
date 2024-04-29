@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
-  import RouteName from '$lib/components/RouteName'
   import FileViewer from '$lib/components/FileViewer'
+  import RouteName from '$lib/components/RouteName'
   import { Accordion, AccordionItem, AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
@@ -64,6 +64,19 @@
           </dd>
         </span>
       </div>
+
+      {#if data.route.description != null && data.route.description.length > 0}
+        <div>
+          <span class="flex-auto">
+            <dt>Description</dt>
+            <dd>
+              <div class="rendered-markdown mt-4">
+                {@html data.route.description}
+              </div>
+            </dd>
+          </span>
+        </div>
+      {/if}
     </dl>
   </svelte:fragment>
 

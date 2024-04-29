@@ -26,7 +26,12 @@
   {/if}
 
   <div class="mt-8">
-    <RouteFormFields grade={form?.grade ?? null} gradingScale={form?.gradingScale} name={form?.name ?? ''} />
+    <RouteFormFields
+      description={form?.description ?? ''}
+      grade={form?.grade ?? null}
+      gradingScale={form?.gradingScale}
+      name={form?.name ?? ''}
+    />
   </div>
 
   <div class="flex justify-between mt-8">

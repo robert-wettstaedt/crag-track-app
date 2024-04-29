@@ -1,1 +1,0 @@
-ALTER TABLE files ADD `area_fk` integer;

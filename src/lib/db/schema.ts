@@ -79,6 +79,7 @@ export const routes = sqliteTable('routes', {
   ...baseFields,
   ...baseContentFields,
 
+  description: text('description'),
   grade: text('grade'),
   gradingScale: text('grading_scale', { enum: ['FB', 'V'] }).notNull(),
 

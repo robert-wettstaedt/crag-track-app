@@ -30,6 +30,7 @@
 
   <div class="mt-8">
     <RouteFormFields
+      description={form?.description ?? data.route.description}
       grade={form?.grade ?? data.route.grade}
       gradingScale={form?.gradingScale ?? data.route.gradingScale}
       name={form?.name ?? data.route.name}

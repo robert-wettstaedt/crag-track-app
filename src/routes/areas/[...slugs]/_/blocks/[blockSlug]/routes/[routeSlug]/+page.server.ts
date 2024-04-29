@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { ascents, routes, blocks } from '$lib/db/schema'
+import { ascents, blocks, routes } from '$lib/db/schema'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { and, desc, eq } from 'drizzle-orm'
@@ -93,9 +93,16 @@ export const load = (async ({ locals, params, parent }) => {
     }),
   )
 
+  let description = route.description
+
+  if (description != null) {
+    const result = await unified().use(remarkParse).use(remarkHtml).process(description)
+    description = result.value as string
+  }
+
   return {
     ascents: enrichedAscents,
-    route,
+    route: { ...route, description },
     files,
   }
 }) satisfies PageServerLoad

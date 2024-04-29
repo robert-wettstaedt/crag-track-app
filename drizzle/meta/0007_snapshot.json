@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "ce63bcec-f082-46eb-9358-5fb66f7428b4",
-  "prevId": "6191e3ad-1ecc-4ed9-b9e4-062f8e7734f0",
+  "id": "20f62036-2b8b-49f4-91a0-3f5b7fa07208",
+  "prevId": "ce63bcec-f082-46eb-9358-5fb66f7428b4",
   "tables": {
     "areas": {
       "name": "areas",
@@ -342,6 +342,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "grade": {
