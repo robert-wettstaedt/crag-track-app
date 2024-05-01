@@ -36,7 +36,8 @@
       gradingScale={data.route.gradingScale}
       notes={form?.notes ?? data.ascent.notes}
       type={form?.type ?? data.ascent.type}
-      filePaths={form?.filePaths ?? data.ascent.files.map((file) => file.path)}
+      filePaths={form?.filePaths ??
+        (data.ascent.files.length === 0 ? undefined : data.ascent.files.map((file) => file.path))}
     />
   </div>
 
