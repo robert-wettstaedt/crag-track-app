@@ -51,7 +51,7 @@ export const load = (async ({ locals, params, parent }) => {
   )
 
   return {
-    block: block,
+    block,
     blocks: geolocationBlocksResults.map(enrichBlock),
     files,
   }

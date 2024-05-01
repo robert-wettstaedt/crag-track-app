@@ -41,6 +41,10 @@ export const areas = sqliteTable('areas', {
   ...baseFields,
   ...baseContentFields,
 
+  type: text('type', { enum: ['area', 'crag', 'sector'] })
+    .notNull()
+    .default('area'),
+
   parentFk: integer('parent_fk').references((): AnySQLiteColumn => areas.id),
 })
 export type Area = InferSelectModel<typeof areas>

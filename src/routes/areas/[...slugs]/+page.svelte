@@ -43,6 +43,18 @@
 </AppBar>
 
 <div class="card mt-4">
+  <div class="card-header">Location</div>
+
+  <section class="pt-4">
+    {#await import('$lib/components/BlocksMap') then BlocksMap}
+      {#key data.area.id}
+        <BlocksMap.default blocks={data.blocks} height={400} selectedArea={data.area} />
+      {/key}
+    {/await}
+  </section>
+</div>
+
+<div class="card mt-4">
   <div class="card-header">Topos</div>
 
   <section class="p-4">

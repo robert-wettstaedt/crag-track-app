@@ -1,7 +1,7 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { areas } from '$lib/db/schema'
-import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
+import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -22,9 +22,7 @@ export const load = (async ({ locals, parent }) => {
     error(404)
   }
 
-  return {
-    name: area.name,
-  }
+  return area
 }) satisfies PageServerLoad
 
 export const actions = {
@@ -35,12 +33,12 @@ export const actions = {
     }
 
     const data = await request.formData()
-    let values: BlockActionValues
+    let values: AreaActionValues
 
     try {
-      values = await validateBlockForm(data)
+      values = await validateAreaForm(data)
     } catch (exception) {
-      return exception as BlockActionFailure
+      return exception as AreaActionFailure
     }
 
     const { areaId } = convertAreaSlug(params)

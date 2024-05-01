@@ -1,11 +1,15 @@
 <script lang="ts">
-  import type { Block } from '$lib/db/schema'
-  import type { EnrichedBlock } from '$lib/db/utils'
+  import type { Area, Block } from '$lib/db/schema'
+  import type { EnrichedArea, EnrichedBlock } from '$lib/db/utils'
   import Feature from 'ol/Feature.js'
-  import Map from 'ol/Map.js'
+  import OlMap from 'ol/Map.js'
   import Overlay from 'ol/Overlay.js'
   import View from 'ol/View.js'
+  import type { Coordinate } from 'ol/coordinate'
+  import { boundingExtent } from 'ol/extent'
+  import { Geometry } from 'ol/geom'
   import Point from 'ol/geom/Point.js'
+  import { fromExtent } from 'ol/geom/Polygon'
   import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer.js'
   import 'ol/ol.css'
   import { Projection, addProjection, fromLonLat } from 'ol/proj.js'
@@ -18,9 +22,15 @@
   import type { ChangeEventHandler } from 'svelte/elements'
 
   export let blocks: EnrichedBlock[]
+  export let selectedArea: Area | null = null
   export let selectedBlock: Block | null = null
   export let heightSubtrahend = 0
   export let height: number | null = null
+
+  interface FeatureData {
+    label: string
+    pathname: string
+  }
 
   proj4.defs(
     'EPSG:31468',
@@ -35,18 +45,18 @@
   })
   addProjection(projection)
 
-  const dispatch = createEventDispatcher<{ action: Map }>()
+  const dispatch = createEventDispatcher<{ action: OlMap }>()
 
   let mapElement: HTMLDivElement | null = null
-  let map: Map | null = null
+  let map: OlMap | null = null
 
-  const createMap = (element: HTMLDivElement): Map => {
+  const createMap = (element: HTMLDivElement): OlMap => {
     const center = {
       lat: selectedBlock?.lat ?? 0,
       lng: selectedBlock?.long ?? 0,
     }
 
-    const map = new Map({
+    const map = new OlMap({
       target: element,
       layers: [
         new TileLayer({
@@ -64,60 +74,108 @@
         }),
       ],
       view: new View({
-        center: fromLonLat([center.lng, center.lat]),
-        zoom: 10,
+        center: fromLonLat([0, 0]),
+        zoom: 17,
       }),
     })
 
     return map
   }
 
-  const createMarkers = (map: Map) => {
-    const iconFeatures = blocks
-      .map((block) => {
-        if (block.lat != null && block.long != null) {
-          const iconFeature = new Feature({
-            geometry: new Point(fromLonLat([block.long, block.lat])),
-            block,
-          })
+  const findArea = (area: EnrichedArea | null, type?: EnrichedArea['type']): EnrichedArea[] => {
+    const parents = area == null ? [] : [area]
+    let current = area
 
-          const iconStyle = new Style({
-            text: new Text({
-              font: `900 ${block.id === selectedBlock?.id ? 2.25 : 1.875}rem 'Font Awesome 6 Free'`,
-              text: '\uf6fc',
-              fill: new Fill({ color: block.id === selectedBlock?.id ? '#60a5fa' : '#ef4444' }),
-            }),
-          })
+    while (current != null && (type == null ? true : current.type !== type)) {
+      current = (current as EnrichedArea).parent as EnrichedArea | null
+      current != null && parents.unshift(current)
+    }
 
-          iconFeature.setStyle(iconStyle)
+    return parents
+  }
 
-          return iconFeature
-        }
-      })
-      .filter((d) => d != null) as Feature<Point>[]
+  const createMarker = (block: EnrichedBlock) => {
+    const parents = findArea(block.area as EnrichedArea, 'crag')
 
-    if (iconFeatures.length > 0) {
-      const vectorSource = new VectorSource({
-        features: iconFeatures,
+    if (block.lat != null && block.long != null) {
+      const iconFeature = new Feature({
+        data: {
+          label: parents.map((parent) => parent.name).join(' / ') + (parents.length === 0 ? '' : ' / ') + block.name,
+          pathname: block.pathname,
+        } satisfies FeatureData,
+        geometry: new Point(fromLonLat([block.long, block.lat])),
       })
 
-      const vectorLayer = new VectorLayer({
-        source: vectorSource as any,
+      const iconStyle = new Style({
+        text: new Text({
+          font: `900 ${block.id === selectedBlock?.id ? 2.25 : 1.875}rem 'Font Awesome 6 Free'`,
+          text: '\uf6fc',
+          fill: new Fill({ color: block.id === selectedBlock?.id ? '#60a5fa' : '#ef4444' }),
+        }),
       })
 
-      map.addLayer(vectorLayer)
+      iconFeature.setStyle(iconStyle)
 
-      if (selectedBlock == null) {
-        window.requestAnimationFrame(() => {
-          map.getView().fit(vectorSource.getExtent(), { maxZoom: 10, padding: [50, 50, 50, 50] })
-        })
-      }
+      return iconFeature
     }
   }
 
-  const createPopup = (map: Map) => {
+  const createCragLayer = (map: OlMap, area: EnrichedArea) => {
+    const areaBlocks = blocks.filter((block) => findArea(block.area as EnrichedArea, 'crag').at(0)?.id === area.id)
+    const iconFeatures = areaBlocks.map(createMarker).filter((d) => d != null) as Feature<Point>[]
+
+    if (iconFeatures.length > 0) {
+      const vectorSource = new VectorSource<Feature<Geometry>>({
+        features: iconFeatures,
+      })
+
+      const parents = findArea(area)
+
+      const geometry = fromExtent(vectorSource.getExtent())
+      geometry.scale(1.5)
+      vectorSource.addFeature(
+        new Feature({
+          data: {
+            label: parents.map((parent) => parent.name).join(' / '),
+            pathname: area.pathname,
+          } satisfies FeatureData,
+          geometry,
+          text: area.name,
+        }),
+      )
+
+      const vectorLayer = new VectorLayer({
+        declutter: area.id,
+        source: vectorSource,
+
+        style: {
+          'stroke-color': 'rgba(49, 57, 68, 1)',
+          'stroke-width': 1,
+          'fill-color': 'rgba(255, 255, 255, 0.2)',
+          'text-value': ['get', 'text'],
+          'text-font': 'bold 14px sans-serif',
+          'text-offset-y': -12,
+          'text-overflow': true,
+        },
+      })
+
+      map.addLayer(vectorLayer)
+    }
+  }
+
+  const createMarkers = (map: OlMap) => {
+    const allCrags = blocks
+      .map((block) => findArea(block.area as EnrichedArea, 'crag').at(0))
+      .filter((d) => d != null) as EnrichedArea[]
+    const cragsMap = new Map(allCrags.map((area) => [area.id, area]))
+    const crags = Array.from(cragsMap.values())
+
+    crags.forEach((area) => createCragLayer(map, area))
+  }
+
+  const createPopup = (map: OlMap) => {
     const element = document.createElement('div')
-    element.className = 'bg-white rounded p-2 anchor'
+    element.className = 'bg-white rounded p-2 anchor z-10'
     map.getTargetElement().appendChild(element)
 
     const popup = new Overlay({
@@ -134,14 +192,18 @@
     map.addOverlay(popup)
 
     map.on('click', function (event) {
-      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature)
+      if (((event.originalEvent as Event).target as HTMLElement).tagName.toLowerCase() === 'a') {
+        return
+      }
 
-      if (feature == null) {
+      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature)
+      const data = feature?.get('data') as FeatureData | undefined
+
+      if (data == null) {
         popup.setPosition(undefined)
       } else {
-        const block = feature.get('block') as EnrichedBlock
-        popup.setPosition(fromLonLat([block.long!, block.lat!]))
-        element.innerHTML = `<a class="anchor" href="${block.pathname}">${block.name}</a>`
+        popup.setPosition(event.coordinate)
+        element.innerHTML = `<a class="anchor" href="${data.pathname}">${data.label}</a>`
       }
     })
 
@@ -161,11 +223,37 @@
     map.on('movestart', () => popup.setPosition(undefined))
   }
 
+  const centerMap = (map: OlMap) => {
+    map.once('rendercomplete', () => {
+      const selectedBlocks = blocks.filter((block) => {
+        if (selectedBlock?.id === block.id) {
+          return true
+        }
+
+        if (selectedArea) {
+          const parentIds = findArea(block.area as EnrichedArea).map((area) => area.id)
+          return parentIds.includes(selectedArea.id)
+        }
+
+        return false
+      })
+
+      const blocksToDisplay = selectedBlocks.length === 0 ? blocks : selectedBlocks
+      const coordinates = blocksToDisplay
+        .map((block) => (block.lat == null || block.long == null ? undefined : fromLonLat([block.long, block.lat])))
+        .filter((d) => d != null) as Coordinate[]
+      const extent = boundingExtent(coordinates)
+
+      map.getView().fit(extent, { maxZoom: 20, padding: [50, 50, 50, 50] })
+    })
+  }
+
   const mapAction = (el: HTMLDivElement) => {
     mapElement = el
     map = createMap(el)
     createMarkers(map)
     createPopup(map)
+    centerMap(map)
     resizeMap()
 
     dispatch('action', map)

@@ -1,15 +1,20 @@
 import { fail, type ActionFailure } from '@sveltejs/kit'
 import { type Area, type Ascent, type Block, type File, type FirstAscent, type Route } from './db/schema'
 
-export type AreaActionValues = Pick<Area, 'name'>
+export type AreaActionValues = Pick<Area, 'name' | 'type'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
 
 export const validateAreaForm = async (data: FormData): Promise<AreaActionValues> => {
   const name = data.get('name')
-  const values = { name } as BlockActionValues
+  const type = data.get('type')
+  const values = { name, type } as AreaActionValues
 
   if (typeof name !== 'string' || name.length === 0) {
     throw fail(400, { ...values, error: 'name is required' })
+  }
+
+  if (typeof type !== 'string' || type.length === 0) {
+    throw fail(400, { ...values, error: 'type is required' })
   }
 
   return values
