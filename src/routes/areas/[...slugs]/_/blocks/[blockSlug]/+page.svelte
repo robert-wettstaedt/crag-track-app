@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import RouteName from '$lib/components/RouteName'
   import FileViewer from '$lib/components/FileViewer'
+  import RouteName from '$lib/components/RouteName'
   import type { File } from '$lib/db/schema'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
@@ -92,7 +92,18 @@
                     files = files.filter((_file) => file.id !== _file.id)
                   }}
                 >
-                  <RouteName route={data.block.routes.find((route) => file.routeFk === route.id)} />
+                  <div class="flex justify-between">
+                    <div>
+                      <RouteName route={data.block.routes.find((route) => file.routeFk === route.id)} />
+                    </div>
+
+                    {#if file.stat.mime?.includes('image')}
+                      <a href={`${basePath}/draw-topo/${file.id}`}>
+                        <i class="fa-solid fa-marker" />
+                        Draw topo
+                      </a>
+                    {/if}
+                  </div>
                 </FileViewer>
               {:else if file.error != null}
                 <aside class="alert variant-filled-error">

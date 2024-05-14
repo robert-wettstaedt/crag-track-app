@@ -1,5 +1,6 @@
 import { fail, type ActionFailure } from '@sveltejs/kit'
 import { type Area, type Ascent, type Block, type File, type FirstAscent, type Route } from './db/schema'
+import type { Point } from './components/TopoViewer'
 
 export type AreaActionValues = Pick<Area, 'name' | 'type'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
@@ -127,4 +128,45 @@ export const validateAscentForm = async (data: FormData): Promise<AscentActionVa
   }
 
   return values
+}
+
+export const validateTopoForm = async (data: FormData) => {
+  const rawCount = data.get('count')
+  const count = Number(rawCount)
+
+  const topType = data.get('topType')
+
+  const xItems = data.getAll('points.x')
+  const yItems = data.getAll('points.y')
+  const typeItems = data.getAll('points.type')
+
+  const values = { count, x: xItems, y: yItems, type: typeItems }
+
+  if (Number.isNaN(count) || count !== xItems.length || count !== yItems.length || count !== typeItems.length) {
+    throw fail(400, { ...values, error: `Unable to verify count: ${count}` })
+  }
+
+  if (typeof topType !== 'string' || topType.length === 0) {
+    throw fail(400, { ...values, error: 'topType is required' })
+  }
+
+  const points: Point[] = []
+
+  for (let index = 0; index < count; index++) {
+    const type = typeItems[index] as Point['type']
+    const x = Number(xItems[index])
+    const y = Number(yItems[index])
+
+    if (typeof type !== 'string' || type.length === 0) {
+      throw fail(400, { ...values, error: 'point type is required' })
+    }
+
+    if (Number.isNaN(x) || Number.isNaN(y)) {
+      throw fail(400, { ...values, error: `point coordinate must be a number: "${xItems[index]}, ${yItems[index]}"` })
+    }
+
+    points.push({ id: 0, type, x, y })
+  }
+
+  console.log(points)
 }

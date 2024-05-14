@@ -163,3 +163,15 @@ export const filesRelations = relations(files, ({ one }) => ({
 }))
 export type File = InferSelectModel<typeof files>
 export type InsertFile = InferInsertModel<typeof files>
+
+export const topos = sqliteTable('topos', {
+  id: baseFields.id,
+
+  fileFk: integer('file_fk'),
+})
+
+export const toposRelations = relations(topos, ({ one }) => ({
+  file: one(files, { fields: [topos.fileFk], references: [files.id] }),
+}))
+export type Topo = InferSelectModel<typeof topos>
+export type InsertTopo = InferInsertModel<typeof topos>
