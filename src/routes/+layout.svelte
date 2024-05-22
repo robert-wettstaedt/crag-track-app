@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import Breadcrumb from '$lib/components/Breadcrumb'
   import { SignIn, SignOut } from '@auth/sveltekit/components'
   import { arrow, autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom'
@@ -24,7 +25,9 @@
       </svelte:fragment>
 
       <svelte:fragment slot="trail">
-        {#if $page.data.session?.user == null}
+        {#if PUBLIC_DEMO_MODE}
+          Demo mode
+        {:else if $page.data.session?.user == null}
           <SignIn>
             <div slot="submitButton" class="buttonPrimary">Sign in</div>
           </SignIn>

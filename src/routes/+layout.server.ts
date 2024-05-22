@@ -1,6 +1,6 @@
 import { db } from '$lib/db/db.server'
-import { users, type User, files } from '$lib/db/schema'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { users, type User } from '$lib/db/schema'
+import { eq } from 'drizzle-orm'
 import type { LayoutServerLoad } from './$types'
 
 export const load: LayoutServerLoad = async (event) => {
