@@ -1,8 +1,18 @@
 import type { db } from './db.server'
 import type { NestedArea, NestedBlock, NestedRoute } from './types'
 
+/**
+ * The maximum depth for nesting areas.
+ * 
+ * @constant {number}
+ */
 export const MAX_AREA_NESTING_DEPTH = 4
 
+/**
+ * Builds a nested area query with a specified maximum nesting depth.
+ *
+ * @returns {object} The nested area query object.
+ */
 export const buildNestedAreaQuery = () => {
   let nestedAreaQuery: Parameters<typeof db.query.areas.findMany>[0] = {
     with: {
@@ -26,6 +36,13 @@ interface WithPathname {
 }
 
 export interface EnrichedArea extends NestedArea, WithPathname {}
+
+/**
+ * Enriches a NestedArea object by adding a pathname.
+ *
+ * @param {NestedArea} area - The area to enrich.
+ * @returns {EnrichedArea} The enriched area with a pathname.
+ */
 export const enrichArea = (area: NestedArea): EnrichedArea => {
   const slugs: string[] = []
 
@@ -48,6 +65,13 @@ export const enrichArea = (area: NestedArea): EnrichedArea => {
 }
 
 export interface EnrichedBlock extends NestedBlock, WithPathname {}
+
+/**
+ * Enriches a NestedBlock object by adding a pathname and enriching its area.
+ *
+ * @param {NestedBlock} block - The block to enrich.
+ * @returns {EnrichedBlock} The enriched block with a pathname and enriched area.
+ */
 export const enrichBlock = (block: NestedBlock): EnrichedBlock => {
   const area = enrichArea(block.area as NestedArea)
 
@@ -55,7 +79,16 @@ export const enrichBlock = (block: NestedBlock): EnrichedBlock => {
   return { ...block, area, pathname }
 }
 
+
 export interface EnrichedRoute extends NestedRoute, WithPathname {}
+
+/**
+ * Enriches a NestedRoute object by adding a pathname and enriching its block.
+ *
+ * @param {NestedRoute} route - The route to enrich.
+ * @returns {EnrichedRoute} The enriched route with a pathname and enriched block.
+ * @throws Will throw an error if the route cannot be enriched.
+ */
 export const enrichRoute = (route: NestedRoute): EnrichedRoute => {
   try {
     const block = enrichBlock(route.block as NestedBlock)

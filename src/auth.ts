@@ -39,6 +39,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
       }
     },
     async jwt({ account, token }) {
+      // If account is available, add its tokens to the JWT
       if (account != null) {
         return {
           ...token,
@@ -48,11 +49,13 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
         }
       }
 
+      // If the current token is still valid, return it
       if (Date.now() < (token.expiresAt as number) * 1000) {
         return token
       }
 
       try {
+        // Prepare the parameters for the token refresh request
         const searchParams = new URLSearchParams({
           client_id: nextcloudProvider.clientId!,
           client_secret: nextcloudProvider.clientSecret!,
@@ -60,14 +63,18 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
           refresh_token: token.refreshToken as string,
         })
 
+        // Make the request to refresh the token
         const response = await fetch(`${nextcloudProvider.token}?${searchParams.toString()}`, { method: 'POST' })
 
+        // Parse the response to get the new tokens
         const tokens: Account = await response.json()
 
+        // If the response is not OK or tokens are invalid, throw an error
         if (!response.ok || tokens.expires_in == null) {
           throw tokens
         }
 
+        // Return the new token data, keeping previous properties
         return {
           ...token, // Keep the previous token properties
           accessToken: tokens.access_token,
