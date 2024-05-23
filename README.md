@@ -24,7 +24,12 @@ A webapp for tracking your rock-climbing sessions.
   ```
 
 - Copy [`.env.example`](./.env.example) to `.env` and fill in the info about your Nextcloud instance.
-- If no `sqlite` database file exists in the root of the project, a new one will be created upon starting the app.
+- If no `sqlite` database file exists in the root of the project, a new one will be created upon starting the app. Then run
+
+  ```bash
+    npm run generate
+    npm run migrate
+  ```
 
 ## License
 
