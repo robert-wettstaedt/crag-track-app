@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="./static/android-chrome-512x512.png" width="128" alt="Climbing Log Logo" />
+  <img src="./static/android-chrome-512x512.png" width="128" alt="Crag Track Logo" />
 </p>
 
-# Climbing Log
+# Crag Track
 
 A webapp for tracking your rock-climbing sessions.
 
-[Demo](https://climbing-log.vercel.app/)
+[Demo](https://crag-track.vercel.app/)
 
 ## Features
 

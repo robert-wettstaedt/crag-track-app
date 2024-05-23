@@ -12,7 +12,7 @@
 </script>
 
 <svelte:head>
-  <title>Climbing log</title>
+  <title>Crag Track</title>
 </svelte:head>
 
 <!-- App Shell -->
@@ -21,7 +21,7 @@
     <!-- App Bar -->
     <AppBar>
       <svelte:fragment slot="lead">
-        <strong class="text-xl uppercase">Climbing Log</strong>
+        <strong class="text-xl uppercase">Crag Track</strong>
       </svelte:fragment>
 
       <svelte:fragment slot="trail">

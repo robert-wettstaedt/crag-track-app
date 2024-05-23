@@ -33,7 +33,7 @@ if (PUBLIC_DEMO_MODE) {
       event.locals.auth ??= async () => {
         return {
           user: {
-            email: 'demo@climbing-log.com',
+            email: 'demo@crag-track.com',
             id: '1',
             name: 'demo_user',
           },

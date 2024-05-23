@@ -123,7 +123,7 @@ CREATE TABLE `users` (
 	`email` text NOT NULL,
 	`user_name` text NOT NULL
 );
-INSERT INTO users VALUES('2024-05-23 08:09:12',1,'demo@climbing-log.com','demo_user');
+INSERT INTO users VALUES('2024-05-23 08:09:12',1,'demo@crag-track.com','demo_user');
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('users',2);
 INSERT INTO sqlite_sequence VALUES('areas',21);
