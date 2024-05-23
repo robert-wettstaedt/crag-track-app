@@ -6,6 +6,8 @@
 
 A webapp for tracking your rock-climbing sessions.
 
+[Demo](https://climbing-log.vercel.app/)
+
 ## Features
 
 - ➕ Create new bouldering areas, crags and boulders - with support for [FB and V grades](https://www.mountainproject.com/international-climbing-grades).
