@@ -1,4 +1,8 @@
-# climbing-log
+<p align="center">
+  <img src="./static/android-chrome-512x512.png" width="128" alt="Climbing Log Logo" />
+</p>
+
+# Climbing Log
 
 A webapp for tracking your rock-climbing sessions.
 
