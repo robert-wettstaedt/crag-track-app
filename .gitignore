@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/svelte,visualstudiocode,node
-# Edit at https://www.toptal.com/developers/gitignore?templates=svelte,visualstudiocode,node
+# Created by https://www.toptal.com/developers/gitignore/api/node,svelte,visualstudiocode,vercel
+# Edit at https://www.toptal.com/developers/gitignore?templates=node,svelte,visualstudiocode,vercel
 
 ### Node ###
 # Logs
@@ -148,6 +148,9 @@ dist
 .svelte-kit/
 package
 
+### Vercel ###
+.vercel
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
@@ -167,6 +170,6 @@ package
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/svelte,visualstudiocode,node
+# End of https://www.toptal.com/developers/gitignore/api/node,svelte,visualstudiocode,vercel
 
 db/sqlite.*
