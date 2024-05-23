@@ -30,7 +30,16 @@ let auth: ReturnType<typeof SvelteKitAuth>
 if (PUBLIC_DEMO_MODE) {
   auth = {
     handle: ({ event, resolve }) => {
-      event.locals.auth ??= async () => null
+      event.locals.auth ??= async () => {
+        return {
+          user: {
+            email: 'demo@climbing-log.com',
+            id: '1',
+            name: 'demo_user',
+          },
+          expires: '',
+        }
+      }
 
       return resolve(event)
     },

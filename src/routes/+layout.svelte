@@ -25,9 +25,7 @@
       </svelte:fragment>
 
       <svelte:fragment slot="trail">
-        {#if PUBLIC_DEMO_MODE}
-          Demo mode
-        {:else if $page.data.session?.user == null}
+        {#if $page.data.session?.user == null}
           <SignIn>
             <div slot="submitButton" class="buttonPrimary">Sign in</div>
           </SignIn>
@@ -48,11 +46,13 @@
                   <a href={`/users/${$page.data.session.user.name}`}>Profile</a>
                 </li>
 
-                <li class="list-item-sign-out">
-                  <SignOut>
-                    <span slot="submitButton">Sign out</span>
-                  </SignOut>
-                </li>
+                {#if !PUBLIC_DEMO_MODE}
+                  <li class="list-item-sign-out">
+                    <SignOut>
+                      <span slot="submitButton">Sign out</span>
+                    </SignOut>
+                  </li>
+                {/if}
               </ul>
             </nav>
 
