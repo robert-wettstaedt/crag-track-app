@@ -8,11 +8,10 @@
 
   export let data
 
-  const ascents = data.sends.map((ascent) => ({
-    ...ascent,
-    grade: ascent.grade ?? ascent.route.grade,
-    color: grades.find((grade) => grade[ascent.route.gradingScale] === ascent.grade)?.color,
-  }))
+  const ascents = data.sends.map((ascent) => {
+    const gradeObj = grades.find((grade) => grade[ascent.route.gradingScale] === (ascent.grade ?? ascent.route.grade))
+    return { ...ascent, grade: gradeObj?.FB, color: gradeObj?.color }
+  })
 </script>
 
 <AppBar>
