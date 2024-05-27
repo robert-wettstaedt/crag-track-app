@@ -37,6 +37,12 @@ A webapp for tracking your rock-climbing sessions.
     npm run migrate
   ```
 
+## Roadmap
+
+- File browsing for the file-hosting instance
+- Route annotation
+- Export of a crag to PDF
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
