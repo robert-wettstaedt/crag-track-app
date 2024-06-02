@@ -5,6 +5,13 @@ import type { Point } from './components/TopoViewer'
 export type AreaActionValues = Pick<Area, 'name' | 'type'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
 
+/**
+ * Validates the area form data.
+ *
+ * @param {FormData} data - The form data to validate.
+ * @returns {Promise<AreaActionValues>} The validated area action values.
+ * @throws {ActionFailure<AreaActionValues & { error: string }>} If validation fails.
+ */
 export const validateAreaForm = async (data: FormData): Promise<AreaActionValues> => {
   const name = data.get('name')
   const type = data.get('type')
@@ -24,6 +31,13 @@ export const validateAreaForm = async (data: FormData): Promise<AreaActionValues
 export type BlockActionValues = Pick<Block, 'name'>
 export type BlockActionFailure = ActionFailure<BlockActionValues & { error: string }>
 
+/**
+ * Validates the block form data.
+ *
+ * @param {FormData} data - The form data to validate.
+ * @returns {Promise<BlockActionValues>} The validated block action values.
+ * @throws {ActionFailure<BlockActionValues & { error: string }>} If validation fails.
+ */
 export const validateBlockForm = async (data: FormData): Promise<BlockActionValues> => {
   const name = data.get('name')
   const values = { name } as BlockActionValues
@@ -38,6 +52,13 @@ export const validateBlockForm = async (data: FormData): Promise<BlockActionValu
 export type RouteActionValues = Pick<Route, 'description' | 'name' | 'gradingScale' | 'grade'>
 export type RouteActionFailure = ActionFailure<RouteActionValues & { error: string }>
 
+/**
+ * Validates the route form data.
+ *
+ * @param {FormData} data - The form data to validate.
+ * @returns {Promise<RouteActionValues>} The validated route action values.
+ * @throws {ActionFailure<RouteActionValues & { error: string }>} If validation fails.
+ */
 export const validateRouteForm = async (data: FormData): Promise<RouteActionValues> => {
   const description = data.get('description')
   const name = data.get('name')
@@ -67,6 +88,13 @@ export const validateRouteForm = async (data: FormData): Promise<RouteActionValu
 export type FirstAscentActionValues = Pick<FirstAscent, 'climberName' | 'year'>
 export type FirstAscentActionFailure = ActionFailure<FirstAscentActionValues & { error: string }>
 
+/**
+ * Validates the first ascent form data.
+ *
+ * @param {FormData} data - The form data to validate.
+ * @returns {Promise<FirstAscentActionValues>} The validated first ascent action values.
+ * @throws {ActionFailure<FirstAscentActionValues & { error: string }>} If validation fails.
+ */
 export const validateFirstAscentForm = async (data: FormData): Promise<FirstAscentActionValues> => {
   const climberName = data.get('climberName')
   const rawYear = data.get('year')
@@ -98,6 +126,13 @@ export type AscentActionValues = Pick<Ascent, 'dateTime' | 'grade' | 'notes' | '
 }
 export type AscentActionFailure = ActionFailure<AscentActionValues & { error: string }>
 
+/**
+ * Validates the ascent form data.
+ *
+ * @param {FormData} data - The form data to validate.
+ * @returns {Promise<AscentActionValues>} The validated ascent action values.
+ * @throws {ActionFailure<AscentActionValues & { error: string }>} If validation fails.
+ */
 export const validateAscentForm = async (data: FormData): Promise<AscentActionValues> => {
   const dateTime = data.get('dateTime')
   const grade = data.get('grade')

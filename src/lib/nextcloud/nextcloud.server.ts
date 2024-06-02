@@ -4,6 +4,14 @@ import type { Session } from '@auth/sveltekit'
 import { error } from '@sveltejs/kit'
 import { AuthType, createClient, type FileStat, type SearchResult, type WebDAVClient } from 'webdav'
 
+/**
+ * Creates a WebDAV client for Nextcloud using the provided session and path.
+ *
+ * @param {Session | null | undefined} session - The session object containing user information and access token.
+ * @param {string} [path='/remote.php/dav/files'] - The path to the WebDAV endpoint.
+ * @returns {WebDAVClient} - The WebDAV client configured for Nextcloud.
+ * @throws {Error} - Throws an error if the session is invalid or missing required information.
+ */
 export const getNextcloud = (session: Session | null | undefined, path = '/remote.php/dav/files'): WebDAVClient => {
   if (session?.user?.email == null || session?.accessToken == null) {
     error(401)
@@ -18,6 +26,14 @@ export const getNextcloud = (session: Session | null | undefined, path = '/remot
   })
 }
 
+/**
+ * Searches for a file in Nextcloud using the provided session and file information.
+ *
+ * @param {Session | null | undefined} session - The session object containing user information and access token.
+ * @param {File} file - The file object containing the path to search for.
+ * @returns {Promise<FileStat>} - A promise that resolves to the file statistics if found.
+ * @throws {Error} - Throws an error if the session is invalid, the file is not found, or there is an issue with the search request.
+ */
 export const searchNextcloudFile = async (session: Session | null | undefined, file: File): Promise<FileStat> => {
   if (session?.user?.email == null || session?.accessToken == null) {
     error(401)

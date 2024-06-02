@@ -1,7 +1,15 @@
+import { PUBLIC_DEMO_MODE } from '$env/static/public'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
+import demoDataSql from './data/demo.sql?raw'
 import * as schema from './schema'
 
-const sqlite = new Database('sqlite.db')
+const dbPath = PUBLIC_DEMO_MODE ? ':memory:' : 'db/sqlite.db'
+
+const sqlite = new Database(dbPath)
 sqlite.exec('PRAGMA journal_mode = WAL;')
 export const db = drizzle(sqlite, { schema })
+
+if (PUBLIC_DEMO_MODE) {
+  sqlite.exec(demoDataSql)
+}

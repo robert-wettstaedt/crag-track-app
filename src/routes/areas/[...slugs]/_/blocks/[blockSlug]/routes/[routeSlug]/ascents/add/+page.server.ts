@@ -10,32 +10,41 @@ import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
+  // Retrieve the areaId from the parent function
   const { areaId } = await parent()
 
+  // Authenticate the user session
   const session = await locals.auth()
   if (session?.user == null) {
+    // If the user is not authenticated, throw a 401 error
     error(401)
   }
 
+  // Query the database to find the block with the given slug and areaId
   const block = await db.query.blocks.findFirst({
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
+        // Filter the routes to find the one with the given slug
         where: eq(routes.slug, params.routeSlug),
       },
     },
   })
 
+  // Get the first route from the block's routes
   const route = block?.routes?.at(0)
 
+  // If no route is found, throw a 404 error
   if (route == null) {
     error(404)
   }
 
+  // If multiple routes with the same slug are found, throw a 400 error
   if (block != null && block.routes.length > 1) {
     error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
+  // Return the found route
   return {
     route,
   }
@@ -43,22 +52,29 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    // Convert area slug to get areaId
     const { areaId } = convertAreaSlug(params)
 
+    // Authenticate the user session
     const session = await locals.auth()
     if (session?.user?.email == null) {
+      // If the user is not authenticated, throw a 401 error
       error(401)
     }
 
+    // Retrieve form data from the request
     const data = await request.formData()
     let values: AscentActionValues
 
     try {
+      // Validate the form data
       values = await validateAscentForm(data)
     } catch (exception) {
+      // Return the validation failure
       return exception as AscentActionFailure
     }
 
+    // Query the database to find the block with the given slug and areaId
     const block = await db.query.blocks.findFirst({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
@@ -68,12 +84,15 @@ export const actions = {
       },
     })
 
+    // Get the first route from the block's routes
     const route = block?.routes?.at(0)
 
+    // Return a 404 failure if the route is not found
     if (route == null) {
       return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
     }
 
+    // Return a 400 failure if multiple routes with the same slug are found
     if (block != null && block.routes.length > 1) {
       return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
     }
@@ -81,6 +100,7 @@ export const actions = {
     let hasFiles = false
     if (values.filePaths != null) {
       try {
+        // Validate each file path
         await Promise.all(
           values.filePaths
             .filter((filePath) => filePath.trim().length > 0)
@@ -88,6 +108,7 @@ export const actions = {
               hasFiles = true
 
               try {
+                // Check the file status in Nextcloud
                 const stat = (await getNextcloud(session)?.stat(session.user!.email + filePath)) as FileStat | undefined
 
                 if (stat == null) {
@@ -103,30 +124,36 @@ export const actions = {
             }),
         )
       } catch (exception) {
+        // Return a 400 failure if file validation fails
         return fail(400, { ...values, error: convertException(exception) })
       }
     }
 
     let ascent: Ascent
     try {
+      // Query the database to find the user by email
       const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
       if (user == null) {
         throw new Error('User not found')
       }
 
+      // Insert the ascent into the database
       const results = await db
         .insert(ascents)
         .values({ ...values, routeFk: route.id, createdBy: user.id })
         .returning()
       ascent = results[0]
     } catch (exception) {
+      // Return a 400 failure if ascent insertion fails
       return fail(400, { ...values, error: convertException(exception) })
     }
 
     if (hasFiles) {
       try {
+        // Determine the file type based on ascent type
         const fileType: File['type'] = values.type === 'flash' ? 'send' : values.type
 
+        // Insert the files into the database
         await db.insert(files).values(
           values
             .filePaths!.filter((filePath) => filePath.trim().length > 0)
@@ -137,10 +164,12 @@ export const actions = {
             })),
         )
       } catch (exception) {
+        // Return a 400 failure if file insertion fails
         return fail(400, { ...values, error: convertException(exception) })
       }
     }
 
+    // Redirect to the merged path
     const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
     redirect(303, '/' + mergedPath)
   },

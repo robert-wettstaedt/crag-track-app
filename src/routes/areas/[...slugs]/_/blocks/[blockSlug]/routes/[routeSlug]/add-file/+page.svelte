@@ -1,5 +1,6 @@
 <script>
   import { page } from '$app/stores'
+  import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import RouteName from '$lib/components/RouteName'
   import { AppBar } from '@skeletonlabs/skeleton'
 
@@ -23,6 +24,16 @@
     <aside class="alert variant-filled-error mt-8">
       <div class="alert-message">
         <p>{form.error}</p>
+      </div>
+    </aside>
+  {/if}
+
+  {#if PUBLIC_DEMO_MODE}
+    <aside class="alert variant-filled-warning mt-4">
+      <i class="fa-solid fa-triangle-exclamation" />
+
+      <div class="alert-message">
+        <p>File storage is disabled in demo mode</p>
       </div>
     </aside>
   {/if}

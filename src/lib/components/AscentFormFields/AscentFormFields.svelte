@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { Ascent, Route, File } from '$lib/db/schema'
+  import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import type { Ascent, File, Route } from '$lib/db/schema'
   import { Tab, TabGroup } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
   import remarkHtml from 'remark-html'
@@ -104,6 +105,16 @@
     value={DateTime.fromSQL(dateTime).toISODate()}
   />
 </label>
+
+{#if PUBLIC_DEMO_MODE}
+  <aside class="alert variant-filled-warning mt-4">
+    <i class="fa-solid fa-triangle-exclamation" />
+
+    <div class="alert-message">
+      <p>File storage is disabled in demo mode</p>
+    </div>
+  </aside>
+{/if}
 
 {#each filePaths as file, index}
   <div class="mt-4">

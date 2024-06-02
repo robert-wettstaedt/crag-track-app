@@ -15,7 +15,7 @@
   import { Projection, addProjection, fromLonLat } from 'ol/proj.js'
   import { register } from 'ol/proj/proj4.js'
   import { Vector as VectorSource, XYZ } from 'ol/source.js'
-  import OSM from 'ol/source/OSM'
+  import OSM, { ATTRIBUTION } from 'ol/source/OSM'
   import { Fill, Style, Text } from 'ol/style.js'
   import proj4 from 'proj4'
   import { createEventDispatcher } from 'svelte'
@@ -66,6 +66,12 @@
           properties: { isBayerRelief: true },
           opacity: 0.8,
           source: new XYZ({
+            attributions: [
+              '© <a href="https://geodaten.bayern.de/" target="_blank">Bayerische Vermessungsverwaltung</a>',
+              '© <a href="https://www.eurogeographics.org/" target="_blank">EuroGeographics</a>',
+              ATTRIBUTION,
+            ],
+
             urls: ['31', '32', '33', '34', '35', '36', '37', '38', '39', '40'].map(
               (instance) => `https://intergeo${instance}.bayernwolke.de/betty/c_dgm_relief/{z}/{x}/{y}`,
             ),

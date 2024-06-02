@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import Breadcrumb from '$lib/components/Breadcrumb'
   import { SignIn, SignOut } from '@auth/sveltekit/components'
   import { arrow, autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom'
@@ -11,7 +12,7 @@
 </script>
 
 <svelte:head>
-  <title>Climbing log</title>
+  <title>Crag Track</title>
 </svelte:head>
 
 <!-- App Shell -->
@@ -20,7 +21,7 @@
     <!-- App Bar -->
     <AppBar>
       <svelte:fragment slot="lead">
-        <strong class="text-xl uppercase">Climbing Log</strong>
+        <strong class="text-xl uppercase">Crag Track</strong>
       </svelte:fragment>
 
       <svelte:fragment slot="trail">
@@ -45,11 +46,13 @@
                   <a href={`/users/${$page.data.session.user.name}`}>Profile</a>
                 </li>
 
-                <li class="list-item-sign-out">
-                  <SignOut>
-                    <span slot="submitButton">Sign out</span>
-                  </SignOut>
-                </li>
+                {#if !PUBLIC_DEMO_MODE}
+                  <li class="list-item-sign-out">
+                    <SignOut>
+                      <span slot="submitButton">Sign out</span>
+                    </SignOut>
+                  </li>
+                {/if}
               </ul>
             </nav>
 

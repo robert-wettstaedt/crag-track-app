@@ -1,5 +1,6 @@
 <script>
   import { page } from '$app/stores'
+  import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let data
@@ -25,6 +26,16 @@
   {/if}
 
   <div class="mt-8">
+    {#if PUBLIC_DEMO_MODE}
+      <aside class="alert variant-filled-warning mb-4">
+        <i class="fa-solid fa-triangle-exclamation" />
+
+        <div class="alert-message">
+          <p>File storage is disabled in demo mode</p>
+        </div>
+      </aside>
+    {/if}
+
     <label class="label">
       <span>New file</span>
       <input class="input" name="path" type="text" placeholder="Path" value={form?.path ?? ''} />

@@ -5,13 +5,16 @@ import { and, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async () => {
+  // Query the database to find blocks with non-null latitude and longitude
   const result = await db.query.blocks.findMany({
     where: and(isNotNull(blocks.lat), isNotNull(blocks.long)),
+    // Include nested area information in the query result
     with: {
       area: buildNestedAreaQuery(),
     },
   })
 
+  // Return the blocks after enriching them with additional data
   return {
     blocks: result.map(enrichBlock),
   }

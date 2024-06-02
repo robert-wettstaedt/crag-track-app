@@ -83,6 +83,10 @@ const _grades = [
     FB: '8C+',
     V: '16',
   },
+  {
+    FB: '9A',
+    V: '17',
+  },
 ]
 
 export const grades = _grades.map((grade, index) => {

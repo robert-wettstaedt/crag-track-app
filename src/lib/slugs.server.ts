@@ -1,6 +1,14 @@
 import { error } from '@sveltejs/kit'
 import { MAX_AREA_NESTING_DEPTH } from './db/utils'
 
+/**
+ * Converts a slug string into an object containing area slug, area ID, 
+ * a flag indicating if more areas can be added, and the path array.
+ *
+ * @param {Record<string, string>} params - The parameters containing the slug string.
+ * @returns {Object} An object containing areaSlug, areaId, canAddArea, and path.
+ * @throws Will throw an error if the last path item is null or if the area ID is not a number.
+ */
 export const convertAreaSlug = (params: Record<string, string>) => {
   const path = params.slugs.split('/')
   const lastPathItem = path.at(-1)
