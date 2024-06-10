@@ -3,12 +3,16 @@
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import FileViewer from '$lib/components/FileViewer'
   import RouteName from '$lib/components/RouteName'
+  import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import { Accordion, AccordionItem, AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`
   $: files = data.files
+
+  $: selectedRouteStore.set(data.route.id)
+  $: highlightedRouteStore.set(null)
 </script>
 
 <AppBar>
@@ -88,6 +92,22 @@
     {/if}
   </svelte:fragment>
 </AppBar>
+
+<div class="card mt-4">
+  <div class="card-header">Topo</div>
+
+  <div class="flex">
+    {#if data.topos.length > 0}
+      <section class="p-4 w-2/4 m-auto">
+        {#if data.topos[0].file.stat == null}
+          Error loading topo
+        {:else}
+          <TopoViewer topos={data.topos} file={data.topos[0].file} />
+        {/if}
+      </section>
+    {/if}
+  </div>
+</div>
 
 <div class="card mt-4">
   <div class="card-header">Files</div>

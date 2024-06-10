@@ -1,14 +1,22 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
   import { page } from '$app/stores'
-  import TopoViewer, { type Point, type TopType } from '$lib/components/TopoViewer'
+  import RouteName from '$lib/components/RouteName'
+  import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
+  import { convertPointsToPath, type RouteDTO } from '$lib/topo'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let form
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`
 
-  let value: Point[] = []
-  let topType: TopType = 'topout'
+  let dirtyRoutes: number[] = []
+
+  const onChangeTopo = (event: CustomEvent<RouteDTO>) => {
+    if (event.detail.routeFk != null) {
+      dirtyRoutes = Array.from(new Set([...dirtyRoutes, event.detail.routeFk]))
+    }
+  }
 </script>
 
 <AppBar>
@@ -28,26 +36,97 @@
 {/if}
 
 <div class="mt-8">
-  <TopoViewer file={data.file.stat} bind:value bind:topType />
+  {#if data.file.stat == null}
+    Error loading topo
+  {:else}
+    <div class="flex">
+      <section class="p-4 w-2/3">
+        <TopoViewer editable={true} file={data.file} bind:topos={data.topos} on:change={onChangeTopo} />
+      </section>
+
+      <section class="p-4 w-1/3">
+        <div class="card h-full">
+          <nav class="list-nav">
+            <ul>
+              {#each data.block.routes as route}
+                <li
+                  class={[$selectedRouteStore, $highlightedRouteStore].includes(route.id) && route.hasTopo
+                    ? 'bg-primary-500/20'
+                    : ''}
+                >
+                  {#if route.hasTopo}
+                    <button
+                      class="text-primary-500 list-option w-full flex justify-between"
+                      on:mouseenter={() => highlightedRouteStore.set(route.id)}
+                      on:mouseleave={() => highlightedRouteStore.set(null)}
+                      on:click={() => selectedRouteStore.set(route.id)}
+                      on:keydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
+                    >
+                      <RouteName {route} />
+
+                      {#if dirtyRoutes.includes(route.id)}
+                        <form
+                          method="POST"
+                          action="?/save"
+                          use:enhance={() => {
+                            return async ({ result, update }) => {
+                              if (result?.error == null) {
+                                dirtyRoutes = dirtyRoutes.filter((routeId) => routeId !== route.id)
+                              }
+
+                              return update()
+                            }
+                          }}
+                        >
+                          <input hidden name="routeFk" value={form?.routeFk ?? route.id} />
+                          <input hidden name="topoFk" value={form?.topoFk ?? data.topos[0].id} />
+                          <input
+                            hidden
+                            name="id"
+                            value={form?.id ??
+                              data.topos[0].routes.find((topoRoute) => topoRoute.routeFk === route.id)?.id}
+                          />
+                          <input
+                            hidden
+                            name="topType"
+                            value={form?.topType ??
+                              data.topos[0].routes.find((topoRoute) => topoRoute.routeFk === route.id)?.topType}
+                          />
+                          <input
+                            hidden
+                            name="path"
+                            value={form?.path ??
+                              convertPointsToPath(
+                                data.topos[0].routes.find((topoRoute) => topoRoute.routeFk === route.id)?.points ?? [],
+                              )}
+                          />
+
+                          <button class="btn btn-sm variant-soft-primary" type="submit">Save</button>
+                        </form>
+                      {/if}
+                    </button>
+                  {:else}
+                    <span class="text-primary-500 list-option hover:!bg-inherit flex justify-between">
+                      <RouteName {route} />
+
+                      <form method="POST" action="?/add" use:enhance>
+                        <input hidden name="routeFk" value={form?.routeFk ?? route.id} />
+                        <input hidden name="topoFk" value={form?.topoFk ?? data.topos[0].id} />
+
+                        <button class="btn btn-sm variant-ringed-primary" type="submit">Add topo</button>
+                      </form>
+                    </span>
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+          </nav>
+        </div>
+      </section>
+    </div>
+  {/if}
 </div>
 
-<form method="POST">
-  <input hidden name="topType" value={topType} />
-  <input hidden name="count" value={value.length} />
-
-  {#each value as point}
-    <input hidden name="points.x" value={point.x} />
-    <input hidden name="points.y" value={point.y} />
-    <input hidden name="points.type" value={point.type} />
-  {/each}
-
-  <div class="flex justify-between mt-8">
-    <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button
-      class="btn variant-filled-primary"
-      disabled={!(value.some((point) => point.type === 'start') && value.some((point) => point.type === 'top'))}
-    >
-      Save topo
-    </button>
-  </div>
-</form>
+<div class="flex justify-between mt-8">
+  <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
+</div>

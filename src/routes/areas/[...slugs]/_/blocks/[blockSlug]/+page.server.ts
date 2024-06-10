@@ -1,10 +1,10 @@
-import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { routes, blocks } from '$lib/db/schema'
+import { blocks, files, routes } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
-import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
+import { loadFiles } from '$lib/nextcloud/nextcloud.server'
+import { getTopos } from '$lib/topo/topo.server'
 import { error } from '@sveltejs/kit'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { and, eq, isNotNull, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -21,9 +21,12 @@ export const load = (async ({ locals, params, parent }) => {
       routes: {
         orderBy: routes.grade,
       },
-      files: true,
+      files: {
+        where: not(eq(files.type, 'topo')),
+      },
     },
   })
+
   // Get the first block from the result
   const block = blocksResult.at(0)
 
@@ -45,24 +48,13 @@ export const load = (async ({ locals, params, parent }) => {
     },
   })
 
-  // Process each file associated with the block
-  const files = await Promise.all(
-    block.files.map(async (file) => {
-      try {
-        // Search for the file in Nextcloud and return its stats
-        const stat = await searchNextcloudFile(session, file)
-        return { ...file, error: undefined, stat }
-      } catch (exception) {
-        // If an error occurs, convert the exception and return it
-        return { ...file, error: convertException(exception), stat: undefined }
-      }
-    }),
-  )
+  const blockFiles = await loadFiles(block.files, session)
 
   // Return the block, enriched geolocation blocks, and processed files
   return {
     block,
     blocks: geolocationBlocksResults.map(enrichBlock),
-    files,
+    files: blockFiles,
+    topos: await getTopos(block.id, session),
   }
 }) satisfies PageServerLoad

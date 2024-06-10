@@ -1,6 +1,13 @@
 import { fail, type ActionFailure } from '@sveltejs/kit'
-import { type Area, type Ascent, type Block, type File, type FirstAscent, type Route } from './db/schema'
-import type { Point } from './components/TopoViewer'
+import {
+  type Area,
+  type Ascent,
+  type Block,
+  type File,
+  type FirstAscent,
+  type Route,
+  type TopoRoute,
+} from './db/schema'
 
 export type AreaActionValues = Pick<Area, 'name' | 'type'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
@@ -165,43 +172,67 @@ export const validateAscentForm = async (data: FormData): Promise<AscentActionVa
   return values
 }
 
-export const validateTopoForm = async (data: FormData) => {
-  const rawCount = data.get('count')
-  const count = Number(rawCount)
+export type SaveTopoActionValues = Pick<TopoRoute, 'path' | 'routeFk' | 'topType' | 'topoFk'> & { id: string }
+export type SaveTopoActionFailure = ActionFailure<SaveTopoActionValues & { error: string }>
 
+export const validateSaveTopoForm = async (data: FormData) => {
+  const rawId = data.get('id')
+  const path = data.get('path')
+  const rawRouteFk = data.get('routeFk')
+  const rawTopoFk = data.get('topoFk')
   const topType = data.get('topType')
 
-  const xItems = data.getAll('points.x')
-  const yItems = data.getAll('points.y')
-  const typeItems = data.getAll('points.type')
+  const values = { id: rawId, path, routeFk: rawRouteFk, topoFk: rawTopoFk, topType } as SaveTopoActionValues
 
-  const values = { count, x: xItems, y: yItems, type: typeItems }
+  const id = Number(rawId)
+  const routeId = Number(rawRouteFk)
+  const topoId = Number(rawTopoFk)
 
-  if (Number.isNaN(count) || count !== xItems.length || count !== yItems.length || count !== typeItems.length) {
-    throw fail(400, { ...values, error: `Unable to verify count: ${count}` })
+  if (rawId != null && Number.isNaN(id)) {
+    throw fail(400, { ...values, error: 'id is not a valid number' })
+  }
+
+  if (rawRouteFk != null && Number.isNaN(routeId)) {
+    throw fail(400, { ...values, error: 'routeFk is not a valid number' })
+  }
+
+  if (rawTopoFk != null && Number.isNaN(topoId)) {
+    throw fail(400, { ...values, error: 'topoFk is not a valid number' })
+  }
+
+  if (typeof path !== 'string' || path.length === 0) {
+    throw fail(400, { ...values, error: 'path is required' })
   }
 
   if (typeof topType !== 'string' || topType.length === 0) {
     throw fail(400, { ...values, error: 'topType is required' })
   }
 
-  const points: Point[] = []
+  return values
+}
 
-  for (let index = 0; index < count; index++) {
-    const type = typeItems[index] as Point['type']
-    const x = Number(xItems[index])
-    const y = Number(yItems[index])
+export type AddTopoActionValues = {
+  routeFk: string
+  topoFk: string
+}
+export type AddTopoActionFailure = ActionFailure<AddTopoActionValues & { error: string }>
 
-    if (typeof type !== 'string' || type.length === 0) {
-      throw fail(400, { ...values, error: 'point type is required' })
-    }
+export const validateAddTopoForm = async (data: FormData): Promise<AddTopoActionValues> => {
+  const rawRouteFk = data.get('routeFk')
+  const rawTopoFk = data.get('topoFk')
 
-    if (Number.isNaN(x) || Number.isNaN(y)) {
-      throw fail(400, { ...values, error: `point coordinate must be a number: "${xItems[index]}, ${yItems[index]}"` })
-    }
+  const values = { routeFk: rawRouteFk, topoFk: rawTopoFk } as AddTopoActionValues
 
-    points.push({ id: 0, type, x, y })
+  const routeFk = Number(rawRouteFk)
+  const topoFk = Number(rawTopoFk)
+
+  if (rawRouteFk != null && Number.isNaN(routeFk)) {
+    throw fail(400, { ...values, error: 'routeFk is not a valid number' })
   }
 
-  console.log(points)
+  if (rawTopoFk != null && Number.isNaN(topoFk)) {
+    throw fail(400, { ...values, error: 'topoFk is not a valid number' })
+  }
+
+  return values
 }

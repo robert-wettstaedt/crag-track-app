@@ -1,8 +1,10 @@
 import { NEXTCLOUD_URL } from '$env/static/private'
+import { convertException } from '$lib'
 import type { File } from '$lib/db/schema'
 import type { Session } from '@auth/sveltekit'
 import { error } from '@sveltejs/kit'
 import { AuthType, createClient, type FileStat, type SearchResult, type WebDAVClient } from 'webdav'
+import type { FileDTO } from '.'
 
 /**
  * Creates a WebDAV client for Nextcloud using the provided session and path.
@@ -91,4 +93,24 @@ export const searchNextcloudFile = async (session: Session | null | undefined, f
 
     error(400, `File with id "${file.id}" not found`)
   }
+}
+
+/**
+ * Loads file information from Nextcloud for a given list of files.
+ *
+ * @param {File[]} files - The list of files to load information for.
+ * @param {Session | null | undefined} session - The session object for authentication, can be null or undefined.
+ * @returns {Promise<FileDTO[]>} A promise that resolves to an array of FileDTO objects containing file information.
+ */
+export const loadFiles = (files: File[], session: Session | null | undefined): Promise<FileDTO[]> => {
+  return Promise.all(
+    files.map(async (file) => {
+      try {
+        const stat = await searchNextcloudFile(session, file)
+        return { ...file, error: undefined, stat }
+      } catch (exception) {
+        return { ...file, error: convertException(exception), stat: undefined }
+      }
+    }),
+  )
 }

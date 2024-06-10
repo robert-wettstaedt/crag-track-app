@@ -1,7 +1,7 @@
-import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
 import { ascents, blocks, routes } from '$lib/db/schema'
-import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
+import { loadFiles } from '$lib/nextcloud/nextcloud.server'
+import { getTopos } from '$lib/topo/topo.server'
 import { error } from '@sveltejs/kit'
 import { and, desc, eq } from 'drizzle-orm'
 import remarkHtml from 'remark-html'
@@ -47,26 +47,19 @@ export const load = (async ({ locals, params, parent }) => {
   const route = block?.routes?.at(0)
 
   // Handle case where route is not found
-  if (route == null) {
+  if (block == null || route == null) {
     error(404)
   }
 
   // Handle case where multiple routes with the same slug are found
-  if (block != null && block.routes.length > 1) {
+  if (block.routes.length > 1) {
     error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
   // Fetch and enrich files associated with the route
-  const files = await Promise.all(
-    route.files.map(async (file) => {
-      try {
-        const stat = await searchNextcloudFile(session, file)
-        return { ...file, error: undefined, stat }
-      } catch (exception) {
-        return { ...file, error: convertException(exception), stat: undefined }
-      }
-    }),
-  )
+  const routeFiles = await loadFiles(route.files, session)
+
+  const topos = await getTopos(block.id, session)
 
   // Enrich ascents with additional data and process notes
   const enrichedAscents = await Promise.all(
@@ -80,17 +73,9 @@ export const load = (async ({ locals, params, parent }) => {
       }
 
       // Fetch and enrich files associated with the ascent
-      const files = await Promise.all(
-        ascent.files
-          .toSorted((a, b) => a.path.localeCompare(b.path))
-          .map(async (file) => {
-            try {
-              const stat = await searchNextcloudFile(session, file)
-              return { ...file, error: undefined, stat }
-            } catch (exception) {
-              return { ...file, error: convertException(exception), stat: undefined }
-            }
-          }),
+      const files = await loadFiles(
+        ascent.files.toSorted((a, b) => a.path.localeCompare(b.path)),
+        session,
       )
 
       return {
@@ -112,6 +97,7 @@ export const load = (async ({ locals, params, parent }) => {
   return {
     ascents: enrichedAscents,
     route: { ...route, description },
-    files,
+    files: routeFiles,
+    topos,
   }
 }) satisfies PageServerLoad

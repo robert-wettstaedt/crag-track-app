@@ -154,6 +154,8 @@ export const files = sqliteTable('files', {
   routeFk: integer('route_fk'),
   blockFk: integer('block_fk'),
 })
+export type File = InferSelectModel<typeof files>
+export type InsertFile = InferInsertModel<typeof files>
 
 export const filesRelations = relations(files, ({ one }) => ({
   area: one(areas, { fields: [files.areaFk], references: [areas.id] }),
@@ -161,17 +163,36 @@ export const filesRelations = relations(files, ({ one }) => ({
   block: one(blocks, { fields: [files.blockFk], references: [blocks.id] }),
   route: one(routes, { fields: [files.routeFk], references: [routes.id] }),
 }))
-export type File = InferSelectModel<typeof files>
-export type InsertFile = InferInsertModel<typeof files>
 
 export const topos = sqliteTable('topos', {
   id: baseFields.id,
 
+  blockFk: integer('block_fk'),
   fileFk: integer('file_fk'),
 })
-
-export const toposRelations = relations(topos, ({ one }) => ({
-  file: one(files, { fields: [topos.fileFk], references: [files.id] }),
-}))
 export type Topo = InferSelectModel<typeof topos>
 export type InsertTopo = InferInsertModel<typeof topos>
+
+export const toposRelations = relations(topos, ({ one, many }) => ({
+  block: one(blocks, { fields: [topos.blockFk], references: [blocks.id] }),
+  file: one(files, { fields: [topos.fileFk], references: [files.id] }),
+
+  routes: many(topoRoutes),
+}))
+
+export const topoRoutes = sqliteTable('topo_routes', {
+  id: baseFields.id,
+
+  topType: text('top_type', { enum: ['top', 'topout'] }).notNull(),
+  path: text('path'),
+
+  routeFk: integer('route_fk'),
+  topoFk: integer('topo_fk'),
+})
+export type TopoRoute = InferSelectModel<typeof topoRoutes>
+export type InsertTopoRoute = InferInsertModel<typeof topoRoutes>
+
+export const topoRoutesRelations = relations(topoRoutes, ({ one }) => ({
+  route: one(routes, { fields: [topoRoutes.routeFk], references: [routes.id] }),
+  topo: one(topos, { fields: [topoRoutes.topoFk], references: [topos.id] }),
+}))
