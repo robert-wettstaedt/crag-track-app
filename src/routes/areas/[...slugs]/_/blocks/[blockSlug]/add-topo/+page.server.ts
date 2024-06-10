@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { blocks, files } from '$lib/db/schema'
+import { blocks, files, topos } from '$lib/db/schema'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -105,7 +105,11 @@ export const actions = {
 
     try {
       // Insert the file information into the database
-      await db.insert(files).values({ blockFk: block.id, path, type: 'topo' })
+      const filesResult = await db.insert(files).values({ blockFk: block.id, path, type: 'topo' }).returning()
+
+      if (stat.mime?.includes('image')) {
+        await db.insert(topos).values({ blockFk: block.id, fileFk: filesResult[0].id })
+      }
     } catch (exception) {
       // If an exception occurs during insertion, return a failure response with the error message
       return fail(404, { ...values, error: convertException(exception) })

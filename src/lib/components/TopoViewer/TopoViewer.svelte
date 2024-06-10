@@ -42,8 +42,6 @@
       }
 
       selectedTopoRoute.points = [...selectedTopoRoute.points, point]
-      console.log(selectedTopoRoute)
-
       currentType = undefined
       dispatcher('change', selectedTopoRoute)
     }

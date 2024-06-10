@@ -90,8 +90,6 @@ export const convertPointsToPath = (points: PointDTO[]): string => {
     })
     .join(' ')
 
-  console.log(points, path)
-
   if (points.some((point) => point.type === 'top')) {
     return `${path} Z`
   }
