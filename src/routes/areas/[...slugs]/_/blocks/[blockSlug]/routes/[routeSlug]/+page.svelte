@@ -97,7 +97,9 @@
   <div class="card-header">Topo</div>
 
   <div class="flex">
-    {#if data.topos.length > 0}
+    {#if data.topos.length === 0}
+      <section class="p-4">No topos yet</section>
+    {:else}
       <section class="p-4 w-2/4 m-auto">
         {#if data.topos[0].file.stat == null}
           Error loading topo
