@@ -144,7 +144,7 @@
             <TopoViewer topos={data.topos} file={data.topos[0].file} />
 
             <a
-              class="btn btn-sm variant-glass-surface absolute bottom-2 right-2"
+              class="btn btn-sm variant-glass-surface absolute bottom-2 right-2 z-30"
               href={`${basePath}/draw-topo/${data.topos[0].file.id}`}
             >
               <i class="fa-solid fa-pen me-2" />Edit topo

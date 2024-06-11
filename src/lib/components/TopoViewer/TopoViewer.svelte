@@ -117,10 +117,24 @@
   </div>
 {/if}
 
-<div class="relative">
-  <img alt={file.stat?.filename} bind:this={img} on:load={getDimensions} src={`/nextcloud${file.stat?.filename}`} />
+<div class="relative overflow-hidden">
+  <img
+    alt={file.stat?.filename}
+    class="absolute top-0 left-0 w-full object-cover blur"
+    bind:this={img}
+    on:load={getDimensions}
+    src={`/nextcloud${file.stat?.filename}`}
+  />
 
-  <div class="absolute top-0 left-0" style={`height: ${height}px; width: ${width}px`}>
+  <img
+    alt={file.stat?.filename}
+    class="m-auto relative z-10"
+    bind:this={img}
+    on:load={getDimensions}
+    src={`/nextcloud${file.stat?.filename}`}
+  />
+
+  <div class="absolute top-0 left-2/4 -translate-x-2/4 z-20" style={`height: ${height}px; width: ${width}px`}>
     <svg
       {height}
       {width}
@@ -140,3 +154,9 @@
     </svg>
   </div>
 </div>
+
+<style>
+  img {
+    max-height: 70vh;
+  }
+</style>
