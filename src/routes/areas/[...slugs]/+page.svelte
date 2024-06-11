@@ -30,6 +30,13 @@
           <dd>{data.area.author.userName}</dd>
         </span>
       </div>
+
+      <div>
+        <span class="flex-auto">
+          <dt>Type</dt>
+          <dd>{data.area.type}</dd>
+        </span>
+      </div>
     </dl>
   </svelte:fragment>
 
