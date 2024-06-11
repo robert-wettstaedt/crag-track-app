@@ -1,7 +1,41 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
+CREATE TABLE `files` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`path` text NOT NULL,
+	`type` text NOT NULL,
+	`area_fk` integer,
+	`ascent_fk` integer,
+	`route_fk` integer,
+	`block_fk` integer
+);
+CREATE TABLE `first_ascents` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`climber_name` text,
+	`year` integer,
+	`route_fk` integer NOT NULL,
+	`climber_fk` integer
+);
+INSERT INTO first_ascents VALUES(1,'Dave Graham',2002,7,NULL);
+INSERT INTO first_ascents VALUES(2,'Nalle Hukkataival',2016,3,NULL);
+INSERT INTO first_ascents VALUES(3,'Daniel Woods',2021,4,NULL);
+INSERT INTO first_ascents VALUES(4,'Shawn Raboutou',2022,1,NULL);
+INSERT INTO first_ascents VALUES(5,'Shawn Raboutou',2022,5,NULL);
+INSERT INTO first_ascents VALUES(6,'Charles Albert',2023,2,NULL);
+CREATE TABLE `topo_routes` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`top_type` text NOT NULL,
+	`path` text,
+	`route_fk` integer,
+	`topo_fk` integer
+);
+CREATE TABLE `topos` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`block_fk` integer,
+	`file_fk` integer
+);
 CREATE TABLE `areas` (
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`created_by` integer NOT NULL,
 	`name` text NOT NULL,
@@ -32,10 +66,10 @@ INSERT INTO areas VALUES('2024-05-23 09:36:45',19,1,'Yosemite','yosemite','area'
 INSERT INTO areas VALUES('2024-05-23 09:37:05',20,1,'Yosemite Valley','yosemite-valley','crag',19);
 INSERT INTO areas VALUES('2024-05-23 09:37:14',21,1,'Camp 4','camp-4','sector',20);
 CREATE TABLE `ascents` (
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`created_by` integer NOT NULL,
-	`date_time` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`date_time` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`grade` text,
 	`notes` text,
 	`type` text NOT NULL,
@@ -58,7 +92,7 @@ INSERT INTO ascents VALUES('2024-05-23 09:34:32',17,1,'2022-12-15',NULL,'','atte
 INSERT INTO ascents VALUES('2024-05-23 09:34:44',18,1,'2023-12-21',NULL,'','attempt',1);
 INSERT INTO ascents VALUES('2024-05-23 09:40:12',19,1,'2024-04-01',NULL,'','flash',8);
 CREATE TABLE `blocks` (
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`created_by` integer NOT NULL,
 	`name` text NOT NULL,
@@ -69,36 +103,14 @@ CREATE TABLE `blocks` (
 );
 INSERT INTO blocks VALUES('2024-05-23 08:16:37',1,1,'Blocco 18','blocco-18',46.431849022171833851,8.8467670292225530914,3);
 INSERT INTO blocks VALUES('2024-05-23 08:21:43',2,1,'Le Coin','le-coin',46.135865172707806181,6.162738144519858352,6);
-INSERT INTO blocks VALUES('2024-05-23 08:30:00',3,1,'Burden of Dreams','burden-of-dreams',60.423218784731718145,26.136604261022071682,8);
+INSERT INTO blocks VALUES('2024-05-23 08:30:00',3,1,'Burden of Dreams','burden-of-dreams',60.423218784731718145,26.136604261022067241,8);
 INSERT INTO blocks VALUES('2024-05-23 08:39:44',4,1,'Sleepwalker','sleepwalker',36.035930322125251379,-115.46296656969348148,11);
 INSERT INTO blocks VALUES('2024-05-23 08:48:03',5,1,'Tron','tron',39.930348795313763687,-105.30000108758126309,13);
-INSERT INTO blocks VALUES('2024-05-23 09:19:34',6,1,'La Marie Rose','la-marie-rose',48.447249361873332418,2.6380299249406480299,16);
+INSERT INTO blocks VALUES('2024-05-23 09:19:34',6,1,'La Marie Rose','la-marie-rose',48.4472493618733413,2.6380299249406480299,16);
 INSERT INTO blocks VALUES('2024-05-23 09:27:18',7,1,'Masso 11b','masso-11b',NULL,NULL,18);
 INSERT INTO blocks VALUES('2024-05-23 09:37:24',8,1,'Big Columbia Boulder','big-columbia-boulder',37.741732085227597259,-119.60365405399706517,21);
-CREATE TABLE `files` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`path` text NOT NULL,
-	`type` text NOT NULL,
-	`area_fk` integer,
-	`ascent_fk` integer,
-	`route_fk` integer,
-	`block_fk` integer
-);
-CREATE TABLE `first_ascents` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`climber_name` text,
-	`year` integer,
-	`route_fk` integer NOT NULL,
-	`climber_fk` integer
-);
-INSERT INTO first_ascents VALUES(1,'Dave Graham',2002,7,NULL);
-INSERT INTO first_ascents VALUES(2,'Nalle Hukkataival',2016,3,NULL);
-INSERT INTO first_ascents VALUES(3,'Daniel Woods',2021,4,NULL);
-INSERT INTO first_ascents VALUES(4,'Shawn Raboutou',2022,1,NULL);
-INSERT INTO first_ascents VALUES(5,'Shawn Raboutou',2022,5,NULL);
-INSERT INTO first_ascents VALUES(6,'Charles Albert',2023,2,NULL);
 CREATE TABLE `routes` (
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`created_by` integer NOT NULL,
 	`name` text NOT NULL,
@@ -118,17 +130,17 @@ INSERT INTO routes VALUES('2024-05-23 09:20:58',6,1,'La Marie Rose','la-marie-ro
 INSERT INTO routes VALUES('2024-05-23 09:27:41',7,1,'Dreamtime','dreamtime','World''s first 8C! In 2002, Dave Graham repeated it by finding a different solution. He used a heel-hook to make the brutal start sequence easier, and downgraded the problem to easy 8B+. Most of the following repeaters, including Adam Ondra, Chris Sharma, and Daniel Woods adopted Graham''s solution and agreed with him about the grade.','8B+','FB',7,1);
 INSERT INTO routes VALUES('2024-05-23 09:40:04',8,1,'Midnight Lightning','midnight-lightning','Midnight Lightning is a problem on the Columbia Boulder in Camp 4 of Yosemite National Park. It has been described as the world''s most famous bouldering problem.The route had been easily identified by a chalk lightning bolt drawn by John Bachar in 1978 while attempting the problem with John Yablonski and Ron Kauk. In May 2013, the iconic chalk lightning bolt was scrubbed off the face of the boulder. The bolt was re-drawn in the same location a few days later.','8','V',8,NULL);
 CREATE TABLE `users` (
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`email` text NOT NULL,
 	`user_name` text NOT NULL
 );
 INSERT INTO users VALUES('2024-05-23 08:09:12',1,'demo@crag-track.com','demo_user');
 DELETE FROM sqlite_sequence;
-INSERT INTO sqlite_sequence VALUES('users',2);
+INSERT INTO sqlite_sequence VALUES('first_ascents',6);
 INSERT INTO sqlite_sequence VALUES('areas',21);
+INSERT INTO sqlite_sequence VALUES('ascents',19);
 INSERT INTO sqlite_sequence VALUES('blocks',8);
 INSERT INTO sqlite_sequence VALUES('routes',8);
-INSERT INTO sqlite_sequence VALUES('ascents',19);
-INSERT INTO sqlite_sequence VALUES('first_ascents',6);
+INSERT INTO sqlite_sequence VALUES('users',1);
 COMMIT;
