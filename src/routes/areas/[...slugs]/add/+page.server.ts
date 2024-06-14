@@ -53,9 +53,6 @@ export const actions = {
       return exception as AreaActionFailure
     }
 
-    // Generate a slug from the area name
-    const slug = generateSlug(values.name)
-
     let parentArea: Area | undefined
     let path: string[]
     try {
@@ -70,8 +67,12 @@ export const actions = {
       path = []
     }
 
+    // Generate a slug from the area name
+    const slug = generateSlug(values.name)
+
     // Check if an area with the same slug already exists
     const existingAreasResult = await db.query.areas.findMany({ where: eq(areas.slug, slug) })
+
     if (existingAreasResult.length > 0) {
       // If an area with the same name exists, return a 400 error with a message
       return fail(400, { ...values, error: `Area with name "${existingAreasResult[0].name}" already exists` })
