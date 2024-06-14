@@ -41,6 +41,10 @@
   </svelte:fragment>
 
   <svelte:fragment slot="trail">
+    <a class="btn btn-sm variant-ghost" href={`/areas/${$page.params.slugs}/export`}>
+      <i class="fa-solid fa-file-export me-2" />Export
+    </a>
+
     {#if data.session?.user != null}
       <a class="btn btn-sm variant-ghost" href={`/areas/${$page.params.slugs}/edit`}>
         <i class="fa-solid fa-pen me-2" />Edit area

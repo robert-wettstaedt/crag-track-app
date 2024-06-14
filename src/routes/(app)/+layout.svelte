@@ -6,7 +6,7 @@
   import { arrow, autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { AppBar, AppRail, AppRailAnchor, AppShell, popup, storePopup } from '@skeletonlabs/skeleton'
-  import '../app.postcss'
+  import '../../app.postcss'
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
 </script>

@@ -10,11 +10,15 @@
   export let file: FileDTO
   export let topos: TopoDTO[]
   export let editable = false
+  export let showRouteKey = false
 
   let img: HTMLImageElement
+  let imgWrapper: HTMLDivElement
   let height = 0
   let width = 0
   let scale = 0
+  let translateX = 0
+  let translateY = 0
   let currentType: PointDTO['type'] | undefined = undefined
   let selectedPoint: PointDTO | undefined = undefined
   let svg: SVGSVGElement | undefined
@@ -68,6 +72,8 @@
     scale = img.width / img.naturalWidth
     height = img.height
     width = img.width
+    translateX = img.getBoundingClientRect().x - imgWrapper.getBoundingClientRect().x
+    translateY = img.getBoundingClientRect().y - imgWrapper.getBoundingClientRect().y
   }
 </script>
 
@@ -117,27 +123,38 @@
   </div>
 {/if}
 
-<div class="relative overflow-hidden">
+<div bind:this={imgWrapper} class="relative overflow-hidden h-full w-full flex items-center justify-center">
+  <ul class="absolute left-0 top-0 z-50">
+    <li>{translateY}</li>
+    <li>{img?.getBoundingClientRect().y}</li>
+    <li>{imgWrapper?.getBoundingClientRect().y}</li>
+    <li>{(img?.getBoundingClientRect().y ?? 0) - (imgWrapper?.getBoundingClientRect().y ?? 0)}</li>
+    <li>{(imgWrapper?.getBoundingClientRect().y ?? 0) / (img?.getBoundingClientRect().y ?? 0)}</li>
+    <li>{((imgWrapper?.getBoundingClientRect().height ?? 0) - (img?.getBoundingClientRect().height ?? 0)) / 2}</li>
+    <li>style={`left: ${translateX}px; right: ${translateX}px; top: ${translateY}px; bottom: ${translateY}px`}</li>
+  </ul>
+
   <img
     alt={file.stat?.filename}
-    class="absolute top-0 left-0 w-full object-cover blur"
-    bind:this={img}
+    class="absolute top-0 left-0 bottom-0 right-0 h-full w-full object-cover blur pointer-events-none touch-none scale-105"
     on:load={getDimensions}
     src={`/nextcloud${file.stat?.filename}`}
   />
 
   <img
     alt={file.stat?.filename}
-    class="m-auto relative z-10"
+    class="relative z-10 pointer-events-none touch-none"
     bind:this={img}
+    id="img"
     on:load={getDimensions}
     src={`/nextcloud${file.stat?.filename}`}
   />
 
-  <div class="absolute top-0 left-2/4 -translate-x-2/4 z-20" style={`height: ${height}px; width: ${width}px`}>
+  <div
+    class="absolute z-20 border border-red-500"
+    style={`left: ${translateX}px; right: ${translateX}px; top: ${translateY}px; bottom: ${translateY}px`}
+  >
     <svg
-      {height}
-      {width}
       bind:this={svg}
       on:click={onClickSvg}
       role="presentation"
@@ -146,8 +163,8 @@
     >
       {#if svg != null}
         {#each topos as topo}
-          {#each topo.routes as route}
-            <RouteView {route} {scale} {svg} on:change={onChangeRoute} />
+          {#each topo.routes as route, index}
+            <RouteView {route} {scale} {svg} key={showRouteKey ? index + 1 : undefined} on:change={onChangeRoute} />
           {/each}
         {/each}
       {/if}
@@ -156,7 +173,7 @@
 </div>
 
 <style>
-  img {
+  #img {
     max-height: 70vh;
   }
 </style>

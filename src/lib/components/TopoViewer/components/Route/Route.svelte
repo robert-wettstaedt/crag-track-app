@@ -4,6 +4,7 @@
   export interface Line {
     from: Coordinates
     to: Coordinates
+    length: number
   }
 </script>
 
@@ -13,6 +14,7 @@
   import type { MouseEventHandler } from 'svelte/elements'
   import { highlightedRouteStore, selectedRouteStore } from '../../stores'
 
+  export let key: number | string | undefined
   export let route: RouteDTO
   export let scale: number
   export let svg: SVGSVGElement
@@ -20,12 +22,19 @@
   $: selected = $selectedRouteStore === route.routeFk
   $: highlighted = $highlightedRouteStore === route.routeFk
 
+  $: cursorClass = selected ? 'cursor-move' : 'cursor-pointer'
+
   $: strokeClass = highlighted ? 'stroke-green-400' : selected ? 'stroke-white' : 'stroke-red-700'
   $: fillClass = highlighted ? 'fill-green-400' : selected ? 'fill-white' : 'fill-red-700'
   $: strokeWidth = highlighted || selected ? 4 : 2
 
+  $: bgStrokeClass = 'stroke-black opacity-50'
+  $: bgFillClass = 'fill-black opacity-50'
+  $: bgStrokeWidth = highlighted || selected ? 6 : 4
+
   let selectedPoint: PointDTO | undefined = undefined
   let lines: Array<Line> = []
+  let center: Coordinates | undefined = undefined
 
   const dispatcher = createEventDispatcher<{ change: RouteDTO }>()
 
@@ -47,6 +56,27 @@
     highlightedRouteStore.set(null)
   }
 
+  const calcCenter = () => {
+    const totalLength = lines.reduce((total, line) => total + line.length, 0)
+    let centerLength = totalLength / 2
+
+    for (let index = 0; index < lines.length; index++) {
+      const line = lines[index]
+
+      if (centerLength > line.length) {
+        centerLength -= line.length
+        continue
+      }
+
+      const ratio = centerLength / line.length
+      center = {
+        x: (1 - ratio) * line.from.x + ratio * line.to.x,
+        y: (1 - ratio) * line.from.y + ratio * line.to.y,
+      }
+      return
+    }
+  }
+
   const calcLines = () => {
     const startPoints = route.points.filter((point) => point.type === 'start')
     let startPoint: Coordinates | undefined = startPoints.at(0)
@@ -55,7 +85,7 @@
     if (startPoints.length === 2) {
       const [from, to] = startPoints
 
-      lines = [...lines, { from, to }]
+      lines = [...lines, { from, to, length: 0 }]
       startPoint = {
         x: (from.x + to.x) / 2,
         y: (from.y + to.y) / 2,
@@ -75,21 +105,24 @@
         return aDist - bDist
       })
 
-    const linesToAdd = [startPoint, ...nonStartPoints].flatMap((curr, index, arr): Line[] => {
-      const next = arr.at(index + 1)
+    const linesToAdd = [startPoint, ...nonStartPoints].flatMap((from, index, arr): Line[] => {
+      const to = arr.at(index + 1)
 
-      if (next == null) {
+      if (to == null) {
         return []
       }
 
-      return [{ from: curr, to: next }]
+      return [{ from, to, length: Math.sqrt(Math.pow(to.x - from.x, 2) + Math.pow(to.y - from.y, 2)) }]
     })
 
     lines = [...lines, ...linesToAdd]
+
+    calcCenter()
   }
 
   const onClickSvg = (event: MouseEvent) => {
-    const selectedPoint = route.points.find((point) => point.id === (event.target as HTMLElement).id)
+    const targetId = (event.target as HTMLElement).attributes.getNamedItem('data-id')?.value
+    const selectedPoint = route.points.find((point) => point.id === targetId)
 
     if (selectedPoint == null) {
       selectedRouteStore.set(null)
@@ -99,7 +132,8 @@
   const onContextMenuSvg = (event: MouseEvent) => {
     event.preventDefault()
 
-    const point = route.points.find((point) => point.id === (event.target as HTMLElement).id)
+    const targetId = (event.target as HTMLElement).attributes.getNamedItem('data-id')?.value
+    const point = route.points.find((point) => point.id === targetId)
 
     if (!selected || point == null) {
       return
@@ -118,7 +152,8 @@
       return
     }
 
-    const point = selectedPoint ?? route.points.find((point) => point.id === (event.target as HTMLElement).id)
+    const targetId = (event.target as HTMLElement).attributes.getNamedItem('data-id')?.value
+    const point = selectedPoint ?? route.points.find((point) => point.id === targetId)
 
     if (point != null) {
       if (selectedPoint == null) {
@@ -164,6 +199,15 @@
 >
   {#each lines as line}
     <line
+      class="${bgStrokeClass}"
+      stroke-width={bgStrokeWidth}
+      x1={line.from.x * scale}
+      x2={line.to.x * scale}
+      y1={line.from.y * scale}
+      y2={line.to.y * scale}
+    />
+
+    <line
       class={strokeClass}
       stroke-width={strokeWidth}
       x1={line.from.x * scale}
@@ -176,37 +220,95 @@
   {#each route.points as point}
     {#if point.type === 'start'}
       <circle
-        class={`${strokeClass} ${selected ? 'cursor-move' : 'cursor-pointer'}`}
+        class={`${bgStrokeClass} ${cursorClass}`}
         cx={point.x * scale}
         cy={point.y * scale}
+        data-id={point.id}
         fill="transparent"
-        id={point.id}
+        id="start-bg-outer"
+        r={highlighted || selected ? 12 : 11}
+        role="presentation"
+      />
+
+      <circle
+        class={`${bgStrokeClass} ${cursorClass}`}
+        cx={point.x * scale}
+        cy={point.y * scale}
+        data-id={point.id}
+        fill="transparent"
+        id="start-bg-inner"
+        r={highlighted || selected ? 8 : 9}
+        role="presentation"
+      />
+
+      <circle
+        class={`${strokeClass} ${cursorClass}`}
+        cx={point.x * scale}
+        cy={point.y * scale}
+        data-id={point.id}
+        fill="transparent"
+        id="start"
         r={10}
         role="presentation"
         stroke-width={strokeWidth}
       />
     {:else if point.type === 'middle'}
       <circle
-        class={`${fillClass} ${selected ? 'cursor-move' : 'cursor-pointer'}`}
+        class={`${bgFillClass} ${cursorClass}`}
         cx={point.x * scale}
         cy={point.y * scale}
-        id={point.id}
+        data-id={point.id}
+        fill="transparent"
+        id="middle-bg"
+        r={6}
+      />
+
+      <circle
+        class={`${fillClass} ${cursorClass}`}
+        cx={point.x * scale}
+        cy={point.y * scale}
+        data-id={point.id}
+        fill="transparent"
+        id="middle"
         r={5}
       />
     {:else if point.type === 'top'}
       {#if route.topType === 'topout'}
         <polyline
-          class={`${strokeClass} ${selected ? 'cursor-move' : 'cursor-pointer'}`}
+          class={`${bgStrokeClass} ${cursorClass}`}
+          data-id={point.id}
           fill="transparent"
-          id={point.id}
-          stroke-width={strokeWidth}
+          id="topout-bg"
           points={`${point.x * scale - 20},${point.y * scale + 20} ${point.x * scale},${point.y * scale}, ${point.x * scale + 20},${point.y * scale + 20}`}
+          stroke-width={bgStrokeWidth}
+        />
+
+        <polyline
+          class={`${strokeClass} ${cursorClass}`}
+          data-id={point.id}
+          fill="transparent"
+          id="topout"
+          points={`${point.x * scale - 20},${point.y * scale + 20} ${point.x * scale},${point.y * scale}, ${point.x * scale + 20},${point.y * scale + 20}`}
+          stroke-width={strokeWidth}
         />
       {:else}
         <line
-          class={`${strokeClass} ${selected ? 'cursor-move' : 'cursor-pointer'}`}
+          class={`${bgStrokeClass} ${cursorClass}`}
+          data-id={point.id}
           fill="transparent"
-          id={point.id}
+          id="top-bg"
+          stroke-width={bgStrokeWidth}
+          x1={point.x * scale - 20}
+          x2={point.x * scale + 20}
+          y1={point.y * scale}
+          y2={point.y * scale}
+        />
+
+        <line
+          class={`${strokeClass} ${cursorClass}`}
+          data-id={point.id}
+          fill="transparent"
+          id="top"
           stroke-width={strokeWidth}
           x1={point.x * scale - 20}
           x2={point.x * scale + 20}
@@ -216,4 +318,17 @@
       {/if}
     {/if}
   {/each}
+
+  {#if center && key != null}
+    <rect
+      class={bgFillClass}
+      height={75 * scale}
+      id="key-bg"
+      width={75 * scale}
+      x={center.x * scale - 112.5 * scale}
+      y={center.y * scale - 62.5 * scale}
+    />
+
+    <text class={fillClass} id="key" x={center.x * scale - 100 * scale} y={center.y * scale}>{key}</text>
+  {/if}
 </g>
