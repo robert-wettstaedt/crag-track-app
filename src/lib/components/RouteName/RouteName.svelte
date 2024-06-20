@@ -34,6 +34,6 @@
       &nbsp;
     {/if}
 
-    {route.name}
+    {route.name.length === 0 ? '<no name>' : route.name}
   </span>
 {/if}

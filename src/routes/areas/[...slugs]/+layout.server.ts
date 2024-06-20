@@ -1,4 +1,4 @@
-import { convertAreaSlug } from '$lib/slugs.server'
+import { convertAreaSlug } from '$lib/helper.server'
 import type { LayoutServerLoad } from './$types'
 
 export const load = (async ({ params }) => {

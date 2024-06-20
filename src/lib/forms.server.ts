@@ -80,8 +80,8 @@ export const validateRouteForm = async (data: FormData): Promise<RouteActionValu
     throw fail(400, { ...values, error: 'description must be a valid string' })
   }
 
-  if (typeof name !== 'string' || name.length === 0) {
-    throw fail(400, { ...values, error: 'name is required' })
+  if (name != null && typeof name !== 'string') {
+    throw fail(400, { ...values, error: 'name must be a valid string' })
   }
 
   if (typeof gradingScale !== 'string' || gradingScale.length === 0) {
