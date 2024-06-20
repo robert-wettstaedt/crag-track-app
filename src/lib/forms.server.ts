@@ -6,6 +6,7 @@ import {
   type File,
   type FirstAscent,
   type Route,
+  type Tag,
   type TopoRoute,
 } from './db/schema'
 
@@ -56,7 +57,7 @@ export const validateBlockForm = async (data: FormData): Promise<BlockActionValu
   return values
 }
 
-export type RouteActionValues = Pick<Route, 'description' | 'name' | 'gradingScale' | 'grade'>
+export type RouteActionValues = Pick<Route, 'description' | 'name' | 'gradingScale' | 'grade'> & { tags: string[] }
 export type RouteActionFailure = ActionFailure<RouteActionValues & { error: string }>
 
 /**
@@ -71,7 +72,9 @@ export const validateRouteForm = async (data: FormData): Promise<RouteActionValu
   const name = data.get('name')
   const gradingScale = data.get('gradingScale')
   const grade = data.get('grade')
-  const values = { description, name, gradingScale, grade } as RouteActionValues
+  const tags = data.getAll('tags')
+
+  const values = { description, name, gradingScale, grade, tags } as RouteActionValues
 
   if (description != null && typeof description !== 'string') {
     throw fail(400, { ...values, error: 'description must be a valid string' })
@@ -87,6 +90,10 @@ export const validateRouteForm = async (data: FormData): Promise<RouteActionValu
 
   if (grade != null && typeof grade !== 'string') {
     throw fail(400, { ...values, error: 'grade must be a valid string' })
+  }
+
+  if (!Array.isArray(tags) || tags.some((tag) => typeof tag !== 'string')) {
+    throw fail(400, { ...values, error: 'tags must be a valid string' })
   }
 
   return values
@@ -232,6 +239,27 @@ export const validateAddTopoForm = async (data: FormData): Promise<AddTopoAction
 
   if (rawTopoFk != null && Number.isNaN(topoFk)) {
     throw fail(400, { ...values, error: 'topoFk is not a valid number' })
+  }
+
+  return values
+}
+
+export type TagActionValues = Pick<Tag, 'id'>
+export type TagActionFailure = ActionFailure<TagActionValues & { error: string }>
+
+/**
+ * Validates the tag form data.
+ *
+ * @param {FormData} data - The form data to validate.
+ * @returns {Promise<TagActionValues>} The validated tag action values.
+ * @throws {ActionFailure<TagActionValues & { error: string }>} If validation fails.
+ */
+export const validateTagForm = async (data: FormData): Promise<TagActionValues> => {
+  const id = data.get('id')
+  const values = { id } as TagActionValues
+
+  if (typeof id !== 'string' || id.length === 0) {
+    throw fail(400, { ...values, error: 'id is required' })
   }
 
   return values

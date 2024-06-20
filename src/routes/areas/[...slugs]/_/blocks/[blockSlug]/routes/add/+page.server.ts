@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { blocks, generateSlug, routes, users } from '$lib/db/schema'
+import { blocks, generateSlug, routes, routesToTags, users } from '$lib/db/schema'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -35,9 +35,12 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
+  const tagsResult = await db.query.tags.findMany()
+
   // Return the found block
   return {
     block,
+    tags: tagsResult,
   }
 }) satisfies PageServerLoad
 
@@ -101,8 +104,17 @@ export const actions = {
         throw new Error('User not found')
       }
 
+      const { tags, ...rest } = values
+
       // Insert the new route into the database
-      await db.insert(routes).values({ ...values, createdBy: user.id, blockFk: block.id, slug })
+      const [route] = await db
+        .insert(routes)
+        .values({ ...rest, createdBy: user.id, blockFk: block.id, slug })
+        .returning()
+
+      if (tags.length > 0) {
+        await db.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag })))
+      }
     } catch (exception) {
       // If the insertion fails, return a 400 error with the exception details
       return fail(400, { ...values, error: convertException(exception) })

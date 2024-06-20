@@ -1,6 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
+  "id": "82ef1932-d41a-45b3-bf06-b5e3cef31f45",
+  "prevId": "99f8da02-c02d-48b8-8f05-c28411f12adc",
   "tables": {
     "areas": {
       "name": "areas",
@@ -62,15 +64,15 @@
         "areas_parent_fk_areas_id_fk": {
           "name": "areas_parent_fk_areas_id_fk",
           "tableFrom": "areas",
+          "tableTo": "areas",
           "columnsFrom": [
             "parent_fk"
           ],
-          "tableTo": "areas",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -391,6 +393,154 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
+    "routes_to_tags": {
+      "name": "routes_to_tags",
+      "columns": {
+        "route_fk": {
+          "name": "route_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tag_fk": {
+          "name": "tag_fk",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "routes_to_tags_route_fk_routes_id_fk": {
+          "name": "routes_to_tags_route_fk_routes_id_fk",
+          "tableFrom": "routes_to_tags",
+          "tableTo": "routes",
+          "columnsFrom": [
+            "route_fk"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "routes_to_tags_tag_fk_tags_id_fk": {
+          "name": "routes_to_tags_tag_fk_tags_id_fk",
+          "tableFrom": "routes_to_tags",
+          "tableTo": "tags",
+          "columnsFrom": [
+            "tag_fk"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "routes_to_tags_route_fk_tag_fk_pk": {
+          "columns": [
+            "route_fk",
+            "tag_fk"
+          ],
+          "name": "routes_to_tags_route_fk_tag_fk_pk"
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "tags": {
+      "name": "tags",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "topo_routes": {
+      "name": "topo_routes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "top_type": {
+          "name": "top_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "route_fk": {
+          "name": "route_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "topo_fk": {
+          "name": "topo_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "topos": {
+      "name": "topos",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "block_fk": {
+          "name": "block_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "file_fk": {
+          "name": "file_fk",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
     "users": {
       "name": "users",
       "columns": {
@@ -432,9 +582,11 @@
   },
   "enums": {},
   "_meta": {
+    "schemas": {},
     "tables": {},
     "columns": {}
   },
-  "id": "99f8da02-c02d-48b8-8f05-c28411f12adc",
-  "prevId": "20f62036-2b8b-49f4-91a0-3f5b7fa07208"
+  "internal": {
+    "indexes": {}
+  }
 }

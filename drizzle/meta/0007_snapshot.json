@@ -1,8 +1,6 @@
 {
-  "version": "5",
+  "version": "6",
   "dialect": "sqlite",
-  "id": "20f62036-2b8b-49f4-91a0-3f5b7fa07208",
-  "prevId": "ce63bcec-f082-46eb-9358-5fb66f7428b4",
   "tables": {
     "areas": {
       "name": "areas",
@@ -56,15 +54,15 @@
         "areas_parent_fk_areas_id_fk": {
           "name": "areas_parent_fk_areas_id_fk",
           "tableFrom": "areas",
-          "tableTo": "areas",
           "columnsFrom": [
             "parent_fk"
           ],
+          "tableTo": "areas",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -426,8 +424,9 @@
   },
   "enums": {},
   "_meta": {
-    "schemas": {},
     "tables": {},
     "columns": {}
-  }
+  },
+  "id": "20f62036-2b8b-49f4-91a0-3f5b7fa07208",
+  "prevId": "ce63bcec-f082-46eb-9358-5fb66f7428b4"
 }

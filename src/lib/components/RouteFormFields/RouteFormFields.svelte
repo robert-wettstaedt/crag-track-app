@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { Route } from '$lib/db/schema'
+  import type { Route, Tag } from '$lib/db/schema'
+  import type { InferResultType } from '$lib/db/types'
   import { grades } from '$lib/grades'
   import { Tab, TabGroup } from '@skeletonlabs/skeleton'
   import remarkHtml from 'remark-html'
@@ -11,6 +12,8 @@
   export let grade: Route['grade']
   export let gradingScale: Route['gradingScale'] | undefined
   export let name: Route['name']
+  export let routeTags: string[]
+  export let tags: Tag[]
 
   const onChangeGradingScale: ChangeEventHandler<HTMLSelectElement> = (event) => {
     gradingScale = event.currentTarget.value as Route['gradingScale']
@@ -76,4 +79,13 @@
       {/if}
     </svelte:fragment>
   </TabGroup>
+</label>
+
+<label class="label mt-4">
+  <span>Tags</span>
+  <select class="select" multiple name="tags" size="8" value={routeTags}>
+    {#each tags as tag}
+      <option value={tag.id}>{tag.id}</option>
+    {/each}
+  </select>
 </label>
