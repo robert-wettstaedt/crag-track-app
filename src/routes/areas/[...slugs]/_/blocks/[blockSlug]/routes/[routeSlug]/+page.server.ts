@@ -38,6 +38,7 @@ export const load = (async ({ locals, params, parent }) => {
               climber: true,
             },
           },
+          tags: true,
         },
       },
     },

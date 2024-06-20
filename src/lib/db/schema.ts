@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import { relations, sql } from 'drizzle-orm'
-import { integer, real, sqliteTable, text, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
+import { integer, real, sqliteTable, text, type AnySQLiteColumn, primaryKey } from 'drizzle-orm/sqlite-core'
 
 export const generateSlug = (name: string): string =>
   name
@@ -100,6 +100,7 @@ export const RoutesRelations = relations(routes, ({ one, many }) => ({
 
   ascents: many(ascents),
   files: many(files),
+  tags: many(routesToTags),
 }))
 
 export const firstAscents = sqliteTable('first_ascents', {
@@ -195,4 +196,34 @@ export type InsertTopoRoute = InferInsertModel<typeof topoRoutes>
 export const topoRoutesRelations = relations(topoRoutes, ({ one }) => ({
   route: one(routes, { fields: [topoRoutes.routeFk], references: [routes.id] }),
   topo: one(topos, { fields: [topoRoutes.topoFk], references: [topos.id] }),
+}))
+
+export const tags = sqliteTable('tags', {
+  id: text('id').primaryKey(),
+})
+export type Tag = InferSelectModel<typeof tags>
+export type InsertTag = InferInsertModel<typeof tags>
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  routes: many(routesToTags),
+}))
+
+export const routesToTags = sqliteTable(
+  'routes_to_tags',
+  {
+    routeFk: integer('route_fk')
+      .notNull()
+      .references(() => routes.id),
+    tagFk: text('tag_fk')
+      .notNull()
+      .references(() => tags.id),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.routeFk, t.tagFk] }),
+  }),
+)
+
+export const routesToTagsRelations = relations(routesToTags, ({ one }) => ({
+  route: one(routes, { fields: [routesToTags.routeFk], references: [routes.id] }),
+  tag: one(tags, { fields: [routesToTags.tagFk], references: [tags.id] }),
 }))

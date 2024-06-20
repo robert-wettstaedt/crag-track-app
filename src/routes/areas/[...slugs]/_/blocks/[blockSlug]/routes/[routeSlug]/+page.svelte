@@ -81,6 +81,22 @@
           </span>
         </div>
       {/if}
+
+      {#if data.route.tags.length > 0}
+        <div>
+          <span class="flex-auto">
+            <dt>Tags</dt>
+            <dd class="flex gap-1">
+              {#each data.route.tags as tag}
+                <span class="chip variant-filled-surface">
+                  <i class="fa-solid fa-tag me-2" />
+                  {tag.tagFk}
+                </span>
+              {/each}
+            </dd>
+          </span>
+        </div>
+      {/if}
     </dl>
   </svelte:fragment>
 

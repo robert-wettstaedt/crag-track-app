@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { blocks, routes } from '$lib/db/schema'
+import { blocks, routes, routesToTags } from '$lib/db/schema'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -23,6 +23,9 @@ export const load = (async ({ locals, params, parent }) => {
     with: {
       routes: {
         where: eq(routes.slug, params.routeSlug), // Filter routes by the given routeSlug
+        with: {
+          tags: true,
+        },
       },
     },
   })
@@ -40,9 +43,12 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
+  const tagsResult = await db.query.tags.findMany()
+
   // Return the found route
   return {
     route,
+    tags: tagsResult,
   }
 }) satisfies PageServerLoad
 
@@ -93,8 +99,18 @@ export const actions = {
     }
 
     try {
+      const { tags, ...rest } = values
+
       // Update the route in the database with the validated values
-      await db.update(routes).set(values).where(eq(routes.id, route.id))
+      await db.update(routes).set(rest).where(eq(routes.id, route.id))
+
+      // Delete existing route-to-tag associations for the route
+      await db.delete(routesToTags).where(eq(routesToTags.routeFk, route.id))
+
+      if (tags.length > 0) {
+        // Insert new route-to-tag associations for the route
+        await db.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag })))
+      }
     } catch (exception) {
       // Return a failure if the update operation fails
       return fail(404, { ...values, error: convertException(exception) })
