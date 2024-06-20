@@ -1,8 +1,8 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { blocks, generateSlug, routes, users } from '$lib/db/schema'
+import { blocks, generateSlug, routes, routesToTags, users, type Route } from '$lib/db/schema'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/slugs.server'
+import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -35,9 +35,12 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
+  const tagsResult = await db.query.tags.findMany()
+
   // Return the found block
   return {
     block,
+    tags: tagsResult,
   }
 }) satisfies PageServerLoad
 
@@ -66,9 +69,6 @@ export const actions = {
       return exception as RouteActionFailure
     }
 
-    // Generate a slug from the route name
-    const slug = generateSlug(values.name)
-
     // Query the database to find the first block matching the given slug and areaId
     const block = await db.query.blocks.findFirst({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
@@ -79,19 +79,26 @@ export const actions = {
       return fail(400, { ...values, error: `Parent not found ${params.blockSlug}` })
     }
 
-    // Query the database to check if a route with the same slug already exists in the block
-    const existingRoutesResult = await db
-      .select()
-      .from(routes)
-      .where(and(eq(routes.slug, slug), eq(routes.blockFk, block.id)))
+    // Generate a slug from the route name
+    const slug = generateSlug(values.name)
 
-    // If a route with the same slug exists, return a 400 error with a message
-    if (existingRoutesResult.length > 0) {
-      return fail(400, {
-        ...values,
-        error: `Route with name "${existingRoutesResult[0].name}" already exists in block "${block.name}"`,
-      })
+    if (slug.length > 0) {
+      // Query the database to check if a route with the same slug already exists in the block
+      const existingRoutesResult = await db
+        .select()
+        .from(routes)
+        .where(and(eq(routes.slug, slug), eq(routes.blockFk, block.id)))
+
+      // If a route with the same slug exists, return a 400 error with a message
+      if (existingRoutesResult.length > 0) {
+        return fail(400, {
+          ...values,
+          error: `Route with name "${existingRoutesResult[0].name}" already exists in block "${block.name}"`,
+        })
+      }
     }
+
+    let route: Route
 
     try {
       // Find the user in the database using their email
@@ -101,15 +108,33 @@ export const actions = {
         throw new Error('User not found')
       }
 
+      const { tags, ...rest } = values
+
       // Insert the new route into the database
-      await db.insert(routes).values({ ...values, createdBy: user.id, blockFk: block.id, slug })
+      const result = await db
+        .insert(routes)
+        .values({ ...rest, createdBy: user.id, blockFk: block.id, slug })
+        .returning()
+      route = result[0]
+
+      if (tags.length > 0) {
+        await db.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag })))
+      }
     } catch (exception) {
       // If the insertion fails, return a 400 error with the exception details
       return fail(400, { ...values, error: convertException(exception) })
     }
 
     // Construct the merged path for redirection
-    const mergedPath = ['areas', ...path, '_', 'blocks', params.blockSlug, 'routes', slug].join('/')
+    const mergedPath = [
+      'areas',
+      ...path,
+      '_',
+      'blocks',
+      params.blockSlug,
+      'routes',
+      slug.length === 0 ? route.id : slug,
+    ].join('/')
     // Redirect to the new route's page
     redirect(303, '/' + mergedPath)
   },

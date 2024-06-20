@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { convertAreaSlug } from '../src/lib/slugs.server'
+import { convertAreaSlug } from '../src/lib/helper.server'
 
 describe('convertAreaSlug', () => {
   it('should convert a valid slug string into the correct object', () => {

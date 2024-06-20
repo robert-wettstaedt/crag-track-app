@@ -1,8 +1,8 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { areas } from '$lib/db/schema'
+import { areas, generateSlug } from '$lib/db/schema'
 import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/slugs.server'
+import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -52,12 +52,26 @@ export const actions = {
       return exception as AreaActionFailure
     }
 
+    // Generate a slug from the area name
+    const slug = generateSlug(values.name)
+
+    // Check if an area with the same slug already exists
+    const existingAreasResult = await db.query.areas.findMany({ where: eq(areas.slug, slug) })
+
+    if (existingAreasResult.length > 0) {
+      // If an area with the same name exists, return a 400 error with a message
+      return fail(400, { ...values, error: `Area with name "${existingAreasResult[0].name}" already exists` })
+    }
+
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
 
     try {
       // Update the area in the database with the validated values
-      await db.update(areas).set(values).where(eq(areas.id, areaId))
+      await db
+        .update(areas)
+        .set({ ...values, slug })
+        .where(eq(areas.id, areaId))
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })

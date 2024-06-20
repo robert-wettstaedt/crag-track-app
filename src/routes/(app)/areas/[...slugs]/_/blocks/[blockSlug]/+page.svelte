@@ -168,7 +168,7 @@
               >
                 <a
                   class="text-primary-500"
-                  href={`${basePath}/routes/${route.slug}`}
+                  href={`${basePath}/routes/${route.slug.length === 0 ? route.id : route.slug}`}
                   on:mouseenter={() => highlightedRouteStore.set(route.id)}
                   on:mouseleave={() => highlightedRouteStore.set(null)}
                   on:click={() => selectedRouteStore.set(route.id)}

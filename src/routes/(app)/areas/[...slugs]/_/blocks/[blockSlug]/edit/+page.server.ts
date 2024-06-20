@@ -1,8 +1,8 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { blocks } from '$lib/db/schema'
+import { blocks, generateSlug } from '$lib/db/schema'
 import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/slugs.server'
+import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -63,11 +63,26 @@ export const actions = {
       return exception as BlockActionFailure
     }
 
+    const slug = generateSlug(values.name)
+
+    // Check if a block with the same slug already exists in the area
+    const existingBlocksResult = await db.query.blocks.findFirst({
+      where: and(eq(blocks.slug, slug), eq(blocks.areaFk, areaId)),
+    })
+
+    if (existingBlocksResult != null) {
+      // If a block with the same slug exists, return a 400 error with a message
+      return fail(400, {
+        ...values,
+        error: `Block with name "${existingBlocksResult.name}" already exists in area "${parent.name}"`,
+      })
+    }
+
     try {
       // Update the block in the database with the validated values
       await db
         .update(blocks)
-        .set(values)
+        .set({ ...values, slug })
         .where(and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)))
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details

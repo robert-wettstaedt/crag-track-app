@@ -2,8 +2,8 @@ import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { ascents, blocks, files, routes, users, type Ascent, type File } from '$lib/db/schema'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
+import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
-import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
@@ -25,7 +25,7 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
-        where: eq(routes.slug, params.routeSlug),
+        where: getRouteDbFilter(params.routeSlug),
       },
     },
   })
@@ -96,7 +96,7 @@ export const actions = {
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
         routes: {
-          where: eq(routes.slug, params.routeSlug),
+          where: getRouteDbFilter(params.routeSlug),
         },
       },
     })

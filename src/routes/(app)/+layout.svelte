@@ -98,6 +98,14 @@
 
         Search
       </AppRailAnchor>
+
+      <AppRailAnchor href="/tags" selected={$page.url.pathname.startsWith('/tags')}>
+        <svelte:fragment slot="lead">
+          <i class="fa-solid fa-tags" />
+        </svelte:fragment>
+
+        Tags
+      </AppRailAnchor>
     </AppRail>
   </svelte:fragment>
   <!-- Page Route Content -->

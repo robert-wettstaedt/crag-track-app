@@ -31,6 +31,8 @@
       grade={form?.grade ?? null}
       gradingScale={form?.gradingScale}
       name={form?.name ?? ''}
+      routeTags={form?.tags ?? []}
+      tags={data.tags}
     />
   </div>
 

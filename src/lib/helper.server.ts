@@ -1,8 +1,10 @@
 import { error } from '@sveltejs/kit'
+import { SQL, eq } from 'drizzle-orm'
+import { routes } from './db/schema'
 import { MAX_AREA_NESTING_DEPTH } from './db/utils'
 
 /**
- * Converts a slug string into an object containing area slug, area ID, 
+ * Converts a slug string into an object containing area slug, area ID,
  * a flag indicating if more areas can be added, and the path array.
  *
  * @param {Record<string, string>} params - The parameters containing the slug string.
@@ -32,4 +34,8 @@ export const convertAreaSlug = (params: Record<string, string>) => {
     canAddArea,
     path,
   }
+}
+
+export const getRouteDbFilter = (routeParam: string): SQL => {
+  return Number.isNaN(Number(routeParam)) ? eq(routes.slug, routeParam) : eq(routes.id, Number(routeParam))
 }

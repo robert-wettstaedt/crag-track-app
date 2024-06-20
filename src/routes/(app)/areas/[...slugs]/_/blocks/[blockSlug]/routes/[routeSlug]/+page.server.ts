@@ -1,5 +1,6 @@
 import { db } from '$lib/db/db.server'
-import { ascents, blocks, routes } from '$lib/db/schema'
+import { ascents, blocks } from '$lib/db/schema'
+import { getRouteDbFilter } from '$lib/helper.server'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { getTopos } from '$lib/topo/topo.server'
 import { error } from '@sveltejs/kit'
@@ -21,7 +22,7 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
-        where: eq(routes.slug, params.routeSlug),
+        where: getRouteDbFilter(params.routeSlug),
         with: {
           author: true,
           ascents: {
@@ -38,6 +39,7 @@ export const load = (async ({ locals, params, parent }) => {
               climber: true,
             },
           },
+          tags: true,
         },
       },
     },
