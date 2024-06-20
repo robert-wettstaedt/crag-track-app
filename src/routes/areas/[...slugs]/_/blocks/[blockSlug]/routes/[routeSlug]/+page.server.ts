@@ -1,8 +1,8 @@
 import { db } from '$lib/db/db.server'
 import { ascents, blocks } from '$lib/db/schema'
+import { enrichTopo } from '$lib/db/utils'
 import { getRouteDbFilter } from '$lib/helper.server'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
-import { getTopos } from '$lib/topo/topo.server'
 import { error } from '@sveltejs/kit'
 import { and, desc, eq } from 'drizzle-orm'
 import remarkHtml from 'remark-html'
@@ -42,6 +42,12 @@ export const load = (async ({ locals, params, parent }) => {
           tags: true,
         },
       },
+      topos: {
+        with: {
+          file: true,
+          routes: true,
+        },
+      },
     },
   })
 
@@ -61,7 +67,7 @@ export const load = (async ({ locals, params, parent }) => {
   // Fetch and enrich files associated with the route
   const routeFiles = await loadFiles(route.files, session)
 
-  const topos = await getTopos(block.id, session)
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
 
   // Enrich ascents with additional data and process notes
   const enrichedAscents = await Promise.all(

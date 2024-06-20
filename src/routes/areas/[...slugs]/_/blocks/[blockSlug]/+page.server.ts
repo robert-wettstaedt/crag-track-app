@@ -1,8 +1,7 @@
 import { db } from '$lib/db/db.server'
 import { blocks, files, routes } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
+import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
-import { getTopos } from '$lib/topo/topo.server'
 import { error } from '@sveltejs/kit'
 import { and, eq, isNotNull, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -23,6 +22,12 @@ export const load = (async ({ locals, params, parent }) => {
       },
       files: {
         where: not(eq(files.type, 'topo')),
+      },
+      topos: {
+        with: {
+          file: true,
+          routes: true,
+        },
       },
     },
   })
@@ -49,12 +54,13 @@ export const load = (async ({ locals, params, parent }) => {
   })
 
   const blockFiles = await loadFiles(block.files, session)
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
 
   // Return the block, enriched geolocation blocks, and processed files
   return {
     block,
     blocks: geolocationBlocksResults.map(enrichBlock),
     files: blockFiles,
-    topos: await getTopos(block.id, session),
+    topos,
   }
 }) satisfies PageServerLoad

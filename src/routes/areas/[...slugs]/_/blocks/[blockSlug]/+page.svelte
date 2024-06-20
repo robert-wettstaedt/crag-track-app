@@ -75,7 +75,7 @@
   </section>
 </div>
 
-{#if files.length > 0 || data.topos.length === 0}
+{#if files.length > 0 || data.topos == null}
   <div class="card mt-4">
     <div class="card-header">Topos</div>
 
@@ -135,26 +135,19 @@
   <div class="card-header">Routes</div>
 
   <div class="flex">
-    {#if data.topos.length > 0}
+    {#if data.topos != null}
       <section class="p-4 w-2/4">
-        {#if data.topos[0].file.stat == null}
-          Error loading topo
-        {:else}
-          <div class="relative">
-            <TopoViewer topos={data.topos} file={data.topos[0].file} />
+        <div class="relative">
+          <TopoViewer topos={data.topos} />
 
-            <a
-              class="btn btn-sm variant-glass-surface absolute bottom-2 right-2 z-30"
-              href={`${basePath}/draw-topo/${data.topos[0].file.id}`}
-            >
-              <i class="fa-solid fa-pen me-2" />Edit topo
-            </a>
-          </div>
-        {/if}
+          <a class="btn btn-sm variant-glass-surface absolute bottom-2 right-2 z-30" href={`${basePath}/draw-topo`}>
+            <i class="fa-solid fa-pen me-2" />Edit topo
+          </a>
+        </div>
       </section>
     {/if}
 
-    <section class={`p-4 ${data.topos.length > 0 ? 'w-2/4' : 'w-full'}`}>
+    <section class={`p-4 ${data.topos == null ? 'w-full' : 'w-2/4'}`}>
       {#if data.block.routes.length === 0}
         No routes yet
       {:else}

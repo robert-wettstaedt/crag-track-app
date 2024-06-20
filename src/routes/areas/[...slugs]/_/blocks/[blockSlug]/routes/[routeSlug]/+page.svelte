@@ -117,11 +117,7 @@
       <section class="p-4">No topos yet</section>
     {:else}
       <section class="p-4 w-2/4 m-auto">
-        {#if data.topos[0].file.stat == null}
-          Error loading topo
-        {:else}
-          <TopoViewer topos={data.topos} file={data.topos[0].file} />
-        {/if}
+        <TopoViewer topos={data.topos} />
       </section>
     {/if}
   </div>

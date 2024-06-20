@@ -1,15 +1,13 @@
 <script lang="ts">
-  import type { TopoRoute } from '$lib/db/schema'
-  import type { FileDTO } from '$lib/nextcloud'
   import type { PointDTO, RouteDTO, TopoDTO } from '$lib/topo'
-  import type { ChangeEventHandler, EventHandler, MouseEventHandler } from 'svelte/elements'
+  import { createEventDispatcher } from 'svelte'
+  import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import RouteView from './components/Route'
   import { selectedRouteStore } from './stores'
-  import { createEventDispatcher } from 'svelte'
 
-  export let file: FileDTO
   export let topos: TopoDTO[]
   export let editable = false
+  export let selectedTopoIndex = 0
 
   let img: HTMLImageElement
   let height = 0
@@ -26,6 +24,9 @@
   selectedRouteStore.subscribe(() => {
     currentType = undefined
     selectedPoint = undefined
+
+    const index = topos.findIndex((topo) => topo.routes.some((route) => route.routeFk === $selectedRouteStore))
+    selectedTopoIndex = index < 0 ? selectedTopoIndex : index
   })
 
   const onClickSvg: MouseEventHandler<SVGElement> = (event) => {
@@ -62,6 +63,16 @@
   const onChangeRoute = (event: CustomEvent<RouteDTO>) => {
     topos = topos
     dispatcher('change', event.detail)
+  }
+
+  const onPrevTopo = () => {
+    selectedTopoIndex = Math.max(selectedTopoIndex - 1, 0)
+    selectedRouteStore.set(null)
+  }
+
+  const onNextTopo = () => {
+    selectedTopoIndex = Math.min(selectedTopoIndex + 1, topos.length - 1)
+    selectedRouteStore.set(null)
   }
 
   const getDimensions = () => {
@@ -118,21 +129,25 @@
 {/if}
 
 <div class="relative overflow-hidden">
-  <img
-    alt={file.stat?.filename}
-    class="absolute top-0 left-0 w-full object-cover blur"
-    bind:this={img}
-    on:load={getDimensions}
-    src={`/nextcloud${file.stat?.filename}`}
-  />
+  {#each topos as topo, index}
+    {#if index === selectedTopoIndex}
+      <img
+        alt={topo.file.stat?.filename}
+        class="absolute top-0 left-0 w-full object-cover blur"
+        bind:this={img}
+        on:load={getDimensions}
+        src={`/nextcloud${topo.file.stat?.filename}`}
+      />
 
-  <img
-    alt={file.stat?.filename}
-    class="m-auto relative z-10"
-    bind:this={img}
-    on:load={getDimensions}
-    src={`/nextcloud${file.stat?.filename}`}
-  />
+      <img
+        alt={topo.file.stat?.filename}
+        class="m-auto relative z-10"
+        bind:this={img}
+        on:load={getDimensions}
+        src={`/nextcloud${topo.file.stat?.filename}`}
+      />
+    {/if}
+  {/each}
 
   <div class="absolute top-0 left-2/4 -translate-x-2/4 z-20" style={`height: ${height}px; width: ${width}px`}>
     <svg
@@ -145,14 +160,28 @@
       xmlns="http://www.w3.org/2000/svg"
     >
       {#if svg != null}
-        {#each topos as topo}
-          {#each topo.routes as route}
-            <RouteView {route} {scale} {svg} on:change={onChangeRoute} />
-          {/each}
+        {#each topos[selectedTopoIndex].routes as route}
+          <RouteView {route} {scale} {svg} on:change={onChangeRoute} />
         {/each}
       {/if}
     </svg>
   </div>
+
+  {#if topos.length > 1}
+    <div class="flex gap-1 absolute top-2 right-2 z-30">
+      <button class="btn btn-sm variant-ghost-primary" disabled={selectedTopoIndex <= 0} on:click={onPrevTopo}>
+        <i class="fa-solid fa-caret-left" />
+      </button>
+
+      <button
+        class="btn btn-sm variant-ghost-primary"
+        disabled={selectedTopoIndex >= topos.length - 1}
+        on:click={onNextTopo}
+      >
+        <i class="fa-solid fa-caret-right" />
+      </button>
+    </div>
+  {/if}
 </div>
 
 <style>

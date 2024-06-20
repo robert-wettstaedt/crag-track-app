@@ -66,6 +66,7 @@ export const actions = {
         files: {
           where: eq(files.type, 'topo'),
         },
+        topos: true,
       },
     })
 
@@ -104,11 +105,10 @@ export const actions = {
     }
 
     try {
-      // Insert the file information into the database
-      const filesResult = await db.insert(files).values({ blockFk: block.id, path, type: 'topo' }).returning()
+      const [fileResult] = await db.insert(files).values({ blockFk: block.id, path, type: 'topo' }).returning()
 
       if (stat.mime?.includes('image')) {
-        await db.insert(topos).values({ blockFk: block.id, fileFk: filesResult[0].id })
+        await db.insert(topos).values({ blockFk: block.id, fileFk: fileResult.id })
       }
     } catch (exception) {
       // If an exception occurs during insertion, return a failure response with the error message
