@@ -1,8 +1,8 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { routes, blocks, files, type File } from '$lib/db/schema'
+import { blocks, files, routes, type File } from '$lib/db/schema'
+import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
-import { convertAreaSlug } from '$lib/slugs.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
@@ -24,7 +24,7 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
-        where: eq(routes.slug, params.routeSlug),
+        where: getRouteDbFilter(params.routeSlug),
         with: {
           files: {
             where: eq(files.type, 'topo'),
@@ -80,7 +80,7 @@ export const actions = {
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
         routes: {
-          where: eq(routes.slug, params.routeSlug),
+          where: getRouteDbFilter(params.routeSlug),
         },
       },
     })
@@ -141,6 +141,9 @@ export const actions = {
     }
 
     // Redirect to the specified URL after successful insertion
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${route.slug}`)
+    redirect(
+      303,
+      `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${route.slug.length === 0 ? route.id : route.slug}`,
+    )
   },
 }

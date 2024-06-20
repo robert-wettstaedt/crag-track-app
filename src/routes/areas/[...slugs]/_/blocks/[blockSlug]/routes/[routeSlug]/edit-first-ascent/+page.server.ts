@@ -2,7 +2,7 @@ import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
 import { validateFirstAscentForm, type FirstAscentActionFailure, type FirstAscentActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/slugs.server'
+import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -23,8 +23,7 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
-        // Filter the routes to find the one with the specified slug
-        where: eq(routes.slug, params.routeSlug),
+        where: getRouteDbFilter(params.routeSlug),
         with: {
           firstAscent: {
             // Include the climber information in the first ascent
@@ -119,7 +118,7 @@ export const actions = {
       with: {
         routes: {
           // Filter the routes to find the one with the specified slug
-          where: eq(routes.slug, params.routeSlug),
+          where: getRouteDbFilter(params.routeSlug),
         },
       },
     })

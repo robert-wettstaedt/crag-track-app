@@ -2,7 +2,7 @@ import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
 import { areas, files } from '$lib/db/schema'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
-import { convertAreaSlug } from '$lib/slugs.server'
+import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
@@ -14,7 +14,7 @@ export const load = (async ({ locals, parent }) => {
 
   // Get the current session from locals
   const session = await locals.auth()
-  
+
   // If the user is not authenticated, throw a 401 error
   if (session?.user == null) {
     error(401)

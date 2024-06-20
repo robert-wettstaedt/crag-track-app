@@ -1,8 +1,8 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { blocks, routes, routesToTags } from '$lib/db/schema'
+import { blocks, generateSlug, routes, routesToTags } from '$lib/db/schema'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/slugs.server'
+import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -22,7 +22,7 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
-        where: eq(routes.slug, params.routeSlug), // Filter routes by the given routeSlug
+        where: getRouteDbFilter(params.routeSlug),
         with: {
           tags: true,
         },
@@ -80,7 +80,7 @@ export const actions = {
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
         routes: {
-          where: eq(routes.slug, params.routeSlug), // Filter routes by the given routeSlug
+          where: getRouteDbFilter(params.routeSlug),
         },
       },
     })
@@ -93,16 +93,43 @@ export const actions = {
       return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
     }
 
+    // If no block is found, return a 400 error with a message
+    if (block == null) {
+      return fail(400, { ...values, error: `Parent not found ${params.blockSlug}` })
+    }
+
     // Return a 400 failure if multiple routes with the same slug are found
-    if (block != null && block.routes.length > 1) {
+    if (block.routes.length > 1) {
       return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
+    }
+
+    // Generate a slug from the route name
+    const slug = generateSlug(values.name)
+
+    if (slug.length > 0) {
+      // Query the database to check if a route with the same slug already exists in the block
+      const existingRoutesResult = await db
+        .select()
+        .from(routes)
+        .where(and(eq(routes.slug, slug), eq(routes.blockFk, block.id)))
+
+      // If a route with the same slug exists, return a 400 error with a message
+      if (existingRoutesResult.length > 0) {
+        return fail(400, {
+          ...values,
+          error: `Route with name "${existingRoutesResult[0].name}" already exists in block "${block.name}"`,
+        })
+      }
     }
 
     try {
       const { tags, ...rest } = values
 
       // Update the route in the database with the validated values
-      await db.update(routes).set(rest).where(eq(routes.id, route.id))
+      await db
+        .update(routes)
+        .set({ ...rest, slug })
+        .where(eq(routes.id, route.id))
 
       // Delete existing route-to-tag associations for the route
       await db.delete(routesToTags).where(eq(routesToTags.routeFk, route.id))
@@ -117,6 +144,6 @@ export const actions = {
     }
 
     // Redirect to the updated route's page
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}`)
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${slug.length === 0 ? route.id : slug}`)
   },
 }
