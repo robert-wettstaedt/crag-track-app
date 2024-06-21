@@ -1,12 +1,13 @@
 <script lang="ts">
   import SaveBouldering from '$lib/assets/Save-Bouldering.jpg'
   import TopoViewer from '$lib/components/TopoViewer/TopoViewer.svelte'
+  import '@fortawesome/fontawesome-free/css/all.css'
   import '../../../../../app.postcss'
 
   export let data
 </script>
 
-<!-- <section>
+<section>
   <div class="flex">
     <div class="w-2/4">
       <div class="p-2 mt-8">
@@ -18,7 +19,7 @@
       <img alt="Save bouldering" class="h-full w-full" src={SaveBouldering} />
     </div>
   </div>
-</section> -->
+</section>
 
 {#each data.area.blocks as block}
   {#each block.topos as topo}
@@ -30,32 +31,34 @@
               {block.name}
             </h2>
 
-            {#each block.routes as route, index}
-              <h3 class="text-lg mt-8">
-                <strong>{index + 1}</strong>
-                {route.name}
+            {#each topo.routes as topoRoute, index}
+              {#if topoRoute.route != null}
+                <h3 class="text-lg mt-8">
+                  <strong>{index + 1}</strong>
+                  {topoRoute.route.name}
 
-                {#if route.grade != null}
-                  &nbsp;{route.gradingScale} {route.grade}
+                  {#if topoRoute.route.grade != null}
+                    &nbsp;{topoRoute.route.gradingScale} {topoRoute.route.grade}
+                  {/if}
+                </h3>
+
+                {#if topoRoute.route.firstAscent}
+                  <p class="ms-4">
+                    FA:
+
+                    {#if (topoRoute.route.firstAscent.climber?.userName ?? topoRoute.route.firstAscent.climberName) != null}
+                      {topoRoute.route.firstAscent.climber?.userName ?? topoRoute.route.firstAscent.climberName}&nbsp;
+                    {/if}
+
+                    {#if topoRoute.route.firstAscent.year}
+                      {topoRoute.route.firstAscent.year}
+                    {/if}
+                  </p>
                 {/if}
-              </h3>
 
-              {#if route.firstAscent}
-                <p class="ms-4">
-                  FA:
-
-                  {#if (route.firstAscent.climber?.userName ?? route.firstAscent.climberName) != null}
-                    {route.firstAscent.climber?.userName ?? route.firstAscent.climberName}&nbsp;
-                  {/if}
-
-                  {#if route.firstAscent.year}
-                    {route.firstAscent.year}
-                  {/if}
-                </p>
-              {/if}
-
-              {#if route.description}
-                <p class="ms-4">{route.description}</p>
+                {#if topoRoute.route.description}
+                  <p class="ms-4">{topoRoute.route.description}</p>
+                {/if}
               {/if}
             {/each}
           </div>
@@ -101,9 +104,6 @@
     :global(body) {
       background: none !important;
       color: #000 !important;
-    }
-
-    section {
     }
   }
 </style>

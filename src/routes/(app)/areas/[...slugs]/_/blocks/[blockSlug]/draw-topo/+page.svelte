@@ -3,7 +3,7 @@
   import { page } from '$app/stores'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { convertPointsToPath, type RouteDTO } from '$lib/topo'
+  import { convertPointsToPath, type TopoRouteDTO } from '$lib/topo'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let form
@@ -13,7 +13,7 @@
   let dirtyRoutes: number[] = []
   let selectedTopoIndex = 0
 
-  const onChangeTopo = (event: CustomEvent<RouteDTO>) => {
+  const onChangeTopo = (event: CustomEvent<TopoRouteDTO>) => {
     if (event.detail.routeFk != null) {
       dirtyRoutes = Array.from(new Set([...dirtyRoutes, event.detail.routeFk]))
     }

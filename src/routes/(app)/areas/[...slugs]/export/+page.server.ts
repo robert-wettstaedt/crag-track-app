@@ -18,19 +18,22 @@ export const load = (async ({ locals, params }) => {
       blocks: {
         orderBy: blocks.name,
         with: {
-          routes: {
-            with: {
-              firstAscent: {
-                with: {
-                  climber: true,
-                },
-              },
-            },
-          },
           topos: {
             with: {
               file: true,
-              routes: true,
+              routes: {
+                with: {
+                  route: {
+                    with: {
+                      firstAscent: {
+                        with: {
+                          climber: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
         },

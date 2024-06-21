@@ -8,13 +8,30 @@ export interface PointDTO {
   y: number
 }
 
-export interface RouteDTO extends Omit<InferResultType<'topoRoutes'>, 'path'> {
+export interface TopoRouteDTO
+  extends Omit<
+    InferResultType<
+      'topoRoutes',
+      {
+        route: {
+          with: {
+            firstAscent: {
+              with: {
+                climber: true
+              }
+            }
+          }
+        }
+      }
+    >,
+    'path'
+  > {
   points: PointDTO[]
 }
 
 export interface TopoDTO extends InferResultType<'topos'> {
   file: FileDTO
-  routes: RouteDTO[]
+  routes: TopoRouteDTO[]
 }
 
 export const convertPathToPoints = (path: string): PointDTO[] => {

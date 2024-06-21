@@ -9,13 +9,13 @@
 </script>
 
 <script lang="ts">
-  import type { PointDTO, RouteDTO } from '$lib/topo'
+  import type { PointDTO, TopoRouteDTO } from '$lib/topo'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
   import type { MouseEventHandler } from 'svelte/elements'
   import { highlightedRouteStore, selectedRouteStore } from '../../stores'
 
   export let key: number | string | undefined
-  export let route: RouteDTO
+  export let route: TopoRouteDTO
   export let scale: number
   export let svg: SVGSVGElement
 
@@ -36,7 +36,7 @@
   let lines: Array<Line> = []
   let center: Coordinates | undefined = undefined
 
-  const dispatcher = createEventDispatcher<{ change: RouteDTO }>()
+  const dispatcher = createEventDispatcher<{ change: TopoRouteDTO }>()
 
   const onSelect: MouseEventHandler<SVGGElement> = (event) => {
     if (!selected) {
@@ -322,11 +322,11 @@
   {#if center && key != null}
     <rect
       class={bgFillClass}
-      height={75 * scale}
+      height={50 * scale}
       id="key-bg"
-      width={75 * scale}
+      width={50 * scale}
       x={center.x * scale - 112.5 * scale}
-      y={center.y * scale - 62.5 * scale}
+      y={center.y * scale - 37.5 * scale}
     />
 
     <text class={fillClass} id="key" x={center.x * scale - 100 * scale} y={center.y * scale}>{key}</text>

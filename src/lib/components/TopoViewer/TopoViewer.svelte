@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PointDTO, RouteDTO, TopoDTO } from '$lib/topo'
+  import type { PointDTO, TopoRouteDTO, TopoDTO } from '$lib/topo'
   import { createEventDispatcher } from 'svelte'
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import RouteView from './components/Route'
@@ -24,7 +24,7 @@
   $: selectedTopo = topos.at(selectedTopoIndex)
   $: selectedTopoRoute = topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore)
 
-  const dispatcher = createEventDispatcher<{ change: RouteDTO }>()
+  const dispatcher = createEventDispatcher<{ change: TopoRouteDTO }>()
 
   selectedRouteStore.subscribe(() => {
     currentType = undefined
@@ -65,7 +65,7 @@
     currentType = currentType === type ? undefined : type
   }
 
-  const onChangeRoute = (event: CustomEvent<RouteDTO>) => {
+  const onChangeRoute = (event: CustomEvent<TopoRouteDTO>) => {
     topos = topos
     dispatcher('change', event.detail)
   }
@@ -136,38 +136,33 @@
 {/if}
 
 <div bind:this={imgWrapper} class="relative overflow-hidden h-full w-full flex items-center justify-center">
-  <ul class="absolute left-0 top-0 z-50">
-    <li>{translateY}</li>
-    <li>{img?.getBoundingClientRect().y}</li>
-    <li>{imgWrapper?.getBoundingClientRect().y}</li>
-    <li>{(img?.getBoundingClientRect().y ?? 0) - (imgWrapper?.getBoundingClientRect().y ?? 0)}</li>
-    <li>{(imgWrapper?.getBoundingClientRect().y ?? 0) / (img?.getBoundingClientRect().y ?? 0)}</li>
-    <li>{((imgWrapper?.getBoundingClientRect().height ?? 0) - (img?.getBoundingClientRect().height ?? 0)) / 2}</li>
-    <li>style={`left: ${translateX}px; right: ${translateX}px; top: ${translateY}px; bottom: ${translateY}px`}</li>
-  </ul>
-
   {#each topos as topo, index}
     {#if index === selectedTopoIndex}
-      <img
-        alt={topo.file.stat?.filename}
-        class="absolute top-0 left-0 w-full object-cover blur"
-        bind:this={img}
-        on:load={getDimensions}
-        src={`/nextcloud${topo.file.stat?.filename}`}
-      />
+      {#if topo.file.error == null}
+        <img
+          alt={topo.file.stat?.filename}
+          bind:this={img}
+          class="absolute top-0 left-0 w-full h-full object-cover blur pointer-events-none touch-none"
+          on:load={getDimensions}
+          src={`/nextcloud${topo.file.stat?.filename}`}
+        />
 
-      <img
-        alt={topo.file.stat?.filename}
-        class="m-auto relative z-10"
-        bind:this={img}
-        on:load={getDimensions}
-        src={`/nextcloud${topo.file.stat?.filename}`}
-      />
+        <img
+          alt={topo.file.stat?.filename}
+          bind:this={img}
+          class="m-auto relative z-10 pointer-events-none touch-none"
+          id="img"
+          on:load={getDimensions}
+          src={`/nextcloud${topo.file.stat?.filename}`}
+        />
+      {:else}
+        <p>Error loading image</p>
+      {/if}
     {/if}
   {/each}
 
   <div
-    class="absolute z-20 border border-red-500"
+    class="absolute z-20"
     style={`left: ${translateX}px; right: ${translateX}px; top: ${translateY}px; bottom: ${translateY}px`}
   >
     <svg
@@ -205,5 +200,11 @@
 <style>
   #img {
     max-height: 70vh;
+  }
+
+  @media print {
+    #img {
+      max-height: none;
+    }
   }
 </style>
