@@ -1,1 +1,0 @@
-ALTER TABLE areas ADD `type` text DEFAULT 'area' NOT NULL;
