@@ -1,5 +1,6 @@
 import { db } from '$lib/db/db.server.js'
 import { blocks, topoRoutes } from '$lib/db/schema'
+import { enrichTopo } from '$lib/db/utils'
 import {
   validateAddTopoForm,
   validateSaveTopoForm,
@@ -7,7 +8,6 @@ import {
   type AddTopoActionValues,
   type SaveTopoActionValues,
 } from '$lib/forms.server'
-import { getTopos } from '$lib/topo/topo.server'
 import { error } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -24,11 +24,17 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: true,
+      topos: {
+        with: {
+          file: true,
+          routes: true,
+        },
+      },
     },
   })
   const block = blocksResult.at(0)
 
-  if (block == null) {
+  if (block?.topos == null) {
     error(404)
   }
 
@@ -36,19 +42,17 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
-  const topos = await getTopos(block.id, session, Number(params.fileId))
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
 
-  const allTopoRoutes = topos.flatMap((topo) => topo.routes)
   const routes = block.routes.map((route) => {
     return {
       ...route,
-      hasTopo: allTopoRoutes.some((topoRoute) => topoRoute.routeFk === route.id),
+      hasTopo: topos.flatMap((topo) => topo.routes).some((topoRoute) => topoRoute.routeFk === route.id),
     }
   })
 
   return {
     block: { ...block, routes },
-    file: topos[0].file,
     topos,
   }
 }) satisfies PageServerLoad

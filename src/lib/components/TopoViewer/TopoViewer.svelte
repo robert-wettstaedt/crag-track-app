@@ -1,16 +1,14 @@
 <script lang="ts">
-  import type { TopoRoute } from '$lib/db/schema'
-  import type { FileDTO } from '$lib/nextcloud'
   import type { PointDTO, RouteDTO, TopoDTO } from '$lib/topo'
-  import type { ChangeEventHandler, EventHandler, MouseEventHandler } from 'svelte/elements'
+  import { createEventDispatcher } from 'svelte'
+  import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import RouteView from './components/Route'
   import { selectedRouteStore } from './stores'
-  import { createEventDispatcher } from 'svelte'
 
-  export let file: FileDTO
   export let topos: TopoDTO[]
   export let editable = false
   export let showRouteKey = false
+  export let selectedTopoIndex = 0
 
   let img: HTMLImageElement
   let imgWrapper: HTMLDivElement
@@ -23,6 +21,7 @@
   let selectedPoint: PointDTO | undefined = undefined
   let svg: SVGSVGElement | undefined
 
+  $: selectedTopo = topos.at(selectedTopoIndex)
   $: selectedTopoRoute = topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore)
 
   const dispatcher = createEventDispatcher<{ change: RouteDTO }>()
@@ -30,6 +29,9 @@
   selectedRouteStore.subscribe(() => {
     currentType = undefined
     selectedPoint = undefined
+
+    const index = topos.findIndex((topo) => topo.routes.some((route) => route.routeFk === $selectedRouteStore))
+    selectedTopoIndex = index < 0 ? selectedTopoIndex : index
   })
 
   const onClickSvg: MouseEventHandler<SVGElement> = (event) => {
@@ -66,6 +68,16 @@
   const onChangeRoute = (event: CustomEvent<RouteDTO>) => {
     topos = topos
     dispatcher('change', event.detail)
+  }
+
+  const onPrevTopo = () => {
+    selectedTopoIndex = Math.max(selectedTopoIndex - 1, 0)
+    selectedRouteStore.set(null)
+  }
+
+  const onNextTopo = () => {
+    selectedTopoIndex = Math.min(selectedTopoIndex + 1, topos.length - 1)
+    selectedRouteStore.set(null)
   }
 
   const getDimensions = () => {
@@ -134,21 +146,25 @@
     <li>style={`left: ${translateX}px; right: ${translateX}px; top: ${translateY}px; bottom: ${translateY}px`}</li>
   </ul>
 
-  <img
-    alt={file.stat?.filename}
-    class="absolute top-0 left-0 bottom-0 right-0 h-full w-full object-cover blur pointer-events-none touch-none scale-105"
-    on:load={getDimensions}
-    src={`/nextcloud${file.stat?.filename}`}
-  />
+  {#each topos as topo, index}
+    {#if index === selectedTopoIndex}
+      <img
+        alt={topo.file.stat?.filename}
+        class="absolute top-0 left-0 w-full object-cover blur"
+        bind:this={img}
+        on:load={getDimensions}
+        src={`/nextcloud${topo.file.stat?.filename}`}
+      />
 
-  <img
-    alt={file.stat?.filename}
-    class="relative z-10 pointer-events-none touch-none"
-    bind:this={img}
-    id="img"
-    on:load={getDimensions}
-    src={`/nextcloud${file.stat?.filename}`}
-  />
+      <img
+        alt={topo.file.stat?.filename}
+        class="m-auto relative z-10"
+        bind:this={img}
+        on:load={getDimensions}
+        src={`/nextcloud${topo.file.stat?.filename}`}
+      />
+    {/if}
+  {/each}
 
   <div
     class="absolute z-20 border border-red-500"
@@ -161,15 +177,29 @@
       viewBox={`0 0 ${width} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {#if svg != null}
-        {#each topos as topo}
-          {#each topo.routes as route, index}
-            <RouteView {route} {scale} {svg} key={showRouteKey ? index + 1 : undefined} on:change={onChangeRoute} />
-          {/each}
+      {#if svg != null && selectedTopo != null}
+        {#each selectedTopo.routes as route, index}
+          <RouteView {route} {scale} {svg} key={showRouteKey ? index + 1 : undefined} on:change={onChangeRoute} />
         {/each}
       {/if}
     </svg>
   </div>
+
+  {#if topos.length > 1}
+    <div class="flex gap-1 absolute top-2 right-2 z-30">
+      <button class="btn btn-sm variant-ghost-primary" disabled={selectedTopoIndex <= 0} on:click={onPrevTopo}>
+        <i class="fa-solid fa-caret-left" />
+      </button>
+
+      <button
+        class="btn btn-sm variant-ghost-primary"
+        disabled={selectedTopoIndex >= topos.length - 1}
+        on:click={onNextTopo}
+      >
+        <i class="fa-solid fa-caret-right" />
+      </button>
+    </div>
+  {/if}
 </div>
 
 <style>

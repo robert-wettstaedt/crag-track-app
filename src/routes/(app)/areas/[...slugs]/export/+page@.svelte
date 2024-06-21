@@ -65,7 +65,7 @@
           {#if topo.file?.stat == null}
             <p class="text-center w-full">Error loading file: {topo.file?.error ?? ''}</p>
           {:else}
-            <TopoViewer file={topo.file} showRouteKey topos={[topo]} />
+            <TopoViewer showRouteKey topos={[topo]} />
           {/if}
 
           {#if block.lat != null && block.long != null}

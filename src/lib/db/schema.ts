@@ -75,8 +75,9 @@ export const blocksRelations = relations(blocks, ({ one, many }) => ({
   area: one(areas, { fields: [blocks.areaFk], references: [areas.id] }),
   author: one(users, { fields: [blocks.createdBy], references: [users.id] }),
 
-  routes: many(routes),
   files: many(files),
+  routes: many(routes),
+  topos: many(topos),
 }))
 
 export const routes = sqliteTable('routes', {

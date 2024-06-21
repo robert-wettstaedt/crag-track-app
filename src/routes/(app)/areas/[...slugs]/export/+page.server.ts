@@ -1,7 +1,7 @@
 import { db } from '$lib/db/db.server'
 import { areas, blocks } from '$lib/db/schema'
-import { convertAreaSlug } from '$lib/slugs.server'
-import { getTopos } from '$lib/topo/topo.server'
+import { enrichTopo } from '$lib/db/utils'
+import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -27,6 +27,12 @@ export const load = (async ({ locals, params }) => {
               },
             },
           },
+          topos: {
+            with: {
+              file: true,
+              routes: true,
+            },
+          },
         },
       },
       areas: {
@@ -45,7 +51,7 @@ export const load = (async ({ locals, params }) => {
 
   const _blocks = await Promise.all(
     area.blocks.map(async (block) => {
-      const toposResult = await getTopos(block.id, session)
+      const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
 
       return {
         ...block,

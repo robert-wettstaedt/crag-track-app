@@ -1,9 +1,13 @@
+import type { InferResultType } from '$lib/db/types'
+import { loadFiles } from '$lib/nextcloud/nextcloud.server'
+import { convertPathToPoints, type RouteDTO, type TopoDTO } from '$lib/topo'
+import type { Session } from '@auth/sveltekit'
 import type { db } from './db.server'
 import type { NestedArea, NestedBlock, NestedRoute } from './types'
 
 /**
  * The maximum depth for nesting areas.
- * 
+ *
  * @constant {number}
  */
 export const MAX_AREA_NESTING_DEPTH = 4
@@ -79,7 +83,6 @@ export const enrichBlock = (block: NestedBlock): EnrichedBlock => {
   return { ...block, area, pathname }
 }
 
-
 export interface EnrichedRoute extends NestedRoute, WithPathname {}
 
 /**
@@ -99,4 +102,21 @@ export const enrichRoute = (route: NestedRoute): EnrichedRoute => {
     console.log('Unable to enrich route: ', route)
     throw error
   }
+}
+
+export const enrichTopo = async (
+  topo: InferResultType<'topos', { file: true; routes: true }>,
+  session: Session | null | undefined,
+): Promise<TopoDTO> => {
+  if (topo.file == null) {
+    throw new Error('Topo file is required')
+  }
+
+  const [file] = await loadFiles([topo.file], session)
+
+  const routes = topo.routes.map(({ path, ...route }): RouteDTO => {
+    return { ...route, points: convertPathToPoints(path ?? '') }
+  })
+
+  return { ...topo, file, routes }
 }
