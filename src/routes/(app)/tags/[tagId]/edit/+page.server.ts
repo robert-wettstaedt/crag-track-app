@@ -1,10 +1,10 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
+import { routesToTags, tags } from '$lib/db/schema'
+import { validateTagForm, type TagActionFailure, type TagActionValues } from '$lib/forms.server'
+import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
-import { tags } from '$lib/db/schema'
-import { error, fail, redirect } from '@sveltejs/kit'
-import { validateTagForm, type TagActionFailure, type TagActionValues } from '$lib/forms.server'
-import { convertException } from '$lib'
 
 export const load = (async ({ params }) => {
   const result = await db.query.tags.findFirst({ where: eq(tags.id, params.tagId) })
@@ -48,8 +48,9 @@ export const actions = {
     }
 
     try {
-      // Insert the new tag into the database
-      await db.update(tags).set(values).where(eq(tags.id, params.tagId))
+      await db.insert(tags).values(values)
+      await db.update(routesToTags).set({ tagFk: values.id }).where(eq(routesToTags.tagFk, params.tagId))
+      await db.delete(tags).where(eq(tags.id, params.tagId))
     } catch (exception) {
       // If an error occurs during insertion, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })
