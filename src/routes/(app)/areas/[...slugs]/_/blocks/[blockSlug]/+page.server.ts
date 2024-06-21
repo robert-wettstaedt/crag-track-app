@@ -17,6 +17,7 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       author: true,
+      geolocation: true,
       routes: {
         orderBy: routes.grade,
       },
@@ -47,9 +48,10 @@ export const load = (async ({ locals, params, parent }) => {
 
   // Query the database for blocks with geolocation data
   const geolocationBlocksResults = await db.query.blocks.findMany({
-    where: and(isNotNull(blocks.lat), isNotNull(blocks.long)),
+    where: and(isNotNull(blocks.geolocationFk)),
     with: {
       area: buildNestedAreaQuery(),
+      geolocation: true,
     },
   })
 

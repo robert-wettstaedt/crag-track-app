@@ -1,6 +1,6 @@
 import { db } from '$lib/db/db.server'
 import { areas, blocks } from '$lib/db/schema'
-import { enrichTopo } from '$lib/db/utils'
+import { enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -18,22 +18,22 @@ export const load = (async ({ locals, params }) => {
       blocks: {
         orderBy: blocks.name,
         with: {
+          area: true,
+          geolocation: true,
+          routes: {
+            with: {
+              firstAscent: {
+                with: {
+                  climber: true,
+                },
+              },
+              tags: true,
+            },
+          },
           topos: {
             with: {
               file: true,
-              routes: {
-                with: {
-                  route: {
-                    with: {
-                      firstAscent: {
-                        with: {
-                          climber: true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
+              routes: true,
             },
           },
         },
@@ -41,6 +41,7 @@ export const load = (async ({ locals, params }) => {
       areas: {
         orderBy: areas.name,
       },
+      parkingLocations: true,
     },
   })
 
@@ -55,9 +56,11 @@ export const load = (async ({ locals, params }) => {
   const _blocks = await Promise.all(
     area.blocks.map(async (block) => {
       const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
+      const enrichedBlock = enrichBlock(block)
 
       return {
         ...block,
+        ...enrichedBlock,
         topos: toposResult,
       }
     }),
@@ -68,5 +71,6 @@ export const load = (async ({ locals, params }) => {
       ...area,
       blocks: _blocks,
     },
+    session,
   }
 }) satisfies PageServerLoad

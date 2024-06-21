@@ -325,10 +325,10 @@
       height={50 * scale}
       id="key-bg"
       width={50 * scale}
-      x={center.x * scale - 112.5 * scale}
+      x={center.x * scale - 65 * scale}
       y={center.y * scale - 37.5 * scale}
     />
 
-    <text class={fillClass} id="key" x={center.x * scale - 100 * scale} y={center.y * scale}>{key}</text>
+    <text class={fillClass} id="key" x={center.x * scale - 50 * scale} y={center.y * scale}>{key}</text>
   {/if}
 </g>

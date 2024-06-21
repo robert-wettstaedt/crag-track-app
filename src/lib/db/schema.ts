@@ -57,16 +57,15 @@ export const areasRelations = relations(areas, ({ one, many }) => ({
   areas: many(areas, { relationName: 'area-to-area' }),
   blocks: many(blocks),
   files: many(files),
+  parkingLocations: many(geolocations),
 }))
 
 export const blocks = sqliteTable('blocks', {
   ...baseFields,
   ...baseContentFields,
 
-  lat: real('lat'),
-  long: real('long'),
-
   areaFk: integer('area_fk').notNull(),
+  geolocationFk: integer('geolocation_fk'),
 })
 export type Block = InferSelectModel<typeof blocks>
 export type InsertBlock = InferInsertModel<typeof blocks>
@@ -74,6 +73,7 @@ export type InsertBlock = InferInsertModel<typeof blocks>
 export const blocksRelations = relations(blocks, ({ one, many }) => ({
   area: one(areas, { fields: [blocks.areaFk], references: [areas.id] }),
   author: one(users, { fields: [blocks.createdBy], references: [users.id] }),
+  geolocation: one(geolocations, { fields: [blocks.geolocationFk], references: [geolocations.id] }),
 
   files: many(files),
   routes: many(routes),
@@ -227,4 +227,21 @@ export const routesToTags = sqliteTable(
 export const routesToTagsRelations = relations(routesToTags, ({ one }) => ({
   route: one(routes, { fields: [routesToTags.routeFk], references: [routes.id] }),
   tag: one(tags, { fields: [routesToTags.tagFk], references: [tags.id] }),
+}))
+
+export const geolocations = sqliteTable('geolocations', {
+  id: baseFields.id,
+
+  lat: real('lat').notNull(),
+  long: real('long').notNull(),
+
+  areaFk: integer('area_fk'),
+  blockFk: integer('block_fk'),
+})
+export type Geolocation = InferSelectModel<typeof geolocations>
+export type InsertGeolocation = InferInsertModel<typeof geolocations>
+
+export const geolocationsRelations = relations(geolocations, ({ one }) => ({
+  area: one(areas, { fields: [geolocations.areaFk], references: [areas.id] }),
+  block: one(blocks, { fields: [geolocations.blockFk], references: [blocks.id] }),
 }))

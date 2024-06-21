@@ -7,10 +7,11 @@ import type { PageServerLoad } from './$types'
 export const load = (async () => {
   // Query the database to find blocks with non-null latitude and longitude
   const result = await db.query.blocks.findMany({
-    where: and(isNotNull(blocks.lat), isNotNull(blocks.long)),
+    where: and(isNotNull(blocks.geolocationFk)),
     // Include nested area information in the query result
     with: {
       area: buildNestedAreaQuery(),
+      geolocation: true,
     },
   })
 

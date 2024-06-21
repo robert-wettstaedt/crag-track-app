@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PointDTO, TopoRouteDTO, TopoDTO } from '$lib/topo'
+  import type { PointDTO, TopoDTO, TopoRouteDTO } from '$lib/topo'
   import { createEventDispatcher } from 'svelte'
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import RouteView from './components/Route'
@@ -7,8 +7,8 @@
 
   export let topos: TopoDTO[]
   export let editable = false
-  export let showRouteKey = false
   export let selectedTopoIndex = 0
+  export let getRouteKey: ((route: TopoRouteDTO, index: number) => string | number) | null = null
 
   let img: HTMLImageElement
   let imgWrapper: HTMLDivElement
@@ -174,7 +174,7 @@
     >
       {#if svg != null && selectedTopo != null}
         {#each selectedTopo.routes as route, index}
-          <RouteView {route} {scale} {svg} key={showRouteKey ? index + 1 : undefined} on:change={onChangeRoute} />
+          <RouteView {route} {scale} {svg} key={getRouteKey?.(route, index)} on:change={onChangeRoute} />
         {/each}
       {/if}
     </svg>

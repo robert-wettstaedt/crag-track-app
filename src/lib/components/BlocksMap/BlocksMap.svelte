@@ -1,6 +1,8 @@
 <script lang="ts">
-  import type { Area, Block } from '$lib/db/schema'
+  import type { Area, Block, Geolocation } from '$lib/db/schema'
+  import type { InferResultType } from '$lib/db/types'
   import type { EnrichedArea, EnrichedBlock } from '$lib/db/utils'
+  import type { InferSelectModel } from 'drizzle-orm'
   import Feature from 'ol/Feature.js'
   import OlMap from 'ol/Map.js'
   import Overlay from 'ol/Overlay.js'
@@ -21,11 +23,18 @@
   import { createEventDispatcher } from 'svelte'
   import type { ChangeEventHandler } from 'svelte/elements'
 
+  const DEFAULT_ZOOM = 19
+
   export let blocks: EnrichedBlock[]
   export let selectedArea: Area | null = null
-  export let selectedBlock: Block | null = null
+  export let selectedBlock: InferResultType<'blocks', { geolocation: true }> | null = null
   export let heightSubtrahend = 0
-  export let height: number | null = null
+  export let height: number | string | null = null
+  export let zoom: number | null = DEFAULT_ZOOM
+  export let showRelief = true
+  export let declutter = true
+  export let getBlockKey: ((block: EnrichedBlock, index: number) => string | number) | null = null
+  export let parkingLocations: Geolocation[] = []
 
   interface FeatureData {
     label: string
@@ -52,8 +61,8 @@
 
   const createMap = (element: HTMLDivElement): OlMap => {
     const center = {
-      lat: selectedBlock?.lat ?? 0,
-      lng: selectedBlock?.long ?? 0,
+      lat: selectedBlock?.geolocation?.lat ?? 0,
+      lng: selectedBlock?.geolocation?.long ?? 0,
     }
 
     const map = new OlMap({
@@ -64,7 +73,7 @@
         }),
         new TileLayer({
           properties: { isBayerRelief: true },
-          opacity: 0.8,
+          opacity: showRelief ? 0.8 : 0,
           source: new XYZ({
             attributions: [
               '© <a href="https://geodaten.bayern.de/" target="_blank">Bayerische Vermessungsverwaltung</a>',
@@ -81,7 +90,7 @@
       ],
       view: new View({
         center: fromLonLat([0, 0]),
-        zoom: 17,
+        zoom: DEFAULT_ZOOM,
       }),
     })
 
@@ -100,16 +109,16 @@
     return parents
   }
 
-  const createMarker = (block: EnrichedBlock) => {
+  const createMarker = (block: EnrichedBlock, index: number) => {
     const parents = findArea(block.area as EnrichedArea, 'crag')
 
-    if (block.lat != null && block.long != null) {
+    if (block.geolocation?.lat != null && block.geolocation?.long != null) {
       const iconFeature = new Feature({
         data: {
           label: parents.map((parent) => parent.name).join(' / ') + (parents.length === 0 ? '' : ' / ') + block.name,
           pathname: block.pathname,
         } satisfies FeatureData,
-        geometry: new Point(fromLonLat([block.long, block.lat])),
+        geometry: new Point(fromLonLat([block.geolocation.long, block.geolocation.lat])),
       })
 
       const iconStyle = new Style({
@@ -120,10 +129,40 @@
         }),
       })
 
-      iconFeature.setStyle(iconStyle)
+      const keyStyle = new Style(
+        getBlockKey == null
+          ? {}
+          : {
+              text: new Text({
+                font: '1.875rem system-ui',
+                text: String(getBlockKey(block, index)),
+                offsetY: 20,
+              }),
+            },
+      )
+
+      iconFeature.setStyle([iconStyle, keyStyle])
 
       return iconFeature
     }
+  }
+
+  const createParkingMarker = (parkingLocation: Geolocation) => {
+    const iconFeature = new Feature({
+      geometry: new Point(fromLonLat([parkingLocation.long, parkingLocation.lat])),
+    })
+
+    const iconStyle = new Style({
+      text: new Text({
+        font: '900 2.25rem "Font Awesome 6 Free"',
+        text: '\uf540',
+        fill: new Fill({ color: '#1e40af' }),
+      }),
+    })
+
+    iconFeature.setStyle(iconStyle)
+
+    return iconFeature
   }
 
   const createCragLayer = (map: OlMap, area: EnrichedArea) => {
@@ -151,7 +190,7 @@
       )
 
       const vectorLayer = new VectorLayer({
-        declutter: area.id,
+        declutter: declutter ? area.id : false,
         source: vectorSource,
 
         style: {
@@ -177,6 +216,11 @@
     const crags = Array.from(cragsMap.values())
 
     crags.forEach((area) => createCragLayer(map, area))
+
+    const parkingIconFeatures = selectedArea == null ? [] : parkingLocations.map(createParkingMarker)
+    const vectorSource = new VectorSource<Feature<Geometry>>({ features: parkingIconFeatures })
+    const vectorLayer = new VectorLayer({ source: vectorSource })
+    map.addLayer(vectorLayer)
   }
 
   const createPopup = (map: OlMap) => {
@@ -246,11 +290,25 @@
 
       const blocksToDisplay = selectedBlocks.length === 0 ? blocks : selectedBlocks
       const coordinates = blocksToDisplay
-        .map((block) => (block.lat == null || block.long == null ? undefined : fromLonLat([block.long, block.lat])))
+        .map((block) =>
+          block.geolocation?.lat == null || block.geolocation?.long == null
+            ? undefined
+            : fromLonLat([block.geolocation.long, block.geolocation.lat]),
+        )
         .filter((d) => d != null) as Coordinate[]
+
+      coordinates.push(
+        ...parkingLocations.map((parkingLocation) => fromLonLat([parkingLocation.long, parkingLocation.lat])),
+      )
+
       const extent = boundingExtent(coordinates)
 
-      map.getView().fit(extent, { maxZoom: 20, padding: [50, 50, 50, 50] })
+      map.getView().fit(extent, { maxZoom: zoom ?? DEFAULT_ZOOM, padding: [250, 250, 250, 250] })
+
+      if (zoom == null)
+        setTimeout(() => {
+          map.getView().fit(extent, { padding: [250, 250, 250, 250] })
+        }, 1000)
     })
   }
 
@@ -277,8 +335,10 @@
     if (mapElement != null) {
       if (height == null) {
         mapElement.style.height = `${window.innerHeight - mapElement.getBoundingClientRect().top - 16 - heightSubtrahend}px`
-      } else {
+      } else if (typeof height === 'number') {
         mapElement.style.height = `${height}px`
+      } else {
+        mapElement.style.height = height
       }
     }
 
@@ -286,10 +346,12 @@
   }
 
   const onChangeRelief: ChangeEventHandler<HTMLInputElement> = (event) => {
+    showRelief = event.currentTarget.checked
+
     map
       ?.getAllLayers()
       .find((layer) => layer.get('isBayerRelief'))
-      ?.setOpacity(event.currentTarget.checked ? 0.8 : 0)
+      ?.setOpacity(showRelief ? 0.8 : 0)
   }
 </script>
 
@@ -298,10 +360,20 @@
 <div class="relative">
   <div class="map w-full -z-0" use:mapAction />
 
-  <div class="absolute top-2 right-2 p-2 bg-surface-500/90 text-white">
+  <div class="map-controls absolute top-2 right-2 p-2 bg-surface-500/90 text-white">
     <label class="flex items-center space-x-2">
-      <input class="checkbox" checked on:change={onChangeRelief} type="checkbox" />
+      <input class="checkbox" bind:checked={showRelief} on:change={onChangeRelief} type="checkbox" />
       <p>Show Bayern relief</p>
     </label>
   </div>
 </div>
+
+<style>
+  @media print {
+    .map-controls,
+    :global(.ol-zoom),
+    :global(.ol-rotate) {
+      display: none;
+    }
+  }
+</style>

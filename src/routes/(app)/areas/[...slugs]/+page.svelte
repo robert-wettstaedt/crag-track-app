@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import FileViewer from '$lib/components/FileViewer'
-  import type { File } from '$lib/db/schema.js'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
@@ -41,12 +40,20 @@
   </svelte:fragment>
 
   <svelte:fragment slot="trail">
-    <a class="btn btn-sm variant-ghost" href={`/areas/${$page.params.slugs}/export`}>
-      <i class="fa-solid fa-file-export me-2" />Export
-    </a>
+    {#if data.area.type === 'crag'}
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/export`}>
+        <i class="fa-solid fa-file-export me-2" />Export
+      </a>
+
+      {#if data.area.parkingLocations.length === 0}
+        <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-parking-location`}>
+          <i class="fa-solid fa-parking me-2" />Edit parking location
+        </a>
+      {/if}
+    {/if}
 
     {#if data.session?.user != null}
-      <a class="btn btn-sm variant-ghost" href={`/areas/${$page.params.slugs}/edit`}>
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen me-2" />Edit area
       </a>
     {/if}
@@ -59,7 +66,12 @@
   <section class="pt-4">
     {#await import('$lib/components/BlocksMap') then BlocksMap}
       {#key data.area.id}
-        <BlocksMap.default blocks={data.blocks} height={400} selectedArea={data.area} />
+        <BlocksMap.default
+          blocks={data.blocks}
+          height={400}
+          parkingLocations={data.area.parkingLocations}
+          selectedArea={data.area}
+        />
       {/key}
     {/await}
   </section>

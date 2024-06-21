@@ -8,24 +8,7 @@ export interface PointDTO {
   y: number
 }
 
-export interface TopoRouteDTO
-  extends Omit<
-    InferResultType<
-      'topoRoutes',
-      {
-        route: {
-          with: {
-            firstAscent: {
-              with: {
-                climber: true
-              }
-            }
-          }
-        }
-      }
-    >,
-    'path'
-  > {
+export interface TopoRouteDTO extends Omit<InferResultType<'topoRoutes'>, 'path'> {
   points: PointDTO[]
 }
 

@@ -25,6 +25,7 @@ export const load = (async ({ locals, parent }) => {
         orderBy: areas.name, // Order nested areas by name
       },
       files: true, // Include files associated with the area
+      parkingLocations: true,
     },
   })
 
@@ -38,9 +39,10 @@ export const load = (async ({ locals, parent }) => {
 
   // Query the database for blocks with geolocation data
   const geolocationBlocksResults = await db.query.blocks.findMany({
-    where: and(isNotNull(blocks.lat), isNotNull(blocks.long)),
+    where: and(isNotNull(blocks.geolocationFk)),
     with: {
       area: buildNestedAreaQuery(), // Include nested area information
+      geolocation: true,
     },
   })
 

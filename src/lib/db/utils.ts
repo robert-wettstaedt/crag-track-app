@@ -1,6 +1,6 @@
 import type { InferResultType } from '$lib/db/types'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
-import { convertPathToPoints, type TopoRouteDTO, type TopoDTO } from '$lib/topo'
+import { convertPathToPoints, type TopoDTO, type TopoRouteDTO } from '$lib/topo'
 import type { Session } from '@auth/sveltekit'
 import type { db } from './db.server'
 import type { NestedArea, NestedBlock, NestedRoute } from './types'
@@ -105,25 +105,7 @@ export const enrichRoute = (route: NestedRoute): EnrichedRoute => {
 }
 
 export const enrichTopo = async (
-  topo: InferResultType<
-    'topos',
-    {
-      file: true
-      routes: {
-        with: {
-          route: {
-            with: {
-              firstAscent: {
-                with: {
-                  climber: true
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  >,
+  topo: InferResultType<'topos', { file: true; routes: true }>,
   session: Session | null | undefined,
 ): Promise<TopoDTO> => {
   if (topo.file == null) {

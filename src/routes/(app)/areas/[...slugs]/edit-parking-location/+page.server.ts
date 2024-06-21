@@ -1,53 +1,47 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { blocks, geolocations } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
+import { areas, geolocations } from '$lib/db/schema'
+import { enrichBlock } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params, parent }) => {
-  // Retrieve areaId and areaSlug from the parent function
-  const { areaId, areaSlug } = await parent()
+export const load = (async ({ locals, parent }) => {
+  // Retrieve the areaId from the parent function
+  const { areaId } = await parent()
 
-  // Get the current session from locals
+  // Authenticate the user session
   const session = await locals.auth()
   if (session?.user == null) {
     // If the user is not authenticated, throw a 401 error
     error(401)
   }
 
-  // Query the database for blocks matching the given slug and areaId
-  const blocksResult = await db.query.blocks.findMany({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+  // Query the database to find the area with the given areaId
+  const areasResult = await db.query.areas.findMany({
+    where: eq(areas.id, areaId),
+    with: {
+      blocks: {
+        with: {
+          area: true,
+          geolocation: true,
+        },
+      },
+    },
   })
-  // Get the first block from the result
-  const block = blocksResult.at(0)
+  const area = areasResult.at(0)
 
-  // If no block is found, throw a 404 error
-  if (block == null) {
+  // If the area is not found, throw a 404 error
+  if (area == null) {
     error(404)
   }
 
-  // If more than one block is found, throw a 400 error
-  if (blocksResult.length > 1) {
-    error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
-  }
+  const blocks = area.blocks.map((block) => enrichBlock(block))
 
-  // Query the database for blocks with geolocation data
-  const result = await db.query.blocks.findMany({
-    where: and(isNotNull(blocks.geolocationFk)),
-    with: {
-      area: buildNestedAreaQuery(),
-      geolocation: true,
-    },
-  })
-
-  // Return the block and the enriched geolocation blocks
   return {
-    block,
-    blocks: result.map(enrichBlock),
+    ...area,
+    blocks,
   }
 }) satisfies PageServerLoad
 
@@ -97,28 +91,26 @@ export const actions = {
       return fail(400, { ...values, error: 'long is not a valid Longitude' })
     }
 
-    // Query the database for blocks matching the given slug and areaId
-    const blocksResult = await db.query.blocks.findMany({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    })
-    // Get the first block from the result
-    const block = blocksResult.at(0)
+    // Query the database to find the area with the given areaId
+    const areasResult = await db.query.areas.findMany({ where: eq(areas.id, areaId) })
+    const area = areasResult.at(0)
 
-    // If no block is found, throw a 404 error
-    if (block == null) {
+    // If the area is not found, throw a 404 error
+    if (area == null) {
       error(404)
     }
 
+    if (area.type !== 'crag') {
+      error(400, 'Area is not a crag')
+    }
+
     try {
-      // Update the block with the new latitude and longitude
-      const [geolocation] = await db.insert(geolocations).values({ lat, long, blockFk: block.id }).returning()
-      await db.update(blocks).set({ geolocationFk: geolocation.id }).where(eq(blocks.id, block.id))
+      await db.insert(geolocations).values({ lat, long, areaFk: area.id })
     } catch (exception) {
       // Handle any exceptions that occur during the update
       return fail(404, { ...values, error: convertException(exception) })
     }
 
-    // Redirect to the block's page after a successful update
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+    redirect(303, `/areas/${params.slugs}`)
   },
 }

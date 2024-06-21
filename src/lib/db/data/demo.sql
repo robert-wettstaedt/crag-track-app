@@ -63,18 +63,16 @@ CREATE TABLE `blocks` (
 	`created_by` integer NOT NULL,
 	`name` text NOT NULL,
 	`slug` text NOT NULL,
-	`lat` real,
-	`long` real,
 	`area_fk` integer NOT NULL
-);
-INSERT INTO blocks VALUES('2024-05-23 08:16:37',1,1,'Blocco 18','blocco-18',46.431849022171833851,8.8467670292225530914,3);
-INSERT INTO blocks VALUES('2024-05-23 08:21:43',2,1,'Le Coin','le-coin',46.135865172707806181,6.162738144519858352,6);
-INSERT INTO blocks VALUES('2024-05-23 08:30:00',3,1,'Burden of Dreams','burden-of-dreams',60.423218784731718145,26.136604261022067241,8);
-INSERT INTO blocks VALUES('2024-05-23 08:39:44',4,1,'Sleepwalker','sleepwalker',36.035930322125251379,-115.46296656969348148,11);
-INSERT INTO blocks VALUES('2024-05-23 08:48:03',5,1,'Tron','tron',39.930348795313763687,-105.30000108758126309,13);
-INSERT INTO blocks VALUES('2024-05-23 09:19:34',6,1,'La Marie Rose','la-marie-rose',48.4472493618733413,2.6380299249406480299,16);
-INSERT INTO blocks VALUES('2024-05-23 09:27:18',7,1,'Masso 11b','masso-11b',NULL,NULL,18);
-INSERT INTO blocks VALUES('2024-05-23 09:37:24',8,1,'Big Columbia Boulder','big-columbia-boulder',37.741732085227597259,-119.60365405399706517,21);
+, `geolocation_fk` integer);
+INSERT INTO blocks VALUES('2024-05-23 08:16:37',1,1,'Blocco 18','blocco-18',3,1);
+INSERT INTO blocks VALUES('2024-05-23 08:21:43',2,1,'Le Coin','le-coin',6,2);
+INSERT INTO blocks VALUES('2024-05-23 08:30:00',3,1,'Burden of Dreams','burden-of-dreams',8,3);
+INSERT INTO blocks VALUES('2024-05-23 08:39:44',4,1,'Sleepwalker','sleepwalker',11,4);
+INSERT INTO blocks VALUES('2024-05-23 08:48:03',5,1,'Tron','tron',13,5);
+INSERT INTO blocks VALUES('2024-05-23 09:19:34',6,1,'La Marie Rose','la-marie-rose',16,6);
+INSERT INTO blocks VALUES('2024-05-23 09:27:18',7,1,'Masso 11b','masso-11b',18,NULL);
+INSERT INTO blocks VALUES('2024-05-23 09:37:24',8,1,'Big Columbia Boulder','big-columbia-boulder',21,7);
 CREATE TABLE `files` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`path` text NOT NULL,
@@ -142,6 +140,7 @@ CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
 				created_at numeric
 			);
 INSERT INTO __drizzle_migrations VALUES(NULL,'a7489d95b3b1b8c43deaa9b9947f96c8d6c446a1f620224a24b0db6ddfeaf1d7',1718902591499);
+INSERT INTO __drizzle_migrations VALUES(NULL,'6a7eb7b9e3449ef14c7de0a250168b551a6bb78e4dedf28dffa23a7024197062',1718980851169);
 CREATE TABLE `routes_to_tags` (
 	`route_fk` integer NOT NULL,
 	`tag_fk` text NOT NULL,
@@ -161,6 +160,20 @@ CREATE TABLE `tags` (
 );
 INSERT INTO tags VALUES('SD');
 INSERT INTO tags VALUES('highball');
+CREATE TABLE `geolocations` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`lat` real NOT NULL,
+	`long` real NOT NULL,
+	`area_fk` integer,
+	`block_fk` integer
+);
+INSERT INTO geolocations VALUES(1,46.431849022171833851,8.8467670292225530914,NULL,1);
+INSERT INTO geolocations VALUES(2,46.135865172707806181,6.162738144519858352,NULL,2);
+INSERT INTO geolocations VALUES(3,60.423218784731718145,26.136604261022067241,NULL,3);
+INSERT INTO geolocations VALUES(4,36.035930322125251379,-115.46296656969348148,NULL,4);
+INSERT INTO geolocations VALUES(5,39.930348795313763687,-105.30000108758126309,NULL,5);
+INSERT INTO geolocations VALUES(6,48.4472493618733413,2.6380299249406480299,NULL,6);
+INSERT INTO geolocations VALUES(7,37.741732085227597259,-119.60365405399706517,NULL,8);
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('users',2);
 INSERT INTO sqlite_sequence VALUES('areas',21);
@@ -168,4 +181,5 @@ INSERT INTO sqlite_sequence VALUES('blocks',8);
 INSERT INTO sqlite_sequence VALUES('routes',8);
 INSERT INTO sqlite_sequence VALUES('ascents',19);
 INSERT INTO sqlite_sequence VALUES('first_ascents',6);
+INSERT INTO sqlite_sequence VALUES('geolocations',7);
 COMMIT;
