@@ -12,6 +12,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",
+    "dump-demo": "sqlite3 ./demo-db/sqlite.db .dump > ./src/lib/db/data/demo.sql",
     "studio": "drizzle-kit studio --config drizzle.config.ts",
     "generate": "drizzle-kit generate --config drizzle.config.ts",
     "migrate": "drizzle-kit push --config drizzle.config.ts"

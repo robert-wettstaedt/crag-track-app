@@ -75,7 +75,7 @@
   </section>
 </div>
 
-{#if files.length > 0 || data.topos == null}
+{#if files.length > 0 || data.topos.length === 0}
   <div class="card mt-4">
     <div class="card-header">Topos</div>
 
@@ -135,7 +135,7 @@
   <div class="card-header">Routes</div>
 
   <div class="flex">
-    {#if data.topos != null}
+    {#if data.topos.length > 0}
       <section class="p-4 w-2/4">
         <div class="relative">
           <TopoViewer topos={data.topos} />
@@ -147,7 +147,7 @@
       </section>
     {/if}
 
-    <section class={`p-4 ${data.topos == null ? 'w-full' : 'w-2/4'}`}>
+    <section class={`p-4 ${data.topos.length === 0 ? 'w-full' : 'w-2/4'}`}>
       {#if data.block.routes.length === 0}
         No routes yet
       {:else}

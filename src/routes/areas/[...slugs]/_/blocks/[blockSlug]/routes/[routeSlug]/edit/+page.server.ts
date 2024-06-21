@@ -106,7 +106,7 @@ export const actions = {
     // Generate a slug from the route name
     const slug = generateSlug(values.name)
 
-    if (slug.length > 0) {
+    if (slug != params.routeSlug && slug.length > 0) {
       // Query the database to check if a route with the same slug already exists in the block
       const existingRoutesResult = await db
         .select()

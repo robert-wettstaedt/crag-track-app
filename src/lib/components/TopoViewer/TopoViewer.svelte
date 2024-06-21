@@ -17,6 +17,7 @@
   let selectedPoint: PointDTO | undefined = undefined
   let svg: SVGSVGElement | undefined
 
+  $: selectedTopo = topos.at(selectedTopoIndex)
   $: selectedTopoRoute = topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore)
 
   const dispatcher = createEventDispatcher<{ change: RouteDTO }>()
@@ -159,8 +160,8 @@
       viewBox={`0 0 ${width} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {#if svg != null}
-        {#each topos[selectedTopoIndex].routes as route}
+      {#if svg != null && selectedTopo != null}
+        {#each selectedTopo.routes as route}
           <RouteView {route} {scale} {svg} on:change={onChangeRoute} />
         {/each}
       {/if}
