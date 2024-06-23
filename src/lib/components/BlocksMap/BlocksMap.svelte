@@ -17,7 +17,7 @@
   import { register } from 'ol/proj/proj4.js'
   import { Vector as VectorSource, XYZ } from 'ol/source.js'
   import OSM, { ATTRIBUTION } from 'ol/source/OSM'
-  import { Fill, Style, Text } from 'ol/style.js'
+  import { Fill, Stroke, Style, Text } from 'ol/style.js'
   import proj4 from 'proj4'
   import { createEventDispatcher } from 'svelte'
   import type { ChangeEventHandler } from 'svelte/elements'
@@ -126,7 +126,7 @@
       const iconStyle = new Style({
         text: new Text({
           font: `900 ${block.id === selectedBlock?.id ? 2.25 : 1.875}rem 'Font Awesome 6 Free'`,
-          text: '\uf6fc',
+          text: '\uf111',
           fill: new Fill({ color: block.id === selectedBlock?.id ? '#60a5fa' : '#ef4444' }),
         }),
         zIndex: showBlocks ? 0 : -1,
@@ -137,9 +137,9 @@
           ? {}
           : {
               text: new Text({
-                font: '1.875rem system-ui',
+                fill: new Fill({ color: 'white' }),
+                font: '1.5rem system-ui',
                 text: String(getBlockKey(block, index)),
-                offsetY: 20,
               }),
             },
       )
