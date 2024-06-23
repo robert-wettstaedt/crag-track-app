@@ -60,7 +60,7 @@ export const load = (async ({ locals, params }) => {
         with: blocksQuery,
       },
       areas: {
-        orderBy: desc(areas.createdAt),
+        orderBy: areas.name,
         with: {
           blocks: {
             orderBy: blocks.name,
