@@ -25,7 +25,8 @@
   <div class="flex">
     <div class="w-2/4">
       <div class="p-2 pt-8 flex flex-col h-full">
-        <h1 class="text-center text-3xl">Bouldern in {data.area.name}</h1>
+        <h1 class="text-center text-4xl">{data.area.name}</h1>
+        <h1 class="text-center text-3xl">Bouldering</h1>
 
         <div class="p-2 mt-4">
           <p>{`<Infos über ${data.area.name}>`}</p>
