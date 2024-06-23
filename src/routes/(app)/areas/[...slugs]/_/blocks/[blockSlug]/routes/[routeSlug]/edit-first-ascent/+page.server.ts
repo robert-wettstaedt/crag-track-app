@@ -49,13 +49,28 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
-  // Query the database to get all users
-  const usersResult = await db.query.users.findMany()
+  const firstAscentsResult = await db.query.firstAscents.findMany({
+    orderBy: firstAscents.climberName,
+    with: {
+      climber: true,
+    },
+  })
+
+  const allClimbers = firstAscentsResult
+    .map((firstAscent) => firstAscent.climber?.userName ?? firstAscent.climberName)
+    .filter((d): d is string => d != null)
+  const climbersMap = allClimbers.reduce(
+    (map, climber) => {
+      return { ...map, [climber]: (map[climber] ?? 0) + 1 }
+    },
+    {} as Record<string, number>,
+  )
+  const climbers = Object.keys(climbersMap).sort((a, b) => climbersMap[b] - climbersMap[a])
 
   // Return the route and users data
   return {
     route,
-    users: usersResult,
+    climbers,
   }
 }) satisfies PageServerLoad
 

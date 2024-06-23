@@ -33,7 +33,7 @@
       climberName={form?.climberName ??
         data.route.firstAscent?.climber?.userName ??
         data.route.firstAscent?.climberName}
-      users={data.users}
+      climbers={data.climbers}
       year={form?.year ?? data.route.firstAscent?.year}
     />
   </div>

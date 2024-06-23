@@ -2,13 +2,13 @@
   import type { FirstAscent, User } from '$lib/db/schema'
   import { Autocomplete, popup, type AutocompleteOption, type PopupSettings } from '@skeletonlabs/skeleton'
 
-  export let users: User[]
+  export let climbers: string[]
 
   export let climberName: FirstAscent['climberName'] | undefined
   export let year: FirstAscent['year'] | undefined
 
   function onSelectClimber(event: CustomEvent<AutocompleteOption<string | undefined | null>>): void {
-    climberName = users.find((user) => String(user.id) === event.detail.value)?.userName
+    climberName = event.detail.value
   }
 
   let popupSettings: PopupSettings = {
@@ -36,7 +36,7 @@
         bind:input={climberName}
         emptyState={climberName ?? undefined}
         on:selection={onSelectClimber}
-        options={users.map((user) => ({ label: user.userName, value: String(user.id) }))}
+        options={climbers.map((climber) => ({ label: climber, value: climber }))}
       />
     </div>
   </div>
