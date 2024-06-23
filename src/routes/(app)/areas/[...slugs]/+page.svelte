@@ -45,11 +45,9 @@
         <i class="fa-solid fa-file-export me-2" />Export
       </a>
 
-      {#if data.area.parkingLocations.length === 0}
-        <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-parking-location`}>
-          <i class="fa-solid fa-parking me-2" />Edit parking location
-        </a>
-      {/if}
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-parking-location`}>
+        <i class="fa-solid fa-parking me-2" />Add parking location
+      </a>
     {/if}
 
     {#if data.session?.user != null}

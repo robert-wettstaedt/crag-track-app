@@ -1,10 +1,10 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { areas, geolocations } from '$lib/db/schema'
-import { enrichBlock } from '$lib/db/utils'
+import { areas, blocks, geolocations } from '$lib/db/schema'
+import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
@@ -21,14 +21,6 @@ export const load = (async ({ locals, parent }) => {
   // Query the database to find the area with the given areaId
   const areasResult = await db.query.areas.findMany({
     where: eq(areas.id, areaId),
-    with: {
-      blocks: {
-        with: {
-          area: true,
-          geolocation: true,
-        },
-      },
-    },
   })
   const area = areasResult.at(0)
 
@@ -37,11 +29,18 @@ export const load = (async ({ locals, parent }) => {
     error(404)
   }
 
-  const blocks = area.blocks.map((block) => enrichBlock(block))
+  // Query the database for blocks with geolocation data
+  const geolocationBlocksResults = await db.query.blocks.findMany({
+    where: and(isNotNull(blocks.geolocationFk)),
+    with: {
+      area: buildNestedAreaQuery(), // Include nested area information
+      geolocation: true,
+    },
+  })
 
   return {
     ...area,
-    blocks,
+    blocks: geolocationBlocksResults.map(enrichBlock),
   }
 }) satisfies PageServerLoad
 
