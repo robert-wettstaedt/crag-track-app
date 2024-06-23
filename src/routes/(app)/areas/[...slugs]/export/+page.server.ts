@@ -1,10 +1,50 @@
 import { db } from '$lib/db/db.server'
 import { areas, blocks } from '$lib/db/schema'
-import { enrichBlock, enrichTopo } from '$lib/db/utils'
+import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
+
+const blocksQuery: {
+  area: Parameters<typeof db.query.areas.findMany>[0]
+  geolocation: true
+  routes: {
+    with: {
+      firstAscent: {
+        with: {
+          climber: true
+        }
+      }
+      tags: true
+    }
+  }
+  topos: {
+    with: {
+      file: true
+      routes: true
+    }
+  }
+} = {
+  area: buildNestedAreaQuery(2),
+  geolocation: true,
+  routes: {
+    with: {
+      firstAscent: {
+        with: {
+          climber: true,
+        },
+      },
+      tags: true,
+    },
+  },
+  topos: {
+    with: {
+      file: true,
+      routes: true,
+    },
+  },
+}
 
 export const load = (async ({ locals, params }) => {
   const session = await locals.auth()
@@ -17,29 +57,16 @@ export const load = (async ({ locals, params }) => {
       author: true,
       blocks: {
         orderBy: blocks.name,
-        with: {
-          area: true,
-          geolocation: true,
-          routes: {
-            with: {
-              firstAscent: {
-                with: {
-                  climber: true,
-                },
-              },
-              tags: true,
-            },
-          },
-          topos: {
-            with: {
-              file: true,
-              routes: true,
-            },
-          },
-        },
+        with: blocksQuery,
       },
       areas: {
-        orderBy: areas.name,
+        orderBy: desc(areas.createdAt),
+        with: {
+          blocks: {
+            orderBy: blocks.name,
+            with: blocksQuery,
+          },
+        },
       },
       parkingLocations: true,
     },
@@ -53,8 +80,10 @@ export const load = (async ({ locals, params }) => {
     error(404)
   }
 
-  const _blocks = await Promise.all(
-    area.blocks.map(async (block) => {
+  const allBlocks = [...area.blocks, ...area.areas.flatMap((area) => area.blocks)]
+
+  const enrichedBlocks = await Promise.all(
+    allBlocks.map(async (block) => {
       const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
       const enrichedBlock = enrichBlock(block)
 
@@ -69,7 +98,13 @@ export const load = (async ({ locals, params }) => {
   return {
     area: {
       ...area,
-      blocks: _blocks,
+      blocks: enrichedBlocks,
+      areas: area.areas.map((area) => {
+        return {
+          ...area,
+          blocks: enrichedBlocks.filter((block) => block.areaFk === area.id),
+        }
+      }),
     },
     session,
   }

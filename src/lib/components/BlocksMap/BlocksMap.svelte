@@ -1,8 +1,7 @@
 <script lang="ts">
-  import type { Area, Block, Geolocation } from '$lib/db/schema'
+  import type { Area, Geolocation } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import type { EnrichedArea, EnrichedBlock } from '$lib/db/utils'
-  import type { InferSelectModel } from 'drizzle-orm'
   import Feature from 'ol/Feature.js'
   import OlMap from 'ol/Map.js'
   import Overlay from 'ol/Overlay.js'
@@ -22,6 +21,7 @@
   import proj4 from 'proj4'
   import { createEventDispatcher } from 'svelte'
   import type { ChangeEventHandler } from 'svelte/elements'
+  import type { GetBlockKey } from '.'
 
   const DEFAULT_ZOOM = 19
 
@@ -32,8 +32,10 @@
   export let height: number | string | null = null
   export let zoom: number | null = DEFAULT_ZOOM
   export let showRelief = true
+  export let showBlocks = true
+  export let showAreas = true
   export let declutter = true
-  export let getBlockKey: ((block: EnrichedBlock, index: number) => string | number) | null = null
+  export let getBlockKey: GetBlockKey = null
   export let parkingLocations: Geolocation[] = []
 
   interface FeatureData {
@@ -97,7 +99,7 @@
     return map
   }
 
-  const findArea = (area: EnrichedArea | null, type?: EnrichedArea['type']): EnrichedArea[] => {
+  const findArea = (area: EnrichedArea | null | undefined, type?: EnrichedArea['type']): EnrichedArea[] => {
     const parents = area == null ? [] : [area]
     let current = area
 
@@ -127,6 +129,7 @@
           text: '\uf6fc',
           fill: new Fill({ color: block.id === selectedBlock?.id ? '#60a5fa' : '#ef4444' }),
         }),
+        zIndex: showBlocks ? 0 : -1,
       })
 
       const keyStyle = new Style(
@@ -165,43 +168,88 @@
     return iconFeature
   }
 
-  const createCragLayer = (map: OlMap, area: EnrichedArea) => {
-    const areaBlocks = blocks.filter((block) => findArea(block.area as EnrichedArea, 'crag').at(0)?.id === area.id)
-    const iconFeatures = areaBlocks.map(createMarker).filter((d) => d != null) as Feature<Point>[]
+  const createSectorLayer = (
+    cragBlocks: EnrichedBlock[],
+    cragSource: VectorSource<Feature<Geometry>>,
+  ): Feature<Point>[] => {
+    const allSectors = cragBlocks
+      .map((block) => findArea(block.area as EnrichedArea, 'sector').at(0))
+      .filter((area) => area?.type === 'sector') as EnrichedArea[]
+    const sectorsMap = new Map(allSectors.map((area) => [area.id, area]))
+    const sectors = Array.from(sectorsMap.values())
+
+    if (sectors.length === 0) {
+      return cragBlocks.map(createMarker).filter((d) => d != null) as Feature<Point>[]
+    } else {
+      return sectors.flatMap((sector) => {
+        const sectorBlocks = cragBlocks.filter(
+          (block) => findArea(block.area as EnrichedArea, 'sector').at(0)?.id === sector.id,
+        )
+        const iconFeatures = sectorBlocks.map(createMarker).filter((d) => d != null) as Feature<Point>[]
+        if (iconFeatures.length > 0) {
+          const parents = findArea(sector)
+
+          const sectorSource = new VectorSource<Feature<Geometry>>({ features: iconFeatures })
+          const geometry = fromExtent(sectorSource.getExtent())
+          geometry.scale(geometry.getArea() > 1000 ? 1.5 : 3)
+
+          cragSource.addFeature(
+            new Feature({
+              data: {
+                label: parents.map((parent) => parent.name).join(' / '),
+                pathname: sector.pathname,
+              } satisfies FeatureData,
+              geometry,
+              text: sector.name,
+            }),
+          )
+        }
+        return iconFeatures
+      })
+    }
+  }
+
+  const createCragLayer = (map: OlMap, crag: EnrichedArea) => {
+    const cragBlocks = blocks.filter((block) => findArea(block.area as EnrichedArea, 'crag').at(0)?.id === crag.id)
+    const vectorSource = new VectorSource<Feature<Geometry>>()
+
+    const iconFeatures = createSectorLayer(cragBlocks, vectorSource)
+    vectorSource.addFeatures(iconFeatures)
 
     if (iconFeatures.length > 0) {
-      const vectorSource = new VectorSource<Feature<Geometry>>({
-        features: iconFeatures,
-      })
-
-      const parents = findArea(area)
+      const parents = findArea(crag)
 
       const geometry = fromExtent(vectorSource.getExtent())
-      geometry.scale(1.5)
+      geometry.scale(geometry.getArea() > 1000 ? 1.5 : 3)
       vectorSource.addFeature(
         new Feature({
           data: {
             label: parents.map((parent) => parent.name).join(' / '),
-            pathname: area.pathname,
+            pathname: crag.pathname,
           } satisfies FeatureData,
           geometry,
-          text: area.name,
+          text: crag.name,
         }),
       )
 
       const vectorLayer = new VectorLayer({
-        declutter: declutter ? area.id : false,
+        declutter: declutter ? crag.id : false,
         source: vectorSource,
 
-        style: {
-          'stroke-color': 'rgba(49, 57, 68, 1)',
-          'stroke-width': 1,
-          'fill-color': 'rgba(255, 255, 255, 0.2)',
-          'text-value': ['get', 'text'],
-          'text-font': 'bold 14px sans-serif',
-          'text-offset-y': -12,
-          'text-overflow': true,
-        },
+        style: showAreas
+          ? {
+              'stroke-color': 'rgba(49, 57, 68, 1)',
+              'stroke-width': 1,
+              'fill-color': 'rgba(255, 255, 255, 0.2)',
+              'text-value': ['get', 'text'],
+              'text-font': 'bold 14px sans-serif',
+              'text-offset-y': -12,
+              'text-overflow': true,
+            }
+          : {
+              'stroke-color': 'transparent',
+              'fill-color': 'transparent',
+            },
       })
 
       map.addLayer(vectorLayer)
@@ -307,7 +355,7 @@
 
       if (zoom == null)
         setTimeout(() => {
-          map.getView().fit(extent, { padding: [250, 250, 250, 250] })
+          map.getView().fit(extent, { maxZoom: 22, padding: [250, 250, 250, 250] })
         }, 1000)
     })
   }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import SaveBouldering from '$lib/assets/Save-Bouldering.jpg'
-  import TopoViewer from '$lib/components/TopoViewer'
+  import AreaBlockListing from '$lib/components/AreaBlockListing'
   import '@fortawesome/fontawesome-free/css/all.css'
   import '../../../../../app.postcss'
 
@@ -48,96 +48,28 @@
       height="210mm"
       parkingLocations={data.area.parkingLocations}
       selectedArea={data.area}
+      showBlocks={false}
       showRelief={false}
       zoom={16}
     />
   {/await}
 </section>
 
-<section>
-  <h2 class="p-2 text-center text-xl">Blöcke</h2>
-
-  {#await import('$lib/components/BlocksMap') then BlocksMap}
-    <BlocksMap.default
-      blocks={data.area.blocks}
-      declutter={false}
+{#if data.area.areas.length > 0}
+  {#each data.area.areas as area}
+    <AreaBlockListing
+      blocks={area.blocks}
       getBlockKey={(_, index) => String.fromCharCode(ALPHABET_START_INDEX + index)}
-      height="210mm"
-      zoom={null}
+      name={area.name}
     />
-  {/await}
-</section>
-
-{#each data.area.blocks as block, index}
-  {#each block.topos as topo}
-    <section>
-      <div class="flex h-full">
-        <div class="w-2/4 px-4">
-          <div class="p-2 mt-8">
-            <h2 class="text-center text-xl">
-              {String.fromCharCode(ALPHABET_START_INDEX + index)}. {block.name}
-            </h2>
-
-            {#each topo.routes.map( (topoRoute) => block.routes.find((route) => route.id === topoRoute.routeFk), ) as route, index}
-              {#if route != null}
-                <h3 class="text-lg mt-8">
-                  <strong>{index + 1}</strong>
-                  {route.name.length === 0 ? 'Unbekannt' : route.name}
-
-                  {#if route.grade != null}
-                    &nbsp;{route.gradingScale} {route.grade}
-                  {/if}
-                </h3>
-
-                {#if route.firstAscent}
-                  <p class="ms-4">
-                    FA:
-
-                    {#if (route.firstAscent.climber?.userName ?? route.firstAscent.climberName) != null}
-                      {route.firstAscent.climber?.userName ?? route.firstAscent.climberName}&nbsp;
-                    {/if}
-
-                    {#if route.firstAscent.year}
-                      {route.firstAscent.year}
-                    {/if}
-                  </p>
-                {/if}
-
-                {#if route.tags.length > 0}
-                  <div class="flex gap-2 ms-4">
-                    {#each route.tags as tag}
-                      <p>#{tag.tagFk}</p>
-                    {/each}
-                  </div>
-                {/if}
-
-                {#if route.description}
-                  <p class="ms-4">{route.description}</p>
-                {/if}
-              {/if}
-            {/each}
-          </div>
-        </div>
-
-        <div class="w-2/4 h-full relative">
-          {#if topo.file?.stat == null}
-            <p class="text-center w-full">Error loading file: {topo.file?.error ?? ''}</p>
-          {:else}
-            <TopoViewer getRouteKey={(_, index) => index + 1} topos={[topo]} />
-          {/if}
-
-          {#if block.geolocation?.lat != null && block.geolocation?.long != null}
-            <p class="text-xs text-white bg-black/50 p-1 absolute top-4 right-4 z-50">
-              <i class="fa-solid fa-location-dot me-2" />{block.geolocation.lat.toFixed(5)}, {block.geolocation.long.toFixed(
-                5,
-              )}
-            </p>
-          {/if}
-        </div>
-      </div>
-    </section>
   {/each}
-{/each}
+{:else}
+  <AreaBlockListing
+    blocks={data.area.blocks}
+    getBlockKey={(_, index) => String.fromCharCode(ALPHABET_START_INDEX + index)}
+    name="Blöcke"
+  />
+{/if}
 
 <style>
   @page {

@@ -17,14 +17,14 @@ export const MAX_AREA_NESTING_DEPTH = 4
  *
  * @returns {object} The nested area query object.
  */
-export const buildNestedAreaQuery = () => {
+export const buildNestedAreaQuery = (depth = MAX_AREA_NESTING_DEPTH) => {
   let nestedAreaQuery: Parameters<typeof db.query.areas.findMany>[0] = {
     with: {
       parent: true,
     },
   }
 
-  for (let i = 0; i < MAX_AREA_NESTING_DEPTH; i++) {
+  for (let i = 0; i < depth; i++) {
     nestedAreaQuery = {
       with: {
         parent: nestedAreaQuery,

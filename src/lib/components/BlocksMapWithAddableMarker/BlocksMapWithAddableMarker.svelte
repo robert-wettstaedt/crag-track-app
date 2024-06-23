@@ -18,26 +18,22 @@
     let marker: Feature<Point> | null = null
 
     map.on('click', (event) => {
-      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature)
+      if (marker == null) {
+        marker = new Feature({
+          geometry: new Point(event.coordinate),
+        })
 
-      if (feature == null) {
-        if (marker == null) {
-          marker = new Feature({
-            geometry: new Point(event.coordinate),
-          })
+        const vectorSource = new VectorSource({
+          features: [marker],
+        })
 
-          const vectorSource = new VectorSource({
-            features: [marker],
-          })
+        const vectorLayer = new VectorLayer({
+          source: vectorSource as any,
+        })
 
-          const vectorLayer = new VectorLayer({
-            source: vectorSource as any,
-          })
-
-          map.addLayer(vectorLayer)
-        } else {
-          marker.getGeometry()?.setCoordinates(event.coordinate)
-        }
+        map.addLayer(vectorLayer)
+      } else {
+        marker.getGeometry()?.setCoordinates(event.coordinate)
       }
 
       dispatch('change', toLonLat(event.coordinate))
