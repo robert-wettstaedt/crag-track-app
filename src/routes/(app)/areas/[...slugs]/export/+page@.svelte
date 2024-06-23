@@ -7,6 +7,17 @@
 
   export let data
 
+  const topos =
+    data.area.areas.length === 0
+      ? data.area.blocks.flatMap((block) => block.topos)
+      : data.area.areas.flatMap((area) => area.blocks.flatMap((block) => block.topos))
+
+  let loadedTopos = 0
+
+  $: if (loadedTopos === topos.length) {
+    window.print()
+  }
+
   const ALPHABET_START_INDEX = 'a'.charCodeAt(0)
 </script>
 
@@ -61,6 +72,7 @@
       blocks={area.blocks}
       getBlockKey={(_, index) => String.fromCharCode(ALPHABET_START_INDEX + index)}
       name={area.name}
+      on:load={() => loadedTopos++}
     />
   {/each}
 {:else}
@@ -68,6 +80,7 @@
     blocks={data.area.blocks}
     getBlockKey={(_, index) => String.fromCharCode(ALPHABET_START_INDEX + index)}
     name="Blöcke"
+    on:load={() => loadedTopos++}
   />
 {/if}
 

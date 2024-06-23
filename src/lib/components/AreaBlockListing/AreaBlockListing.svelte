@@ -90,14 +90,13 @@
           {#if topo.file?.stat == null}
             <p class="text-center w-full">Error loading file: {topo.file?.error ?? ''}</p>
           {:else}
-            <TopoViewer getRouteKey={(_, index) => index + 1} topos={[topo]} />
+            <TopoViewer getRouteKey={(_, index) => index + 1} topos={[topo]} on:load />
           {/if}
 
           {#if block.geolocation?.lat != null && block.geolocation?.long != null}
             <p class="text-xs text-white bg-black/50 p-1 absolute top-4 right-4 z-50">
-              <i class="fa-solid fa-location-dot me-2" />{block.geolocation.lat.toFixed(5)}, {block.geolocation.long.toFixed(
-                5,
-              )}
+              <i class="fa-solid fa-location-dot me-2" />
+              {block.geolocation.lat.toFixed(5)}, {block.geolocation.long.toFixed(5)}
             </p>
           {/if}
         </div>

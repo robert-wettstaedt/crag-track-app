@@ -23,7 +23,7 @@
   $: selectedTopo = topos.at(selectedTopoIndex)
   $: selectedTopoRoute = topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore)
 
-  const dispatcher = createEventDispatcher<{ change: TopoRouteDTO }>()
+  const dispatcher = createEventDispatcher<{ change: TopoRouteDTO; load: void }>()
 
   selectedRouteStore.subscribe(() => {
     $selectedPointTypeStore = null
@@ -95,6 +95,11 @@
     translateX = img.getBoundingClientRect().x - imgWrapper.getBoundingClientRect().x
     translateY = img.getBoundingClientRect().y - imgWrapper.getBoundingClientRect().y
   }
+
+  const onLoadImage = () => {
+    getDimensions()
+    dispatcher('load')
+  }
 </script>
 
 <svelte:window on:resize={getDimensions} />
@@ -160,7 +165,7 @@
           bind:this={img}
           class="m-auto relative z-10 pointer-events-none touch-none"
           id="img"
-          on:load={getDimensions}
+          on:load={onLoadImage}
           src={`/nextcloud${topo.file.stat?.filename}`}
         />
       {:else}
