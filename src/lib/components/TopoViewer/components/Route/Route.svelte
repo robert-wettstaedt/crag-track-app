@@ -12,7 +12,7 @@
   import type { PointDTO, TopoRouteDTO } from '$lib/topo'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
   import type { MouseEventHandler } from 'svelte/elements'
-  import { highlightedRouteStore, selectedRouteStore } from '../../stores'
+  import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from '../../stores'
 
   export let key: number | string | undefined
   export let route: TopoRouteDTO
@@ -39,7 +39,7 @@
   const dispatcher = createEventDispatcher<{ change: TopoRouteDTO }>()
 
   const onSelect: MouseEventHandler<SVGGElement> = (event) => {
-    if (!selected) {
+    if (!selected && $selectedPointTypeStore == null) {
       event.stopImmediatePropagation()
       selectedRouteStore.set(route.routeFk)
       highlightedRouteStore.set(null)

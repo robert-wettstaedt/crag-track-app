@@ -3,7 +3,7 @@
   import { createEventDispatcher } from 'svelte'
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import RouteView from './components/Route'
-  import { selectedRouteStore } from './stores'
+  import { selectedPointTypeStore, selectedRouteStore } from './stores'
 
   export let topos: TopoDTO[]
   export let editable = false
@@ -17,7 +17,6 @@
   let scale = 0
   let translateX = 0
   let translateY = 0
-  let currentType: PointDTO['type'] | undefined = undefined
   let selectedPoint: PointDTO | undefined = undefined
   let svg: SVGSVGElement | undefined
 
@@ -27,7 +26,7 @@
   const dispatcher = createEventDispatcher<{ change: TopoRouteDTO }>()
 
   selectedRouteStore.subscribe(() => {
-    currentType = undefined
+    $selectedPointTypeStore = null
     selectedPoint = undefined
 
     const index = topos.findIndex((topo) => topo.routes.some((route) => route.routeFk === $selectedRouteStore))
@@ -35,20 +34,29 @@
   })
 
   const onClickSvg: MouseEventHandler<SVGElement> = (event) => {
-    if ($selectedRouteStore != null && currentType != null) {
+    if ($selectedRouteStore != null && $selectedPointTypeStore != null) {
       if (selectedTopoRoute == null) {
         return
       }
 
       const point: PointDTO = {
         id: crypto.randomUUID(),
-        type: currentType,
+        type: $selectedPointTypeStore,
         x: Math.ceil(event.layerX / scale),
         y: Math.ceil(event.layerY / scale),
       }
 
+      const closePoint = topos
+        .flatMap((topo) => topo.routes.flatMap((route) => route.points))
+        .find((p) => Math.abs(p.x - point.x) < 10 && Math.abs(p.y - point.y) < 10)
+
+      if (closePoint != null) {
+        point.x = closePoint.x
+        point.y = closePoint.y
+      }
+
       selectedTopoRoute.points = [...selectedTopoRoute.points, point]
-      currentType = undefined
+      $selectedPointTypeStore = null
       dispatcher('change', selectedTopoRoute)
     }
   }
@@ -62,7 +70,7 @@
   }
 
   const onChangeType = (type: PointDTO['type']) => () => {
-    currentType = currentType === type ? undefined : type
+    $selectedPointTypeStore = $selectedPointTypeStore === type ? null : type
   }
 
   const onChangeRoute = (event: CustomEvent<TopoRouteDTO>) => {
@@ -109,7 +117,7 @@
 
       <div class="flex gap-1">
         <button
-          class={`btn btn-sm ${currentType === 'start' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
+          class={`btn btn-sm ${$selectedPointTypeStore === 'start' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
           disabled={(selectedTopoRoute?.points ?? []).filter((point) => point.type === 'start').length >= 2}
           on:click={onChangeType('start')}
         >
@@ -117,14 +125,14 @@
         </button>
 
         <button
-          class={`btn btn-sm ${currentType === 'middle' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
+          class={`btn btn-sm ${$selectedPointTypeStore === 'middle' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
           on:click={onChangeType('middle')}
         >
           Middle
         </button>
 
         <button
-          class={`btn btn-sm ${currentType === 'top' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
+          class={`btn btn-sm ${$selectedPointTypeStore === 'top' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
           disabled={(selectedTopoRoute?.points ?? []).filter((point) => point.type === 'top').length >= 1}
           on:click={onChangeType('top')}
         >
