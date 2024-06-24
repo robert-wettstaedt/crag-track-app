@@ -31,7 +31,15 @@
   <h2 class="p-2 text-center text-xl">{name}</h2>
 
   {#await import('$lib/components/BlocksMap') then BlocksMap}
-    <BlocksMap.default {blocks} declutter={false} {getBlockKey} height="210mm" showAreas={false} zoom={null} />
+    <BlocksMap.default
+      {blocks}
+      {getBlockKey}
+      declutter={false}
+      height="210mm"
+      on:rendercomplete
+      showAreas={false}
+      zoom={null}
+    />
   {/await}
 </section>
 

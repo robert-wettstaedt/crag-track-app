@@ -7,14 +7,18 @@
 
   export let data
 
-  const topos =
+  const noTopos = (
     data.area.areas.length === 0
       ? data.area.blocks.flatMap((block) => block.topos)
       : data.area.areas.flatMap((area) => area.blocks.flatMap((block) => block.topos))
+  ).length
+
+  const noMaps = data.area.areas.length === 0 ? 2 : data.area.areas.length + 1
 
   let loadedTopos = 0
+  let loadedMaps = 0
 
-  $: if (loadedTopos === topos.length) {
+  $: if (loadedTopos === noTopos && loadedMaps === noMaps) {
     window.print()
   }
 
@@ -58,6 +62,7 @@
     <BlocksMap.default
       blocks={data.area.blocks}
       height="210mm"
+      on:rendercomplete={() => loadedMaps++}
       parkingLocations={data.area.parkingLocations}
       selectedArea={data.area}
       showBlocks={false}
@@ -74,6 +79,7 @@
       getBlockKey={(_, index) => String.fromCharCode(ALPHABET_START_INDEX + index)}
       name={area.name}
       on:load={() => loadedTopos++}
+      on:rendercomplete={() => loadedMaps++}
     />
   {/each}
 {:else}
@@ -82,6 +88,7 @@
     getBlockKey={(_, index) => String.fromCharCode(ALPHABET_START_INDEX + index)}
     name="Blöcke"
     on:load={() => loadedTopos++}
+    on:rendercomplete={() => loadedMaps++}
   />
 {/if}
 

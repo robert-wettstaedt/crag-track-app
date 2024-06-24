@@ -56,7 +56,7 @@
   })
   addProjection(projection)
 
-  const dispatch = createEventDispatcher<{ action: OlMap }>()
+  const dispatch = createEventDispatcher<{ action: OlMap; rendercomplete: void }>()
 
   let mapElement: HTMLDivElement | null = null
   let map: OlMap | null = null
@@ -353,10 +353,14 @@
 
       map.getView().fit(extent, { maxZoom: zoom ?? DEFAULT_ZOOM, padding: [250, 250, 250, 250] })
 
-      if (zoom == null)
+      if (zoom == null) {
         setTimeout(() => {
           map.getView().fit(extent, { maxZoom: 22, padding: [250, 250, 250, 250] })
+          dispatch('rendercomplete')
         }, 1000)
+      } else {
+        dispatch('rendercomplete')
+      }
     })
   }
 

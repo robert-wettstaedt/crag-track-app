@@ -322,13 +322,21 @@
   {#if center && key != null}
     <rect
       class={bgFillClass}
-      height={50 * scale}
+      height={40 * scale}
       id="key-bg"
-      width={50 * scale}
-      x={center.x * scale - 65 * scale}
-      y={center.y * scale - 37.5 * scale}
+      width={40 * scale}
+      x={center.x * scale - 50 * scale}
+      y={center.y * scale - 60 * scale}
     />
 
-    <text class={fillClass} id="key" x={center.x * scale - 50 * scale} y={center.y * scale}>{key}</text>
+    <text
+      class={fillClass}
+      font-size={25 * scale}
+      id="key"
+      x={center.x * scale - 38 * scale}
+      y={center.y * scale - 30 * scale}
+    >
+      {key}
+    </text>
   {/if}
 </g>
