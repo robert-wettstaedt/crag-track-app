@@ -3,7 +3,14 @@ import { convertException } from '$lib'
 import type { File } from '$lib/db/schema'
 import type { Session } from '@auth/sveltekit'
 import { error } from '@sveltejs/kit'
-import { AuthType, createClient, type FileStat, type SearchResult, type WebDAVClient } from 'webdav'
+import {
+  AuthType,
+  createClient,
+  type FileStat,
+  type ResponseDataDetailed,
+  type SearchResult,
+  type WebDAVClient,
+} from 'webdav'
 import type { FileDTO } from '.'
 
 /**
@@ -45,6 +52,7 @@ export const searchNextcloudFile = async (session: Session | null | undefined, f
 
   try {
     const searchResult = await getNextcloud(session, '/remote.php/dav').search('/', {
+      details: true,
       data: `<?xml version="1.0" encoding="UTF-8"?>
 <d:searchrequest xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
     <d:basicsearch>
@@ -76,7 +84,9 @@ export const searchNextcloudFile = async (session: Session | null | undefined, f
 </d:searchrequest>`,
     })
 
-    const stat = (searchResult as SearchResult).results.find((result) => result.filename.includes(file.path))
+    const stat = (searchResult as ResponseDataDetailed<SearchResult>).data.results.find((result) =>
+      result.filename.includes(file.path),
+    )
 
     if (stat == null) {
       error(404)

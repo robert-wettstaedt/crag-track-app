@@ -1,13 +1,14 @@
 <script lang="ts">
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import type { Ascent, File, Route } from '$lib/db/schema'
-  import { Tab, TabGroup } from '@skeletonlabs/skeleton'
+  import { Tab, TabGroup, getModalStore, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
   import remarkHtml from 'remark-html'
   import remarkParse from 'remark-parse'
-  import type { ChangeEventHandler } from 'svelte/elements'
+  import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import { unified } from 'unified'
-  import AscentTypeLabel from '../AscentTypeLabel/AscentTypeLabel.svelte'
+  import AscentTypeLabel from '$lib/components/AscentTypeLabel'
+  import FileBrowser from '$lib/components/FileBrowser'
 
   export let dateTime: Ascent['dateTime']
   export let gradingScale: Route['gradingScale']
@@ -16,29 +17,59 @@
   export let type: Ascent['type'] | null
   export let filePaths: File['path'][] = ['']
 
+  $: (() => {
+    const lastFile = filePaths.at(-1)
+
+    if (lastFile != null && lastFile.length > 0) {
+      filePaths = [...filePaths, '']
+    }
+  })()
+
+  const modalStore = getModalStore()
+
   let notesTabSet: number = 0
   let notesValue = notes
   let notesHtml = ''
+
   const onChangeNotes: ChangeEventHandler<HTMLTextAreaElement> = async (event) => {
     notesValue = event.currentTarget.value
     const result = await unified().use(remarkParse).use(remarkHtml).process(notesValue)
     notesHtml = result.value as string
   }
 
-  const onChangeFile =
-    (index: number): ChangeEventHandler<HTMLInputElement> =>
+  const onRemoveFile =
+    (index: number): MouseEventHandler<HTMLButtonElement> =>
     (event) => {
-      filePaths[index] = event.currentTarget.value
+      event.preventDefault()
+      filePaths = filePaths.filter((_, i) => i !== index)
 
-      const lastFile = filePaths.at(-1)
-      if (lastFile != null && lastFile.length > 0) {
-        return filePaths.push('')
+      if (filePaths.length === 0) {
+        filePaths = ['']
+      }
+    }
+
+  const onChooseFile =
+    (index: number): MouseEventHandler<HTMLButtonElement> =>
+    (event) => {
+      event.preventDefault()
+
+      const modal: ModalSettings = {
+        component: {
+          ref: FileBrowser,
+          props: {
+            onChange: (value: string | null) => {
+              if (value != null) {
+                filePaths[index] = value
+                modalStore.close()
+              }
+            },
+          },
+        },
+        title: 'File Browser',
+        type: 'component',
       }
 
-      const secondToLastFile = filePaths.at(-2)
-      if (secondToLastFile != null && secondToLastFile.length === 0) {
-        return filePaths.splice(-1, 1)
-      }
+      modalStore.trigger(modal)
     }
 </script>
 
@@ -116,18 +147,25 @@
   </aside>
 {/if}
 
-{#each filePaths as file, index}
+{#each filePaths as filePath, index}
   <div class="mt-4">
     <label class="label">
       <span>File {filePaths.length > 1 ? index + 1 : ''}</span>
-      <input
-        class="input"
-        name="file.path"
-        on:change={onChangeFile(index)}
-        placeholder="Path"
-        type="text"
-        value={file}
-      />
+
+      <div class="flex">
+        {#if filePath.length > 0}
+          <img alt="" height="42" src={`/nextcloud${filePath}/preview?x=42&y=42&mimeFallback=true&a=0`} width="42" />
+        {/if}
+
+        <input class="input" disabled placeholder="Path" type="text" value={filePath} />
+        <input name="file.path" type="hidden" value={filePath} />
+
+        {#if filePath.length === 0}
+          <button class="btn variant-filled-primary" on:click={onChooseFile(index)}>Choose</button>
+        {:else}
+          <button class="btn variant-filled-error" on:click={onRemoveFile(index)}>Remove</button>
+        {/if}
+      </div>
     </label>
   </div>
 {/each}

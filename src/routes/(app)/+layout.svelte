@@ -5,15 +5,27 @@
   import { SignIn, SignOut } from '@auth/sveltekit/components'
   import { arrow, autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom'
   import '@fortawesome/fontawesome-free/css/all.css'
-  import { AppBar, AppRail, AppRailAnchor, AppShell, popup, storePopup } from '@skeletonlabs/skeleton'
+  import {
+    AppBar,
+    AppRail,
+    AppRailAnchor,
+    AppShell,
+    Modal,
+    initializeStores,
+    popup,
+    storePopup,
+  } from '@skeletonlabs/skeleton'
   import '../../app.postcss'
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
+  initializeStores()
 </script>
 
 <svelte:head>
   <title>Crag Track</title>
 </svelte:head>
+
+<Modal />
 
 <!-- App Shell -->
 <AppShell>
