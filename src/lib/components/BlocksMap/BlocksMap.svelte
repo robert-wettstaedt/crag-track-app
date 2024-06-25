@@ -17,7 +17,7 @@
   import { register } from 'ol/proj/proj4.js'
   import { Vector as VectorSource, XYZ } from 'ol/source.js'
   import OSM, { ATTRIBUTION } from 'ol/source/OSM'
-  import { Fill, Stroke, Style, Text } from 'ol/style.js'
+  import { Fill, Style, Text } from 'ol/style.js'
   import proj4 from 'proj4'
   import { createEventDispatcher } from 'svelte'
   import type { ChangeEventHandler } from 'svelte/elements'
@@ -190,7 +190,15 @@
           const parents = findArea(sector)
 
           const sectorSource = new VectorSource<Feature<Geometry>>({ features: iconFeatures })
-          const geometry = fromExtent(sectorSource.getExtent())
+          const extent = sectorSource.getExtent()
+          let geometry = fromExtent(extent)
+          let area = geometry.getArea()
+
+          if (area < 100) {
+            geometry = fromExtent([extent[0] - 10, extent[1] - 10, extent[2] + 10, extent[3] + 10])
+            area = geometry.getArea()
+          }
+
           geometry.scale(geometry.getArea() > 1000 ? 1.5 : 3)
 
           cragSource.addFeature(
