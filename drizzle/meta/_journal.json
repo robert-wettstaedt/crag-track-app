@@ -1,13 +1,1 @@
-{
-  "version": "5",
-  "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1718980851169,
-      "tag": "0001_opposite_hiroim",
-      "breakpoints": true
-    }
-  ]
-}
+{"version":"5","dialect":"sqlite","entries":[{"idx":2,"version":"6","when":1719499418076,"tag":"0002_shallow_penance","breakpoints":true}]}

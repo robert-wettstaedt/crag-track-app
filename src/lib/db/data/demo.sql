@@ -118,22 +118,22 @@ CREATE TABLE `routes` (
 	`grading_scale` text NOT NULL,
 	`block_fk` integer NOT NULL,
 	`first_ascent_fk` integer
-);
-INSERT INTO routes VALUES('2024-05-23 08:17:48',1,1,'Alphane','alphane','','9A','FB',1,4);
-INSERT INTO routes VALUES('2024-05-23 08:24:03',2,1,'L''Ombre du Voyageur','lombre-du-voyageur','','9A','FB',2,6);
-INSERT INTO routes VALUES('2024-05-23 08:30:06',3,1,'Burden of Dreams','burden-of-dreams','First 9A in the world set by Nalle Hukkataival in October 2016. Grade proposed by Nalle Hukkataival after several years of trials. During these years, Hukkataival "very quickly" solved several 8C and 8C+ boulder problems throughout the world, including Gioia. Compared to these other problems, Burden of Dreams felt "way way harder". The route was finally repeated and confirmed as solid 9A in April 2023 by Will Bosi.','9A','FB',3,2);
-INSERT INTO routes VALUES('2024-05-23 08:41:25',4,1,'Return of the Sleepwalker','return-of-the-sleepwalker','Sit start to ''Sleepwalker''.','17','V',4,3);
-INSERT INTO routes VALUES('2024-05-23 08:50:23',5,1,'Megatron','megatron','','17','V',5,5);
-INSERT INTO routes VALUES('2024-05-23 09:20:58',6,1,'La Marie Rose','la-marie-rose',replace(replace('- This is pure climbing history - the first 6A in the world and probably Fontainebleau''s most famous boulder. An absolute must-do for every visitor - if you find a way through the crowds around. Applause guaranteed in case of success!\r\n- Slighlty overhanging wall with polished holds, followed by a sloper top-out. Even today not to be underestimated, especially for the shorter ones.\r\n','\r',char(13)),'\n',char(10)),'6A','FB',6,NULL);
-INSERT INTO routes VALUES('2024-05-23 09:27:41',7,1,'Dreamtime','dreamtime','World''s first 8C! In 2002, Dave Graham repeated it by finding a different solution. He used a heel-hook to make the brutal start sequence easier, and downgraded the problem to easy 8B+. Most of the following repeaters, including Adam Ondra, Chris Sharma, and Daniel Woods adopted Graham''s solution and agreed with him about the grade.','8B+','FB',7,1);
-INSERT INTO routes VALUES('2024-05-23 09:40:04',8,1,'Midnight Lightning','midnight-lightning','Midnight Lightning is a problem on the Columbia Boulder in Camp 4 of Yosemite National Park. It has been described as the world''s most famous bouldering problem.The route had been easily identified by a chalk lightning bolt drawn by John Bachar in 1978 while attempting the problem with John Yablonski and Ron Kauk. In May 2013, the iconic chalk lightning bolt was scrubbed off the face of the boulder. The bolt was re-drawn in the same location a few days later.','8','V',8,NULL);
+, `rating` integer);
+INSERT INTO routes VALUES('2024-05-23 08:17:48',1,1,'Alphane','alphane','','9A','FB',1,4,3);
+INSERT INTO routes VALUES('2024-05-23 08:24:03',2,1,'L''Ombre du Voyageur','lombre-du-voyageur','','9A','FB',2,6,NULL);
+INSERT INTO routes VALUES('2024-05-23 08:30:06',3,1,'Burden of Dreams','burden-of-dreams','First 9A in the world set by Nalle Hukkataival in October 2016. Grade proposed by Nalle Hukkataival after several years of trials. During these years, Hukkataival "very quickly" solved several 8C and 8C+ boulder problems throughout the world, including Gioia. Compared to these other problems, Burden of Dreams felt "way way harder". The route was finally repeated and confirmed as solid 9A in April 2023 by Will Bosi.','9A','FB',3,2,3);
+INSERT INTO routes VALUES('2024-05-23 08:41:25',4,1,'Return of the Sleepwalker','return-of-the-sleepwalker','Sit start to ''Sleepwalker''.','17','V',4,3,2);
+INSERT INTO routes VALUES('2024-05-23 08:50:23',5,1,'Megatron','megatron','','17','V',5,5,1);
+INSERT INTO routes VALUES('2024-05-23 09:20:58',6,1,'La Marie Rose','la-marie-rose',replace(replace('- This is pure climbing history - the first 6A in the world and probably Fontainebleau''s most famous boulder. An absolute must-do for every visitor - if you find a way through the crowds around. Applause guaranteed in case of success!\r\n- Slighlty overhanging wall with polished holds, followed by a sloper top-out. Even today not to be underestimated, especially for the shorter ones.\r\n','\r',char(13)),'\n',char(10)),'6A','FB',6,NULL,3);
+INSERT INTO routes VALUES('2024-05-23 09:27:41',7,1,'Dreamtime','dreamtime','World''s first 8C! In 2002, Dave Graham repeated it by finding a different solution. He used a heel-hook to make the brutal start sequence easier, and downgraded the problem to easy 8B+. Most of the following repeaters, including Adam Ondra, Chris Sharma, and Daniel Woods adopted Graham''s solution and agreed with him about the grade.','8B+','FB',7,1,1);
+INSERT INTO routes VALUES('2024-05-23 09:40:04',8,1,'Midnight Lightning','midnight-lightning','Midnight Lightning is a problem on the Columbia Boulder in Camp 4 of Yosemite National Park. It has been described as the world''s most famous bouldering problem.The route had been easily identified by a chalk lightning bolt drawn by John Bachar in 1978 while attempting the problem with John Yablonski and Ron Kauk. In May 2013, the iconic chalk lightning bolt was scrubbed off the face of the boulder. The bolt was re-drawn in the same location a few days later.','8','V',8,NULL,2);
 CREATE TABLE `users` (
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`email` text NOT NULL,
 	`user_name` text NOT NULL
 );
-INSERT INTO users VALUES('2024-05-23 08:09:12',1,'demo@climbing-log.com','demo_user');
+INSERT INTO users VALUES('2024-05-23 08:09:12',1,'demo@crag-track.com','demo_user');
 CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
 				id SERIAL PRIMARY KEY,
 				hash text NOT NULL,
@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
 			);
 INSERT INTO __drizzle_migrations VALUES(NULL,'a7489d95b3b1b8c43deaa9b9947f96c8d6c446a1f620224a24b0db6ddfeaf1d7',1718902591499);
 INSERT INTO __drizzle_migrations VALUES(NULL,'6a7eb7b9e3449ef14c7de0a250168b551a6bb78e4dedf28dffa23a7024197062',1718980851169);
+INSERT INTO __drizzle_migrations VALUES(NULL,'4a7933f0ef0557b2485d3abef11327e8e684e2700d239a1ee510c5e02e25fce1',1719499418076);
 CREATE TABLE `routes_to_tags` (
 	`route_fk` integer NOT NULL,
 	`tag_fk` text NOT NULL,
@@ -148,11 +149,11 @@ CREATE TABLE `routes_to_tags` (
 	FOREIGN KEY (`route_fk`) REFERENCES `routes`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`tag_fk`) REFERENCES `tags`(`id`) ON UPDATE no action ON DELETE no action
 );
-INSERT INTO routes_to_tags VALUES(1,'highball');
 INSERT INTO routes_to_tags VALUES(2,'SD');
-INSERT INTO routes_to_tags VALUES(4,'SD');
-INSERT INTO routes_to_tags VALUES(3,'SD');
 INSERT INTO routes_to_tags VALUES(5,'SD');
+INSERT INTO routes_to_tags VALUES(3,'SD');
+INSERT INTO routes_to_tags VALUES(4,'SD');
+INSERT INTO routes_to_tags VALUES(1,'highball');
 INSERT INTO routes_to_tags VALUES(7,'SD');
 INSERT INTO routes_to_tags VALUES(8,'highball');
 CREATE TABLE `tags` (

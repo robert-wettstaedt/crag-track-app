@@ -4,6 +4,7 @@
   import type { InferResultType } from '$lib/db/types'
   import type { EnrichedBlock } from '$lib/db/utils'
   import type { TopoDTO } from '$lib/topo'
+  import { Ratings } from '@skeletonlabs/skeleton'
 
   type Block = InferResultType<
     'blocks',
@@ -55,12 +56,23 @@
 
             {#each topo.routes.map( (topoRoute) => block.routes.find((route) => route.id === topoRoute.routeFk), ) as route, index}
               {#if route != null}
-                <h3 class="text-lg mt-8">
+                <h3 class="text-lg mt-8 flex gap-x-2">
                   <strong>{index + 1}</strong>
+
                   {route.name.length === 0 ? 'Unbekannt' : route.name}
 
                   {#if route.grade != null}
-                    &nbsp;{route.gradingScale} {route.grade}
+                    {route.gradingScale} {route.grade}
+                  {/if}
+
+                  {#if route.rating != null}
+                    <div>
+                      <Ratings value={route.rating} max={3} justify="start" spacing="">
+                        <svelte:fragment slot="full">
+                          <i class="fa-solid fa-star text-warning-500" /></svelte:fragment
+                        >
+                      </Ratings>
+                    </div>
                   {/if}
                 </h3>
 

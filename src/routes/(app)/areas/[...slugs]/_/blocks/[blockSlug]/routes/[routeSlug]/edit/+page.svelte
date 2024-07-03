@@ -34,6 +34,7 @@
       grade={form?.grade ?? data.route.grade}
       gradingScale={form?.gradingScale ?? data.route.gradingScale}
       name={form?.name ?? data.route.name}
+      rating={form?.rating ?? data.route.rating}
       routeTags={form?.tags ?? data.route.tags.map((tag) => tag.tagFk)}
       tags={data.tags}
     />

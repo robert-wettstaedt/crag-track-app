@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e05bcea9-0e8f-4a14-9c3a-86a4611483b1",
-  "prevId": "fdccbb2e-386c-4867-9349-374cac0efc30",
+  "id": "0721da9d-4773-44ec-86a0-8e589421ac50",
+  "prevId": "e05bcea9-0e8f-4a14-9c3a-86a4611483b1",
   "tables": {
     "areas": {
       "name": "areas",
@@ -408,6 +408,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "rating": {
+          "name": "rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "block_fk": {

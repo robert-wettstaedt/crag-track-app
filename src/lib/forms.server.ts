@@ -57,7 +57,9 @@ export const validateBlockForm = async (data: FormData): Promise<BlockActionValu
   return values
 }
 
-export type RouteActionValues = Pick<Route, 'description' | 'name' | 'gradingScale' | 'grade'> & { tags: string[] }
+export type RouteActionValues = Pick<Route, 'description' | 'name' | 'gradingScale' | 'grade' | 'rating'> & {
+  tags: string[]
+}
 export type RouteActionFailure = ActionFailure<RouteActionValues & { error: string }>
 
 /**
@@ -69,12 +71,15 @@ export type RouteActionFailure = ActionFailure<RouteActionValues & { error: stri
  */
 export const validateRouteForm = async (data: FormData): Promise<RouteActionValues> => {
   const description = data.get('description')
-  const name = data.get('name')
-  const gradingScale = data.get('gradingScale')
   const grade = data.get('grade')
+  const gradingScale = data.get('gradingScale')
+  const name = data.get('name')
+  const rawRating = data.get('rating')
   const tags = data.getAll('tags')
 
-  const values = { description, name, gradingScale, grade, tags } as RouteActionValues
+  const values = { description, name, gradingScale, grade, rating: rawRating, tags } as RouteActionValues
+
+  const rating = Number(rawRating)
 
   if (description != null && typeof description !== 'string') {
     throw fail(400, { ...values, error: 'description must be a valid string' })
@@ -90,6 +95,10 @@ export const validateRouteForm = async (data: FormData): Promise<RouteActionValu
 
   if (grade != null && typeof grade !== 'string') {
     throw fail(400, { ...values, error: 'grade must be a valid string' })
+  }
+
+  if (rawRating != null && Number.isNaN(rating)) {
+    throw fail(400, { ...values, error: 'rating is not a valid number' })
   }
 
   if (!Array.isArray(tags) || tags.some((tag) => typeof tag !== 'string')) {
@@ -118,10 +127,6 @@ export const validateFirstAscentForm = async (data: FormData): Promise<FirstAsce
 
   if (climberName != null && typeof climberName !== 'string') {
     throw fail(400, { ...values, error: 'climberName must be a valid string' })
-  }
-
-  if (rawYear != null && typeof rawYear !== 'string') {
-    throw fail(400, { ...values, error: 'year must be a valid string' })
   }
 
   if (rawYear != null && Number.isNaN(year)) {

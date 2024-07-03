@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { Ascent, Route } from '$lib/db/schema'
   import { grades } from '$lib/grades'
+  import { Ratings } from '@skeletonlabs/skeleton'
+  import { span } from 'vega'
 
   export let route: Route | undefined
   export let ascent: Ascent | undefined = undefined
@@ -12,9 +14,8 @@
 </script>
 
 {#if route != null}
-  <span>
+  <div class="flex gap-x-2">
     {#if route.grade != null}
-      &nbsp;
       <span class={`badge text-white`} style={`background: ${ascentGradeConfig?.color ?? routeGradeConfig?.color}`}>
         {#if ascent?.grade == null || ascent.grade === route.grade}
           {route.gradingScale}
@@ -25,15 +26,20 @@
             {route.grade}
           </s>
 
-          &nbsp;
-
           {route.gradingScale}
           {ascent.grade}
         {/if}
       </span>
-      &nbsp;
+    {/if}
+
+    {#if route.rating != null}
+      <div>
+        <Ratings justify="start" max={3} spacing="" value={route.rating}>
+          <svelte:fragment slot="full"><i class="fa-solid fa-star text-warning-500" /></svelte:fragment>
+        </Ratings>
+      </div>
     {/if}
 
     {route.name.length === 0 ? '<no name>' : route.name}
-  </span>
+  </div>
 {/if}

@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Route, Tag } from '$lib/db/schema'
-  import type { InferResultType } from '$lib/db/types'
   import { grades } from '$lib/grades'
-  import { Tab, TabGroup } from '@skeletonlabs/skeleton'
+  import { Ratings, Tab, TabGroup } from '@skeletonlabs/skeleton'
   import remarkHtml from 'remark-html'
   import remarkParse from 'remark-parse'
   import type { ChangeEventHandler } from 'svelte/elements'
@@ -12,6 +11,7 @@
   export let grade: Route['grade']
   export let gradingScale: Route['gradingScale'] | undefined
   export let name: Route['name']
+  export let rating: Route['rating']
   export let routeTags: string[]
   export let tags: Tag[]
 
@@ -80,6 +80,22 @@
     </svelte:fragment>
   </TabGroup>
 </label>
+
+<label class="label mt-4">
+  <span>Rating</span>
+  <input name="rating" type="hidden" value={rating} />
+</label>
+
+<Ratings
+  interactive
+  justify="start"
+  max={3}
+  on:icon={(event) => (rating = event.detail.index)}
+  value={rating ?? undefined}
+>
+  <svelte:fragment slot="empty"><i class="fa-regular fa-star text-3xl text-warning-500" /></svelte:fragment>
+  <svelte:fragment slot="full"><i class="fa-solid fa-star text-3xl text-warning-500" /></svelte:fragment>
+</Ratings>
 
 <label class="label mt-4">
   <span>Tags</span>

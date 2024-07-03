@@ -4,7 +4,7 @@
   import FileViewer from '$lib/components/FileViewer'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { Accordion, AccordionItem, AppBar } from '@skeletonlabs/skeleton'
+  import { Accordion, AccordionItem, AppBar, Ratings } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
