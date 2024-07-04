@@ -20,10 +20,6 @@ export const load = (async ({ locals, parent }) => {
     error(401)
   }
 
-  const nextcloud = getNextcloud(session)
-  const stat = await nextcloud.getDirectoryContents(session.user.email + '/')
-  console.log(stat)
-
   // Query the database for areas with the specified areaId
   const areasResult = await db.query.areas.findMany({
     where: eq(areas.id, areaId),

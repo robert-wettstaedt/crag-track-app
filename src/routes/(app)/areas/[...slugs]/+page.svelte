@@ -42,7 +42,11 @@
   <svelte:fragment slot="trail">
     {#if data.area.type === 'crag'}
       <a class="btn btn-sm variant-ghost" href={`${basePath}/export`}>
-        <i class="fa-solid fa-file-export me-2" />Export
+        <i class="fa-solid fa-file-export me-2" />Export PDF
+      </a>
+
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/gpx`} download={`${data.area.slug}.gpx`}>
+        <i class="fa-solid fa-map-location-dot me-2" />Export GPX
       </a>
 
       <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-parking-location`}>

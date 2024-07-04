@@ -3,7 +3,7 @@ import { areas, blocks } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
-import { desc, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 const blocksQuery: {
