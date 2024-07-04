@@ -13,7 +13,7 @@ A webapp for tracking your rock-climbing sessions.
 - ➕ Create new bouldering areas, crags and boulders - with support for [FB and V grades](https://www.mountainproject.com/international-climbing-grades).
 - 🗺️ Display all your boulders on a map.
 - ✅ Log your climbing ascents.
-- ✍️ AddTake notes about your session.
+- ✍️ Take notes about your session.
 - 📸 Link photos, videos and pdf files from a file-hosting instance (currently only supports [Nextcloud](https://github.com/nextcloud)).
 - 📈 Display your climbing history and statistics about your ascents.
 - 🚀 Easy self-hosting with Docker and docker-compose.
@@ -36,12 +36,6 @@ A webapp for tracking your rock-climbing sessions.
     npm run generate
     npm run migrate
   ```
-
-## Roadmap
-
-- File browsing for the file-hosting instance
-- Route annotation
-- Export of a crag to PDF
 
 ## License
 
