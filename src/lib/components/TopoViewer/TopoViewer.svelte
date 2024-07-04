@@ -187,8 +187,24 @@
     >
       {#if svg != null && selectedTopo != null}
         {#each selectedTopo.routes as route, index}
-          <RouteView {route} {scale} {svg} key={getRouteKey?.(route, index)} on:change={onChangeRoute} />
+          {#if $selectedRouteStore !== route.routeFk}
+            <RouteView {editable} {route} {scale} {svg} key={getRouteKey?.(route, index)} on:change={onChangeRoute} />
+          {/if}
         {/each}
+
+        {#if selectedTopoRoute != null}
+          <RouteView
+            {editable}
+            {scale}
+            {svg}
+            key={getRouteKey?.(
+              selectedTopoRoute,
+              selectedTopo.routes.findIndex((route) => route.routeFk === $selectedRouteStore),
+            )}
+            route={selectedTopoRoute}
+            on:change={onChangeRoute}
+          />
+        {/if}
       {/if}
     </svg>
   </div>

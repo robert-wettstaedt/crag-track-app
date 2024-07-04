@@ -15,6 +15,7 @@
   import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from '../../stores'
 
   export let key: number | string | undefined
+  export let editable = false
   export let route: TopoRouteDTO
   export let scale: number
   export let svg: SVGSVGElement
@@ -22,7 +23,7 @@
   $: selected = $selectedRouteStore === route.routeFk
   $: highlighted = $highlightedRouteStore === route.routeFk
 
-  $: cursorClass = selected ? 'cursor-move' : 'cursor-pointer'
+  $: cursorClass = selected && editable ? 'cursor-move' : 'cursor-pointer'
 
   $: strokeClass = highlighted ? 'stroke-green-400' : selected ? 'stroke-white' : 'stroke-red-700'
   $: fillClass = highlighted ? 'fill-green-400' : selected ? 'fill-white' : 'fill-red-700'
@@ -35,6 +36,9 @@
   let selectedPoint: PointDTO | undefined = undefined
   let lines: Array<Line> = []
   let center: Coordinates | undefined = undefined
+
+  let prevEventPosition: Coordinates | undefined = undefined
+  let isMoving = false
 
   const dispatcher = createEventDispatcher<{ change: TopoRouteDTO }>()
 
@@ -127,6 +131,9 @@
     if (selectedPoint == null) {
       selectedRouteStore.set(null)
     }
+
+    isMoving = false
+    prevEventPosition = undefined
   }
 
   const onContextMenuSvg = (event: MouseEvent) => {
@@ -135,7 +142,7 @@
     const targetId = (event.target as HTMLElement).attributes.getNamedItem('data-id')?.value
     const point = route.points.find((point) => point.id === targetId)
 
-    if (!selected || point == null) {
+    if (!selected || point == null || !editable) {
       return
     }
 
@@ -147,7 +154,7 @@
   }
 
   const onMouseMoveSvg = (event: MouseEvent) => {
-    if (!selected || event.buttons === 0) {
+    if (!selected || event.buttons === 0 || !editable) {
       selectedPoint = undefined
       return
     }
@@ -156,6 +163,9 @@
     const point = selectedPoint ?? route.points.find((point) => point.id === targetId)
 
     if (point != null) {
+      isMoving = false
+      prevEventPosition = undefined
+
       if (selectedPoint == null) {
         selectedPoint = point
       }
@@ -166,7 +176,27 @@
       route.points = route.points
 
       dispatcher('change', route)
-      calcLines()
+    } else if (targetId === 'line') {
+      isMoving = true
+    }
+
+    if (isMoving) {
+      if (prevEventPosition != null) {
+        const delta: Coordinates = {
+          x: event.layerX - prevEventPosition.x,
+          y: event.layerY - prevEventPosition.y,
+        }
+
+        route.points = route.points.map((point) => ({
+          ...point,
+          x: point.x + delta.x,
+          y: point.y + delta.y,
+        }))
+
+        dispatcher('change', route)
+      }
+
+      prevEventPosition = { x: event.layerX, y: event.layerY }
     }
   }
 
@@ -200,6 +230,7 @@
   {#each lines as line}
     <line
       class="${bgStrokeClass}"
+      data-id="line"
       stroke-width={bgStrokeWidth}
       x1={line.from.x * scale}
       x2={line.to.x * scale}
@@ -209,6 +240,7 @@
 
     <line
       class={strokeClass}
+      data-id="line"
       stroke-width={strokeWidth}
       x1={line.from.x * scale}
       x2={line.to.x * scale}
