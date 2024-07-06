@@ -33,7 +33,7 @@
     })()
 
     const enrichedRoute = route as EnrichedRoute
-    const routeName = `<a class="anchor" href="${enrichedRoute.pathname}">${route.name}</a>`
+    const routeName = `<a class="anchor" href="${enrichedRoute.pathname}">${route.name.length === 0 ? '&lt;no name&gt;' : route.name}</a>`
 
     const formattedType =
       type === 'flash'

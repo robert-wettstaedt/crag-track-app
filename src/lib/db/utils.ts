@@ -96,7 +96,7 @@ export const enrichRoute = (route: NestedRoute): EnrichedRoute => {
   try {
     const block = enrichBlock(route.block as NestedBlock)
 
-    const pathname = block.pathname + ['', 'routes', route.slug].join('/')
+    const pathname = block.pathname + ['', 'routes', route.slug.length === 0 ? route.id : route.slug].join('/')
     return { ...route, block, pathname }
   } catch (error) {
     console.log('Unable to enrich route: ', route)
