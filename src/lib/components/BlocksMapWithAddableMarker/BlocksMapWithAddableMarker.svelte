@@ -1,5 +1,7 @@
 <script lang="ts">
   import BlocksMap from '$lib/components/BlocksMap'
+  import type { Area } from '$lib/db/schema'
+  import type { InferResultType } from '$lib/db/types'
   import type { EnrichedBlock } from '$lib/db/utils'
   import Feature from 'ol/Feature.js'
   import Map from 'ol/Map.js'
@@ -11,6 +13,8 @@
   import { createEventDispatcher } from 'svelte'
 
   export let blocks: EnrichedBlock[]
+  export let selectedArea: Area | null = null
+  export let selectedBlock: InferResultType<'blocks', { geolocation: true }> | null = null
 
   const dispatch = createEventDispatcher<{ change: Coordinate }>()
 
@@ -41,4 +45,4 @@
   }
 </script>
 
-<BlocksMap {blocks} heightSubtrahend={74} on:action={onAction} />
+<BlocksMap {blocks} heightSubtrahend={74} {selectedArea} {selectedBlock} on:action={onAction} />

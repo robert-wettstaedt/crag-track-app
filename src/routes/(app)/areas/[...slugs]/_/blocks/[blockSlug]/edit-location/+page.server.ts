@@ -21,6 +21,10 @@ export const load = (async ({ locals, params, parent }) => {
   // Query the database for blocks matching the given slug and areaId
   const blocksResult = await db.query.blocks.findMany({
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+    with: {
+      area: buildNestedAreaQuery(),
+      geolocation: true,
+    },
   })
   // Get the first block from the result
   const block = blocksResult.at(0)
@@ -46,7 +50,7 @@ export const load = (async ({ locals, params, parent }) => {
 
   // Return the block and the enriched geolocation blocks
   return {
-    block,
+    block: enrichBlock(block),
     blocks: result.map(enrichBlock),
   }
 }) satisfies PageServerLoad
@@ -110,9 +114,15 @@ export const actions = {
     }
 
     try {
-      // Update the block with the new latitude and longitude
-      const [geolocation] = await db.insert(geolocations).values({ lat, long, blockFk: block.id }).returning()
-      await db.update(blocks).set({ geolocationFk: geolocation.id }).where(eq(blocks.id, block.id))
+      // If the block does not have a geolocation, insert a new geolocation record
+      if (block.geolocationFk == null) {
+        const [geolocation] = await db.insert(geolocations).values({ lat, long, blockFk: block.id }).returning()
+        // Update the block with the new geolocation foreign key
+        await db.update(blocks).set({ geolocationFk: geolocation.id }).where(eq(blocks.id, block.id))
+      } else {
+        // If the block already has a geolocation, update the existing geolocation record
+        await db.update(geolocations).set({ lat, long }).where(eq(geolocations.id, block.geolocationFk))
+      }
     } catch (exception) {
       // Handle any exceptions that occur during the update
       return fail(404, { ...values, error: convertException(exception) })

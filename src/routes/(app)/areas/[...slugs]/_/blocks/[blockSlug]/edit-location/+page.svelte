@@ -54,8 +54,13 @@
 
       <svelte:fragment slot="panel">
         {#if tabSet === 0}
-          {#await import('$lib/components/BlocksMapWithAddableMarker/index.js') then BlocksMap}
-            <BlocksMap.default blocks={data.blocks} on:change={onChange} />
+          {#await import('$lib/components/BlocksMapWithAddableMarker') then BlocksMap}
+            <BlocksMap.default
+              blocks={data.blocks}
+              selectedArea={data.block.area}
+              selectedBlock={data.block}
+              on:change={onChange}
+            />
           {/await}
 
           <input hidden name="lat" value={form?.lat ?? coordinate?.at(1)} />

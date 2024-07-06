@@ -54,11 +54,9 @@
         <i class="fa-solid fa-pen me-2" />Edit block
       </a>
 
-      {#if data.block.geolocationFk == null}
-        <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-location`}>
-          <i class="fa-solid fa-location-dot me-2" />Add geolocation
-        </a>
-      {/if}
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-location`}>
+        <i class="fa-solid fa-location-dot me-2" />Edit geolocation
+      </a>
     {/if}
   </svelte:fragment>
 </AppBar>
