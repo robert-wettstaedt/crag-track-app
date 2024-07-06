@@ -12,7 +12,7 @@ import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
-  const { areaId } = await parent()
+  const { areaId, user } = await parent()
 
   // Authenticate the session
   const session = await locals.auth()
@@ -26,6 +26,7 @@ export const load = (async ({ locals, params, parent }) => {
         with: {
           author: true,
           ascents: {
+            ...(user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) }),
             orderBy: desc(ascents.dateTime),
             with: {
               author: true,

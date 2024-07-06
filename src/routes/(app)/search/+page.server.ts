@@ -1,10 +1,12 @@
 import { db } from '$lib/db/db.server'
-import { like, or } from 'drizzle-orm'
+import { areas, ascents, blocks, routes, users } from '$lib/db/schema'
+import { buildNestedAreaQuery, enrichArea, enrichBlock, enrichRoute } from '$lib/db/utils'
+import { eq, like, or } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
-import { areas, routes, blocks, users } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichArea, enrichRoute, enrichBlock } from '$lib/db/utils'
 
-export const load = (async ({ url }) => {
+export const load = (async ({ url, parent }) => {
+  const { user } = await parent()
+
   // Get the search query parameter from the URL
   const query = url.searchParams.get('q')
 
@@ -29,6 +31,7 @@ export const load = (async ({ url }) => {
     where: like(blocks.name, searchString),
     with: {
       area: buildNestedAreaQuery(), // Include nested area information
+      geolocation: true,
     },
   })
 
@@ -36,6 +39,7 @@ export const load = (async ({ url }) => {
   const routesResult = await db.query.routes.findMany({
     where: like(routes.name, searchString),
     with: {
+      ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
       block: {
         with: {
           area: buildNestedAreaQuery(), // Include nested block and area information
@@ -52,7 +56,7 @@ export const load = (async ({ url }) => {
   // Return the search results after enriching them with additional data
   return {
     searchResults: {
-      routes: routesResult.map(enrichRoute), // Enrich routes with additional data
+      routes: routesResult.map((route) => ({ ...enrichRoute(route), ascents: route.ascents })), // Enrich routes with additional data
       blocks: blocksResult.map(enrichBlock), // Enrich blocks with additional data
       areas: areasResult.map(enrichArea), // Enrich areas with additional data
       users: usersResult, // Return users as is

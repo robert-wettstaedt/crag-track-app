@@ -126,10 +126,7 @@
               <li class="flex justify-between w-full hover:bg-primary-500/10">
                 <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
                   <dt>
-                    <RouteName
-                      route={attempt.route}
-                      ascent={attempt.ascents.find((ascent) => ascent.type === 'send')}
-                    />
+                    <RouteName route={attempt.route} />
                   </dt>
 
                   <dd class="text-sm opacity-50">Sessions: {attempt.ascents.length}</dd>

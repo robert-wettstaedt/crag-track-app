@@ -11,7 +11,7 @@ import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
-  const { areaId } = await parent()
+  const { areaId, user } = await parent()
 
   // Authenticate the user session
   const session = await locals.auth()
@@ -25,7 +25,11 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
+        orderBy: routes.grade,
         where: getRouteDbFilter(params.routeSlug),
+        with: {
+          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+        },
       },
     },
   })

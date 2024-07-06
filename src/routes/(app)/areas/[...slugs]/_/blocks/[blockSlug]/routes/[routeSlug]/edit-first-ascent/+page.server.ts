@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
+import { ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
 import { validateFirstAscentForm, type FirstAscentActionFailure, type FirstAscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -9,7 +9,7 @@ import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
-  const { areaId } = await parent()
+  const { areaId, user } = await parent()
 
   // Authenticate the user session
   const session = await locals.auth()
@@ -25,6 +25,7 @@ export const load = (async ({ locals, params, parent }) => {
       routes: {
         where: getRouteDbFilter(params.routeSlug),
         with: {
+          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
           firstAscent: {
             // Include the climber information in the first ascent
             with: {

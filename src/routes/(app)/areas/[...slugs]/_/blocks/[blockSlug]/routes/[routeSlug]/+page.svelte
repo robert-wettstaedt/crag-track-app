@@ -2,9 +2,10 @@
   import { page } from '$app/stores'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import FileViewer from '$lib/components/FileViewer'
+  import RouteGrade from '$lib/components/RouteGrade'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { Accordion, AccordionItem, AppBar, Ratings } from '@skeletonlabs/skeleton'
+  import { Accordion, AccordionItem, AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
@@ -199,7 +200,9 @@
             <AscentTypeLabel type={ascent.type} />
 
             {#if ascent.grade != null}
-              <RouteName route={data.route} {ascent} />
+              <span class="ms-2">
+                <RouteGrade route={data.route} />
+              </span>
             {/if}
           </div>
 

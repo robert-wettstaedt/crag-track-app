@@ -28,4 +28,4 @@ export type InferResultType<
 
 export type NestedArea = InferResultType<'areas', { parent: true }>
 export type NestedBlock = InferResultType<'blocks', { area: true; geolocation: true }>
-export type NestedRoute = InferResultType<'routes', { block: true }>
+export type NestedRoute = InferResultType<'routes', { block: { with: { area: true } } }>

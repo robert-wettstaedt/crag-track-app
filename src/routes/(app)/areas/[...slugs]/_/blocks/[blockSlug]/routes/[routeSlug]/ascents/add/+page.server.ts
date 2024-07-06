@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { ascents, blocks, files, routes, users, type Ascent, type File } from '$lib/db/schema'
+import { ascents, blocks, files, users, type Ascent, type File } from '$lib/db/schema'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
@@ -11,7 +11,7 @@ import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
-  const { areaId } = await parent()
+  const { areaId, user } = await parent()
 
   // Authenticate the user session
   const session = await locals.auth()
@@ -25,8 +25,10 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
-        // Filter the routes to find the one with the given slug
         where: getRouteDbFilter(params.routeSlug),
+        with: {
+          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+        },
       },
     },
   })

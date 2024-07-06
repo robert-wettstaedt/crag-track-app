@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server.js'
-import { blocks, topoRoutes } from '$lib/db/schema'
+import { ascents, blocks, routes, topoRoutes } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import {
   validateAddTopoForm,
@@ -13,7 +13,7 @@ import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  const { areaId, areaSlug } = await parent()
+  const { areaId, areaSlug, user } = await parent()
 
   const session = await locals.auth()
   if (session?.user == null) {
@@ -23,7 +23,12 @@ export const load = (async ({ locals, params, parent }) => {
   const blocksResult = await db.query.blocks.findMany({
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
-      routes: true,
+      routes: {
+        orderBy: routes.grade,
+        with: {
+          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+        },
+      },
       topos: {
         with: {
           file: true,
@@ -44,7 +49,7 @@ export const load = (async ({ locals, params, parent }) => {
 
   const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
 
-  const routes = block.routes.map((route) => {
+  const enrichedRoutes = block.routes.map((route) => {
     return {
       ...route,
       hasTopo: topos.flatMap((topo) => topo.routes).some((topoRoute) => topoRoute.routeFk === route.id),
@@ -52,7 +57,7 @@ export const load = (async ({ locals, params, parent }) => {
   })
 
   return {
-    block: { ...block, routes },
+    block: { ...block, routes: enrichedRoutes },
     topos,
   }
 }) satisfies PageServerLoad

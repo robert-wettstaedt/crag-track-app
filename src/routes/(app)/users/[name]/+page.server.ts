@@ -56,7 +56,7 @@ export const load = (async ({ params }) => {
       }
 
       // Return the route and its ascents
-      return [{ route: enrichRoute(ascents[0].route), ascents }]
+      return [{ route: { ...enrichRoute(ascents[0].route), ascents }, ascents }]
     })
     .toSorted((a, b) => {
       // Sort open projects by the number of ascents and the date of the last attempt
@@ -83,7 +83,7 @@ export const load = (async ({ params }) => {
       }
 
       // Return the route and its ascents
-      return [{ route: enrichRoute(ascents[0].route), ascents }]
+      return [{ route: { ...enrichRoute(ascents[0].route), ascents }, ascents }]
     })
     .slice(0, 10) // Limit the number of finished projects to 10
     .toSorted((a, b) => {

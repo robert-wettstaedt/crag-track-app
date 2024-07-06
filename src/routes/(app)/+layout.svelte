@@ -103,6 +103,14 @@
         Ascents
       </AppRailAnchor>
 
+      <AppRailAnchor href="/routes" selected={$page.url.pathname.startsWith('/routes')}>
+        <svelte:fragment slot="lead">
+          <i class="fa-solid fa-route" />
+        </svelte:fragment>
+
+        Routes
+      </AppRailAnchor>
+
       <AppRailAnchor href="/search" selected={$page.url.pathname.startsWith('/search')}>
         <svelte:fragment slot="lead">
           <i class="fa-solid fa-search" />

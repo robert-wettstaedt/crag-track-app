@@ -2,14 +2,40 @@
   import type { Ascent } from '$lib/db/schema'
 
   export let type: Ascent['type']
+  export let includeIcon = true
+  export let includeText = true
 </script>
 
 {#if type === 'flash'}
-  <i class="fa-solid fa-bolt-lightning text-yellow-300 me-2" />Flash
+  {#if includeIcon}
+    <i class="fa-solid fa-bolt-lightning text-yellow-300 me-2" />
+  {/if}
+
+  {#if includeText}
+    Flash
+  {/if}
 {:else if type === 'send'}
-  <i class="fa-solid fa-circle text-red-500 me-2" />Send
+  {#if includeIcon}
+    <i class="fa-solid fa-circle text-red-500 me-2" />
+  {/if}
+
+  {#if includeText}
+    Send
+  {/if}
 {:else if type === 'repeat'}
-  <i class="fa-solid fa-repeat text-green-500 me-2" />Repeat
+  {#if includeIcon}
+    <i class="fa-solid fa-repeat text-green-500 me-2" />
+  {/if}
+
+  {#if includeText}
+    Repeat
+  {/if}
 {:else}
-  <i class="fa-solid fa-person-falling text-blue-300 me-2" />Attempt
+  {#if includeIcon}
+    <i class="fa-solid fa-person-falling text-blue-3000 me-2" />
+  {/if}
+
+  {#if includeText}
+    Attempt
+  {/if}
 {/if}

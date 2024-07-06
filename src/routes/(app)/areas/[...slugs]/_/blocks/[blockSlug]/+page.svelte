@@ -2,10 +2,10 @@
   import { page } from '$app/stores'
   import FileViewer from '$lib/components/FileViewer'
   import RouteName from '$lib/components/RouteName'
+  import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import type { File } from '$lib/db/schema'
   import { AppBar } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
-  import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
 
   export let data
   $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`

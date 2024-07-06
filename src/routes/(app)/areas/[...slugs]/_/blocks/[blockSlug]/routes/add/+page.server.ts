@@ -79,6 +79,8 @@ export const actions = {
       return fail(400, { ...values, error: `Parent not found ${params.blockSlug}` })
     }
 
+    values.rating = values.rating == null || String(values.rating).length === 0 ? null : values.rating
+
     // Generate a slug from the route name
     const slug = generateSlug(values.name)
 

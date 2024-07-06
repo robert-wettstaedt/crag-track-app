@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { blocks, files, routes } from '$lib/db/schema'
+import { ascents, blocks, files, routes } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
@@ -8,7 +8,7 @@ import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
   // Retrieve areaId and areaSlug from the parent function
-  const { areaId, areaSlug } = await parent()
+  const { areaId, areaSlug, user } = await parent()
   // Get the current session from locals
   const session = await locals.auth()
 
@@ -20,6 +20,9 @@ export const load = (async ({ locals, params, parent }) => {
       geolocation: true,
       routes: {
         orderBy: routes.grade,
+        with: {
+          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+        },
       },
       files: {
         where: not(eq(files.type, 'topo')),

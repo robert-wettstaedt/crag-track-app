@@ -1,35 +1,22 @@
 <script lang="ts">
-  import type { Ascent, Route } from '$lib/db/schema'
-  import { grades } from '$lib/grades'
+  import AscentTypeLabel from '$lib/components/AscentTypeLabel'
+  import RouteGrade from '$lib/components/RouteGrade'
+  import type { InferResultType } from '$lib/db/types'
   import { Ratings } from '@skeletonlabs/skeleton'
-  import { span } from 'vega'
 
-  export let route: Route | undefined
-  export let ascent: Ascent | undefined = undefined
+  export let route: InferResultType<'routes', { ascents: true }> | undefined
 
-  const routeGradeConfig = grades.find((grade) => (route == null ? false : grade[route.gradingScale] === route.grade))
-  const ascentGradeConfig = grades.find((grade) =>
-    route == null || ascent == null ? false : grade[route.gradingScale] === ascent.grade,
-  )
+  const lastAscent = route?.ascents.toSorted((a, b) => a.dateTime.localeCompare(b.dateTime)).at(-1)
 </script>
 
 {#if route != null}
-  <div class="flex gap-x-2">
-    {#if route.grade != null}
-      <span class={`badge text-white`} style={`background: ${ascentGradeConfig?.color ?? routeGradeConfig?.color}`}>
-        {#if ascent?.grade == null || ascent.grade === route.grade}
-          {route.gradingScale}
-          {route.grade}
-        {:else}
-          <s>
-            {route.gradingScale}
-            {route.grade}
-          </s>
+  <div class="flex gap-x-2 items-center">
+    {#if lastAscent != null}
+      <AscentTypeLabel includeText={false} type={lastAscent.type} />
+    {/if}
 
-          {route.gradingScale}
-          {ascent.grade}
-        {/if}
-      </span>
+    {#if route.grade != null}
+      <RouteGrade {route} />
     {/if}
 
     {#if route.rating != null}
