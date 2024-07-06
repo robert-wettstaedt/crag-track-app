@@ -26,6 +26,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Edit parking location of {data.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     <span>Edit parking location of</span>

@@ -11,6 +11,10 @@
   let filePath = form?.path == null ? null : form.path.toString()
 </script>
 
+<svelte:head>
+  <title>Edit topos of {data.area.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     <span>Edit topos of</span>

@@ -13,6 +13,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Routes - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">Routes</svelte:fragment>
 </AppBar>

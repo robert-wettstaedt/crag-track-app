@@ -12,6 +12,10 @@
   let filePath = form?.path == null ? null : form.path.toString()
 </script>
 
+<svelte:head>
+  <title>Edit files of {data.route.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     <span>Edit files of</span>

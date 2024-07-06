@@ -7,13 +7,8 @@
   export let data
 
   export const snapshot: Snapshot = {
-    capture: () => {
-      console.log('snapshot capture', searchQuery)
-      return searchQuery
-    },
+    capture: () => searchQuery,
     restore: (value) => {
-      console.log('snapshot restore', value)
-
       searchQuery = value
     },
   }
@@ -26,6 +21,10 @@
     element = el
   }
 </script>
+
+<svelte:head>
+  <title>Search - Crag Track</title>
+</svelte:head>
 
 <AppBar>
   <svelte:fragment slot="lead">Search</svelte:fragment>

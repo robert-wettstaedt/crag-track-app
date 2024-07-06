@@ -20,6 +20,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Draw topo of {data.block.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     <span>Draw topo of</span>

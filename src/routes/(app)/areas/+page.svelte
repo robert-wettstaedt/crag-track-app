@@ -1,8 +1,12 @@
 <script lang="ts">
-  import { AppBar, popup } from '@skeletonlabs/skeleton'
+  import { AppBar } from '@skeletonlabs/skeleton'
 
   export let data
 </script>
+
+<svelte:head>
+  <title>Areas - Crag Track</title>
+</svelte:head>
 
 <AppBar>
   <svelte:fragment slot="lead">Areas</svelte:fragment>

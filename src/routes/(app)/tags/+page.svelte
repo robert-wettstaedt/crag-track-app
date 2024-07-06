@@ -6,6 +6,10 @@
   export let form
 </script>
 
+<svelte:head>
+  <title>Tags - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">Tags</svelte:fragment>
 

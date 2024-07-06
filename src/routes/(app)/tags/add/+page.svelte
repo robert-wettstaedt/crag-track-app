@@ -5,6 +5,10 @@
   export let form
 </script>
 
+<svelte:head>
+  <title>Create tag - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     <span>Create tag</span>

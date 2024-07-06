@@ -11,6 +11,10 @@
   $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`
 </script>
 
+<svelte:head>
+  <title>Log ascent of {data.route.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     <span>Log ascent of</span>

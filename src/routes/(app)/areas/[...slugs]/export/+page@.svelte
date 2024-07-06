@@ -25,6 +25,10 @@
   const ALPHABET_START_INDEX = 'a'.charCodeAt(0)
 </script>
 
+<svelte:head>
+  <title>Exporting {data.area.name} - Crag Track</title>
+</svelte:head>
+
 <section>
   <div class="flex">
     <div class="w-2/4">

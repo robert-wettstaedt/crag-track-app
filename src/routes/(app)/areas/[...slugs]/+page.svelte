@@ -9,6 +9,10 @@
   $: files = data.files
 </script>
 
+<svelte:head>
+  <title>{data.area.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     {data.area.name}

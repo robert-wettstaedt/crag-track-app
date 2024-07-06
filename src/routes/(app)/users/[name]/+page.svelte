@@ -14,6 +14,10 @@
   })
 </script>
 
+<svelte:head>
+  <title>Profile of {data.user.userName} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     {data.user.userName}

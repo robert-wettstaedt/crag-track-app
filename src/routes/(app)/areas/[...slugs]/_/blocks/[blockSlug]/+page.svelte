@@ -25,6 +25,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>{data.block.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     {data.block.name}

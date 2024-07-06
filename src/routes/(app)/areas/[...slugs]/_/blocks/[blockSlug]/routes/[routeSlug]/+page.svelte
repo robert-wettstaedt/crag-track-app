@@ -16,6 +16,10 @@
   $: highlightedRouteStore.set(null)
 </script>
 
+<svelte:head>
+  <title>{data.route.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     <RouteName route={data.route} />

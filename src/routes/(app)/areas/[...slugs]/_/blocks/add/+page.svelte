@@ -8,6 +8,10 @@
   $: basePath = `/areas/${$page.params.slugs}`
 </script>
 
+<svelte:head>
+  <title>Create block in {data.area.name} - Crag Track</title>
+</svelte:head>
+
 <AppBar>
   <svelte:fragment slot="lead">
     <span>Create block in</span>
