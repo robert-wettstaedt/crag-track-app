@@ -1,11 +1,14 @@
 <script>
   import { page } from '$app/stores'
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import FileBrowser from '$lib/components/FileBrowser'
   import { AppBar } from '@skeletonlabs/skeleton'
 
   export let data
   export let form
   $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`
+
+  let filePath = form?.path == null ? null : form.path.toString()
 </script>
 
 <AppBar>
@@ -38,7 +41,8 @@
 
     <label class="label">
       <span>New file</span>
-      <input class="input" name="path" type="text" placeholder="Path" value={form?.path ?? ''} />
+      <input name="path" type="hidden" value={filePath} />
+      <FileBrowser bind:value={filePath} />
     </label>
   </div>
 
