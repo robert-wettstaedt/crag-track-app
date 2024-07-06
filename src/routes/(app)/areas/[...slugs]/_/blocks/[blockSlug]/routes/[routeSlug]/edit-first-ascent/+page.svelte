@@ -10,7 +10,13 @@
 </script>
 
 <svelte:head>
-  <title>Edit FA of {data.route.name} - Crag Track</title>
+  <title>
+    Edit FA of
+    {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
+    {data.route.name}
+    {data.route.grade == null ? '' : ` (${data.route.grade} ${data.route.gradingScale})`}
+    - Crag Track
+  </title>
 </svelte:head>
 
 <AppBar>
