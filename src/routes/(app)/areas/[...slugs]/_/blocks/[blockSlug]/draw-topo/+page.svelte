@@ -16,6 +16,7 @@
   const onChangeTopo = (event: CustomEvent<TopoRouteDTO>) => {
     if (event.detail.routeFk != null) {
       dirtyRoutes = Array.from(new Set([...dirtyRoutes, event.detail.routeFk]))
+      data.topos = data.topos
     }
   }
 </script>
