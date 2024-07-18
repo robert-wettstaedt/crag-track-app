@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server.js'
-import { ascents, blocks, routes, topoRoutes } from '$lib/db/schema'
+import { ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import {
   validateAddTopoForm,
@@ -8,7 +8,7 @@ import {
   type AddTopoActionValues,
   type SaveTopoActionValues,
 } from '$lib/forms.server'
-import { error } from '@sveltejs/kit'
+import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
@@ -63,7 +63,7 @@ export const load = (async ({ locals, params, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  save: async ({ request }) => {
+  saveRoute: async ({ request }) => {
     const data = await request.formData()
 
     let values: SaveTopoActionValues
@@ -85,7 +85,7 @@ export const actions = {
       .where(eq(topoRoutes.id, Number(values.id)))
   },
 
-  add: async ({ request }) => {
+  addRoute: async ({ request }) => {
     // Get form data from the request
     const data = await request.formData()
     let values: AddTopoActionValues
@@ -100,5 +100,29 @@ export const actions = {
     await db
       .insert(topoRoutes)
       .values({ topType: 'top', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) })
+  },
+
+  removeTopo: async ({ params, request }) => {
+    const data = await request.formData()
+    const id = Number(data.get('id'))
+
+    const topo = await db.query.topos.findFirst({ where: eq(topos.id, id) })
+
+    if (topo == null) {
+      return fail(404, { error: `Topo with id ${id} not found` })
+    }
+
+    await Promise.all([
+      topo.fileFk == null ? null : db.delete(files).where(eq(files.id, topo.fileFk)),
+      db.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)),
+      db.delete(topos).where(eq(topos.id, id)),
+    ])
+
+    if (topo.blockFk != null) {
+      const remainingTopos = await db.query.topos.findMany({ where: eq(topos.blockFk, topo.blockFk) })
+      if (remainingTopos.length === 0) {
+        redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+      }
+    }
   },
 }

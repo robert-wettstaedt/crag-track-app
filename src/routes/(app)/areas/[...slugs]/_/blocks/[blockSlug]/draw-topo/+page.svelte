@@ -4,7 +4,7 @@
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import { convertPointsToPath, type TopoRouteDTO } from '$lib/topo'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar, popup } from '@skeletonlabs/skeleton'
 
   export let form
   export let data
@@ -68,7 +68,7 @@
                   {#if dirtyRoutes.includes(route.id)}
                     <form
                       method="POST"
-                      action="?/save"
+                      action="?/saveRoute"
                       use:enhance={() => {
                         return async ({ result, update }) => {
                           if (result?.error == null) {
@@ -114,7 +114,7 @@
                 <span class="text-primary-500 list-option hover:!bg-inherit flex justify-between">
                   <RouteName {route} />
 
-                  <form method="POST" action="?/add" use:enhance>
+                  <form method="POST" action="?/addRoute" use:enhance>
                     <input hidden name="routeFk" value={form?.routeFk ?? route.id} />
                     <input hidden name="topoFk" value={form?.topoFk ?? data.topos[selectedTopoIndex].id} />
 
@@ -127,9 +127,34 @@
         </ul>
       </nav>
 
-      <a class="btn variant-filled-primary" href="{basePath}/add-topo">Add image</a>
+      <div class="flex gap-2">
+        <button
+          class="btn variant-filled-error w-full"
+          use:popup={{ event: 'click', target: 'popup-delete-topo', placement: 'top' }}
+        >
+          <i class="fa-solid fa-trash me-2" />Remove image
+        </button>
+
+        <a class="btn variant-filled-primary w-full" href="{basePath}/add-topo">
+          <i class="fa-solid fa-plus me-2" />Add image
+        </a>
+      </div>
     </div>
   </section>
+</div>
+
+<div class="card p-4 shadow-xl" data-popup="popup-delete-topo">
+  <p>Are you sure you want to delete this image?</p>
+
+  <div class="flex justify-end gap-2 mt-4">
+    <form method="POST" action="?/removeTopo" use:enhance>
+      <input hidden name="id" value={data.topos[selectedTopoIndex].id} />
+
+      <button class="btn btn-sm variant-filled-primary" type="submit">Yes</button>
+    </form>
+
+    <button class="btn btn-sm variant-filled-surface">Cancel</button>
+  </div>
 </div>
 
 <div class="flex justify-between mt-8">
