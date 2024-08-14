@@ -5,6 +5,7 @@ import { integer, real, sqliteTable, text, type AnySQLiteColumn, primaryKey } fr
 export const generateSlug = (name: string): string =>
   name
     .toLowerCase()
+    .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
     .replace(/[^\w ]+/g, '')
     .replace(/ +/g, '-')
 
@@ -26,15 +27,38 @@ export const users = sqliteTable('users', {
 
   email: text('email').notNull(),
   userName: text('user_name').notNull(),
+
+  userExternalResourcesFk: integer('user_external_resources_fk'),
 })
 export type User = InferSelectModel<typeof users>
 export type InsertUser = InferInsertModel<typeof users>
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
+  userExternalResources: one(userExternalResources, {
+    fields: [users.userExternalResourcesFk],
+    references: [userExternalResources.id],
+  }),
+
   areas: many(areas),
   ascents: many(ascents),
   blocks: many(blocks),
   routes: many(routes),
+}))
+
+export const userExternalResources = sqliteTable('user_external_resources', {
+  id: baseFields.id,
+
+  userFk: integer('user_fk').notNull(),
+
+  cookie8a: text('cookie_8a'),
+  cookie27crags: text('cookie_27crags'),
+  cookieTheCrag: text('cookie_the_crag'),
+})
+export type UserExternalResource = InferSelectModel<typeof userExternalResources>
+export type InsertUserExternalResource = InferInsertModel<typeof userExternalResources>
+
+export const userExternalResourcesRelations = relations(userExternalResources, ({ one }) => ({
+  user: one(users, { fields: [userExternalResources.userFk], references: [users.id] }),
 }))
 
 export const areas = sqliteTable('areas', {
@@ -91,6 +115,7 @@ export const routes = sqliteTable('routes', {
 
   blockFk: integer('block_fk').notNull(),
   firstAscentFk: integer('first_ascent_fk'),
+  externalResourcesFk: integer('external_resources_fk'),
 })
 export type Route = InferSelectModel<typeof routes>
 export type InsertRoute = InferInsertModel<typeof routes>
@@ -99,10 +124,130 @@ export const RoutesRelations = relations(routes, ({ one, many }) => ({
   author: one(users, { fields: [routes.createdBy], references: [users.id] }),
   block: one(blocks, { fields: [routes.blockFk], references: [blocks.id] }),
   firstAscent: one(firstAscents, { fields: [routes.firstAscentFk], references: [firstAscents.id] }),
+  externalResources: one(routeExternalResources, {
+    fields: [routes.externalResourcesFk],
+    references: [routeExternalResources.id],
+  }),
 
   ascents: many(ascents),
   files: many(files),
   tags: many(routesToTags),
+}))
+
+export const routeExternalResources = sqliteTable('route_external_resources', {
+  id: baseFields.id,
+
+  routeFk: integer('route_fk').notNull(),
+
+  externalResource8aFk: integer('external_resource_8a_fk'),
+  externalResource27cragsFk: integer('external_resource_27crags_fk'),
+  externalResourceTheCragFk: integer('external_resource_the_crag_fk'),
+})
+export type RouteExternalResource = InferSelectModel<typeof routeExternalResources>
+export type InsertRouteExternalResource = InferInsertModel<typeof routeExternalResources>
+
+export const routeExternalResourcesRelations = relations(routeExternalResources, ({ one }) => ({
+  route: one(routes, { fields: [routeExternalResources.routeFk], references: [routes.id] }),
+
+  externalResource8a: one(routeExternalResource8a, {
+    fields: [routeExternalResources.externalResource8aFk],
+    references: [routeExternalResource8a.id],
+  }),
+  externalResource27crags: one(routeExternalResource27crags, {
+    fields: [routeExternalResources.externalResource27cragsFk],
+    references: [routeExternalResource27crags.id],
+  }),
+  externalResourceTheCrag: one(routeExternalResourceTheCrag, {
+    fields: [routeExternalResources.externalResourceTheCragFk],
+    references: [routeExternalResourceTheCrag.id],
+  }),
+}))
+
+export const routeExternalResource8a = sqliteTable('route_external_resource_8a', {
+  id: baseFields.id,
+
+  zlaggableName: text('zlaggable_name'),
+  zlaggableSlug: text('zlaggable_slug'),
+  zlaggableId: integer('zlaggable_id'),
+  cragName: text('crag_name'),
+  cragSlug: text('crag_slug'),
+  countrySlug: text('country_slug'),
+  countryName: text('country_name'),
+  areaName: text('area_name'),
+  areaSlug: text('area_slug'),
+  sectorName: text('sector_name'),
+  sectorSlug: text('sector_slug'),
+  gradeIndex: integer('grade_index'),
+  type: integer('type'),
+  category: integer('category'),
+  averageRating: real('average_rating'),
+  difficulty: text('difficulty'),
+
+  url: text('url'),
+
+  externalResourcesFk: integer('external_resources_fk').notNull(),
+})
+export type RouteExternalResource8a = InferSelectModel<typeof routeExternalResource8a>
+export type InsertRouteExternalResource8a = InferInsertModel<typeof routeExternalResource8a>
+
+export const routeExternalResource8aRelations = relations(routeExternalResource8a, ({ one }) => ({
+  externalResources: one(routeExternalResources, {
+    fields: [routeExternalResource8a.externalResourcesFk],
+    references: [routeExternalResources.id],
+  }),
+}))
+
+export const routeExternalResource27crags = sqliteTable('route_external_resource_27crags', {
+  id: baseFields.id,
+
+  name: text('name'),
+  searchable_id: integer('searchable_id'),
+  searchable_type: text('searchable_type'),
+  country_name: text('country_name'),
+  location_name: text('location_name'),
+  description: text('description'),
+  crag_id: integer('crag_id'),
+  latitude: real('latitude'),
+  longitude: real('longitude'),
+  path: text('path'),
+
+  url: text('url'),
+
+  externalResourcesFk: integer('external_resources_fk').notNull(),
+})
+export type RouteExternalResource27crags = InferSelectModel<typeof routeExternalResource27crags>
+export type InsertRouteExternalResource27crags = InferInsertModel<typeof routeExternalResource27crags>
+
+export const routeExternalResource27cragsRelations = relations(routeExternalResource27crags, ({ one }) => ({
+  externalResources: one(routeExternalResources, {
+    fields: [routeExternalResource27crags.externalResourcesFk],
+    references: [routeExternalResources.id],
+  }),
+}))
+
+export const routeExternalResourceTheCrag = sqliteTable('route_external_resource_the_crag', {
+  id: baseFields.id,
+
+  name: text('name'),
+  description: text('description'),
+  grade: text('grade'),
+  gradingScale: text('grading_scale', { enum: ['FB', 'V'] }),
+  node: integer('node'),
+  rating: integer('rating'),
+  tags: text('tags'),
+
+  url: text('url'),
+
+  externalResourcesFk: integer('external_resources_fk').notNull(),
+})
+export type RouteExternalResourceTheCrag = InferSelectModel<typeof routeExternalResourceTheCrag>
+export type InsertRouteExternalResourceTheCrag = InferInsertModel<typeof routeExternalResourceTheCrag>
+
+export const routeExternalResourceTheCragRelations = relations(routeExternalResourceTheCrag, ({ one }) => ({
+  externalResources: one(routeExternalResources, {
+    fields: [routeExternalResourceTheCrag.externalResourcesFk],
+    references: [routeExternalResources.id],
+  }),
 }))
 
 export const firstAscents = sqliteTable('first_ascents', {

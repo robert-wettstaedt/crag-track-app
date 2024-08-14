@@ -1,0 +1,187 @@
+import { db } from '$lib/db/db.server'
+import { keyv } from '$lib/db/db.server.js'
+import { generateSlug } from '$lib/db/schema'
+import { routeExternalResourceTheCrag, type RouteExternalResourceTheCrag } from '$lib/db/schema.js'
+import * as cheerio from 'cheerio'
+import { eq } from 'drizzle-orm'
+import type { ExternalResourceHandler } from './index.server'
+
+export default {
+  postUrl: 'https://www.thecrag.com/api/ascent/create?markupType=markdown&cookieAuth=1',
+
+  query: async (query, blockId, crag, sector, userExternalResource) => {
+    const cacheKey = `thecrag-${blockId}-${generateSlug(query)}`
+
+    try {
+      if (await keyv.has(cacheKey)) {
+        return keyv.get(cacheKey)
+      }
+
+      const url = `https://www.thecrag.com/en/climbing/world/routes/search/${query}/with-gear-style/boulder/?sortby=popularity,desc`
+
+      const response = await fetch(
+        url,
+        userExternalResource == null
+          ? undefined
+          : {
+              headers: {
+                Cookie: `ApacheSessionID=${userExternalResource.cookieTheCrag}`,
+              },
+            },
+      )
+      const html = await response.text()
+
+      if (response.status >= 400) {
+        console.log(`Failed query POST ${url}`)
+        console.log(html)
+        throw new Error(`Failed theCrag session check: ${response.status} ${response.statusText}`)
+      }
+
+      const $ = cheerio.load(html)
+      const $rows = $('table.routetable tr')
+      const $row = $rows.filter((_, row) => {
+        const $anchor = $('.route a', row)
+        const title = generateSlug($anchor.attr('title') ?? '')
+
+        const isRoute = generateSlug($(row).attr('data-nodename') ?? '') === generateSlug(query)
+        const isCrag = crag != null && title.includes(generateSlug(crag.name))
+        const isSector = sector != null && title.includes(generateSlug(sector.name))
+
+        return isRoute && (isCrag || isSector)
+      })
+
+      const id = Number($row.attr('data-nid'))
+
+      if (!Number.isNaN(id)) {
+        const grade = $('.pull-right', $row)
+          .text()
+          .replace(/\{\w+\}/, '')
+          .trim()
+
+        const description = $('.markdown p', $row).contents().not('.tags').text().trim()
+        const tags = $('.markdown .tags', $row).text().trim()
+
+        const data: RouteExternalResourceTheCrag = {
+          externalResourcesFk: -1,
+          description:
+            description.startsWith('"') && description.endsWith('"')
+              ? description.substring(1, description.length - 1)
+              : description,
+          grade: grade.startsWith('V') ? grade.substring(1) : grade,
+          gradingScale: grade.startsWith('V') ? 'V' : 'FB',
+          id: -1,
+          name: $row.attr('data-nodename') ?? '',
+          node: id,
+          rating: $('.star', $row).length,
+          tags,
+          url: `https://www.thecrag.com/route/${id}`,
+        }
+
+        await keyv.set(cacheKey, data)
+
+        return data
+      }
+    } catch (error) {
+      console.error(JSON.stringify(error, null, 2))
+    }
+
+    return null
+  },
+
+  convertToRoute: (data) => {
+    return {
+      blockFk: -1,
+      createdAt: '',
+      createdBy: -1,
+      description: data.description ?? null,
+      externalResourcesFk: null,
+      firstAscentFk: null,
+      grade: data.grade ?? null,
+      gradingScale: data.gradingScale ?? 'FB',
+      id: data.node ?? -1,
+      name: data.name ?? '',
+      rating: data.rating ?? null,
+      slug: '',
+    }
+  },
+
+  checkSession: async function (externalResourceId, userExternalResource) {
+    const externalResource =
+      externalResourceId == null
+        ? null
+        : await db.query.routeExternalResourceTheCrag.findFirst({
+            where: eq(routeExternalResourceTheCrag.id, externalResourceId),
+          })
+
+    if (externalResource?.url == null || userExternalResource.cookieTheCrag == null) {
+      return null
+    }
+
+    const res = await fetch(this.postUrl ?? '', {
+      headers: {
+        Cookie: `ApacheSessionID=${userExternalResource.cookieTheCrag}`,
+        'Content-Type': 'application/json',
+        Referer: externalResource.url,
+      },
+      method: 'POST',
+    })
+    const json = await res.json()
+
+    if (res.status === 400) {
+      if (typeof json.authAccountID === 'string') {
+        return { account: json.authAccountID }
+      }
+
+      throw new Error('Your theCrag session is invalid')
+    }
+
+    console.log(`Failed checkSession POST ${this.postUrl}`)
+    console.log(json)
+    throw new Error(`Failed theCrag session check: ${res.status} ${res.statusText}`)
+  },
+
+  logAscent: async function (ascent, externalResourceId, userExternalResource, session) {
+    const externalResourceTheCrag =
+      externalResourceId == null
+        ? null
+        : await db.query.routeExternalResourceTheCrag.findFirst({
+            where: eq(routeExternalResourceTheCrag.id, externalResourceId),
+          })
+
+    if (externalResourceTheCrag == null || userExternalResource.cookieTheCrag == null) {
+      return
+    }
+
+    const res = await fetch(this.postUrl ?? '', {
+      headers: {
+        Cookie: `ApacheSessionID=${userExternalResource.cookieTheCrag}`,
+        'Content-Type': 'application/json',
+        Referer: externalResourceTheCrag.url ?? '',
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        data: {
+          account: session.account,
+          node: externalResourceTheCrag.node,
+          date: ascent.dateTime,
+          tick: ascent.type,
+          comment: ascent.notes ?? '',
+          with: '',
+          climbedGearStyle: 'boulder',
+          difficultyFeedback: [],
+          tag: {},
+          version: 2,
+        },
+        role: 'Licensee Standard User',
+      }),
+    })
+
+    if (res.status >= 400) {
+      const json = await res.json()
+
+      console.log(`Failed logAscent POST ${this.postUrl}`)
+      console.log(json)
+      throw new Error(`Unable to log theCrag ascent: ${res.status} ${res.statusText}`)
+    }
+  },
+} as ExternalResourceHandler<RouteExternalResourceTheCrag, { account: string }>

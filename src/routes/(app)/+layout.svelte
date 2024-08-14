@@ -17,6 +17,8 @@
   } from '@skeletonlabs/skeleton'
   import '../../app.postcss'
 
+  export let data
+
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
   initializeStores()
 </script>
@@ -49,13 +51,13 @@
 
           <div class="card p-4 w-72 shadow-xl" data-popup="popup-user">
             <div class="mb-4">
-              Hi, {$page.data.session.user.name}
+              Hi, {data.user?.userName}
             </div>
 
             <nav class="list-nav">
               <ul>
                 <li>
-                  <a href={`/users/${$page.data.session.user.name}`}>Profile</a>
+                  <a href={`/users/${data.user?.userName}`}>Profile</a>
                 </li>
 
                 {#if !PUBLIC_DEMO_MODE}

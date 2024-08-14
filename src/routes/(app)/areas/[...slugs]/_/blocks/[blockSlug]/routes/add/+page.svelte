@@ -31,6 +31,7 @@
 
   <div class="mt-8">
     <RouteFormFields
+      blockId={data.block.id}
       description={form?.description ?? ''}
       grade={form?.grade ?? null}
       gradingScale={form?.gradingScale}
