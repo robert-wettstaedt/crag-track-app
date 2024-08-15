@@ -1,14 +1,14 @@
 <script lang="ts">
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import AscentTypeLabel from '$lib/components/AscentTypeLabel'
+  import FileBrowser from '$lib/components/FileBrowser'
   import type { Ascent, File, Route } from '$lib/db/schema'
-  import { Tab, TabGroup, getModalStore, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton'
+  import { Tab, TabGroup, getModalStore, type ModalSettings } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
   import remarkHtml from 'remark-html'
   import remarkParse from 'remark-parse'
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import { unified } from 'unified'
-  import AscentTypeLabel from '$lib/components/AscentTypeLabel'
-  import FileBrowser from '$lib/components/FileBrowser'
 
   export let dateTime: Ascent['dateTime']
   export let gradingScale: Route['gradingScale']
@@ -54,6 +54,7 @@
       event.preventDefault()
 
       const modal: ModalSettings = {
+        backdropClasses: '!overflow-y-auto',
         component: {
           ref: FileBrowser,
           props: {
