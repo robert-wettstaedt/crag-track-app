@@ -85,7 +85,6 @@ export const load = (async ({ params }) => {
       // Return the route and its ascents
       return [{ route: { ...enrichRoute(ascents[0].route), ascents }, ascents }]
     })
-    .slice(0, 10) // Limit the number of finished projects to 10
     .toSorted((a, b) => {
       // Sort finished projects by the number of ascents and the date of the last attempt
       if (a.ascents.length === b.ascents.length) {
@@ -101,7 +100,7 @@ export const load = (async ({ params }) => {
   // Return the user, sends, open projects, and finished projects
   return {
     user,
-    sends: ascentsResult.filter((ascent) => ascent.type !== 'attempt'),
+    sends: ascentsResult.filter((ascent) => ascent.type !== 'attempt' && ascent.type !== 'repeat'),
     openProjects,
     finishedProjects,
   }
