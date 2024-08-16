@@ -1,6 +1,7 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { blocks, generateSlug, routes, routesToTags, users, type Route } from '$lib/db/schema'
+import { insertExternalResources } from '$lib/external-resources/index.server'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -110,21 +111,31 @@ export const actions = {
         throw new Error('User not found')
       }
 
-      const { tags, ...rest } = values
-
       // Insert the new route into the database
       const result = await db
         .insert(routes)
-        .values({ ...rest, createdBy: user.id, blockFk: block.id, slug })
+        .values({ ...values, createdBy: user.id, blockFk: block.id, slug })
         .returning()
       route = result[0]
+    } catch (exception) {
+      return fail(400, { ...values, error: `Unable to create route: ${convertException(exception)}` })
+    }
 
-      if (tags.length > 0) {
-        await db.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag })))
+    try {
+      if (values.tags.length > 0) {
+        await db.insert(routesToTags).values(values.tags.map((tag) => ({ routeFk: route.id, tagFk: tag })))
       }
     } catch (exception) {
-      // If the insertion fails, return a 400 error with the exception details
-      return fail(400, { ...values, error: convertException(exception) })
+      return fail(400, { ...values, error: `Unable to create tags: ${convertException(exception)}` })
+    }
+
+    try {
+      await insertExternalResources(route, block, session)
+    } catch (exception) {
+      return fail(400, {
+        ...values,
+        error: `Unable to create route external resources: ${convertException(exception)}`,
+      })
     }
 
     // Construct the merged path for redirection

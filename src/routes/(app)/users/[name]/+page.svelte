@@ -1,5 +1,9 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
   import { page } from '$app/stores'
+  import Logo27crags from '$lib/assets/27crags-logo.png'
+  import Logo8a from '$lib/assets/8a-logo.png'
+  import LogoTheCrag from '$lib/assets/thecrag-logo.png'
   import RouteName from '$lib/components/RouteName'
   import Vega from '$lib/components/Vega'
   import { grades } from '$lib/grades.js'
@@ -7,6 +11,7 @@
   import { DateTime } from 'luxon'
 
   export let data
+  export let form
 
   const ascents = data.sends.map((ascent) => {
     const gradeObj = grades.find((grade) => grade[ascent.route.gradingScale] === (ascent.grade ?? ascent.route.grade))
@@ -35,6 +40,10 @@
     <TabAnchor href={$page.url.pathname + '#finished-projects'} selected={$page.url.hash === '#finished-projects'}>
       Finished projects
     </TabAnchor>
+
+    {#if $page.data.session?.user?.email === data.user.email}
+      <TabAnchor href={$page.url.pathname + '#settings'} selected={$page.url.hash === '#settings'}>Settings</TabAnchor>
+    {/if}
 
     <svelte:fragment slot="panel">
       {#if $page.url.hash === ''}
@@ -158,6 +167,67 @@
             {/each}
           </ul>
         </nav>
+      {:else if $page.url.hash === '#settings'}
+        {#if $page.data.session?.user?.email === data.user.email}
+          <form method="POST" use:enhance>
+            {#if form?.error}
+              <aside class="alert variant-filled-error mt-8">
+                <div class="alert-message">
+                  <p>{form.error}</p>
+                </div>
+              </aside>
+            {/if}
+
+            <label class="label mt-4">
+              <span class="flex items-center gap-x-2">
+                <img class="h-4 w-4" src={Logo8a} alt="8a" width={16} height={16} />
+                Cookie
+              </span>
+              <input
+                class="input"
+                name="cookie8a"
+                type="text"
+                placeholder="Enter value..."
+                value={data.externalResources?.cookie8a ?? ''}
+              />
+            </label>
+
+            <label class="label mt-4">
+              <span class="flex items-center gap-x-2">
+                <img class="h-4 w-4" src={Logo27crags} alt="27crags" width={16} height={16} />
+                Cookie
+              </span>
+              <input
+                class="input"
+                name="cookie27crags"
+                type="text"
+                placeholder="Enter value..."
+                value={data.externalResources?.cookie27crags ?? ''}
+              />
+            </label>
+
+            <label class="label mt-4">
+              <span class="flex items-center gap-x-2">
+                <img class="h-4 w-4" src={LogoTheCrag} alt="TheCrag" width={16} height={16} />
+                Cookie
+              </span>
+              <input
+                class="input"
+                name="cookieTheCrag"
+                type="text"
+                placeholder="Enter value..."
+                value={data.externalResources?.cookieTheCrag ?? ''}
+              />
+            </label>
+
+            <div class="flex justify-end mt-8">
+              <button class="btn variant-filled-primary">
+                <i class="fa-solid fa-floppy-disk me-2" />
+                Save settings
+              </button>
+            </div>
+          </form>
+        {/if}
       {/if}
     </svelte:fragment>
   </TabGroup>

@@ -1,11 +1,15 @@
+import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { ascents, users } from '$lib/db/schema'
+import { ascents, userExternalResources, users } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichRoute } from '$lib/db/utils'
-import { error } from '@sveltejs/kit'
+import { validateUserExternalResourceForm, type UserExternalResourceActionValues } from '$lib/forms.server'
+import { error, fail } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
+export const load = (async ({ locals, params }) => {
+  const session = await locals.auth()
+
   // Query the database to find users with the given name
   const usersResult = await db.query.users.findMany({
     where: eq(users.userName, params.name),
@@ -23,6 +27,13 @@ export const load = (async ({ params }) => {
   if (usersResult.length > 1) {
     error(400, `Multiple users with name ${params.name} found`)
   }
+
+  const externalResources =
+    user.email === session?.user?.email
+      ? await db.query.userExternalResources.findFirst({
+          where: eq(userExternalResources.userFk, user.id),
+        })
+      : null
 
   // Query the database to find ascents created by the user
   const ascentsResult = await db.query.ascents.findMany({
@@ -103,5 +114,65 @@ export const load = (async ({ params }) => {
     sends: ascentsResult.filter((ascent) => ascent.type !== 'attempt' && ascent.type !== 'repeat'),
     openProjects,
     finishedProjects,
+    externalResources,
   }
 }) satisfies PageServerLoad
+
+export const actions = {
+  default: async ({ locals, params, request }) => {
+    // Query the database to find users with the given name
+    const usersResult = await db.query.users.findMany({
+      where: eq(users.userName, params.name),
+    })
+
+    // Get the first user from the result
+    const user = usersResult.at(0)
+
+    // If no user is found, throw a 404 error
+    if (user == null) {
+      error(404)
+    }
+
+    // If multiple users are found, throw a 400 error
+    if (usersResult.length > 1) {
+      error(400, `Multiple users with name ${params.name} found`)
+    }
+
+    const session = await locals.auth()
+
+    if (user.email !== session?.user?.email) {
+      error(401)
+    }
+
+    const externalResources = await db.query.userExternalResources.findFirst({
+      where: eq(userExternalResources.userFk, user.id),
+    })
+
+    // Get the form data from the request
+    const data = await request.formData()
+    let values: UserExternalResourceActionValues
+
+    try {
+      // Validate the form data
+      values = await validateUserExternalResourceForm(data)
+    } catch (exception) {
+      // If validation fails, return the exception as AreaActionFailure
+      return exception as UserExternalResourceActionValues
+    }
+
+    try {
+      if (externalResources == null) {
+        const [result] = await db
+          .insert(userExternalResources)
+          .values({ userFk: user.id, ...values })
+          .returning()
+        await db.update(users).set({ userExternalResourcesFk: result.id }).where(eq(users.id, user.id))
+      } else {
+        await db.update(userExternalResources).set(values).where(eq(userExternalResources.id, externalResources.id))
+      }
+    } catch (exception) {
+      // If an error occurs during insertion, return a 400 error with the exception message
+      return fail(400, { ...values, error: convertException(exception) })
+    }
+  },
+}

@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { ascents, blocks } from '$lib/db/schema'
+import { ascents, blocks, routeExternalResources } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import { getRouteDbFilter } from '$lib/helper.server'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
@@ -41,6 +41,13 @@ export const load = (async ({ locals, params, parent }) => {
             },
           },
           tags: true,
+          externalResources: {
+            with: {
+              externalResource8a: true,
+              externalResource27crags: true,
+              externalResourceTheCrag: true,
+            },
+          },
         },
       },
       topos: {

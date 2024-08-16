@@ -1,1 +1,20 @@
-{"version":"5","dialect":"sqlite","entries":[{"idx":2,"version":"6","when":1719499418076,"tag":"0002_shallow_penance","breakpoints":true}]}
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1719499418076,
+      "tag": "0002_shallow_penance",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1723192641236,
+      "tag": "0003_sweet_shocker",
+      "breakpoints": true
+    }
+  ]
+}

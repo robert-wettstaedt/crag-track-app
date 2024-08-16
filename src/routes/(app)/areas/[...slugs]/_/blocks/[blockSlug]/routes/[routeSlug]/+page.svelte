@@ -1,5 +1,8 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import Logo27crags from '$lib/assets/27crags-logo.png'
+  import Logo8a from '$lib/assets/8a-logo.png'
+  import LogoTheCrag from '$lib/assets/thecrag-logo.png'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import FileViewer from '$lib/components/FileViewer'
   import RouteGrade from '$lib/components/RouteGrade'
@@ -110,6 +113,32 @@
   </svelte:fragment>
 
   <svelte:fragment slot="trail">
+    {#if data.route.externalResources?.externalResource8a?.url != null}
+      <a class="btn btn-sm variant-ghost" href={data.route.externalResources.externalResource8a.url} target="_blank">
+        <img src={Logo8a} alt="8a" width={16} height={16} />
+      </a>
+    {/if}
+
+    {#if data.route.externalResources?.externalResource27crags?.url != null}
+      <a
+        class="btn btn-sm variant-ghost"
+        href={data.route.externalResources.externalResource27crags.url}
+        target="_blank"
+      >
+        <img src={Logo27crags} alt="27crags" width={16} height={16} />
+      </a>
+    {/if}
+
+    {#if data.route.externalResources?.externalResourceTheCrag?.url != null}
+      <a
+        class="btn btn-sm variant-ghost"
+        href={data.route.externalResources.externalResourceTheCrag.url}
+        target="_blank"
+      >
+        <img src={LogoTheCrag} alt="The Crag" width={16} height={16} />
+      </a>
+    {/if}
+
     {#if data.session?.user != null}
       <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen me-2" />Edit route

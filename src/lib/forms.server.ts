@@ -8,6 +8,7 @@ import {
   type Route,
   type Tag,
   type TopoRoute,
+  type UserExternalResource,
 } from './db/schema'
 
 export type AreaActionValues = Pick<Area, 'name' | 'type'>
@@ -265,6 +266,44 @@ export const validateTagForm = async (data: FormData): Promise<TagActionValues> 
 
   if (typeof id !== 'string' || id.length === 0) {
     throw fail(400, { ...values, error: 'id is required' })
+  }
+
+  return values
+}
+
+export type UserExternalResourceActionValues = Pick<
+  UserExternalResource,
+  'cookie8a' | 'cookie27crags' | 'cookieTheCrag'
+>
+export type UserExternalResourceActionFailure = ActionFailure<UserExternalResourceActionValues & { error: string }>
+
+/**
+ * Validates the user external resource form data.
+ *
+ * @param {FormData} data - The form data to validate.
+ * @returns {Promise<UserExternalResourceActionValues>} The validated user external resource action values.
+ * @throws {ActionFailure<UserExternalResourceActionValues & { error: string }>} If validation fails.
+ */
+export const validateUserExternalResourceForm = async (data: FormData): Promise<UserExternalResourceActionValues> => {
+  const cookie8a = data.get('cookie8a')
+  const cookie27crags = data.get('cookie27crags')
+  const cookieTheCrag = data.get('cookieTheCrag')
+  const values = {
+    cookie8a: typeof cookie8a === 'string' && cookie8a.trim().length > 0 ? cookie8a : null,
+    cookie27crags: typeof cookie27crags === 'string' && cookie27crags.trim().length > 0 ? cookie27crags : null,
+    cookieTheCrag: typeof cookieTheCrag === 'string' && cookieTheCrag.trim().length > 0 ? cookieTheCrag : null,
+  } as UserExternalResourceActionValues
+
+  if (cookie8a != null && typeof cookie8a !== 'string') {
+    throw fail(400, { ...values, error: 'cookie8a must be a valid string' })
+  }
+
+  if (cookie27crags != null && typeof cookie27crags !== 'string') {
+    throw fail(400, { ...values, error: 'cookie27crags must be a valid string' })
+  }
+
+  if (cookieTheCrag != null && typeof cookieTheCrag !== 'string') {
+    throw fail(400, { ...values, error: 'cookieTheCrag must be a valid string' })
   }
 
   return values

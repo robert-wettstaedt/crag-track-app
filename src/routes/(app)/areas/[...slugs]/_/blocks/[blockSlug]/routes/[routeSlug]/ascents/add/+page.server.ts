@@ -1,6 +1,7 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
 import { ascents, blocks, files, users, type Ascent, type File } from '$lib/db/schema'
+import { checkExternalSessions, logExternalAscent } from '$lib/external-resources/index.server'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
@@ -131,6 +132,13 @@ export const actions = {
       }
     }
 
+    let externalSessions: Awaited<ReturnType<typeof checkExternalSessions>>
+    try {
+      externalSessions = await checkExternalSessions(route, session)
+    } catch (error) {
+      return fail(400, { ...values, error: convertException(error) })
+    }
+
     let ascent: Ascent
     try {
       // Query the database to find the user by email
@@ -169,6 +177,15 @@ export const actions = {
         // Return a 400 failure if file insertion fails
         return fail(400, { ...values, error: convertException(exception) })
       }
+    }
+
+    try {
+      await logExternalAscent(ascent, externalSessions)
+    } catch (error) {
+      return fail(400, {
+        ...values,
+        error: `Your ascent was logged but failed to log to external resources: ${convertException(error)}`,
+      })
     }
 
     // Redirect to the merged path
