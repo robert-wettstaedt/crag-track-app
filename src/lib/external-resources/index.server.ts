@@ -93,6 +93,10 @@ export const queryExternalResource = async (query: string, blockId: number, sess
 }
 
 export const insertExternalResources = async (route: Route, block: Block, session: Session | null) => {
+  if (route.name.length === 0) {
+    return
+  }
+
   const externalResources = await queryExternalResource(route.name, block.id, session)
 
   if (
