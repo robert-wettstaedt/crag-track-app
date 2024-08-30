@@ -107,6 +107,12 @@ export default {
       }
 
       const req = http.request(options, (res) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        let responseData = ''
+        res.on('data', (chunk) => {
+          responseData += chunk
+        })
+
         res.on('end', async () => {
           if (res.statusCode === 302) {
             const cookies = res.headers['set-cookie'] ?? []
