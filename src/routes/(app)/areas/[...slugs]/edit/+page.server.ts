@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { areas, generateSlug } from '$lib/db/schema'
+import { areas, files, generateSlug, geolocations } from '$lib/db/schema'
 import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -19,8 +19,7 @@ export const load = (async ({ locals, parent }) => {
   }
 
   // Query the database to find the area with the given areaId
-  const areasResult = await db.query.areas.findMany({ where: eq(areas.id, areaId) })
-  const area = areasResult.at(0)
+  const area = await db.query.areas.findFirst({ where: eq(areas.id, areaId) })
 
   // If the area is not found, throw a 404 error
   if (area == null) {
@@ -32,7 +31,7 @@ export const load = (async ({ locals, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ locals, params, request }) => {
+  updateArea: async ({ locals, params, request }) => {
     // Authenticate the user session
     const session = await locals.auth()
     if (session?.user == null) {
@@ -79,5 +78,50 @@ export const actions = {
 
     // Redirect to the updated area page
     redirect(303, `/areas/${params.slugs}`)
+  },
+
+  removeArea: async ({ locals, params }) => {
+    // Convert area slug to areaId
+    const { areaId } = convertAreaSlug(params)
+
+    // Authenticate the user session
+    const session = await locals.auth()
+    if (session?.user == null) {
+      // If the user is not authenticated, throw a 401 error
+      error(401)
+    }
+
+    // Query the database to find the area with the given areaId
+    const area = await db.query.areas.findFirst({
+      where: eq(areas.id, areaId),
+      with: {
+        areas: true,
+        blocks: true,
+      },
+    })
+
+    if (area == null) {
+      error(404)
+    }
+
+    if (area.areas.length > 0) {
+      return fail(400, { error: `${area.name} has ${area.areas.length} subareas. Delete subareas first.` })
+    }
+
+    if (area.blocks.length > 0) {
+      return fail(400, { error: `${area.name} has ${area.blocks.length} blocks. Delete blocks first.` })
+    }
+
+    try {
+      await db.delete(files).where(eq(files.areaFk, areaId))
+      await db.delete(geolocations).where(eq(geolocations.areaFk, areaId))
+      await db.update(areas).set({ parentFk: null }).where(eq(areas.parentFk, areaId))
+      await db.delete(areas).where(eq(areas.id, areaId))
+    } catch (error) {
+      return fail(404, { error: convertException(error) })
+    }
+
+    const slugs = params.slugs.split('/').slice(0, -1).join('/')
+    redirect(303, `/areas/${slugs}`)
   },
 }

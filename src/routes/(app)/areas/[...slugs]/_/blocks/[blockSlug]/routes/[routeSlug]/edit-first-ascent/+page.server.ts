@@ -76,7 +76,7 @@ export const load = (async ({ locals, params, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ locals, params, request }) => {
+  updateFirstAscent: async ({ locals, params, request }) => {
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
 
@@ -166,11 +166,57 @@ export const actions = {
         await db.update(firstAscents).set(firstAscentValue).where(eq(firstAscents.id, route.firstAscentFk))
       }
     } catch (exception) {
-      // Return a 404 error if an exception occurs
-      return fail(404, { ...values, error: convertException(exception) })
+      // Return a 400 error if an exception occurs
+      return fail(400, { ...values, error: convertException(exception) })
     }
 
     // Redirect to the route edit page
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}`)
+  },
+
+  removeFirstAscent: async ({ locals, params, request }) => {
+    // Convert the area slug to get the areaId
+    const { areaId } = convertAreaSlug(params)
+
+    // Authenticate the user session
+    const session = await locals.auth()
+    if (session?.user == null) {
+      // Throw a 401 error if the user is not authenticated
+      error(401)
+    }
+
+    // Query the database to find the block with the specified slug and areaId
+    const block = await db.query.blocks.findFirst({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        routes: {
+          // Filter the routes to find the one with the specified slug
+          where: getRouteDbFilter(params.routeSlug),
+        },
+      },
+    })
+
+    // Get the first route from the block's routes
+    const route = block?.routes?.at(0)
+
+    // Return a 404 error if the route is not found
+    if (route == null) {
+      return fail(404, { error: `Route not found ${params.routeSlug}` })
+    }
+
+    // Return a 400 error if multiple routes with the same slug are found
+    if (block != null && block.routes.length > 1) {
+      return fail(400, { error: `Multiple routes with slug ${params.routeSlug} found` })
+    }
+
+    if (route.firstAscentFk != null) {
+      try {
+        await db.delete(firstAscents).where(eq(firstAscents.id, route.firstAscentFk))
+      } catch (error) {
+        return fail(400, { error: convertException(error) })
+      }
+    }
+
     redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}`)
   },
 }

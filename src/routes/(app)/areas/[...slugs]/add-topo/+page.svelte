@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import FileBrowser from '$lib/components/FileBrowser'
@@ -23,7 +24,7 @@
   </svelte:fragment>
 </AppBar>
 
-<form method="POST">
+<form method="POST" use:enhance>
   {#if form?.error != null}
     <aside class="alert variant-filled-error mt-8">
       <div class="alert-message">
@@ -52,6 +53,6 @@
 
   <div class="flex justify-between mt-8">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary" disabled={filePath == null}>Select</button>
+    <button class="btn variant-filled-primary" disabled={filePath == null} type="submit">Select</button>
   </div>
 </form>

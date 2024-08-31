@@ -1,10 +1,10 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { blocks, generateSlug } from '$lib/db/schema'
+import { blocks, files, generateSlug, geolocations, topoRoutes, topos } from '$lib/db/schema'
 import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -40,7 +40,7 @@ export const load = (async ({ locals, params, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ locals, params, request }) => {
+  updateBlock: async ({ locals, params, request }) => {
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
 
@@ -91,5 +91,62 @@ export const actions = {
 
     // Redirect to the block's page after successful update
     redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+  },
+
+  removeBlock: async ({ locals, params }) => {
+    // Convert the area slug to get the areaId
+    const { areaId, areaSlug } = convertAreaSlug(params)
+
+    // Authenticate the user session
+    const session = await locals.auth()
+    if (session?.user == null) {
+      // If no user is found in the session, throw a 401 error
+      error(401)
+    }
+
+    // Query the database to find blocks matching the provided slug and areaId
+    const blocksResult = await db.query.blocks.findMany({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        routes: true,
+      },
+    })
+    const block = blocksResult.at(0) // Get the first block from the result
+
+    // If no block is found, return a 404 error
+    if (block == null) {
+      return fail(404, { error: `Block with slug ${params.blockSlug} in ${areaSlug} not found` }) // Not Found error
+    }
+
+    // If multiple blocks are found, return a 400 error with a message
+    if (blocksResult.length > 1) {
+      return fail(400, { error: `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found` }) // Bad Request error
+    }
+
+    if (block.routes.length > 0) {
+      return fail(400, { error: `${block.name} has ${block.routes.length} routes. Delete routes first.` }) // Bad Request error
+    }
+
+    try {
+      await db.delete(files).where(eq(files.blockFk, block.id))
+      await db.delete(geolocations).where(eq(geolocations.blockFk, block.id))
+
+      const deletedTopos = await db.delete(topos).where(eq(topos.blockFk, block.id)).returning()
+
+      if (deletedTopos.length > 0) {
+        await db.delete(topoRoutes).where(
+          inArray(
+            topoRoutes.topoFk,
+            deletedTopos.map((topo) => topo.id),
+          ),
+        )
+      }
+
+      await db.delete(blocks).where(eq(blocks.id, block.id))
+    } catch (error) {
+      return fail(400, { error: convertException(error) })
+    }
+
+    redirect(303, `/areas/${params.slugs}`)
   },
 }

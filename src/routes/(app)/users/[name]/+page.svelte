@@ -169,7 +169,7 @@
         </nav>
       {:else if $page.url.hash === '#settings'}
         {#if $page.data.session?.user?.email === data.user.email}
-          <form method="POST" use:enhance>
+          <form method="POST">
             {#if form?.error}
               <aside class="alert variant-filled-error mt-8">
                 <div class="alert-message">
@@ -188,7 +188,7 @@
                 name="cookie8a"
                 type="text"
                 placeholder="Enter value..."
-                value={data.externalResources?.cookie8a ?? ''}
+                value={form?.cookie8a ?? data.externalResources?.cookie8a ?? ''}
               />
             </label>
 
@@ -202,7 +202,7 @@
                 name="cookie27crags"
                 type="text"
                 placeholder="Enter value..."
-                value={data.externalResources?.cookie27crags ?? ''}
+                value={form?.cookie27crags ?? data.externalResources?.cookie27crags ?? ''}
               />
             </label>
 
@@ -216,12 +216,12 @@
                 name="cookieTheCrag"
                 type="text"
                 placeholder="Enter value..."
-                value={data.externalResources?.cookieTheCrag ?? ''}
+                value={form?.cookieTheCrag ?? data.externalResources?.cookieTheCrag ?? ''}
               />
             </label>
 
             <div class="flex justify-end mt-8">
-              <button class="btn variant-filled-primary">
+              <button class="btn variant-filled-primary" type="submit">
                 <i class="fa-solid fa-floppy-disk me-2" />
                 Save settings
               </button>

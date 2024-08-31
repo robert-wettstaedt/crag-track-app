@@ -109,6 +109,13 @@
 
                       <button class="btn btn-sm variant-soft-primary" type="submit">Save</button>
                     </form>
+                  {:else}
+                    <button
+                      class="btn btn-sm variant-soft-error"
+                      use:popup={{ event: 'click', target: `popup-delete-route-${route.id}`, placement: 'top' }}
+                    >
+                      <i class="fa-solid fa-trash" />
+                    </button>
                   {/if}
                 </button>
               {:else}
@@ -123,6 +130,21 @@
                   </form>
                 </span>
               {/if}
+
+              <div class="card p-4 shadow-xl" data-popup="popup-delete-route-{route.id}">
+                <p>Are you sure you want to delete this route's topo?</p>
+
+                <div class="flex justify-end gap-2 mt-4">
+                  <form method="POST" action="?/removeRoute" use:enhance>
+                    <input hidden name="routeFk" value={route.id} />
+                    <input hidden name="topoFk" value={data.topos[selectedTopoIndex].id} />
+
+                    <button class="btn btn-sm variant-filled-primary" type="submit">Yes</button>
+                  </form>
+
+                  <button class="btn btn-sm variant-filled-surface">Cancel</button>
+                </div>
+              </div>
             </li>
           {/each}
         </ul>

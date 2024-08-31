@@ -102,6 +102,23 @@ export const actions = {
       .values({ topType: 'top', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) })
   },
 
+  removeRoute: async ({ request }) => {
+    // Get form data from the request
+    const data = await request.formData()
+    let values: AddTopoActionValues
+
+    // Validate the ascent form data
+    try {
+      values = await validateAddTopoForm(data)
+    } catch (exception) {
+      return exception as AddTopoActionFailure
+    }
+
+    await db
+      .delete(topoRoutes)
+      .where(and(eq(topoRoutes.routeFk, Number(values.routeFk)), eq(topoRoutes.topoFk, Number(values.topoFk))))
+  },
+
   removeTopo: async ({ params, request }) => {
     const data = await request.formData()
     const id = Number(data.get('id'))

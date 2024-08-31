@@ -174,5 +174,7 @@ export const actions = {
       // If an error occurs during insertion, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })
     }
+
+    return values
   },
 }

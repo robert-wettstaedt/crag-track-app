@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import AscentFormFields from '$lib/components/AscentFormFields'
   import RouteName from '$lib/components/RouteName'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar, popup } from '@skeletonlabs/skeleton'
   import type { ActionData, PageData } from './$types'
 
   export let data: PageData
@@ -13,9 +14,9 @@
 <svelte:head>
   <title>
     Edit ascent of
-    {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
-    {data.route.name}
-    {data.route.grade == null ? '' : ` (${data.route.grade} ${data.route.gradingScale})`}
+    {data.ascent.route.rating == null ? '' : `${Array(data.ascent.route.rating).fill('★').join('')} `}
+    {data.ascent.route.name}
+    {data.ascent.route.grade == null ? '' : ` (${data.ascent.route.grade} ${data.ascent.route.gradingScale})`}
     - Crag Track
   </title>
 </svelte:head>
@@ -25,12 +26,12 @@
     <span>Edit ascent of</span>
     &nbsp;
     <a class="anchor" href={basePath}>
-      <RouteName route={data.route} />
+      <RouteName route={data.ascent.route} />
     </a>
   </svelte:fragment>
 </AppBar>
 
-<form method="POST">
+<form action="?/updateAscent" method="POST" use:enhance>
   {#if form?.error != null}
     <aside class="alert variant-filled-error mt-8">
       <div class="alert-message">
@@ -43,7 +44,7 @@
     <AscentFormFields
       dateTime={form?.dateTime ?? data.ascent.dateTime}
       grade={form?.grade ?? data.ascent.grade}
-      gradingScale={data.route.gradingScale}
+      gradingScale={data.ascent.route.gradingScale}
       notes={form?.notes ?? data.ascent.notes}
       type={form?.type ?? data.ascent.type}
       filePaths={form?.filePaths ??
@@ -53,6 +54,29 @@
 
   <div class="flex justify-between mt-8">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary">Save ascent</button>
+
+    <div>
+      <button
+        class="btn variant-filled-error"
+        use:popup={{ event: 'click', target: `popup-delete-ascent`, placement: 'top' }}
+        type="button"
+      >
+        <i class="fa-solid fa-trash me-2" />Delete ascent
+      </button>
+
+      <button class="btn variant-filled-primary" type="submit">Save ascent</button>
+    </div>
   </div>
 </form>
+
+<div class="card p-4 shadow-xl" data-popup="popup-delete-ascent">
+  <p>Are you sure you want to delete this ascent?</p>
+
+  <div class="flex justify-end gap-2 mt-4">
+    <form method="POST" action="?/removeAscent" use:enhance>
+      <button class="btn btn-sm variant-filled-primary" type="submit">Yes</button>
+    </form>
+
+    <button class="btn btn-sm variant-filled-surface">Cancel</button>
+  </div>
+</div>

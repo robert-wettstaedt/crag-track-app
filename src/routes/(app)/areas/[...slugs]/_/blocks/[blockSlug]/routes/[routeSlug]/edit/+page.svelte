@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import RouteFormFields from '$lib/components/RouteFormFields'
   import RouteName from '$lib/components/RouteName'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar, popup } from '@skeletonlabs/skeleton'
 
   export let data
   export let form
@@ -29,7 +30,7 @@
   </svelte:fragment>
 </AppBar>
 
-<form method="POST">
+<form action="?/updateRoute" method="POST" use:enhance>
   {#if form?.error}
     <aside class="alert variant-filled-error mt-8">
       <div class="alert-message">
@@ -52,6 +53,29 @@
 
   <div class="flex justify-between mt-4">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary">Update route</button>
+
+    <div>
+      <button
+        class="btn variant-filled-error"
+        use:popup={{ event: 'click', target: `popup-delete-route`, placement: 'top' }}
+        type="button"
+      >
+        <i class="fa-solid fa-trash me-2" />Delete route
+      </button>
+
+      <button class="btn variant-filled-primary" type="submit">Update route</button>
+    </div>
   </div>
 </form>
+
+<div class="card p-4 shadow-xl" data-popup="popup-delete-route">
+  <p>Are you sure you want to delete this route?</p>
+
+  <div class="flex justify-end gap-2 mt-4">
+    <form method="POST" action="?/removeRoute" use:enhance>
+      <button class="btn btn-sm variant-filled-primary" type="submit">Yes</button>
+    </form>
+
+    <button class="btn btn-sm variant-filled-surface">Cancel</button>
+  </div>
+</div>

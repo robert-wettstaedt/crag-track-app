@@ -45,7 +45,7 @@ export const load = (async ({ locals, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ locals, params, request }) => {
+  updateParkingLocation: async ({ locals, params, request }) => {
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
 
@@ -108,6 +108,37 @@ export const actions = {
     } catch (exception) {
       // Handle any exceptions that occur during the update
       return fail(404, { ...values, error: convertException(exception) })
+    }
+
+    redirect(303, `/areas/${params.slugs}`)
+  },
+
+  removeParkingLocation: async ({ locals, params }) => {
+    // Convert area slug to areaId
+    const { areaId } = convertAreaSlug(params)
+
+    // Authenticate the user session
+    const session = await locals.auth()
+    if (session?.user == null) {
+      // If the user is not authenticated, throw a 401 error
+      error(401)
+    }
+
+    // Query the database to find the area with the given areaId
+    const areasResult = await db.query.areas.findMany({
+      where: eq(areas.id, areaId),
+    })
+    const area = areasResult.at(0)
+
+    // If the area is not found, throw a 404 error
+    if (area == null) {
+      error(404)
+    }
+
+    try {
+      await db.delete(geolocations).where(eq(geolocations.areaFk, area.id))
+    } catch (error) {
+      return fail(404, { error: convertException(error) })
     }
 
     redirect(303, `/areas/${params.slugs}`)

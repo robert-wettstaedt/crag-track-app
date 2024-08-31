@@ -1,10 +1,23 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { ascents, blocks, generateSlug, routes, routesToTags } from '$lib/db/schema'
+import {
+  ascents,
+  blocks,
+  files,
+  firstAscents,
+  generateSlug,
+  routeExternalResource27crags,
+  routeExternalResource8a,
+  routeExternalResources,
+  routeExternalResourceTheCrag,
+  routes,
+  routesToTags,
+  topoRoutes,
+} from '$lib/db/schema'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -54,7 +67,7 @@ export const load = (async ({ locals, params, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ locals, params, request }) => {
+  updateRoute: async ({ locals, params, request }) => {
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
 
@@ -148,5 +161,96 @@ export const actions = {
 
     // Redirect to the updated route's page
     redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${slug.length === 0 ? route.id : slug}`)
+  },
+
+  removeRoute: async ({ locals, params }) => {
+    const { areaId } = convertAreaSlug(params)
+
+    const session = await locals.auth()
+    if (session?.user == null) {
+      error(401) // Throw an error if the user is not authenticated
+    }
+
+    // Query the database to find the block with the given slug and areaId
+    const block = await db.query.blocks.findFirst({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        routes: {
+          where: getRouteDbFilter(params.routeSlug),
+          with: {
+            ascents: {
+              with: {
+                files: true,
+              },
+            },
+            externalResources: true,
+            files: true,
+            firstAscent: true,
+            tags: true,
+          },
+        },
+      },
+    })
+
+    // Get the first route from the block's routes
+    const route = block?.routes?.at(0)
+
+    // Return a 404 failure if the route is not found
+    if (route == null) {
+      return fail(404, { error: `Route not found ${params.routeSlug}` })
+    }
+
+    // If no block is found, return a 400 error with a message
+    if (block == null) {
+      return fail(400, { error: `Parent not found ${params.blockSlug}` })
+    }
+
+    // Return a 400 failure if multiple routes with the same slug are found
+    if (block.routes.length > 1) {
+      return fail(400, { error: `Multiple routes with slug ${params.routeSlug} found` })
+    }
+
+    try {
+      await db.delete(ascents).where(eq(ascents.routeFk, route.id))
+      await db.delete(firstAscents).where(eq(firstAscents.routeFk, route.id))
+      await db.delete(routesToTags).where(eq(routesToTags.routeFk, route.id))
+      await db.delete(files).where(eq(files.routeFk, route.id))
+      await db.delete(topoRoutes).where(eq(topoRoutes.routeFk, route.id))
+
+      if (route.ascents.length > 0) {
+        await db.delete(files).where(
+          inArray(
+            files.ascentFk,
+            route.ascents.map((ascent) => ascent.id),
+          ),
+        )
+      }
+
+      const externalResources = await db
+        .delete(routeExternalResources)
+        .where(eq(routeExternalResources.routeFk, route.id))
+        .returning()
+
+      const ex8aIds = externalResources.map((er) => er.externalResource8aFk).filter((id) => id != null)
+      if (ex8aIds.length > 0) {
+        await db.delete(routeExternalResource8a).where(inArray(routeExternalResource8a.id, ex8aIds))
+      }
+
+      const ex27cragsIds = externalResources.map((er) => er.externalResource27cragsFk).filter((id) => id != null)
+      if (ex27cragsIds.length > 0) {
+        await db.delete(routeExternalResource27crags).where(inArray(routeExternalResource27crags.id, ex27cragsIds))
+      }
+
+      const exTheCragIds = externalResources.map((er) => er.externalResourceTheCragFk).filter((id) => id != null)
+      if (exTheCragIds.length > 0) {
+        await db.delete(routeExternalResourceTheCrag).where(inArray(routeExternalResourceTheCrag.id, exTheCragIds))
+      }
+
+      await db.delete(routes).where(eq(routes.id, route.id))
+    } catch (exception) {
+      return fail(400, { error: convertException(exception) })
+    }
+
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
   },
 }

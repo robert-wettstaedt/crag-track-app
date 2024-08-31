@@ -56,7 +56,7 @@ export const load = (async ({ locals, params, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ locals, params, request }) => {
+  updateLocation: async ({ locals, params, request }) => {
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
 
@@ -110,7 +110,7 @@ export const actions = {
 
     // If no block is found, throw a 404 error
     if (block == null) {
-      error(404)
+      return fail(404, { ...values, error: 'Block not found' })
     }
 
     try {
@@ -126,6 +126,45 @@ export const actions = {
     } catch (exception) {
       // Handle any exceptions that occur during the update
       return fail(404, { ...values, error: convertException(exception) })
+    }
+
+    // Redirect to the block's page after a successful update
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+  },
+
+  removeGeolocation: async ({ locals, params }) => {
+    // Convert area slug to areaId
+    const { areaId } = convertAreaSlug(params)
+
+    // Get the current session from locals
+    const session = await locals.auth()
+    if (session?.user == null) {
+      // If the user is not authenticated, throw a 401 error
+      error(401)
+    }
+
+    // Query the database for blocks matching the given slug and areaId
+    const blocksResult = await db.query.blocks.findMany({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+    })
+    // Get the first block from the result
+    const block = blocksResult.at(0)
+
+    // If no block is found, throw a 404 error
+    if (block == null) {
+      return fail(404, { error: 'Block not found' })
+    }
+
+    try {
+      // If the block has a geolocation, delete the geolocation record
+      if (block.geolocationFk != null) {
+        await db.delete(geolocations).where(eq(geolocations.id, block.geolocationFk))
+      }
+
+      // Update the block to remove the geolocation foreign key
+      await db.update(blocks).set({ geolocationFk: null }).where(eq(blocks.id, block.id))
+    } catch (error) {
+      return fail(400, { error: convertException(error) })
     }
 
     // Redirect to the block's page after a successful update

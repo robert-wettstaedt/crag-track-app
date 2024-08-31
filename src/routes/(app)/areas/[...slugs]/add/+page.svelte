@@ -1,4 +1,5 @@
 <script>
+  import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import AreaFormFields from '$lib/components/AreaFormFields'
   import { AppBar } from '@skeletonlabs/skeleton'
@@ -28,7 +29,7 @@
   </svelte:fragment>
 </AppBar>
 
-<form method="POST">
+<form method="POST" use:enhance>
   {#if form?.error}
     <aside class="alert variant-filled-error mt-8">
       <div class="alert-message">
@@ -43,6 +44,8 @@
 
   <div class="flex justify-between mt-8">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary"><i class="fa-solid fa-floppy-disk me-2" /> Save area</button>
+    <button class="btn variant-filled-primary" type="submit">
+      <i class="fa-solid fa-floppy-disk me-2" /> Save area
+    </button>
   </div>
 </form>

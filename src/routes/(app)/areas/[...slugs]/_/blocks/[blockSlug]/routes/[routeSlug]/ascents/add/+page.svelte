@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import AscentFormFields from '$lib/components/AscentFormFields'
   import RouteName from '$lib/components/RouteName'
@@ -31,7 +32,7 @@
   </svelte:fragment>
 </AppBar>
 
-<form method="POST">
+<form method="POST" use:enhance>
   {#if form?.error != null}
     <aside class="alert variant-filled-error mt-8">
       <div class="alert-message">
@@ -53,6 +54,6 @@
 
   <div class="flex justify-between mt-8">
     <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary">Save ascent</button>
+    <button class="btn variant-filled-primary" type="submit">Save ascent</button>
   </div>
 </form>

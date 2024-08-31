@@ -1,60 +1,33 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server.js'
-import { ascents, blocks, files, routes, users, type Ascent, type File } from '$lib/db/schema'
+import { ascents, files, type File } from '$lib/db/schema'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
-import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params, parent }) => {
-  // Retrieve the areaId from the parent function
-  const { areaId, user } = await parent()
-
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
-    // If no user is found in the session, throw a 401 Unauthorized error
-    error(401)
-  }
-
-  // Query the database to find the block with the given slug and areaId
-  const block = await db.query.blocks.findFirst({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    with: {
-      routes: {
-        orderBy: routes.grade,
-        where: getRouteDbFilter(params.routeSlug),
-        with: {
-          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
-        },
-      },
-    },
-  })
-
-  // Get the first route from the block's routes
-  const route = block?.routes?.at(0)
-
-  // If no route is found, throw a 404 Not Found error
-  if (route == null) {
-    error(404)
-  }
-
-  // If multiple routes with the same slug are found, throw a 400 Bad Request error
-  if (block != null && block.routes.length > 1) {
-    error(400, `Multiple route with slug ${params.routeSlug} found`)
-  }
-
+export const load = (async ({ locals, params }) => {
   // Query the database to find the ascent with the given id
   const ascent = await db.query.ascents.findFirst({
     where: eq(ascents.id, Number(params.ascentId)),
     with: {
       author: true,
       files: true,
+      route: {
+        with: {
+          ascents: true,
+        },
+      },
     },
   })
+
+  // Authenticate the user
+  const session = await locals.auth()
+  if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
+    error(401)
+  }
 
   // If no ascent is found, throw a 404 Not Found error
   if (ascent == null) {
@@ -69,21 +42,11 @@ export const load = (async ({ locals, params, parent }) => {
   // Return the ascent and route data
   return {
     ascent,
-    route,
   }
 }) satisfies PageServerLoad
 
 export const actions = {
-  default: async ({ locals, params, request }) => {
-    // Convert area slug to areaId
-    const { areaId } = convertAreaSlug(params)
-
-    // Authenticate the user
-    const session = await locals.auth()
-    if (session?.user?.email == null) {
-      error(401)
-    }
-
+  updateAscent: async ({ locals, params, request }) => {
     // Get form data from the request
     const data = await request.formData()
     let values: AscentActionValues
@@ -95,27 +58,22 @@ export const actions = {
       return exception as AscentActionFailure
     }
 
-    // Query the database to find the block with the given slug and areaId
-    const block = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+    const ascent = await db.query.ascents.findFirst({
+      where: eq(ascents.id, Number(params.ascentId)),
       with: {
-        routes: {
-          where: getRouteDbFilter(params.routeSlug),
-        },
+        author: true,
+        route: true,
       },
     })
 
-    // Get the first route from the block's routes
-    const route = block?.routes?.at(0)
-
-    // If no route is found, return a 404 error
-    if (route == null) {
-      return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
+    if (ascent == null) {
+      return fail(404, { ...values, error: `Ascent not found ${params.ascentId}` })
     }
 
-    // If multiple routes with the same slug are found, return a 400 error
-    if (block != null && block.routes.length > 1) {
-      return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
+    // Authenticate the user
+    const session = await locals.auth()
+    if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
+      error(401)
     }
 
     // Check if there are any file paths provided
@@ -144,21 +102,12 @@ export const actions = {
       }
     }
 
-    let ascent: Ascent
     try {
-      // Find the user in the database
-      const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
-      if (user == null) {
-        throw new Error('User not found')
-      }
-
       // Update the ascent in the database
-      const results = await db
+      await db
         .update(ascents)
-        .set({ ...values, routeFk: route.id, createdBy: user.id })
-        .where(eq(ascents.id, Number(params.ascentId)))
-        .returning()
-      ascent = results[0]
+        .set({ ...values, routeFk: ascent.route.id })
+        .where(eq(ascents.id, ascent.id))
     } catch (exception) {
       return fail(400, { ...values, error: convertException(exception) })
     }
@@ -182,6 +131,36 @@ export const actions = {
       } catch (exception) {
         return fail(400, { ...values, error: convertException(exception) })
       }
+    }
+
+    // Redirect to the merged path
+    const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
+    redirect(303, '/' + mergedPath)
+  },
+
+  removeAscent: async ({ locals, params }) => {
+    const ascent = await db.query.ascents.findFirst({
+      where: eq(ascents.id, Number(params.ascentId)),
+      with: {
+        author: true,
+      },
+    })
+
+    if (ascent == null) {
+      return fail(404, { error: `Ascent not found ${params.ascentId}` })
+    }
+
+    // Authenticate the user
+    const session = await locals.auth()
+    if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
+      error(401)
+    }
+
+    try {
+      await db.delete(ascents).where(eq(ascents.id, ascent.id))
+      await db.delete(files).where(eq(files.ascentFk, ascent.id))
+    } catch (error) {
+      return fail(400, { error: convertException(error) })
     }
 
     // Redirect to the merged path

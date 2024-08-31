@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { ascents, blocks, routeExternalResources } from '$lib/db/schema'
+import { ascents, blocks } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import { getRouteDbFilter } from '$lib/helper.server'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
@@ -117,3 +117,14 @@ export const load = (async ({ locals, params, parent }) => {
     topos,
   }
 }) satisfies PageServerLoad
+
+export const actions = {
+  removeAscent: async ({ request }) => {
+    const data = await request.formData()
+    const ascentFk = data.get('ascentFk')
+
+    if (ascentFk != null) {
+      await db.delete(ascents).where(eq(ascents.id, Number(ascentFk)))
+    }
+  },
+}
