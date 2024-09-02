@@ -244,7 +244,7 @@ export const checkExternalSessions = async (route: Route, session: Session) => {
 }
 
 export const logExternalAscent = async (ascent: Ascent, opts: Awaited<ReturnType<typeof checkExternalSessions>>) => {
-  if (opts == null) {
+  if (opts == null || ascent.type === 'attempt') {
     return
   }
 
