@@ -1,12 +1,15 @@
 <script lang="ts">
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import RouteGrade from '$lib/components/RouteGrade'
+  import type { Route } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import { Ratings } from '@skeletonlabs/skeleton'
 
-  export let route: InferResultType<'routes', { ascents: true }> | undefined
+  type RouteWithAscents = InferResultType<'routes', { ascents: true }>
 
-  const lastAscent = route?.ascents.toSorted((a, b) => a.dateTime.localeCompare(b.dateTime)).at(-1)
+  export let route: (Omit<RouteWithAscents, 'ascents'> & Partial<Pick<RouteWithAscents, 'ascents'>>) | undefined
+
+  const lastAscent = route?.ascents?.toSorted((a, b) => a.dateTime.localeCompare(b.dateTime)).at(-1)
 </script>
 
 {#if route != null}

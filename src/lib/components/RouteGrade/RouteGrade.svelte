@@ -2,9 +2,11 @@
   import type { InferResultType } from '$lib/db/types'
   import { grades } from '$lib/grades'
 
-  export let route: InferResultType<'routes', { ascents: true }> | undefined
+  type RouteWithAscents = InferResultType<'routes', { ascents: true }>
 
-  const send = route?.ascents.find((ascent) => ascent.type === 'send')
+  export let route: (Omit<RouteWithAscents, 'ascents'> & Partial<Pick<RouteWithAscents, 'ascents'>>) | undefined
+
+  const send = route?.ascents?.find((ascent) => ascent.type === 'send')
 
   const routeGradeConfig = grades.find((grade) => (route == null ? false : grade[route.gradingScale] === route.grade))
   const ascentGradeConfig = grades.find((grade) =>

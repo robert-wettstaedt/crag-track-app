@@ -9,8 +9,12 @@ import type { ExternalResourceHandler } from './index.server'
 export default {
   postUrl: 'https://www.thecrag.com/api/ascent/create?markupType=markdown&cookieAuth=1',
 
-  query: async (query, blockId, crag, sector, userExternalResource) => {
+  query: async (query, blockId, cragName, sectorName, userExternalResource) => {
     const cacheKey = `thecrag-${blockId}-${generateSlug(query)}`
+
+    const cragSlug = cragName != null ? generateSlug(cragName) : null
+    const sectorSlug = sectorName != null ? generateSlug(sectorName) : null
+    const querySlug = generateSlug(query)
 
     try {
       if (await keyv.has(cacheKey)) {
@@ -43,9 +47,9 @@ export default {
         const $anchor = $('.route a', row)
         const title = generateSlug($anchor.attr('title') ?? '')
 
-        const isRoute = generateSlug($(row).attr('data-nodename') ?? '') === generateSlug(query)
-        const isCrag = crag != null && title.includes(generateSlug(crag.name))
-        const isSector = sector != null && title.includes(generateSlug(sector.name))
+        const isRoute = generateSlug($(row).attr('data-nodename') ?? '') === querySlug
+        const isCrag = cragSlug != null && title.includes(cragSlug)
+        const isSector = sectorSlug != null && title.includes(sectorSlug)
 
         return isRoute && (isCrag || isSector)
       })

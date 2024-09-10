@@ -1,7 +1,5 @@
 <script lang="ts">
-  import Logo27crags from '$lib/assets/27crags-logo.png'
-  import Logo8a from '$lib/assets/8a-logo.png'
-  import LogoTheCrag from '$lib/assets/thecrag-logo.png'
+  import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
   import type { InsertRoute, Route, Tag } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import { grades } from '$lib/grades'
@@ -84,24 +82,8 @@
 </div>
 
 {#if routeExternalResources != null}
-  <div class="flex gap-2 mt-4">
-    {#if routeExternalResources.externalResource8a?.url != null}
-      <a class="btn variant-ghost" href={routeExternalResources.externalResource8a.url} target="_blank">
-        <img src={Logo8a} alt="The Crag" width={24} height={24} />
-      </a>
-    {/if}
-
-    {#if routeExternalResources.externalResource27crags?.url != null}
-      <a class="btn variant-ghost" href={routeExternalResources.externalResource27crags.url} target="_blank">
-        <img src={Logo27crags} alt="27crags" width={24} height={24} />
-      </a>
-    {/if}
-
-    {#if routeExternalResources.externalResourceTheCrag?.url != null}
-      <a class="btn variant-ghost" href={routeExternalResources.externalResourceTheCrag.url} target="_blank">
-        <img src={LogoTheCrag} alt="The Crag" width={24} height={24} />
-      </a>
-    {/if}
+  <div class="mt-4">
+    <RouteExternalResourceLinks iconSize={24} {routeExternalResources} />
   </div>
 {/if}
 

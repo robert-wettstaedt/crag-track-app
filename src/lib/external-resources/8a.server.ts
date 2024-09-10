@@ -37,23 +37,21 @@ type QueryResponse8a = z.infer<typeof QueryResponse8a>
 export default {
   postUrl: 'https://www.8a.nu/api/ascents',
 
-  query: async (query, blockId, crag, sector) => {
+  query: async (query, blockId, cragName, sectorName) => {
     const cacheKey = `8a-${blockId}-${generateSlug(query)}`
 
-    const extendedQuery = `${query}+${crag?.name ?? ''}`
+    const cragSlug = cragName != null ? generateSlug(cragName) : null
+    const sectorSlug = sectorName != null ? generateSlug(sectorName) : null
+    const querySlug = generateSlug(query)
 
-    const searchParams = new URLSearchParams({
-      query: extendedQuery,
-      pageIndex: '0',
-      pageSize: '20',
-      'entityTypes[]': '3',
-      showOnMap: 'false',
-    })
-
-    try {
-      if (await keyv.has(cacheKey)) {
-        return keyv.get(cacheKey)
-      }
+    const queryItems = async (query: string) => {
+      const searchParams = new URLSearchParams({
+        query,
+        pageIndex: '0',
+        pageSize: '20',
+        'entityTypes[]': '3',
+        showOnMap: 'false',
+      })
 
       const url = `https://www.8a.nu/unificationAPI/collection/v1/web/search?${searchParams.toString()}`
       const response = await fetch(url)
@@ -61,16 +59,37 @@ export default {
 
       const parsed = QueryResponse8a.parse(data)
       const item = parsed.items
-        .filter(
-          (item) =>
-            generateSlug(item.zlaggableName) === generateSlug(query) &&
-            (generateSlug(item.cragName) === crag?.slug ||
-              generateSlug(item.cragSlug) === crag?.slug ||
-              generateSlug(item.sectorName) === sector?.slug ||
-              generateSlug(item.sectorSlug) === sector?.slug),
-        )
+        .filter((item) => {
+          const _cragSlug = generateSlug(item.cragName)
+          const _sectorSlug = generateSlug(item.sectorName)
+
+          return (
+            generateSlug(item.zlaggableName) === querySlug &&
+            [cragSlug, sectorSlug].some((slug) => _cragSlug === slug || _sectorSlug === slug)
+          )
+        })
         .toSorted((a, b) => b.totalAscents - a.totalAscents)
         .at(0)
+
+      return item
+    }
+
+    try {
+      if (await keyv.has(cacheKey)) {
+        return keyv.get(cacheKey)
+      }
+
+      let extendedQuery = `${query}+${cragName ?? ''}`
+      let item = await queryItems(extendedQuery)
+
+      if (item == null) {
+        extendedQuery = `${query}+${sectorName ?? ''}`
+        item = await queryItems(extendedQuery)
+      }
+
+      if (item == null) {
+        item = await queryItems(query)
+      }
 
       if (item != null) {
         const data: RouteExternalResource8a = {

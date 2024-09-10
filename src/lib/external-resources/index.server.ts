@@ -26,8 +26,8 @@ export interface ExternalResourceHandler<ExternalResource, SessionReturnType> {
   query: (
     query: string,
     blockId: number,
-    crag: Area | null,
-    sector: Area | null,
+    cragName: string | null | undefined,
+    sectorName: string | null | undefined,
     userExternalResource: UserExternalResource | null | undefined,
   ) => Promise<ExternalResource | null>
   convertToRoute: (data: ExternalResource) => Route
@@ -83,10 +83,13 @@ export const queryExternalResource = async (query: string, blockId: number, sess
     area = area.parent as NestedArea
   }
 
+  const cragName = crag?.name.replace(/\(.*\)/g, '').trim()
+  const sectorName = sector?.name.replace(/\(.*\)/g, '').trim()
+
   const [data8a, data27crags, dataTheCrag] = await Promise.all([
-    handler8a.query(query, blockId, crag, sector, userExternalResource),
-    handler27crags.query(query, blockId, crag, sector, userExternalResource),
-    handlerTheCrag.query(query, blockId, crag, sector, userExternalResource),
+    handler8a.query(query, blockId, cragName, sectorName, userExternalResource),
+    handler27crags.query(query, blockId, cragName, sectorName, userExternalResource),
+    handlerTheCrag.query(query, blockId, cragName, sectorName, userExternalResource),
   ])
 
   return { data8a, data27crags, dataTheCrag }
@@ -97,7 +100,24 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
     return
   }
 
-  const externalResources = await queryExternalResource(route.name, block.id, session)
+  let routeName: string | undefined = route.name.replace(/\(.*\)/g, '').trim()
+  let externalResources = await queryExternalResource(routeName, block.id, session)
+
+  if (
+    externalResources?.data8a == null &&
+    externalResources?.data27crags == null &&
+    externalResources?.dataTheCrag == null
+  ) {
+    routeName = route.name
+      .match(/\(.*\)/)
+      ?.at(0)
+      ?.replace(/\(|\)/g, '')
+      ?.trim()
+
+    if (routeName != null) {
+      externalResources = await queryExternalResource(routeName, block.id, session)
+    }
+  }
 
   if (
     externalResources?.data8a == null &&

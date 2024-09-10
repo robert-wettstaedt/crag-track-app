@@ -48,17 +48,23 @@
       <a class="btn btn-sm variant-ghost" href={`${basePath}/export`}>
         <i class="fa-solid fa-file-export me-2" />Export PDF
       </a>
+    {/if}
 
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/gpx`} download={`${data.area.slug}.gpx`}>
-        <i class="fa-solid fa-map-location-dot me-2" />Export GPX
-      </a>
+    <a class="btn btn-sm variant-ghost" href={`${basePath}/gpx`} download={`${data.area.name}.gpx`}>
+      <i class="fa-solid fa-map-location-dot me-2" />Export GPX
+    </a>
 
+    {#if data.area.type === 'crag'}
       <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-parking-location`}>
         <i class="fa-solid fa-parking me-2" />Add parking location
       </a>
     {/if}
 
     {#if data.session?.user != null}
+      <a class="btn btn-sm variant-ghost" href={`${basePath}/sync-external-resources`}>
+        <i class="fa-solid fa-sync me-2" />Sync external resources
+      </a>
+
       <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen me-2" />Edit area
       </a>

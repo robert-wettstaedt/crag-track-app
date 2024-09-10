@@ -26,8 +26,12 @@ export const QueryResponse27crags = z.object({
 })
 
 export default {
-  query: async (query, blockId, crag, sector) => {
+  query: async (query, blockId, cragName, sectorName) => {
     const cacheKey = `27crags-${blockId}-${generateSlug(query)}`
+
+    const cragSlug = cragName != null ? generateSlug(cragName) : null
+    const sectorSlug = sectorName != null ? generateSlug(sectorName) : null
+    const querySlug = generateSlug(query)
 
     try {
       if (await keyv.has(cacheKey)) {
@@ -40,10 +44,10 @@ export default {
       const parsed = QueryResponse27crags.parse(data)
       const item = parsed.search_keys.find(
         (item) =>
-          generateSlug(item.name) === generateSlug(query) &&
+          generateSlug(item.name) === querySlug &&
           item.searchable_type === 'Route' &&
-          ((crag != null && item.description?.toLowerCase().includes(crag.name.toLowerCase())) ||
-            (sector != null && item.description?.toLowerCase().includes(sector.name.toLowerCase()))),
+          ((cragSlug != null && item.description?.toLowerCase().includes(cragSlug.toLowerCase())) ||
+            (sectorSlug != null && item.description?.toLowerCase().includes(sectorSlug.toLowerCase()))),
       )
 
       if (item != null) {
