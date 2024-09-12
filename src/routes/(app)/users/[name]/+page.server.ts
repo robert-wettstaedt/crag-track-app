@@ -1,6 +1,6 @@
 import { convertException } from '$lib'
 import { db } from '$lib/db/db.server'
-import { ascents, userExternalResources, users } from '$lib/db/schema'
+import { ascents, userSettings, users } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichRoute } from '$lib/db/utils'
 import { validateUserExternalResourceForm, type UserExternalResourceActionValues } from '$lib/forms.server'
 import { error, fail } from '@sveltejs/kit'
@@ -30,8 +30,8 @@ export const load = (async ({ locals, params }) => {
 
   const externalResources =
     user.email === session?.user?.email
-      ? await db.query.userExternalResources.findFirst({
-          where: eq(userExternalResources.userFk, user.id),
+      ? await db.query.userSettings.findFirst({
+          where: eq(userSettings.userFk, user.id),
         })
       : null
 
@@ -110,7 +110,6 @@ export const load = (async ({ locals, params }) => {
 
   // Return the user, sends, open projects, and finished projects
   return {
-    user,
     sends: ascentsResult.filter((ascent) => ascent.type !== 'attempt' && ascent.type !== 'repeat'),
     openProjects,
     finishedProjects,
@@ -144,8 +143,8 @@ export const actions = {
       error(401)
     }
 
-    const externalResources = await db.query.userExternalResources.findFirst({
-      where: eq(userExternalResources.userFk, user.id),
+    const externalResources = await db.query.userSettings.findFirst({
+      where: eq(userSettings.userFk, user.id),
     })
 
     // Get the form data from the request
@@ -163,12 +162,12 @@ export const actions = {
     try {
       if (externalResources == null) {
         const [result] = await db
-          .insert(userExternalResources)
+          .insert(userSettings)
           .values({ userFk: user.id, ...values })
           .returning()
-        await db.update(users).set({ userExternalResourcesFk: result.id }).where(eq(users.id, user.id))
+        await db.update(users).set({ userSettingsFk: result.id }).where(eq(users.id, user.id))
       } else {
-        await db.update(userExternalResources).set(values).where(eq(userExternalResources.id, externalResources.id))
+        await db.update(userSettings).set(values).where(eq(userSettings.id, externalResources.id))
       }
     } catch (exception) {
       // If an error occurs during insertion, return a 400 error with the exception message

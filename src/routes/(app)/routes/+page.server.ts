@@ -15,7 +15,7 @@ export const load = (async ({ parent, url }) => {
   const routesResult = await db.query.routes.findMany({
     limit: pageSize,
     offset: page * pageSize,
-    orderBy: [desc(routes.rating), asc(routes.grade)],
+    orderBy: [desc(routes.rating), asc(routes.gradeFk)],
     where: isNotNull(routes.rating),
     with: {
       ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },

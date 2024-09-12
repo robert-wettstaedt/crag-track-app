@@ -17,19 +17,22 @@
 
   $: selectedRouteStore.set(data.route.id)
   $: highlightedRouteStore.set(null)
+
+  $: grade = data.grades.find((grade) => grade.id === data.route.gradeFk)
 </script>
 
 <svelte:head>
   <title>
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
-    {data.route.grade == null ? '' : ` (${data.route.grade} ${data.route.gradingScale})`} - Crag Track
+    {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
+    - Crag Track
   </title>
 </svelte:head>
 
 <AppBar>
   <svelte:fragment slot="lead">
-    <RouteName route={data.route} />
+    <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={data.route} />
   </svelte:fragment>
 
   <svelte:fragment slot="headline">
@@ -236,9 +239,13 @@
           <div class="ms-8 mt-2">
             <AscentTypeLabel type={ascent.type} />
 
-            {#if ascent.grade != null}
+            {#if ascent.gradeFk != null}
               <span class="ms-2">
-                <RouteGrade route={data.route} />
+                <RouteGrade
+                  grades={data.grades}
+                  gradingScale={data.user?.userSettings?.gradingScale}
+                  route={data.route}
+                />
               </span>
             {/if}
           </div>

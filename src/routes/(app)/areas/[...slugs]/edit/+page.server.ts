@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server.js'
+import { db } from '$lib/db/db.server'
 import { areas, files, generateSlug, geolocations } from '$lib/db/schema'
 import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'

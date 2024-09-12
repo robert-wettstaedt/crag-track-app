@@ -113,6 +113,8 @@
     <AreaBlockListing
       blocks={area.blocks}
       getBlockKey={(_, index) => String.fromCharCode(ALPHABET_START_INDEX + index)}
+      grades={data.grades}
+      gradingScale={data.gradingScale}
       name={area.name}
       on:load={() => loadedTopos++}
       on:rendercomplete={() => loadedMaps++}
@@ -122,6 +124,8 @@
   <AreaBlockListing
     blocks={data.area.blocks}
     getBlockKey={(_, index) => String.fromCharCode(ALPHABET_START_INDEX + index)}
+    grades={data.grades}
+    gradingScale={data.gradingScale}
     name="Blöcke"
     on:load={() => loadedTopos++}
     on:rendercomplete={() => loadedMaps++}

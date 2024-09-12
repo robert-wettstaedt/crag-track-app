@@ -8,6 +8,8 @@
   export let data
   export let form
   $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`
+
+  $: grade = data.grades.find((grade) => grade.id === data.route.gradeFk)
 </script>
 
 <svelte:head>
@@ -15,7 +17,7 @@
     Edit FA of
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
-    {data.route.grade == null ? '' : ` (${data.route.grade} ${data.route.gradingScale})`}
+    {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
     - Crag Track
   </title>
 </svelte:head>
@@ -25,7 +27,7 @@
     <span>Edit FA of</span>
     &nbsp;
     <a class="anchor" href={basePath}>
-      <RouteName route={data.route} />
+      <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={data.route} />
     </a>
   </svelte:fragment>
 </AppBar>

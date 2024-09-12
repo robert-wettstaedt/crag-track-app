@@ -1,4 +1,4 @@
-import { db } from '$lib/db/db.server.js'
+import { db } from '$lib/db/db.server'
 import { ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import {
@@ -24,7 +24,7 @@ export const load = (async ({ locals, params, parent }) => {
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
     with: {
       routes: {
-        orderBy: routes.grade,
+        orderBy: routes.gradeFk,
         with: {
           ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
         },

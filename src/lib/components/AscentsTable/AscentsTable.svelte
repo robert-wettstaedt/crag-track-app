@@ -1,11 +1,14 @@
 <script lang="ts">
+  import type { Grade, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import type { EnrichedRoute } from '$lib/db/utils'
-  import { grades } from '$lib/grades'
+  import { getGradeColor } from '$lib/grades'
   import { Table } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let ascents: InferResultType<'ascents', { author: true; route: true }>[]
+  export let grades: Grade[]
+  export let gradingScale: UserSettings['gradingScale'] = 'FB'
 
   $: body = ascents.map((ascent) => {
     const { dateTime, route, type } = ascent
@@ -15,21 +18,23 @@
     const formattedDateTime = DateTime.fromSQL(dateTime).toLocaleString(DateTime.DATE_FULL)
 
     const routeGrade = (() => {
-      if (route.gradingScale == null || route.grade == null) {
+      const grade = grades.find((grade) => grade.id === route.gradeFk)
+
+      if (grade == null) {
         return ''
       }
 
-      const grade = grades.find((grade) => grade[route.gradingScale] === route.grade)
-      return `<span class="badge text-white" style="background: ${grade?.color}">${route.gradingScale} ${route.grade}</span>`
+      return `<span class="badge text-white" style="background: ${getGradeColor(grade)}">${grade[gradingScale]}</span>`
     })()
 
     const personalGrade = (() => {
-      if (route.gradingScale == null || ascent.grade == null) {
+      const grade = grades.find((grade) => grade.id === ascent.gradeFk)
+
+      if (grade == null) {
         return ''
       }
 
-      const grade = grades.find((grade) => grade[route.gradingScale] === ascent.grade)
-      return `<span class="badge text-white" style="background: ${grade?.color}">${route.gradingScale} ${ascent.grade}</span>`
+      return `<span class="badge text-white" style="background: ${getGradeColor(grade)}">${grade[gradingScale]}</span>`
     })()
 
     const enrichedRoute = route as EnrichedRoute

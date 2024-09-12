@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { areas, blocks } from '$lib/db/schema'
+import { areas, blocks, users, type UserSettings } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
@@ -50,6 +50,25 @@ export const load = (async ({ locals, params }) => {
   const session = await locals.auth()
 
   const { areaId } = convertAreaSlug(params)
+
+  const grades = await db.query.grades.findMany()
+
+  let gradingScale: UserSettings['gradingScale'] = 'FB'
+
+  if (session?.user?.email != null) {
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, session.user.email),
+      with: {
+        userSettings: {
+          columns: {
+            gradingScale: true,
+          },
+        },
+      },
+    })
+
+    gradingScale = user?.userSettings?.gradingScale ?? gradingScale
+  }
 
   const areasResult = await db.query.areas.findMany({
     where: eq(areas.id, areaId),
@@ -106,6 +125,7 @@ export const load = (async ({ locals, params }) => {
         }
       }),
     },
-    session,
+    grades,
+    gradingScale,
   }
 }) satisfies PageServerLoad

@@ -25,7 +25,7 @@
   {#each data.routes as route (route.id)}
     <li class="px-4 py-2 hover:bg-primary-500/10 flex justify-between">
       <a class="text-primary-500" href={route.pathname}>
-        <RouteName {route} />
+        <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
       </a>
 
       <a class="text-primary-500" href={route.block.area.pathname}>

@@ -1,5 +1,5 @@
-import { db } from '$lib/db/db.server.js'
-import { getAreaGPX } from '$lib/gpx.server.js'
+import { db } from '$lib/db/db.server'
+import { getAreaGPX } from '$lib/gpx.server'
 import { convertAreaSlug } from '$lib/helper.server'
 
 export async function GET({ params }) {

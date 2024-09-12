@@ -1,5 +1,5 @@
-import { db } from '$lib/db/db.server.js'
-import { files, users, type User } from '$lib/db/schema.js'
+import { db } from '$lib/db/db.server'
+import { files, users, type User } from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'

@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server.js'
+import { db } from '$lib/db/db.server'
 import { ascents, files, type File } from '$lib/db/schema'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'

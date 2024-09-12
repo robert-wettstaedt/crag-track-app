@@ -1,7 +1,7 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server.js'
-import { tags } from '$lib/db/schema.js'
-import { validateTagForm, type TagActionFailure, type TagActionValues } from '$lib/forms.server.js'
+import { db } from '$lib/db/db.server'
+import { tags } from '$lib/db/schema'
+import { validateTagForm, type TagActionFailure, type TagActionValues } from '$lib/forms.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 

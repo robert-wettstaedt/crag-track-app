@@ -28,15 +28,15 @@ export const users = sqliteTable('users', {
   email: text('email').notNull(),
   userName: text('user_name').notNull(),
 
-  userExternalResourcesFk: integer('user_external_resources_fk'),
+  userSettingsFk: integer('user_settings_fk'),
 })
 export type User = InferSelectModel<typeof users>
 export type InsertUser = InferInsertModel<typeof users>
 
 export const usersRelations = relations(users, ({ one, many }) => ({
-  userExternalResources: one(userExternalResources, {
-    fields: [users.userExternalResourcesFk],
-    references: [userExternalResources.id],
+  userSettings: one(userSettings, {
+    fields: [users.userSettingsFk],
+    references: [userSettings.id],
   }),
 
   areas: many(areas),
@@ -45,7 +45,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   routes: many(routes),
 }))
 
-export const userExternalResources = sqliteTable('user_external_resources', {
+export const userSettings = sqliteTable('user_settings', {
   id: baseFields.id,
 
   userFk: integer('user_fk').notNull(),
@@ -53,12 +53,16 @@ export const userExternalResources = sqliteTable('user_external_resources', {
   cookie8a: text('cookie_8a'),
   cookie27crags: text('cookie_27crags'),
   cookieTheCrag: text('cookie_the_crag'),
-})
-export type UserExternalResource = InferSelectModel<typeof userExternalResources>
-export type InsertUserExternalResource = InferInsertModel<typeof userExternalResources>
 
-export const userExternalResourcesRelations = relations(userExternalResources, ({ one }) => ({
-  user: one(users, { fields: [userExternalResources.userFk], references: [users.id] }),
+  gradingScale: text('grading_scale', { enum: ['FB', 'V'] })
+    .notNull()
+    .default('FB'),
+})
+export type UserSettings = InferSelectModel<typeof userSettings>
+export type InsertUserSettings = InferInsertModel<typeof userSettings>
+
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(users, { fields: [userSettings.userFk], references: [users.id] }),
 }))
 
 export const areas = sqliteTable('areas', {
@@ -109,13 +113,12 @@ export const routes = sqliteTable('routes', {
   ...baseContentFields,
 
   description: text('description'),
-  grade: text('grade'),
-  gradingScale: text('grading_scale', { enum: ['FB', 'V'] }).notNull(),
   rating: integer('rating'),
 
   blockFk: integer('block_fk').notNull(),
   firstAscentFk: integer('first_ascent_fk'),
   externalResourcesFk: integer('external_resources_fk'),
+  gradeFk: integer('grade_fk'),
 })
 export type Route = InferSelectModel<typeof routes>
 export type InsertRoute = InferInsertModel<typeof routes>
@@ -128,10 +131,25 @@ export const RoutesRelations = relations(routes, ({ one, many }) => ({
     fields: [routes.externalResourcesFk],
     references: [routeExternalResources.id],
   }),
+  grade: one(grades, { fields: [routes.gradeFk], references: [grades.id] }),
 
   ascents: many(ascents),
   files: many(files),
   tags: many(routesToTags),
+}))
+
+export const grades = sqliteTable('grades', {
+  id: baseFields.id,
+
+  FB: text('FB'),
+  V: text('V'),
+})
+export type Grade = InferSelectModel<typeof grades>
+export type InsertGrade = InferInsertModel<typeof grades>
+
+export const GradesRelations = relations(grades, ({ many }) => ({
+  ascents: many(ascents),
+  routes: many(routes),
 }))
 
 export const routeExternalResources = sqliteTable('route_external_resources', {
@@ -231,7 +249,6 @@ export const routeExternalResourceTheCrag = sqliteTable('route_external_resource
   name: text('name'),
   description: text('description'),
   grade: text('grade'),
-  gradingScale: text('grading_scale', { enum: ['FB', 'V'] }),
   node: integer('node'),
   rating: integer('rating'),
   tags: text('tags'),
@@ -275,10 +292,10 @@ export const ascents = sqliteTable('ascents', {
   dateTime: text('date_time')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-  grade: text('grade'),
   notes: text('notes'),
   type: text('type', { enum: ['flash', 'send', 'repeat', 'attempt'] }).notNull(),
 
+  gradeFk: integer('grade_fk'),
   routeFk: integer('route_fk').notNull(),
 })
 export type Ascent = InferSelectModel<typeof ascents>
@@ -286,6 +303,7 @@ export type InsertAscent = InferInsertModel<typeof ascents>
 
 export const ascentsRelations = relations(ascents, ({ one, many }) => ({
   author: one(users, { fields: [ascents.createdBy], references: [users.id] }),
+  grade: one(grades, { fields: [ascents.gradeFk], references: [grades.id] }),
   route: one(routes, { fields: [ascents.routeFk], references: [routes.id] }),
 
   files: many(files),

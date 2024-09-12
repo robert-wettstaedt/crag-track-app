@@ -1,5 +1,5 @@
 import { NEXTCLOUD_URL } from '$env/static/private'
-import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server.js'
+import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { type Headers } from 'webdav'
 

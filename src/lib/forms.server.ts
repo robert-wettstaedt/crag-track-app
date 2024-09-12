@@ -8,7 +8,7 @@ import {
   type Route,
   type Tag,
   type TopoRoute,
-  type UserExternalResource,
+  type UserSettings,
 } from './db/schema'
 
 export type AreaActionValues = Pick<Area, 'name' | 'type'>
@@ -58,7 +58,7 @@ export const validateBlockForm = async (data: FormData): Promise<BlockActionValu
   return values
 }
 
-export type RouteActionValues = Pick<Route, 'description' | 'name' | 'gradingScale' | 'grade' | 'rating'> & {
+export type RouteActionValues = Pick<Route, 'description' | 'gradeFk' | 'name' | 'rating'> & {
   tags: string[]
 }
 export type RouteActionFailure = ActionFailure<RouteActionValues & { error: string }>
@@ -72,14 +72,14 @@ export type RouteActionFailure = ActionFailure<RouteActionValues & { error: stri
  */
 export const validateRouteForm = async (data: FormData): Promise<RouteActionValues> => {
   const description = data.get('description')
-  const grade = data.get('grade')
-  const gradingScale = data.get('gradingScale')
+  const rawGradeFk = data.get('gradeFk')
   const name = data.get('name')
   const rawRating = data.get('rating')
   const tags = data.getAll('tags')
 
-  const values = { description, name, gradingScale, grade, rating: rawRating, tags } as RouteActionValues
+  const values = { description, name, gradeFk: rawGradeFk, rating: rawRating, tags } as RouteActionValues
 
+  const grade = Number(rawGradeFk)
   const rating = Number(rawRating)
 
   if (description != null && typeof description !== 'string') {
@@ -90,12 +90,8 @@ export const validateRouteForm = async (data: FormData): Promise<RouteActionValu
     throw fail(400, { ...values, error: 'name must be a valid string' })
   }
 
-  if (typeof gradingScale !== 'string' || gradingScale.length === 0) {
-    throw fail(400, { ...values, error: 'gradingScale is required' })
-  }
-
-  if (grade != null && typeof grade !== 'string') {
-    throw fail(400, { ...values, error: 'grade must be a valid string' })
+  if (rawGradeFk != null && Number.isNaN(grade)) {
+    throw fail(400, { ...values, error: 'grade must be valid' })
   }
 
   if (rawRating != null && Number.isNaN(rating)) {
@@ -141,7 +137,7 @@ export const validateFirstAscentForm = async (data: FormData): Promise<FirstAsce
   return values
 }
 
-export type AscentActionValues = Pick<Ascent, 'dateTime' | 'grade' | 'notes' | 'type'> & {
+export type AscentActionValues = Pick<Ascent, 'dateTime' | 'gradeFk' | 'notes' | 'type'> & {
   filePaths: File['path'][] | null
 }
 export type AscentActionFailure = ActionFailure<AscentActionValues & { error: string }>
@@ -155,12 +151,14 @@ export type AscentActionFailure = ActionFailure<AscentActionValues & { error: st
  */
 export const validateAscentForm = async (data: FormData): Promise<AscentActionValues> => {
   const dateTime = data.get('dateTime')
-  const grade = data.get('grade')
+  const rawGradeFk = data.get('gradeFk')
   const notes = data.get('notes')
   const type = data.get('type')
   const filePaths = data.getAll('file.path')
 
-  const values = { dateTime, grade, notes, type, filePaths } as AscentActionValues
+  const values = { dateTime, gradeFk: rawGradeFk, notes, type, filePaths } as AscentActionValues
+
+  const gradeFk = Number(rawGradeFk)
 
   if (typeof dateTime !== 'string' || dateTime.length === 0) {
     throw fail(400, { ...values, error: 'dateTime is required' })
@@ -170,8 +168,8 @@ export const validateAscentForm = async (data: FormData): Promise<AscentActionVa
     throw fail(400, { ...values, error: 'type is required' })
   }
 
-  if (grade != null && typeof grade !== 'string') {
-    throw fail(400, { ...values, error: 'grade must be a valid string' })
+  if (rawGradeFk != null && Number.isNaN(gradeFk)) {
+    throw fail(400, { ...values, error: 'grade must be valid' })
   }
 
   if (notes != null && typeof notes !== 'string') {
@@ -271,10 +269,7 @@ export const validateTagForm = async (data: FormData): Promise<TagActionValues> 
   return values
 }
 
-export type UserExternalResourceActionValues = Pick<
-  UserExternalResource,
-  'cookie8a' | 'cookie27crags' | 'cookieTheCrag'
->
+export type UserExternalResourceActionValues = Pick<UserSettings, 'cookie8a' | 'cookie27crags' | 'cookieTheCrag'>
 export type UserExternalResourceActionFailure = ActionFailure<UserExternalResourceActionValues & { error: string }>
 
 /**

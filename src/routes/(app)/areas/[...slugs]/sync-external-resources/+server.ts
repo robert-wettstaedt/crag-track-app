@@ -1,8 +1,8 @@
-import { getBlocksOfArea } from '$lib/blocks.server.js'
-import { db } from '$lib/db/db.server.js'
-import type { InferResultType } from '$lib/db/types.js'
-import { insertExternalResources, queryExternalResource } from '$lib/external-resources/index.server.js'
-import { convertAreaSlug } from '$lib/helper.server.js'
+import { getBlocksOfArea } from '$lib/blocks.server'
+import { db } from '$lib/db/db.server'
+import type { InferResultType } from '$lib/db/types'
+import { insertExternalResources, queryExternalResource } from '$lib/external-resources/index.server'
+import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
 
 export async function POST({ locals, params, request }) {

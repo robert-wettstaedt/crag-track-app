@@ -59,7 +59,7 @@
 
       <svelte:fragment slot="panel">
         {#if tabSet === 0}
-          {#await import('$lib/components/BlocksMapWithAddableMarker/index.js') then BlocksMap}
+          {#await import('$lib/components/BlocksMapWithAddableMarker') then BlocksMap}
             <BlocksMap.default blocks={data.blocks} on:change={onChange} />
           {/await}
 

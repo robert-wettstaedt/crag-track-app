@@ -21,7 +21,7 @@
   <svelte:fragment slot="lead">Ascents</svelte:fragment>
 </AppBar>
 
-<AscentsTable ascents={data.ascents} />
+<AscentsTable ascents={data.ascents} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
 
 <div class="mt-8 flex justify-end">
   <Paginator

@@ -34,8 +34,9 @@
     <RouteFormFields
       blockId={data.block.id}
       description={form?.description ?? ''}
-      grade={form?.grade ?? null}
-      gradingScale={form?.gradingScale}
+      gradeFk={form?.gradeFk ?? null}
+      grades={data.grades}
+      gradingScale={data.user?.userSettings?.gradingScale}
       name={form?.name ?? ''}
       rating={form?.rating ?? null}
       routeTags={form?.tags ?? []}

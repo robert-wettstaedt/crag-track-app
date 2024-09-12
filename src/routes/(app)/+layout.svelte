@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import Breadcrumb from '$lib/components/Breadcrumb'
@@ -11,6 +12,7 @@
     AppRailAnchor,
     AppShell,
     Modal,
+    SlideToggle,
     initializeStores,
     popup,
     storePopup,
@@ -68,6 +70,30 @@
                   </li>
                 {/if}
               </ul>
+
+              <div class="flex items-center px-4">
+                Grading scale:
+
+                <span class="mx-2">FB</span>
+
+                <SlideToggle
+                  checked={data.user?.userSettings?.gradingScale === 'V'}
+                  name="gradingScale"
+                  on:change={async (event) => {
+                    const response = await fetch(
+                      `/api/users/settings?gradingScale=${event.target?.checked ? 'V' : 'FB'}`,
+                      { method: 'POST' },
+                    )
+
+                    if (response.ok) {
+                      invalidateAll()
+                    }
+                  }}
+                  size="sm"
+                />
+
+                <span class="mx-2">V</span>
+              </div>
             </nav>
 
             <div class="arrow bg-surface-100-800-token" />

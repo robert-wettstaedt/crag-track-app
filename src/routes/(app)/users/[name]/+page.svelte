@@ -1,31 +1,37 @@
 <script lang="ts">
-  import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
   import RouteName from '$lib/components/RouteName'
   import Vega from '$lib/components/Vega'
-  import { grades } from '$lib/grades.js'
+  import { getGradeColor } from '$lib/grades'
   import { AppBar, TabAnchor, TabGroup } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
   export let form
 
+  const gradingScale = data.user?.userSettings?.gradingScale ?? 'FB'
+
   const ascents = data.sends.map((ascent) => {
-    const gradeObj = grades.find((grade) => grade[ascent.route.gradingScale] === (ascent.grade ?? ascent.route.grade))
-    return { ...ascent, grade: gradeObj?.FB, color: gradeObj?.color }
+    const grade = data.grades.find((grade) => grade.id === (ascent.gradeFk ?? ascent.route.gradeFk))
+
+    if (grade == null) {
+      return ascent
+    }
+
+    return { ...ascent, grade: grade[gradingScale], color: getGradeColor(grade) }
   })
 </script>
 
 <svelte:head>
-  <title>Profile of {data.user.userName} - Crag Track</title>
+  <title>Profile of {data.user?.userName} - Crag Track</title>
 </svelte:head>
 
 <AppBar>
   <svelte:fragment slot="lead">
-    {data.user.userName}
+    {data.user?.userName}
   </svelte:fragment>
 </AppBar>
 
@@ -41,7 +47,7 @@
       Finished projects
     </TabAnchor>
 
-    {#if $page.data.session?.user?.email === data.user.email}
+    {#if $page.data.session?.user?.email === data.user?.email}
       <TabAnchor href={$page.url.pathname + '#settings'} selected={$page.url.hash === '#settings'}>Settings</TabAnchor>
     {/if}
 
@@ -60,14 +66,14 @@
                 legend: null,
                 field: 'grade',
                 scale: {
-                  domain: grades.map((grade) => grade.FB),
-                  range: grades.map((grade) => grade.color),
+                  domain: data.grades.map((grade) => grade[gradingScale]),
+                  range: data.grades.map((grade) => getGradeColor(grade)),
                 },
               },
               x: {
                 field: 'grade',
                 scale: {
-                  domain: grades.map((grade) => grade.FB),
+                  domain: data.grades.map((grade) => grade[gradingScale]),
                 },
                 type: 'nominal',
                 title: 'Grade',
@@ -104,7 +110,7 @@
               <li class="flex justify-between w-full hover:bg-primary-500/10">
                 <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
                   <dt>
-                    <RouteName route={attempt.route} />
+                    <RouteName grades={data.grades} {gradingScale} route={attempt.route} />
                   </dt>
 
                   <dd class="text-sm opacity-50">Sessions: {attempt.ascents.length}</dd>
@@ -139,7 +145,7 @@
               <li class="flex justify-between w-full hover:bg-primary-500/10">
                 <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
                   <dt>
-                    <RouteName route={attempt.route} />
+                    <RouteName grades={data.grades} {gradingScale} route={attempt.route} />
                   </dt>
 
                   <dd class="text-sm opacity-50">Sessions: {attempt.ascents.length}</dd>
@@ -168,7 +174,7 @@
           </ul>
         </nav>
       {:else if $page.url.hash === '#settings'}
-        {#if $page.data.session?.user?.email === data.user.email}
+        {#if $page.data.session?.user?.email === data.user?.email}
           <form method="POST">
             {#if form?.error}
               <aside class="alert variant-filled-error mt-8">

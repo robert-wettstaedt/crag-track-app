@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server.js'
+import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import type { FileStat } from 'webdav'
 

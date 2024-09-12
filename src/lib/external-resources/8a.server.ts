@@ -1,6 +1,5 @@
-import { db, keyv } from '$lib/db/db.server.js'
-import { generateSlug, routeExternalResource8a } from '$lib/db/schema'
-import { type RouteExternalResource8a } from '$lib/db/schema.js'
+import { db, keyv } from '$lib/db/db.server'
+import { generateSlug, routeExternalResource8a, type RouteExternalResource8a } from '$lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import type { ExternalResourceHandler } from './index.server'
@@ -110,7 +109,15 @@ export default {
     return null
   },
 
-  convertToRoute: (data) => {
+  convertToRoute: (data, grades) => {
+    const grade = grades.find((grade) =>
+      data.difficulty == null
+        ? undefined
+        : data.difficulty.startsWith('V')
+          ? grade.V === data.difficulty
+          : grade.FB?.includes(data.difficulty),
+    )
+
     return {
       blockFk: -1,
       createdAt: '',
@@ -118,8 +125,7 @@ export default {
       description: null,
       externalResourcesFk: null,
       firstAscentFk: null,
-      grade: data.difficulty ?? null,
-      gradingScale: data.difficulty?.startsWith('V') ? 'V' : 'FB',
+      gradeFk: grade?.id ?? null,
       id: data.zlaggableId ?? -1,
       name: data.zlaggableName ?? '',
       rating: Math.round(((data.averageRating ?? 0) / 5) * 3),
@@ -132,8 +138,8 @@ export default {
    * If the session is valid, the server will respond with a 400 status code.
    * If the session is invalid, the server will respond with a 401 status code.
    */
-  checkSession: async function (_, userExternalResource) {
-    if (userExternalResource.cookie8a == null) {
+  checkSession: async function (_, userSettings) {
+    if (userSettings.cookie8a == null) {
       return null
     }
 
@@ -141,7 +147,7 @@ export default {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `connect.sid=${userExternalResource.cookie8a}`,
+        Cookie: `connect.sid=${userSettings.cookie8a}`,
       },
     })
 
@@ -159,7 +165,7 @@ export default {
     throw new Error(`Failed 8a session check: ${res.status} ${res.statusText}`)
   },
 
-  logAscent: async function (ascent, externalResourceId, userExternalResource) {
+  logAscent: async function (ascent, externalResourceId, userSettings) {
     const externalResource =
       externalResourceId == null
         ? null
@@ -167,7 +173,7 @@ export default {
             where: eq(routeExternalResource8a.id, externalResourceId),
           })
 
-    if (externalResource == null || userExternalResource.cookie8a == null) {
+    if (externalResource == null || userSettings.cookie8a == null) {
       return
     }
 
@@ -188,7 +194,7 @@ export default {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `connect.sid=${userExternalResource.cookie8a}`,
+        Cookie: `connect.sid=${userSettings.cookie8a}`,
       },
       body: JSON.stringify({
         zlaggable: {

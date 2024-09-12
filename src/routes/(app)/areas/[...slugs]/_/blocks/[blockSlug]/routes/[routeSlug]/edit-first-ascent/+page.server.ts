@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server.js'
+import { db } from '$lib/db/db.server'
 import { ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
 import { validateFirstAscentForm, type FirstAscentActionFailure, type FirstAscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'

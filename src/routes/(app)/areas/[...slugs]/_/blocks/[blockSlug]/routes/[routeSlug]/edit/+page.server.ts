@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server.js'
+import { db } from '$lib/db/db.server'
 import {
   ascents,
   blocks,

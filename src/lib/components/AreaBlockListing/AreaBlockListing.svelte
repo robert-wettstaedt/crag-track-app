@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { GetBlockKey } from '$lib/components/BlocksMap'
   import TopoViewer from '$lib/components/TopoViewer'
+  import type { Grade, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import type { EnrichedBlock } from '$lib/db/utils'
   import type { TopoDTO } from '$lib/topo'
@@ -26,6 +27,9 @@
   export let name: string
   export let blocks: Block[]
   export let getBlockKey: GetBlockKey = null
+
+  export let grades: Grade[]
+  export let gradingScale: UserSettings['gradingScale'] = 'FB'
 </script>
 
 <section>
@@ -61,8 +65,8 @@
 
                   {route.name.length === 0 ? 'Unbekannt' : route.name}
 
-                  {#if route.grade != null}
-                    {route.gradingScale} {route.grade}
+                  {#if route.gradeFk != null}
+                    {grades.find((grade) => grade.id === route.gradeFk)?.[gradingScale]}
                   {/if}
 
                   {#if route.rating != null}

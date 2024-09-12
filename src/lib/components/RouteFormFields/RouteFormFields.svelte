@@ -1,8 +1,7 @@
 <script lang="ts">
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
-  import type { InsertRoute, Route, Tag } from '$lib/db/schema'
+  import type { Grade, InsertRoute, Route, Tag, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
-  import { grades } from '$lib/grades'
   import { Ratings, Tab, TabGroup } from '@skeletonlabs/skeleton'
   import remarkHtml from 'remark-html'
   import remarkParse from 'remark-parse'
@@ -11,8 +10,9 @@
 
   export let blockId: number
   export let description: Route['description']
-  export let grade: Route['grade']
-  export let gradingScale: Route['gradingScale'] | undefined
+  export let gradeFk: Route['gradeFk']
+  export let grades: Grade[]
+  export let gradingScale: UserSettings['gradingScale'] | null | undefined
   export let name: Route['name']
   export let rating: Route['rating']
   export let routeTags: string[]
@@ -24,10 +24,6 @@
   >
 
   let loading = false
-
-  const onChangeGradingScale: ChangeEventHandler<HTMLSelectElement> = (event) => {
-    gradingScale = event.currentTarget.value as Route['gradingScale']
-  }
 
   let descriptionTabSet: number = 0
   let descriptionValue = description
@@ -58,8 +54,7 @@
     }
 
     name = route.name ?? null
-    grade = route.grade ?? null
-    gradingScale = route.gradingScale ?? null
+    gradeFk = route.gradeFk ?? null
     rating = route.rating ?? null
     description = route.description ?? null
     descriptionValue = route.description ?? null
@@ -88,23 +83,11 @@
 {/if}
 
 <label class="label mt-4">
-  <span>Grading scale</span>
-  <select class="select" name="gradingScale" on:change={onChangeGradingScale} size="2" value={gradingScale}>
-    <option value="FB">FB</option>
-    <option value="V">V</option>
-  </select>
-</label>
-
-<label class="label mt-4">
   <span>Grade</span>
-  <select class="select" name="grade" size="8" value={grade}>
-    {#if gradingScale == null}
-      <option disabled>Select grading scale first...</option>
-    {:else}
-      {#each grades as grade}
-        <option value={grade[gradingScale]}>{gradingScale} {grade[gradingScale]}</option>
-      {/each}
-    {/if}
+  <select class="select" name="gradeFk" size="8" value={gradeFk}>
+    {#each grades as grade}
+      <option value={grade.id}>{grade[gradingScale ?? 'FB']}</option>
+    {/each}
   </select>
 </label>
 

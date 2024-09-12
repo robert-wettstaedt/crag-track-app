@@ -2,7 +2,7 @@
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import FileBrowser from '$lib/components/FileBrowser'
-  import type { Ascent, File, Route } from '$lib/db/schema'
+  import type { Ascent, File, Grade, Route, UserSettings } from '$lib/db/schema'
   import { Tab, TabGroup, getModalStore, type ModalSettings } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
   import remarkHtml from 'remark-html'
@@ -11,11 +11,12 @@
   import { unified } from 'unified'
 
   export let dateTime: Ascent['dateTime']
-  export let gradingScale: Route['gradingScale']
-  export let grade: Ascent['grade']
+  export let filePaths: File['path'][] = ['']
+  export let gradeFk: Ascent['gradeFk']
+  export let grades: Grade[]
+  export let gradingScale: UserSettings['gradingScale'] | null | undefined
   export let notes: Ascent['notes']
   export let type: Ascent['type'] | null
-  export let filePaths: File['path'][] = ['']
 
   $: (() => {
     const lastFile = filePaths.at(-1)
@@ -76,43 +77,10 @@
 
 <label class="label mt-4">
   <span>Grade</span>
-  <select class="select" name="grade" size="8" value={grade}>
-    {#if gradingScale === 'FB'}
-      <option value="5A">{gradingScale} 5A</option>
-      <option value="5B">{gradingScale} 5B</option>
-      <option value="5C">{gradingScale} 5C</option>
-      <option value="6A">{gradingScale} 6A</option>
-      <option value="6A+">{gradingScale} 6A+</option>
-      <option value="6B">{gradingScale} 6B</option>
-      <option value="6B+">{gradingScale} 6B+</option>
-      <option value="6C">{gradingScale} 6C</option>
-      <option value="6C+">{gradingScale} 6C+</option>
-      <option value="7A">{gradingScale} 7A</option>
-      <option value="7A+">{gradingScale} 7A+</option>
-      <option value="7B">{gradingScale} 7B</option>
-      <option value="7B+">{gradingScale} 7B+</option>
-      <option value="7C">{gradingScale} 7C</option>
-      <option value="7C+">{gradingScale} 7C+</option>
-      <option value="8A">{gradingScale} 8A</option>
-      <option value="8A+">{gradingScale} 8A+</option>
-    {:else if gradingScale === 'V'}
-      <option value="0">{gradingScale} 0</option>
-      <option value="1">{gradingScale} 1</option>
-      <option value="2">{gradingScale} 2</option>
-      <option value="3">{gradingScale} 3</option>
-      <option value="4">{gradingScale} 4</option>
-      <option value="5">{gradingScale} 5</option>
-      <option value="6">{gradingScale} 6</option>
-      <option value="7">{gradingScale} 7</option>
-      <option value="8">{gradingScale} 8</option>
-      <option value="9">{gradingScale} 9</option>
-      <option value="10">{gradingScale} 10</option>
-      <option value="11">{gradingScale} 11</option>
-      <option value="12">{gradingScale} 12</option>
-      <option value="13">{gradingScale} 13</option>
-    {:else}
-      <option disabled>Select grading scale first...</option>
-    {/if}
+  <select class="select" name="gradeFk" size="8" value={gradeFk}>
+    {#each grades as grade}
+      <option value={grade.id}>{grade[gradingScale ?? 'FB']}</option>
+    {/each}
   </select>
 </label>
 

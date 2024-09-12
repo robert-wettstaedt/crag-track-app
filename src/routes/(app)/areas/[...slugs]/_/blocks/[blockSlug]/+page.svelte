@@ -99,7 +99,11 @@
                   >
                     <div class="flex justify-between">
                       <div>
-                        <RouteName route={data.block.routes.find((route) => file.routeFk === route.id)} />
+                        <RouteName
+                          grades={data.grades}
+                          gradingScale={data.user?.userSettings?.gradingScale}
+                          route={data.block.routes.find((route) => file.routeFk === route.id)}
+                        />
                       </div>
 
                       {#if file.stat.mime?.includes('image')}
@@ -169,7 +173,7 @@
                   on:click={() => selectedRouteStore.set(route.id)}
                   on:keydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
                 >
-                  <RouteName {route} />
+                  <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
                 </a>
               </li>
             {/each}

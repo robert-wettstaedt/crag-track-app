@@ -1,7 +1,5 @@
-import { db } from '$lib/db/db.server'
-import { keyv } from '$lib/db/db.server.js'
-import { generateSlug } from '$lib/db/schema'
-import { routeExternalResourceTheCrag, type RouteExternalResourceTheCrag } from '$lib/db/schema.js'
+import { db, keyv } from '$lib/db/db.server'
+import { generateSlug, routeExternalResourceTheCrag, type RouteExternalResourceTheCrag } from '$lib/db/schema'
 import * as cheerio from 'cheerio'
 import { eq } from 'drizzle-orm'
 import type { ExternalResourceHandler } from './index.server'
@@ -71,8 +69,7 @@ export default {
             description.startsWith('"') && description.endsWith('"')
               ? description.substring(1, description.length - 1)
               : description,
-          grade: grade.startsWith('V') ? grade.substring(1) : grade,
-          gradingScale: grade.startsWith('V') ? 'V' : 'FB',
+          grade,
           id: -1,
           name: $row.attr('data-nodename') ?? '',
           node: id,
@@ -92,7 +89,15 @@ export default {
     return null
   },
 
-  convertToRoute: (data) => {
+  convertToRoute: (data, grades) => {
+    const grade = grades.find((grade) =>
+      data.grade == null
+        ? undefined
+        : data.grade.startsWith('V')
+          ? grade.V === data.grade
+          : grade.FB?.includes(data.grade),
+    )
+
     return {
       blockFk: -1,
       createdAt: '',
@@ -100,8 +105,7 @@ export default {
       description: data.description ?? null,
       externalResourcesFk: null,
       firstAscentFk: null,
-      grade: data.grade ?? null,
-      gradingScale: data.gradingScale ?? 'FB',
+      gradeFk: grade?.id ?? null,
       id: data.node ?? -1,
       name: data.name ?? '',
       rating: data.rating ?? null,

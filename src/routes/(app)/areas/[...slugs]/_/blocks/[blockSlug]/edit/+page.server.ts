@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server.js'
+import { db } from '$lib/db/db.server'
 import { blocks, files, generateSlug, geolocations, topoRoutes, topos } from '$lib/db/schema'
 import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'

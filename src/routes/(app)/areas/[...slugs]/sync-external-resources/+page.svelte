@@ -3,7 +3,7 @@
   import { convertException } from '$lib'
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
   import RouteName from '$lib/components/RouteName'
-  import type { InferResultType } from '$lib/db/types.js'
+  import type { InferResultType } from '$lib/db/types'
   import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
 
   export let data
@@ -81,7 +81,7 @@
     <ul class="list">
       {#each block.routes as route}
         <li class="flex items-center justify-between p-1 hover:bg-surface-400">
-          <RouteName {route} />
+          <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
 
           {#if loading && values?.find((value) => value.routeFk === route.id) == null}
             <ProgressRadial class="w-4" />

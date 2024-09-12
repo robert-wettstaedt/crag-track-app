@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server.js'
+import { db } from '$lib/db/db.server'
 import { ascents, blocks, files, users, type Ascent, type File } from '$lib/db/schema'
 import { checkExternalSessions, logExternalAscent } from '$lib/external-resources/index.server'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'

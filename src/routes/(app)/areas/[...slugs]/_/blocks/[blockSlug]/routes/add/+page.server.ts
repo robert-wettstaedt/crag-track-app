@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server.js'
+import { db } from '$lib/db/db.server'
 import { blocks, generateSlug, routes, routesToTags, users, type Route } from '$lib/db/schema'
 import { insertExternalResources } from '$lib/external-resources/index.server'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'

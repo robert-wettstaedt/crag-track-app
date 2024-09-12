@@ -10,6 +10,8 @@
   export let data: PageData
   export let form: ActionData
   $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`
+
+  $: grade = data.grades.find((grade) => grade.id === data.route.gradeFk)
 </script>
 
 <svelte:head>
@@ -17,7 +19,7 @@
     Log ascent of
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
-    {data.route.grade == null ? '' : ` (${data.route.grade} ${data.route.gradingScale})`}
+    {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
     - Crag Track
   </title>
 </svelte:head>
@@ -27,7 +29,7 @@
     <span>Log ascent of</span>
     &nbsp;
     <a class="anchor" href={basePath}>
-      <RouteName route={data.route} />
+      <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={data.route} />
     </a>
   </svelte:fragment>
 </AppBar>
@@ -44,11 +46,12 @@
   <div class="mt-8">
     <AscentFormFields
       dateTime={form?.dateTime ?? DateTime.now().toSQLDate()}
-      grade={form?.grade ?? null}
-      gradingScale={data.route.gradingScale}
+      filePaths={form?.filePaths ?? undefined}
+      gradeFk={form?.gradeFk ?? null}
+      grades={data.grades}
+      gradingScale={data.user?.userSettings?.gradingScale ?? null}
       notes={form?.notes ?? null}
       type={form?.type ?? null}
-      filePaths={form?.filePaths ?? undefined}
     />
   </div>
 

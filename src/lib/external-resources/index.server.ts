@@ -1,18 +1,6 @@
-import { db } from '$lib/db/db.server.js'
-import {
-  blocks,
-  routeExternalResource27crags,
-  routeExternalResource8a,
-  routeExternalResources,
-  routeExternalResourceTheCrag,
-  userExternalResources,
-  users,
-  type Area,
-  type Ascent,
-  type Route,
-  type UserExternalResource,
-} from '$lib/db/schema'
-import { geolocations, routes, type Block } from '$lib/db/schema.js'
+import { db } from '$lib/db/db.server'
+import * as schema from '$lib/db/schema'
+import { geolocations, routes, type Area, type Ascent, type Block, type Route, type UserSettings } from '$lib/db/schema'
 import type { NestedArea } from '$lib/db/types'
 import { buildNestedAreaQuery } from '$lib/db/utils'
 import type { Session } from '@auth/sveltekit'
@@ -28,24 +16,21 @@ export interface ExternalResourceHandler<ExternalResource, SessionReturnType> {
     blockId: number,
     cragName: string | null | undefined,
     sectorName: string | null | undefined,
-    userExternalResource: UserExternalResource | null | undefined,
+    userSettings: UserSettings | null | undefined,
   ) => Promise<ExternalResource | null>
-  convertToRoute: (data: ExternalResource) => Route
-  checkSession: (
-    externalResourceId: number | null,
-    userExternalResource: UserExternalResource,
-  ) => Promise<SessionReturnType | null>
+  convertToRoute: (data: ExternalResource, grades: schema.Grade[]) => Route
+  checkSession: (externalResourceId: number | null, userSettings: UserSettings) => Promise<SessionReturnType | null>
   logAscent: (
     ascent: Ascent,
     externalResourceId: number | null,
-    userExternalResource: UserExternalResource,
+    userSettings: UserSettings,
     session: SessionReturnType,
   ) => Promise<void>
 }
 
 export const queryExternalResource = async (query: string, blockId: number, session: Session | null) => {
   const block = await db.query.blocks.findFirst({
-    where: eq(blocks.id, Number(blockId)),
+    where: eq(schema.blocks.id, Number(blockId)),
     with: {
       area: buildNestedAreaQuery(),
     },
@@ -59,14 +44,14 @@ export const queryExternalResource = async (query: string, blockId: number, sess
     session?.user?.email == null
       ? null
       : await db.query.users.findFirst({
-          where: eq(users.email, session.user.email),
+          where: eq(schema.users.email, session.user.email),
         })
 
-  const userExternalResource =
+  const userSettings =
     user == null
       ? null
-      : await db.query.userExternalResources.findFirst({
-          where: eq(userExternalResources.userFk, user.id),
+      : await db.query.userSettings.findFirst({
+          where: eq(schema.userSettings.userFk, user.id),
         })
 
   let sector: Area | null = null
@@ -87,9 +72,9 @@ export const queryExternalResource = async (query: string, blockId: number, sess
   const sectorName = sector?.name.replace(/\(.*\)/g, '').trim()
 
   const [data8a, data27crags, dataTheCrag] = await Promise.all([
-    handler8a.query(query, blockId, cragName, sectorName, userExternalResource),
-    handler27crags.query(query, blockId, cragName, sectorName, userExternalResource),
-    handlerTheCrag.query(query, blockId, cragName, sectorName, userExternalResource),
+    handler8a.query(query, blockId, cragName, sectorName, userSettings),
+    handler27crags.query(query, blockId, cragName, sectorName, userSettings),
+    handlerTheCrag.query(query, blockId, cragName, sectorName, userSettings),
   ])
 
   return { data8a, data27crags, dataTheCrag }
@@ -128,11 +113,11 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
   }
 
   let resource = await db.query.routeExternalResources.findFirst({
-    where: eq(routeExternalResources.routeFk, route.id),
+    where: eq(schema.routeExternalResources.routeFk, route.id),
   })
 
   if (resource == null) {
-    ;[resource] = await db.insert(routeExternalResources).values({ routeFk: route.id }).returning()
+    ;[resource] = await db.insert(schema.routeExternalResources).values({ routeFk: route.id }).returning()
     await db.update(routes).set({ externalResourcesFk: resource.id }).where(eq(routes.id, route.id))
   }
 
@@ -142,12 +127,12 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
     }
 
     let resource8a = await db.query.routeExternalResource8a.findFirst({
-      where: eq(routeExternalResource8a.externalResourcesFk, resource.id),
+      where: eq(schema.routeExternalResource8a.externalResourcesFk, resource.id),
     })
 
     if (resource8a == null) {
       ;[resource8a] = await db
-        .insert(routeExternalResource8a)
+        .insert(schema.routeExternalResource8a)
         .values({
           ...externalResources.data8a,
           id: undefined,
@@ -165,12 +150,12 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
     }
 
     let resource27crags = await db.query.routeExternalResource27crags.findFirst({
-      where: eq(routeExternalResource27crags.externalResourcesFk, resource.id),
+      where: eq(schema.routeExternalResource27crags.externalResourcesFk, resource.id),
     })
 
     if (resource27crags == null) {
       ;[resource27crags] = await db
-        .insert(routeExternalResource27crags)
+        .insert(schema.routeExternalResource27crags)
         .values({
           ...externalResources.data27crags,
           id: undefined,
@@ -188,12 +173,12 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
     }
 
     let resourceTheCrag = await db.query.routeExternalResourceTheCrag.findFirst({
-      where: eq(routeExternalResourceTheCrag.externalResourcesFk, resource.id),
+      where: eq(schema.routeExternalResourceTheCrag.externalResourcesFk, resource.id),
     })
 
     if (resourceTheCrag == null) {
       ;[resourceTheCrag] = await db
-        .insert(routeExternalResourceTheCrag)
+        .insert(schema.routeExternalResourceTheCrag)
         .values({
           ...externalResources.dataTheCrag,
           id: undefined,
@@ -206,13 +191,13 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
   })()
 
   await db
-    .update(routeExternalResources)
+    .update(schema.routeExternalResources)
     .set({
       externalResource8aFk: resource8a?.id,
       externalResource27cragsFk: resource27crags?.id,
       externalResourceTheCragFk: resourceTheCrag?.id,
     })
-    .where(eq(routeExternalResources.id, resource.id))
+    .where(eq(schema.routeExternalResources.id, resource.id))
 
   if (
     externalResources.data27crags?.latitude != null &&
@@ -227,40 +212,40 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
         long: externalResources.data27crags.longitude,
       })
       .returning()
-    await db.update(blocks).set({ geolocationFk: geolocation.id }).where(eq(blocks.id, block.id))
+    await db.update(schema.blocks).set({ geolocationFk: geolocation.id }).where(eq(schema.blocks.id, block.id))
   }
 }
 
 export const checkExternalSessions = async (route: Route, session: Session) => {
   const routeExternalResource = await db.query.routeExternalResources.findFirst({
-    where: eq(routeExternalResources.routeFk, route.id),
+    where: eq(schema.routeExternalResources.routeFk, route.id),
   })
 
   const user =
     session.user?.email == null
       ? null
       : await db.query.users.findFirst({
-          where: eq(users.email, session.user.email),
+          where: eq(schema.users.email, session.user.email),
         })
 
-  const userExternalResource =
+  const userSettings =
     user == null
       ? null
-      : await db.query.userExternalResources.findFirst({
-          where: eq(userExternalResources.userFk, user.id),
+      : await db.query.userSettings.findFirst({
+          where: eq(schema.userSettings.userFk, user.id),
         })
 
-  if (routeExternalResource == null || userExternalResource == null) {
+  if (routeExternalResource == null || userSettings == null) {
     return null
   }
 
   const [session8a, session27crags, sessionTheCrag] = await Promise.all([
-    handler8a.checkSession(routeExternalResource.externalResource8aFk, userExternalResource),
-    handler27crags.checkSession(routeExternalResource.externalResource27cragsFk, userExternalResource),
-    handlerTheCrag.checkSession(routeExternalResource.externalResourceTheCragFk, userExternalResource),
+    handler8a.checkSession(routeExternalResource.externalResource8aFk, userSettings),
+    handler27crags.checkSession(routeExternalResource.externalResource27cragsFk, userSettings),
+    handlerTheCrag.checkSession(routeExternalResource.externalResourceTheCragFk, userSettings),
   ])
 
-  return { routeExternalResource, userExternalResource, session8a, session27crags, sessionTheCrag }
+  return { routeExternalResource, userSettings, session8a, session27crags, sessionTheCrag }
 }
 
 export const logExternalAscent = async (ascent: Ascent, opts: Awaited<ReturnType<typeof checkExternalSessions>>) => {
@@ -268,30 +253,20 @@ export const logExternalAscent = async (ascent: Ascent, opts: Awaited<ReturnType
     return
   }
 
-  const { routeExternalResource, userExternalResource, session8a, session27crags, sessionTheCrag } = opts
+  const { routeExternalResource, userSettings, session8a, session27crags, sessionTheCrag } = opts
 
   await Promise.all([
     session8a == null
       ? Promise.resolve()
-      : handler8a.logAscent(ascent, routeExternalResource.externalResource8aFk, userExternalResource, session8a),
+      : handler8a.logAscent(ascent, routeExternalResource.externalResource8aFk, userSettings, session8a),
 
     session27crags == null
       ? Promise.resolve()
-      : handler27crags.logAscent(
-          ascent,
-          routeExternalResource.externalResource27cragsFk,
-          userExternalResource,
-          session27crags,
-        ),
+      : handler27crags.logAscent(ascent, routeExternalResource.externalResource27cragsFk, userSettings, session27crags),
 
     sessionTheCrag == null
       ? Promise.resolve()
-      : handlerTheCrag.logAscent(
-          ascent,
-          routeExternalResource.externalResourceTheCragFk,
-          userExternalResource,
-          sessionTheCrag,
-        ),
+      : handlerTheCrag.logAscent(ascent, routeExternalResource.externalResourceTheCragFk, userSettings, sessionTheCrag),
   ])
 }
 

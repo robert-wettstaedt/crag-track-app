@@ -1,3 +1,5 @@
+import type { Session } from '@auth/sveltekit'
+import { eq } from 'drizzle-orm'
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 import { encode } from 'html-entities'
 import { DateTime } from 'luxon'
@@ -5,9 +7,25 @@ import stringToColor from 'string-to-color'
 import { getBlocksOfArea } from './blocks.server'
 import * as schema from './db/schema'
 
-export const getAreaGPX = async (areaId: number, db: BetterSQLite3Database<typeof schema>) => {
+export const getAreaGPX = async (
+  areaId: number,
+  db: BetterSQLite3Database<typeof schema>,
+  session?: Session | null,
+) => {
   const { area, blocks } = await getBlocksOfArea(areaId, db)
   const parkingLocations = [...area.parkingLocations, ...area.areas.flatMap((area) => area.parkingLocations)]
+
+  const grades = await db.query.grades.findMany()
+
+  let gradingScale: schema.UserSettings['gradingScale'] = 'FB'
+
+  if (session?.user?.email != null) {
+    const userSettings = await db.query.userSettings.findFirst({
+      where: eq(schema.users.email, session.user.email),
+    })
+
+    gradingScale = userSettings?.gradingScale ?? gradingScale
+  }
 
   const xml = `<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
   <gpx
@@ -46,7 +64,7 @@ export const getAreaGPX = async (areaId: number, db: BetterSQLite3Database<typeo
           .map((route) =>
             [
               route.name.length === 0 ? '* ?' : `* ${route.name}`,
-              route.grade == null ? null : `${route.gradingScale} ${route.grade}`,
+              route.gradeFk == null ? null : grades.find((grade) => grade.id === route.gradeFk)?.[gradingScale],
               route.description,
             ]
               .filter(Boolean)
@@ -65,7 +83,7 @@ export const getAreaGPX = async (areaId: number, db: BetterSQLite3Database<typeo
       .map((route) => {
         const routeName = [
           route.name.length === 0 ? '?' : route.name,
-          route.grade == null ? null : `${route.gradingScale} ${route.grade}`,
+          route.gradeFk == null ? null : grades.find((grade) => grade.id === route.gradeFk)?.[gradingScale],
         ]
           .filter(Boolean)
           .join(' - ')

@@ -1,34 +1,35 @@
 <script lang="ts">
+  import type { Grade, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
-  import { grades } from '$lib/grades'
+  import { getGradeColor } from '$lib/grades'
 
   type RouteWithAscents = InferResultType<'routes', { ascents: true }>
 
   export let route: (Omit<RouteWithAscents, 'ascents'> & Partial<Pick<RouteWithAscents, 'ascents'>>) | undefined
+  export let grades: Grade[]
+  export let gradingScale: UserSettings['gradingScale'] = 'FB'
 
   const send = route?.ascents?.find((ascent) => ascent.type === 'send')
 
-  const routeGradeConfig = grades.find((grade) => (route == null ? false : grade[route.gradingScale] === route.grade))
+  const routeGradeConfig = grades.find((grade) => (route == null ? false : grade.id === route?.gradeFk))
   const ascentGradeConfig = grades.find((grade) =>
-    route == null || route.ascents == null ? false : grade[route.gradingScale] === send?.grade,
+    route == null || route.ascents == null ? false : grade.id === send?.gradeFk,
   )
+  const gradeConfig = ascentGradeConfig ?? routeGradeConfig
 </script>
 
-{#if route?.grade != null}
-  <span class={`badge text-white`} style={`background: ${ascentGradeConfig?.color ?? routeGradeConfig?.color}`}>
-    {#if send?.grade == null || send.grade === route.grade}
-      {route.gradingScale}
-      {route.grade}
+{#if route?.gradeFk != null}
+  <span class="badge text-white" style={gradeConfig == null ? undefined : `background: ${getGradeColor(gradeConfig)}`}>
+    {#if send?.gradeFk == null || send.gradeFk === route.gradeFk}
+      {routeGradeConfig?.[gradingScale]}
     {:else}
       <s>
-        {route.gradingScale}
-        {route.grade}
+        {routeGradeConfig?.[gradingScale]}
       </s>
 
       &nbsp;
 
-      {route.gradingScale}
-      {send.grade}
+      {ascentGradeConfig?.[gradingScale]}
     {/if}
   </span>
 {/if}

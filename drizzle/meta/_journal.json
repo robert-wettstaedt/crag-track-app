@@ -15,6 +15,20 @@
       "when": 1723192641236,
       "tag": "0003_sweet_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1726129661598,
+      "tag": "0004_dear_makkari",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1726158542515,
+      "tag": "0005_cloudy_princess_powerful",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,10 @@
-import { db } from '$lib/db/db.server'
-import { keyv } from '$lib/db/db.server.js'
-import { generateSlug } from '$lib/db/schema'
-import { routeExternalResource27crags, type Route, type RouteExternalResource27crags } from '$lib/db/schema.js'
+import { db, keyv } from '$lib/db/db.server'
+import {
+  generateSlug,
+  routeExternalResource27crags,
+  type Route,
+  type RouteExternalResource27crags,
+} from '$lib/db/schema'
 import { parse } from 'cookie'
 import { eq } from 'drizzle-orm'
 import http from 'https'
@@ -69,13 +72,17 @@ export default {
     return null
   },
 
-  convertToRoute: (data) => {
-    const grade = data.description
+  convertToRoute: (data, grades) => {
+    const gradeStr = data.description
       ?.split(',')[0]
       .match(/\(.+\)/)
       ?.at(0)
       ?.replace('(', '')
       .replace(')', '')
+
+    const grade = grades.find((grade) =>
+      gradeStr == null ? undefined : gradeStr.startsWith('V') ? grade.V === gradeStr : grade.FB?.includes(gradeStr),
+    )
 
     const route: Route = {
       blockFk: -1,
@@ -84,8 +91,7 @@ export default {
       description: null,
       externalResourcesFk: null,
       firstAscentFk: null,
-      grade: grade ?? null,
-      gradingScale: grade?.startsWith('V') ? 'V' : 'FB',
+      gradeFk: grade?.id ?? null,
       id: data.searchable_id ?? -1,
       name: data.name ?? '',
       rating: null,
