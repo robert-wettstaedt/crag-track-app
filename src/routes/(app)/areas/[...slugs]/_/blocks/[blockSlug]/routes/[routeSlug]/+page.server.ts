@@ -1,7 +1,8 @@
 import { db } from '$lib/db/db.server'
 import { ascents, blocks } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
-import { getRouteDbFilter } from '$lib/helper.server'
+import { insertExternalResources } from '$lib/external-resources/index.server'
+import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { and, desc, eq } from 'drizzle-orm'
@@ -119,12 +120,34 @@ export const load = (async ({ locals, params, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  removeAscent: async ({ request }) => {
-    const data = await request.formData()
-    const ascentFk = data.get('ascentFk')
+  syncExternalResources: async ({ locals, params }) => {
+    const { areaId } = convertAreaSlug(params)
 
-    if (ascentFk != null) {
-      await db.delete(ascents).where(eq(ascents.id, Number(ascentFk)))
+    const session = await locals.auth()
+
+    if (session?.user == null) {
+      // If the user is not authenticated, throw a 401 error
+      error(401)
     }
+
+    // Query the database to find the block and its associated routes
+    const block = await db.query.blocks.findFirst({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        routes: {
+          where: getRouteDbFilter(params.routeSlug),
+        },
+      },
+    })
+
+    // Get the first route from the block's routes
+    const route = block?.routes?.at(0)
+
+    // Handle case where route is not found
+    if (block == null || route == null) {
+      error(404)
+    }
+
+    await insertExternalResources(route, block, session)
   },
 }

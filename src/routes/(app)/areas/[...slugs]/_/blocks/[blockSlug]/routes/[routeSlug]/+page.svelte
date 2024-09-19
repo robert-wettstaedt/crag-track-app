@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
+  import { invalidate, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
@@ -8,7 +10,7 @@
   import RouteGrade from '$lib/components/RouteGrade'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { Accordion, AccordionItem, AppBar } from '@skeletonlabs/skeleton'
+  import { Accordion, AccordionItem, AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
 
   export let data
@@ -19,6 +21,8 @@
   $: highlightedRouteStore.set(null)
 
   $: grade = data.grades.find((grade) => grade.id === data.route.gradeFk)
+
+  let syncing = false
 </script>
 
 <svelte:head>
@@ -143,6 +147,30 @@
     {/if}
 
     {#if data.session?.user != null}
+      <form
+        method="POST"
+        action="?/syncExternalResources"
+        use:enhance={({}) => {
+          syncing = true
+
+          return ({ result }) => {
+            syncing = false
+
+            if (result.type === 'success') {
+              invalidateAll()
+            }
+          }
+        }}
+      >
+        <button class="btn btn-sm variant-filled-primary me-2" disabled={syncing} type="submit">
+          {#if syncing}
+            <ProgressRadial class="me-2" width="w-4" />
+          {/if}
+
+          Sync external resources
+        </button>
+      </form>
+
       <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen me-2" />Edit route
       </a>
