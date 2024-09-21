@@ -15,7 +15,7 @@ export async function DELETE({ locals, params }) {
   const fileId = Number(params.id)
 
   // Initialize variables for file and user
-  let file: InferResultType<'files', { ascent: true; route: true; block: true }> | undefined = undefined
+  let file: InferResultType<'files', { area: true; ascent: true; block: true; route: true }> | undefined = undefined
   let user: User | undefined
 
   // Attempt to find the file in the database
@@ -23,9 +23,10 @@ export async function DELETE({ locals, params }) {
     file = await db.query.files.findFirst({
       where: eq(files.id, fileId),
       with: {
+        area: true,
         ascent: true,
-        route: true,
         block: true,
+        route: true,
       },
     })
   } catch (exception) {
@@ -42,7 +43,7 @@ export async function DELETE({ locals, params }) {
   }
 
   // Determine the author ID from the file's related entities
-  const authorId = file?.route?.createdBy ?? file?.block?.createdBy ?? file?.ascent?.createdBy
+  const authorId = file?.area?.createdBy ?? file?.ascent?.createdBy ?? file?.block?.createdBy ?? file?.route?.createdBy
 
   // Check if the authenticated user is the author of the file
   if (authorId !== user?.id) {
