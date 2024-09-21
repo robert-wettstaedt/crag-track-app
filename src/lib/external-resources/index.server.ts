@@ -68,13 +68,14 @@ export const queryExternalResource = async (query: string, blockId: number, sess
     area = area.parent as NestedArea
   }
 
+  const normalizedQuery = query.replace(/\(.*\)/g, '').trim()
   const cragName = crag?.name.replace(/\(.*\)/g, '').trim()
   const sectorName = sector?.name.replace(/\(.*\)/g, '').trim()
 
   const [data8a, data27crags, dataTheCrag] = await Promise.all([
-    handler8a.query(query, blockId, cragName, sectorName, userSettings),
-    handler27crags.query(query, blockId, cragName, sectorName, userSettings),
-    handlerTheCrag.query(query, blockId, cragName, sectorName, userSettings),
+    handler8a.query(normalizedQuery, blockId, cragName, sectorName, userSettings),
+    handler27crags.query(normalizedQuery, blockId, cragName, sectorName, userSettings),
+    handlerTheCrag.query(normalizedQuery, blockId, cragName, sectorName, userSettings),
   ])
 
   return { data8a, data27crags, dataTheCrag }
