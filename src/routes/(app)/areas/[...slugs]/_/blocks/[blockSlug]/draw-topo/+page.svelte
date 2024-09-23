@@ -64,7 +64,7 @@
                   on:click={() => selectedRouteStore.set(route.id)}
                   on:keydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
                 >
-                  <RouteName {route} />
+                  <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
 
                   {#if dirtyRoutes.includes(route.id)}
                     <form
@@ -120,7 +120,7 @@
                 </button>
               {:else}
                 <span class="text-primary-500 list-option hover:!bg-inherit flex justify-between">
-                  <RouteName {route} />
+                  <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
 
                   <form method="POST" action="?/addRoute" use:enhance>
                     <input hidden name="routeFk" value={form?.routeFk ?? route.id} />
