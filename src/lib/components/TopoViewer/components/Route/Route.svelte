@@ -351,7 +351,7 @@
     {/if}
   {/each}
 
-  {#if center && key != null}
+  {#if center != null && key != null}
     <rect
       class={bgFillClass}
       height={40 * scale}

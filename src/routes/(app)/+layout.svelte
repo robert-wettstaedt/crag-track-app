@@ -11,11 +11,12 @@
     AppRail,
     AppRailAnchor,
     AppShell,
-    Modal,
-    SlideToggle,
     initializeStores,
+    Modal,
     popup,
+    SlideToggle,
     storePopup,
+    Toast,
   } from '@skeletonlabs/skeleton'
   import '../../app.postcss'
 
@@ -30,6 +31,7 @@
 </svelte:head>
 
 <Modal />
+<Toast position="t" />
 
 <!-- App Shell -->
 <AppShell>

@@ -1,12 +1,51 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import FileViewer from '$lib/components/FileViewer'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
   import { DateTime } from 'luxon'
+  import { getToastStore } from '@skeletonlabs/skeleton'
+  import { convertException } from '$lib'
+
+  const toastStore = getToastStore()
 
   export let data
   $: basePath = `/areas/${$page.params.slugs}`
   $: files = data.files
+
+  let loadingDownload = false
+
+  const onDownloadGpx = async () => {
+    loadingDownload = true
+
+    try {
+      const res = await fetch(`${basePath}/gpx`)
+
+      if (!res.ok || res.status >= 400) {
+        throw new Error(res.statusText)
+      }
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `${data.area.name}.gpx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (exception) {
+      const error = convertException(exception)
+
+      toastStore.trigger({
+        background: 'variant-filled-error',
+        hideDismiss: true,
+        message: error,
+        timeout: 10_000,
+      })
+    }
+
+    loadingDownload = false
+  }
 </script>
 
 <svelte:head>
@@ -44,23 +83,29 @@
   </svelte:fragment>
 
   <svelte:fragment slot="trail">
-    {#if data.area.type === 'crag'}
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/export`}>
-        <i class="fa-solid fa-file-export me-2" />Export PDF
-      </a>
-    {/if}
-
-    <a class="btn btn-sm variant-ghost" href={`${basePath}/gpx`} download={`${data.area.name}.gpx`}>
-      <i class="fa-solid fa-map-location-dot me-2" />Export GPX
-    </a>
-
-    {#if data.area.type === 'crag'}
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-parking-location`}>
-        <i class="fa-solid fa-parking me-2" />Add parking location
-      </a>
-    {/if}
-
     {#if data.session?.user != null}
+      {#if data.area.type === 'crag'}
+        <a class="btn btn-sm variant-ghost" href={`${basePath}/export`}>
+          <i class="fa-solid fa-file-export me-2" />Export PDF
+        </a>
+      {/if}
+
+      <button class="btn btn-sm variant-ghost" disabled={loadingDownload} on:click={onDownloadGpx}>
+        {#if loadingDownload}
+          <ProgressRadial class="me-2" width="w-4" />
+        {:else}
+          <i class="fa-solid fa-map-location-dot me-2" />
+        {/if}
+
+        Export GPX
+      </button>
+
+      {#if data.area.type === 'crag'}
+        <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-parking-location`}>
+          <i class="fa-solid fa-parking me-2" />Add parking location
+        </a>
+      {/if}
+
       <a class="btn btn-sm variant-ghost" href={`${basePath}/sync-external-resources`}>
         <i class="fa-solid fa-sync me-2" />Sync external resources
       </a>
