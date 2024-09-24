@@ -57,21 +57,7 @@
             </div>
 
             <nav class="list-nav">
-              <ul>
-                <li>
-                  <a href={`/users/${data.user?.userName}`}>Profile</a>
-                </li>
-
-                {#if !PUBLIC_DEMO_MODE}
-                  <li class="list-item-sign-out">
-                    <SignOut>
-                      <span slot="submitButton">Sign out</span>
-                    </SignOut>
-                  </li>
-                {/if}
-              </ul>
-
-              <div class="flex items-center px-4">
+              <div class="flex items-center px-4 py-2">
                 Grading scale:
 
                 <span class="mx-2">FB</span>
@@ -94,6 +80,20 @@
 
                 <span class="mx-2">V</span>
               </div>
+
+              <ul>
+                <li>
+                  <a href={`/users/${data.user?.userName}`}>Profile</a>
+                </li>
+
+                {#if !PUBLIC_DEMO_MODE}
+                  <li class="list-item-sign-out">
+                    <SignOut>
+                      <span slot="submitButton">Sign out</span>
+                    </SignOut>
+                  </li>
+                {/if}
+              </ul>
             </nav>
 
             <div class="arrow bg-surface-100-800-token" />
