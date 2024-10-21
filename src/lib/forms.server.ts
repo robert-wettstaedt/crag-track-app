@@ -11,7 +11,7 @@ import {
   type UserSettings,
 } from './db/schema'
 
-export type AreaActionValues = Pick<Area, 'name' | 'type'>
+export type AreaActionValues = Pick<Area, 'description' | 'name' | 'type'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>
 
 /**
@@ -22,9 +22,14 @@ export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string
  * @throws {ActionFailure<AreaActionValues & { error: string }>} If validation fails.
  */
 export const validateAreaForm = async (data: FormData): Promise<AreaActionValues> => {
+  const description = data.get('description')
   const name = data.get('name')
   const type = data.get('type')
-  const values = { name, type } as AreaActionValues
+  const values = { description, name, type } as AreaActionValues
+
+  if (description != null && typeof description !== 'string') {
+    throw fail(400, { ...values, error: 'description must be a valid string' })
+  }
 
   if (typeof name !== 'string' || name.length === 0) {
     throw fail(400, { ...values, error: 'name is required' })

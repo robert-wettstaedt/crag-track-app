@@ -4,6 +4,9 @@ import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
+import remarkHtml from 'remark-html'
+import remarkParse from 'remark-parse'
+import { unified } from 'unified'
 import type { PageServerLoad } from './$types'
 
 const blocksQuery: {
@@ -114,9 +117,17 @@ export const load = (async ({ locals, params }) => {
     }),
   )
 
+  // Process area description from markdown to HTML if description is present
+  let description = area.description
+  if (description != null) {
+    const result = await unified().use(remarkParse).use(remarkHtml).process(description)
+    description = result.value as string
+  }
+
   return {
     area: {
       ...area,
+      description,
       blocks: enrichedBlocks,
       areas: area.areas.map((area) => {
         return {

@@ -59,6 +59,19 @@
 
   <svelte:fragment slot="headline">
     <dl class="list-dl">
+      {#if data.area.description != null && data.area.description.length > 0}
+        <div>
+          <span class="flex-auto">
+            <dt>Description</dt>
+            <dd>
+              <div class="rendered-markdown mt-4">
+                {@html data.area.description}
+              </div>
+            </dd>
+          </span>
+        </div>
+      {/if}
+
       <div>
         <span class="flex-auto">
           <dt>Created at</dt>

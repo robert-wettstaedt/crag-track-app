@@ -37,7 +37,11 @@
         <h1 class="text-center text-3xl">Bouldering</h1>
 
         <div class="p-2 mt-4">
-          <p>{`<Infos über ${data.area.name}>`}</p>
+          {#if data.area.description != null && data.area.description.length > 0}
+            <div class="rendered-markdown mt-4">
+              {@html data.area.description}
+            </div>
+          {/if}
         </div>
 
         <div class="mt-auto text-right">

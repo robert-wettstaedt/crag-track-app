@@ -31,7 +31,11 @@
   {/if}
 
   <div class="mt-8">
-    <AreaFormFields name={form?.name ?? data.name} type={form?.type ?? data.type} />
+    <AreaFormFields
+      description={form?.description ?? data.description}
+      name={form?.name ?? data.name}
+      type={form?.type ?? data.type}
+    />
   </div>
 
   <div class="flex justify-between mt-8">

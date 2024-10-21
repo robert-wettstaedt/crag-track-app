@@ -4,8 +4,9 @@ import { areas, files, generateSlug, geolocations } from '$lib/db/schema'
 import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
+import { and, eq, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
+import { notEqual } from 'assert'
 
 export const load = (async ({ locals, parent }) => {
   // Retrieve the areaId from the parent function
@@ -51,19 +52,21 @@ export const actions = {
       return exception as AreaActionFailure
     }
 
+    // Convert the area slug to get the areaId
+    const { areaId } = convertAreaSlug(params)
+
     // Generate a slug from the area name
     const slug = generateSlug(values.name)
 
     // Check if an area with the same slug already exists
-    const existingAreasResult = await db.query.areas.findMany({ where: eq(areas.slug, slug) })
+    const existingAreasResult = await db.query.areas.findMany({
+      where: and(eq(areas.slug, slug), not(eq(areas.id, areaId))),
+    })
 
     if (existingAreasResult.length > 0) {
       // If an area with the same name exists, return a 400 error with a message
       return fail(400, { ...values, error: `Area with name "${existingAreasResult[0].name}" already exists` })
     }
-
-    // Convert the area slug to get the areaId
-    const { areaId } = convertAreaSlug(params)
 
     try {
       // Update the area in the database with the validated values

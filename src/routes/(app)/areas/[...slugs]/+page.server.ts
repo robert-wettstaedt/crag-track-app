@@ -5,6 +5,9 @@ import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
+import remarkHtml from 'remark-html'
+import remarkParse from 'remark-parse'
+import { unified } from 'unified'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
@@ -62,9 +65,16 @@ export const load = (async ({ locals, parent }) => {
     }),
   )
 
+  // Process area description from markdown to HTML if description is present
+  let description = area.description
+  if (description != null) {
+    const result = await unified().use(remarkParse).use(remarkHtml).process(description)
+    description = result.value as string
+  }
+
   // Return the area, enriched blocks, and processed files
   return {
-    area,
+    area: { ...area, description },
     blocks: geolocationBlocksResults.map(enrichBlock),
     files,
   }

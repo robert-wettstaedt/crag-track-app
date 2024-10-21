@@ -69,6 +69,7 @@ export const areas = sqliteTable('areas', {
   ...baseFields,
   ...baseContentFields,
 
+  description: text('description'),
   type: text('type', { enum: ['area', 'crag', 'sector'] })
     .notNull()
     .default('area'),
