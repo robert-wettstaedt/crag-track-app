@@ -3,7 +3,7 @@ import type { Coordinates, Line } from '$lib/components/TopoViewer/components/Ro
 import * as schema from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
 import { getNextcloud, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
-import type { TopoRouteDTO } from '$lib/topo'
+import { colorScheme, type TopoRouteDTO } from '$lib/topo'
 import type { Session } from '@auth/sveltekit'
 import { error } from '@sveltejs/kit'
 import { eq, inArray } from 'drizzle-orm'
@@ -323,7 +323,7 @@ const renderRoute = (
 ): string => {
   return `
     <div style="margin-top: 4px;">
-      <h3>
+      <h3 ${key == null ? '' : `style="background-color: ${colorScheme[key + 1]}; color: white; padding: 0.25rem 0.5rem;`}">
         ${key == null ? '' : `<strong>${key + 1}.</strong>`}
 
         ${renderRouteName(route, grades, gradingScale)}
@@ -432,7 +432,7 @@ const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: T
                 <line
                   data-id="line"
                   stroke-width="2"
-                  stroke="#4ade80"
+                  stroke=${colorScheme[index + 1]}
                   x1="${line.from.x * scale}"
                   x2="${line.to.x * scale}"
                   y1="${line.from.y * scale}"
@@ -473,7 +473,7 @@ const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: T
                   r="10"
                   role="presentation"
                   stroke-width="1"
-                  stroke="#4ade80"
+                  stroke=${colorScheme[index + 1]}
                 />`
                 : point.type === 'middle'
                   ? `
@@ -515,7 +515,7 @@ const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: T
                     id="topout"
                     points=${`${point.x - 20},${point.y + 20} ${point.x},${point.y}, ${point.x + 20},${point.y + 20}`}
                     stroke-width="2"
-                    stroke="#4ade80"
+                    stroke=${colorScheme[index + 1]}
                   />
                 `
                       : `
@@ -536,7 +536,7 @@ const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: T
                     fill="transparent"
                     id="top"
                     stroke-width="2"
-                    stroke="#4ade80"
+                    stroke=${colorScheme[index + 1]}
                     x1="${point.x * scale - 20}"
                     x2="${point.x * scale + 20}"
                     y1="${point.y * scale}"
@@ -560,7 +560,7 @@ const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: T
                 />
 
                 <text
-                  fill="#4ade80"
+                  fill=${colorScheme[index + 1]}
                   font-size="${25 * scale}"
                   id="key"
                   x="${center.x * scale - 38 * scale}"

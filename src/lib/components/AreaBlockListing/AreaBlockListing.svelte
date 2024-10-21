@@ -4,7 +4,7 @@
   import type { Grade, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import type { EnrichedBlock } from '$lib/db/utils'
-  import type { TopoDTO } from '$lib/topo'
+  import { colorScheme, type TopoDTO } from '$lib/topo'
   import { Ratings } from '@skeletonlabs/skeleton'
 
   type Block = InferResultType<
@@ -60,7 +60,10 @@
 
             {#each topo.routes.map( (topoRoute) => block.routes.find((route) => route.id === topoRoute.routeFk), ) as route, index}
               {#if route != null}
-                <h3 class="text-lg mt-8 flex gap-x-2">
+                <h3
+                  class="text-lg text-white mt-8 px-2 flex gap-x-2"
+                  style={`background-color: ${colorScheme[index + 1]}; print-color-adjust: exact !important;`}
+                >
                   <strong>{index + 1}</strong>
 
                   {route.name.length === 0 ? 'Unbekannt' : route.name}
@@ -118,7 +121,10 @@
           {/if}
 
           {#if block.geolocation?.lat != null && block.geolocation?.long != null}
-            <p class="text-xs text-white bg-black/50 p-1 absolute top-4 right-4 z-50">
+            <p
+              class="text-xs text-white bg-black/50 p-1 absolute top-4 right-4 z-50"
+              style="print-color-adjust: exact !important"
+            >
               <i class="fa-solid fa-location-dot me-2" />
               {block.geolocation.lat.toFixed(5)}, {block.geolocation.long.toFixed(5)}
             </p>

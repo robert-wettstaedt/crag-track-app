@@ -8,7 +8,7 @@
   export let topos: TopoDTO[]
   export let editable = false
   export let selectedTopoIndex = 0
-  export let getRouteKey: ((route: TopoRouteDTO, index: number) => string | number) | null = null
+  export let getRouteKey: ((route: TopoRouteDTO, index: number) => number) | null = null
 
   let img: HTMLImageElement
   let imgWrapper: HTMLDivElement

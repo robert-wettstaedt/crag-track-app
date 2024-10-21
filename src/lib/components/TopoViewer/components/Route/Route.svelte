@@ -9,12 +9,12 @@
 </script>
 
 <script lang="ts">
-  import type { PointDTO, TopoRouteDTO } from '$lib/topo'
+  import { colorScheme, type PointDTO, type TopoRouteDTO } from '$lib/topo'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
   import type { MouseEventHandler } from 'svelte/elements'
   import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from '../../stores'
 
-  export let key: number | string | undefined
+  export let key: number | undefined
   export let editable = false
   export let route: TopoRouteDTO
   export let scale: number
@@ -24,6 +24,8 @@
   $: highlighted = $highlightedRouteStore === route.routeFk
 
   $: cursorClass = selected && editable ? 'cursor-move' : 'cursor-pointer'
+
+  $: color = key == null ? undefined : colorScheme[key]
 
   $: strokeClass = highlighted ? 'stroke-green-400' : selected ? 'stroke-white' : 'stroke-red-700'
   $: fillClass = highlighted ? 'fill-green-400' : selected ? 'fill-white' : 'fill-red-700'
@@ -229,8 +231,9 @@
 >
   {#each lines as line}
     <line
-      class="${bgStrokeClass}"
+      class={color == null ? bgStrokeClass : undefined}
       data-id="line"
+      stroke={color}
       stroke-width={bgStrokeWidth}
       x1={line.from.x * scale}
       x2={line.to.x * scale}
@@ -239,8 +242,9 @@
     />
 
     <line
-      class={strokeClass}
+      class={color == null ? bgStrokeClass : undefined}
       data-id="line"
+      stroke={color}
       stroke-width={strokeWidth}
       x1={line.from.x * scale}
       x2={line.to.x * scale}
@@ -274,7 +278,7 @@
       />
 
       <circle
-        class={`${strokeClass} ${cursorClass}`}
+        class={`${color == null ? strokeClass : ''} ${cursorClass}`}
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
@@ -282,6 +286,7 @@
         id="start"
         r={10}
         role="presentation"
+        stroke={color}
         stroke-width={strokeWidth}
       />
     {:else if point.type === 'middle'}
@@ -296,11 +301,11 @@
       />
 
       <circle
-        class={`${fillClass} ${cursorClass}`}
+        class={`${color == null ? fillClass : ''} ${cursorClass}`}
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
-        fill="transparent"
+        fill={color}
         id="middle"
         r={5}
       />
@@ -316,11 +321,12 @@
         />
 
         <polyline
-          class={`${strokeClass} ${cursorClass}`}
+          class={`${color == null ? strokeClass : ''} ${cursorClass}`}
           data-id={point.id}
           fill="transparent"
           id="topout"
           points={`${point.x * scale - 20},${point.y * scale + 20} ${point.x * scale},${point.y * scale}, ${point.x * scale + 20},${point.y * scale + 20}`}
+          stroke={color}
           stroke-width={strokeWidth}
         />
       {:else}
@@ -337,10 +343,11 @@
         />
 
         <line
-          class={`${strokeClass} ${cursorClass}`}
+          class={`${color == null ? strokeClass : ''} ${cursorClass}`}
           data-id={point.id}
           fill="transparent"
           id="top"
+          stroke={color}
           stroke-width={strokeWidth}
           x1={point.x * scale - 20}
           x2={point.x * scale + 20}
@@ -362,7 +369,8 @@
     />
 
     <text
-      class={fillClass}
+      class={color == null ? fillClass : ''}
+      fill={color}
       font-size={25 * scale}
       id="key"
       x={center.x * scale - 38 * scale}
