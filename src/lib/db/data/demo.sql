@@ -7,30 +7,30 @@ CREATE TABLE `areas` (
 	`name` text NOT NULL,
 	`slug` text NOT NULL,
 	`type` text DEFAULT 'area' NOT NULL,
-	`parent_fk` integer,
+	`parent_fk` integer, `description` text,
 	FOREIGN KEY (`parent_fk`) REFERENCES `areas`(`id`) ON UPDATE no action ON DELETE no action
 );
-INSERT INTO areas VALUES('2024-05-23 08:16:07',1,1,'Ticino','ticino','area',NULL);
-INSERT INTO areas VALUES('2024-05-23 08:16:19',2,1,'Chironico','chironico','crag',1);
-INSERT INTO areas VALUES('2024-05-23 08:16:30',3,1,'Nivo alta','nivo-alta','sector',2);
-INSERT INTO areas VALUES('2024-05-23 08:20:32',4,1,'Savoie','savoie','area',NULL);
-INSERT INTO areas VALUES('2024-05-23 08:21:07',5,1,'La Salève','la-salve','crag',4);
-INSERT INTO areas VALUES('2024-05-23 08:21:22',6,1,'Chaos des blocs du Salève','chaos-des-blocs-du-salve','sector',5);
-INSERT INTO areas VALUES('2024-05-23 08:27:52',7,1,'Lappnor','lappnor','crag',NULL);
-INSERT INTO areas VALUES('2024-05-23 08:29:37',8,1,'Happy Auer','happy-auer','sector',7);
-INSERT INTO areas VALUES('2024-05-23 08:37:18',9,1,'Red Rock','red-rock','area',NULL);
-INSERT INTO areas VALUES('2024-05-23 08:37:28',10,1,'Black Velvet Canyon','black-velvet-canyon','crag',9);
-INSERT INTO areas VALUES('2024-05-23 08:39:36',11,1,'Wet Dream','wet-dream','sector',10);
-INSERT INTO areas VALUES('2024-05-23 08:46:33',12,1,'Boulder','boulder','area',NULL);
-INSERT INTO areas VALUES('2024-05-23 08:47:05',13,1,'Eldorado Canyon','eldorado-canyon','crag',12);
-INSERT INTO areas VALUES('2024-05-23 09:11:13',14,1,'Fontainebleau','fontainebleau','area',NULL);
-INSERT INTO areas VALUES('2024-05-23 09:13:24',15,1,'Cuvier','cuvier','crag',14);
-INSERT INTO areas VALUES('2024-05-23 09:16:08',16,1,'Bas Cuvier','bas-cuvier','sector',15);
-INSERT INTO areas VALUES('2024-05-23 09:26:49',17,1,'Cresiano','cresiano','crag',1);
-INSERT INTO areas VALUES('2024-05-23 09:27:11',18,1,'Dreamtime','dreamtime','sector',17);
-INSERT INTO areas VALUES('2024-05-23 09:36:45',19,1,'Yosemite','yosemite','area',NULL);
-INSERT INTO areas VALUES('2024-05-23 09:37:05',20,1,'Yosemite Valley','yosemite-valley','crag',19);
-INSERT INTO areas VALUES('2024-05-23 09:37:14',21,1,'Camp 4','camp-4','sector',20);
+INSERT INTO areas VALUES('2024-05-23 08:16:07',1,1,'Ticino','ticino','area',NULL,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:16:19',2,1,'Chironico','chironico','crag',1,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:16:30',3,1,'Nivo alta','nivo-alta','sector',2,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:20:32',4,1,'Savoie','savoie','area',NULL,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:21:07',5,1,'La Salève','la-salve','crag',4,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:21:22',6,1,'Chaos des blocs du Salève','chaos-des-blocs-du-salve','sector',5,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:27:52',7,1,'Lappnor','lappnor','crag',NULL,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:29:37',8,1,'Happy Auer','happy-auer','sector',7,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:37:18',9,1,'Red Rock','red-rock','area',NULL,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:37:28',10,1,'Black Velvet Canyon','black-velvet-canyon','crag',9,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:39:36',11,1,'Wet Dream','wet-dream','sector',10,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:46:33',12,1,'Boulder','boulder','area',NULL,NULL);
+INSERT INTO areas VALUES('2024-05-23 08:47:05',13,1,'Eldorado Canyon','eldorado-canyon','crag',12,NULL);
+INSERT INTO areas VALUES('2024-05-23 09:11:13',14,1,'Fontainebleau','fontainebleau','area',NULL,NULL);
+INSERT INTO areas VALUES('2024-05-23 09:13:24',15,1,'Cuvier','cuvier','crag',14,NULL);
+INSERT INTO areas VALUES('2024-05-23 09:16:08',16,1,'Bas Cuvier','bas-cuvier','sector',15,NULL);
+INSERT INTO areas VALUES('2024-05-23 09:26:49',17,1,'Cresiano','cresiano','crag',1,NULL);
+INSERT INTO areas VALUES('2024-05-23 09:27:11',18,1,'Dreamtime','dreamtime','sector',17,NULL);
+INSERT INTO areas VALUES('2024-05-23 09:36:45',19,1,'Yosemite','yosemite','area',NULL,NULL);
+INSERT INTO areas VALUES('2024-05-23 09:37:05',20,1,'Yosemite Valley','yosemite-valley','crag',19,NULL);
+INSERT INTO areas VALUES('2024-05-23 09:37:14',21,1,'Camp 4','camp-4','sector',20,NULL);
 CREATE TABLE `ascents` (
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -145,6 +145,7 @@ INSERT INTO __drizzle_migrations VALUES(NULL,'6a7eb7b9e3449ef14c7de0a250168b551a
 INSERT INTO __drizzle_migrations VALUES(NULL,'4a7933f0ef0557b2485d3abef11327e8e684e2700d239a1ee510c5e02e25fce1',1719499418076);
 INSERT INTO __drizzle_migrations VALUES(NULL,'505debddece4f7ba9c5457497b44798ddd89f748428df31a9626ed87b5ad5d80',1726129661598);
 INSERT INTO __drizzle_migrations VALUES(NULL,'49a827c0a5576b321a3672b697ca14b499a86325bfbec1ff10953563e572e969',1726158542515);
+INSERT INTO __drizzle_migrations VALUES(NULL,'b047162d28b8f7e0a65298dff5f57c767f2a5c586669fa124efc52dfed933faf',1729520789486);
 CREATE TABLE `routes_to_tags` (
 	`route_fk` integer NOT NULL,
 	`tag_fk` text NOT NULL,
