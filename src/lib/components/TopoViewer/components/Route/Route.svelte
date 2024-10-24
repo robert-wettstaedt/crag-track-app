@@ -27,6 +27,8 @@
 
   $: color = key == null ? undefined : colorScheme[key]
 
+  console.log(color)
+
   $: strokeClass = highlighted ? 'stroke-green-400' : selected ? 'stroke-white' : 'stroke-red-700'
   $: fillClass = highlighted ? 'fill-green-400' : selected ? 'fill-white' : 'fill-red-700'
   $: strokeWidth = highlighted || selected ? 4 : 2
@@ -242,7 +244,7 @@
     />
 
     <line
-      class={color == null ? bgStrokeClass : undefined}
+      class={color == null ? strokeClass : undefined}
       data-id="line"
       stroke={color}
       stroke-width={strokeWidth}
