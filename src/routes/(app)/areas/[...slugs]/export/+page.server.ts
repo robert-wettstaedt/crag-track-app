@@ -2,11 +2,9 @@ import { db } from '$lib/db/db.server'
 import { areas, blocks, users, type UserSettings } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
+import { convertMarkdownToHtml } from '$lib/markdown'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
-import remarkHtml from 'remark-html'
-import remarkParse from 'remark-parse'
-import { unified } from 'unified'
 import type { PageServerLoad } from './$types'
 
 const blocksQuery: {
@@ -109,20 +107,23 @@ export const load = (async ({ locals, params }) => {
       const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
       const enrichedBlock = enrichBlock(block)
 
+      const enrichedRoutes = await Promise.all(
+        block.routes.map(async (route) => ({
+          ...route,
+          description: route.description == null ? null : await convertMarkdownToHtml(route.description, db, 'strong'),
+        })),
+      )
+
       return {
         ...block,
         ...enrichedBlock,
+        routes: enrichedRoutes,
         topos: toposResult,
       }
     }),
   )
 
-  // Process area description from markdown to HTML if description is present
-  let description = area.description
-  if (description != null) {
-    const result = await unified().use(remarkParse).use(remarkHtml).process(description)
-    description = result.value as string
-  }
+  const description = area.description == null ? null : await convertMarkdownToHtml(area.description, db, 'strong')
 
   return {
     area: {

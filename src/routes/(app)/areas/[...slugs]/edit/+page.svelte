@@ -32,6 +32,8 @@
 
   <div class="mt-8">
     <AreaFormFields
+      grades={data.grades}
+      gradingScale={data.user?.userSettings?.gradingScale}
       description={form?.description ?? data.description}
       name={form?.name ?? data.name}
       type={form?.type ?? data.type}

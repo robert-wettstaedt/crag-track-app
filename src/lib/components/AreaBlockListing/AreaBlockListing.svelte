@@ -106,7 +106,7 @@
                 {/if}
 
                 {#if route.description}
-                  <p class="ms-4">{route.description}</p>
+                  <p class="ms-4">{@html route.description}</p>
                 {/if}
               {/if}
             {/each}

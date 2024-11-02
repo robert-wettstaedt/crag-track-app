@@ -3,12 +3,11 @@ import { ascents, blocks } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import { insertExternalResources } from '$lib/external-resources/index.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
+import { convertMarkdownToHtml } from '$lib/markdown'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
+import { getReferences } from '$lib/references.server'
 import { error } from '@sveltejs/kit'
 import { and, desc, eq } from 'drizzle-orm'
-import remarkHtml from 'remark-html'
-import remarkParse from 'remark-parse'
-import { unified } from 'unified'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -81,13 +80,7 @@ export const load = (async ({ locals, params, parent }) => {
   // Enrich ascents with additional data and process notes
   const enrichedAscents = await Promise.all(
     route.ascents.map(async (ascent) => {
-      let notes = ascent.notes
-
-      // Convert ascent notes from markdown to HTML if notes are present
-      if (ascent.notes != null) {
-        const result = await unified().use(remarkParse).use(remarkHtml).process(ascent.notes)
-        notes = result.value as string
-      }
+      const notes = ascent.notes == null ? null : await convertMarkdownToHtml(ascent.notes, db)
 
       // Fetch and enrich files associated with the ascent
       const files = await loadFiles(
@@ -104,17 +97,14 @@ export const load = (async ({ locals, params, parent }) => {
   )
 
   // Process route description from markdown to HTML if description is present
-  let description = route.description
-  if (description != null) {
-    const result = await unified().use(remarkParse).use(remarkHtml).process(description)
-    description = result.value as string
-  }
+  const description = route.description == null ? null : await convertMarkdownToHtml(route.description, db)
 
   // Return the enriched data
   return {
     ascents: enrichedAscents,
     route: { ...route, description },
     files: routeFiles,
+    references: getReferences(route.id, 'routes'),
     topos,
   }
 }) satisfies PageServerLoad

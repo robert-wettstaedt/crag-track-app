@@ -3,10 +3,10 @@ import { db } from '$lib/db/db.server'
 import { areas, files, generateSlug, geolocations } from '$lib/db/schema'
 import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
+import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
-import { notEqual } from 'assert'
 
 export const load = (async ({ locals, parent }) => {
   // Retrieve the areaId from the parent function
@@ -113,6 +113,11 @@ export const actions = {
 
     if (area.blocks.length > 0) {
       return fail(400, { error: `${area.name} has ${area.blocks.length} blocks. Delete blocks first.` })
+    }
+
+    const references = await getReferences(area.id, 'areas')
+    if (references.areas.length + references.ascents.length + references.routes.length > 0) {
+      return fail(400, { error: 'Area is referenced by other entities. Delete references first.' })
     }
 
     try {

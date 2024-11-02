@@ -1,0 +1,29 @@
+import { db } from '$lib/db/db.server.js'
+import * as schema from '$lib/db/schema'
+import { buildNestedAreaQuery } from '$lib/db/utils.js'
+import { error, redirect } from '@sveltejs/kit'
+import { eq } from 'drizzle-orm'
+
+export const load = async ({ params }) => {
+  const block = await db.query.blocks.findFirst({
+    where: eq(schema.blocks.id, Number(params.id)),
+    with: {
+      area: buildNestedAreaQuery(),
+    },
+  })
+
+  const path = []
+  let parent = block?.area
+  while (parent != null) {
+    path.unshift(`${parent.slug}-${parent.id}`)
+    parent = parent.parent
+  }
+
+  if (block == null || path.length === 0) {
+    error(404, 'Not found')
+  }
+
+  const mergedPath = ['areas', ...path, '_', 'blocks', block?.slug].join('/')
+
+  redirect(301, '/' + mergedPath)
+}

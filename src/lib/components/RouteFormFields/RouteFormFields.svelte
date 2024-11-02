@@ -1,12 +1,10 @@
 <script lang="ts">
+  import MarkdownEditor from '$lib/components/MarkdownEditor'
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
   import type { Grade, InsertRoute, Route, Tag, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
-  import { Ratings, Tab, TabGroup } from '@skeletonlabs/skeleton'
-  import remarkHtml from 'remark-html'
-  import remarkParse from 'remark-parse'
+  import { Ratings } from '@skeletonlabs/skeleton'
   import type { ChangeEventHandler } from 'svelte/elements'
-  import { unified } from 'unified'
 
   export let blockId: number
   export let description: Route['description']
@@ -24,19 +22,6 @@
   >
 
   let loading = false
-
-  let descriptionTabSet: number = 0
-  let descriptionValue = description
-  let descriptionHtml = ''
-  const onChangeDescription: ChangeEventHandler<HTMLTextAreaElement> = (event) => {
-    descriptionValue = event.currentTarget.value
-    parseDescription(descriptionValue)
-  }
-
-  const parseDescription = async (description: string) => {
-    const result = await unified().use(remarkParse).use(remarkHtml).process(description)
-    descriptionHtml = result.value as string
-  }
 
   const onChangeName: ChangeEventHandler<HTMLInputElement> = async (event) => {
     loading = true
@@ -57,8 +42,7 @@
     gradeFk = route.gradeFk ?? null
     rating = route.rating ?? null
     description = route.description ?? null
-    descriptionValue = route.description ?? null
-    parseDescription(description ?? '')
+    description = route.description ?? null
 
     routeExternalResources = rest.routeExternalResources
     loading = false
@@ -93,28 +77,9 @@
 
 <label class="label mt-4">
   <span>Description</span>
-  <textarea hidden name="description" value={descriptionValue} />
+  <textarea hidden name="description" value={description} />
 
-  <TabGroup>
-    <Tab bind:group={descriptionTabSet} name="Write" value={0}>Write</Tab>
-    <Tab bind:group={descriptionTabSet} name="Preview" value={1}>Preview</Tab>
-
-    <svelte:fragment slot="panel">
-      {#if descriptionTabSet === 0}
-        <textarea
-          class="textarea"
-          on:keyup={onChangeDescription}
-          placeholder="Enter some long form content."
-          rows="10"
-          value={descriptionValue}
-        />
-      {:else if descriptionTabSet === 1}
-        <div class="rendered-markdown min-h-64 bg-surface-700 px-3 py-2">
-          {@html descriptionHtml}
-        </div>
-      {/if}
-    </svelte:fragment>
-  </TabGroup>
+  <MarkdownEditor value={description} {grades} {gradingScale} on:change={(event) => (description = event.detail)} />
 </label>
 
 <label class="label mt-4">

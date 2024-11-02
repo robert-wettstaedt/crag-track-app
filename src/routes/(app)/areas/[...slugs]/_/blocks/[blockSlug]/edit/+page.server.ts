@@ -3,6 +3,7 @@ import { db } from '$lib/db/db.server'
 import { blocks, files, generateSlug, geolocations, topoRoutes, topos } from '$lib/db/schema'
 import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
+import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, inArray } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -125,6 +126,11 @@ export const actions = {
 
     if (block.routes.length > 0) {
       return fail(400, { error: `${block.name} has ${block.routes.length} routes. Delete routes first.` }) // Bad Request error
+    }
+
+    const references = await getReferences(block.id, 'blocks')
+    if (references.areas.length + references.ascents.length + references.routes.length > 0) {
+      return fail(400, { error: 'Block is referenced by other entities. Delete references first.' })
     }
 
     try {

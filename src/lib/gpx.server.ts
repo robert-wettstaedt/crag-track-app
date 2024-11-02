@@ -2,6 +2,7 @@ import { getToposOfArea } from '$lib/blocks.server'
 import type { Coordinates, Line } from '$lib/components/TopoViewer/components/Route'
 import * as schema from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
+import { convertMarkdownToHtml } from '$lib/markdown'
 import { getNextcloud, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { colorScheme, type TopoRouteDTO } from '$lib/topo'
 import type { Session } from '@auth/sveltekit'
@@ -187,7 +188,10 @@ const loadBlockFiles = async (
             stats.filter((stat) => stat.mime?.includes('image')).map((stat) => getTopoFile(stat)),
           )
 
-          return { ...route, files: topoFiles }
+          const description =
+            route.description == null ? null : await convertMarkdownToHtml(route.description, db, 'strong')
+
+          return { ...route, description, files: topoFiles }
         }),
       )
 

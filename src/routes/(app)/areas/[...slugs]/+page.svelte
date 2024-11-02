@@ -1,10 +1,10 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import FileViewer from '$lib/components/FileViewer'
-  import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
-  import { DateTime } from 'luxon'
-  import { getToastStore } from '@skeletonlabs/skeleton'
   import { convertException } from '$lib'
+  import FileViewer from '$lib/components/FileViewer'
+  import References from '$lib/components/References'
+  import { AppBar, getToastStore, ProgressRadial } from '@skeletonlabs/skeleton'
+  import { DateTime } from 'luxon'
 
   const toastStore = getToastStore()
 
@@ -129,6 +129,16 @@
     {/if}
   </svelte:fragment>
 </AppBar>
+
+{#await data.references then references}
+  {#if references.routes.length > 0}
+    <div class="card mt-4">
+      <div class="card-header">Mentioned in</div>
+
+      <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
+    </div>
+  {/if}
+{/await}
 
 <div class="card mt-4">
   <div class="card-header">Location</div>

@@ -16,6 +16,7 @@ import {
 } from '$lib/db/schema'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
+import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, inArray } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -208,6 +209,11 @@ export const actions = {
     // Return a 400 failure if multiple routes with the same slug are found
     if (block.routes.length > 1) {
       return fail(400, { error: `Multiple routes with slug ${params.routeSlug} found` })
+    }
+
+    const references = await getReferences(route.id, 'routes')
+    if (references.areas.length + references.ascents.length + references.routes.length > 0) {
+      return fail(400, { error: 'Route is referenced by other entities. Delete references first.' })
     }
 
     try {

@@ -34,14 +34,22 @@ body {
 
 .rendered-markdown {
   display: block !important;
-}
 
-.rendered-markdown ul {
-  list-style: initial;
-  margin: 16px 0;
-  padding-left: 40px;
-}
+  & > * {
+    margin-left: 0 !important;
+  }
 
-.rendered-markdown a {
-  @apply anchor;
+  & ul {
+    list-style: initial;
+    margin: 16px 0;
+    padding-left: 40px;
+  }
+
+  & a {
+    @apply anchor;
+  }
+
+  & p {
+    margin-top: 8px;
+  }
 }

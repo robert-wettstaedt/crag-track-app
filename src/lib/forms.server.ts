@@ -9,7 +9,7 @@ import {
   type Tag,
   type TopoRoute,
   type UserSettings,
-} from './db/schema'
+} from '$lib/db/schema'
 
 export type AreaActionValues = Pick<Area, 'description' | 'name' | 'type'>
 export type AreaActionFailure = ActionFailure<AreaActionValues & { error: string }>

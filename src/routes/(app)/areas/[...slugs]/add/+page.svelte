@@ -39,7 +39,13 @@
   {/if}
 
   <div class="mt-8">
-    <AreaFormFields description={form?.description ?? ''} name={form?.name ?? ''} type={form?.type ?? 'area'} />
+    <AreaFormFields
+      grades={data.grades}
+      gradingScale={data.user?.userSettings?.gradingScale}
+      description={form?.description ?? ''}
+      name={form?.name ?? ''}
+      type={form?.type ?? 'area'}
+    />
   </div>
 
   <div class="flex justify-between mt-8">

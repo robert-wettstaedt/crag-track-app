@@ -2,6 +2,7 @@ import { db } from '$lib/db/db.server'
 import { ascents, blocks, files, routes } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
+import { getReferences } from '$lib/references.server'
 import { error } from '@sveltejs/kit'
 import { and, eq, isNotNull, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -66,6 +67,7 @@ export const load = (async ({ locals, params, parent }) => {
     block,
     blocks: geolocationBlocksResults.map(enrichBlock),
     files: blockFiles,
+    references: getReferences(block.id, 'blocks'),
     topos,
   }
 }) satisfies PageServerLoad
