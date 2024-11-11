@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { enhance } from '$app/forms'
+  import { applyAction, enhance } from '$app/forms'
   import { page } from '$app/stores'
   import RouteFormFields from '$lib/components/RouteFormFields'
   import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
@@ -28,8 +28,16 @@
   use:enhance={() => {
     loading = true
 
-    return () => {
+    return ({ action, result }) => {
       loading = false
+
+      if (
+        location.origin + location.pathname === action.origin + action.pathname ||
+        result.type === 'redirect' ||
+        result.type === 'error'
+      ) {
+        applyAction(result)
+      }
     }
   }}
 >
