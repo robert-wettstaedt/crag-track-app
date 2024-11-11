@@ -5,14 +5,14 @@
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import type { File } from '$lib/db/schema'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
-  export let data
-  $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`
-  $: files = data.files
+  let { data } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
+  let files = $state(data.files)
 
-  let highlightedRoutes: number[] = []
+  let highlightedRoutes: number[] = $state([])
 
   const onMouseEnterFile = (file: File) => () => {
     if (file.routeFk == null) {
@@ -31,44 +31,44 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     {data.block.name}
-  </svelte:fragment>
+  {/snippet}
 
-  <svelte:fragment slot="headline">
-    <dl class="list-dl">
-      <div>
+  {#snippet headline()}
+    <dl>
+      <div class="flex p-2">
         <span class="flex-auto">
           <dt>Created at</dt>
           <dd>{DateTime.fromSQL(data.block.createdAt).toLocaleString(DateTime.DATETIME_MED)}</dd>
         </span>
       </div>
 
-      <div>
+      <div class="flex p-2">
         <span class="flex-auto">
           <dt>Author</dt>
           <dd>{data.block.author.userName}</dd>
         </span>
       </div>
     </dl>
-  </svelte:fragment>
+  {/snippet}
 
-  <svelte:fragment slot="trail">
+  {#snippet trail()}
     {#if data.session?.user != null}
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
-        <i class="fa-solid fa-pen me-2" />Edit block
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
+        <i class="fa-solid fa-pen"></i>Edit block
       </a>
 
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-location`}>
-        <i class="fa-solid fa-location-dot me-2" />Edit geolocation
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-location`}>
+        <i class="fa-solid fa-location-dot"></i>Edit geolocation
       </a>
     {/if}
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
 {#await data.references then references}
   {#if references.routes.length > 0}
-    <div class="card mt-4">
+    <div class="card mt-4 p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
       <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
@@ -76,7 +76,7 @@
   {/if}
 {/await}
 
-<div class="card mt-4">
+<div class="card mt-4 p-4 preset-filled-surface-100-900">
   <div class="card-header">Location</div>
 
   <section class="pt-4">
@@ -89,7 +89,7 @@
 </div>
 
 {#if files.length > 0 || data.topos.length === 0}
-  <div class="card mt-4">
+  <div class="card mt-4 p-4 preset-filled-surface-100-900">
     <div class="card-header">Topos</div>
 
     <section class="p-4">
@@ -99,7 +99,7 @@
         {:else}
           <div class="flex flex-wrap gap-3">
             {#each files as file}
-              <div class="flex" on:mouseenter={onMouseEnterFile(file)} on:mouseleave={onMouseLeaveFile} role="figure">
+              <div class="flex" onmouseenter={onMouseEnterFile(file)} onmouseleave={onMouseLeaveFile} role="figure">
                 {#if file.stat != null}
                   <FileViewer
                     {file}
@@ -119,7 +119,7 @@
 
                       {#if file.stat.mime?.includes('image')}
                         <a href={`${basePath}/draw-topo/${file.id}`}>
-                          <i class="fa-solid fa-marker" />
+                          <i class="fa-solid fa-marker"></i>
                           Draw topo
                         </a>
                       {/if}
@@ -141,14 +141,14 @@
 
       {#if data.session?.user != null}
         <div class="flex justify-center mt-4">
-          <a class="btn variant-filled-primary" href={`${basePath}/add-topo`}> Add topos </a>
+          <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
         </div>
       {/if}
     </section>
   </div>
 {/if}
 
-<div class="card mt-4">
+<div class="card mt-4 p-4 preset-filled-surface-100-900">
   <div class="card-header">Routes</div>
 
   <div class="flex">
@@ -157,8 +157,8 @@
         <div class="relative">
           <TopoViewer topos={data.topos} />
 
-          <a class="btn btn-sm variant-glass-surface absolute bottom-2 right-2 z-30" href={`${basePath}/draw-topo`}>
-            <i class="fa-solid fa-pen me-2" />Edit topo
+          <a class="btn btn-sm preset-tonal-surface absolute bottom-2 right-2 z-30" href={`${basePath}/draw-topo`}>
+            <i class="fa-solid fa-pen"></i>Edit topo
           </a>
         </div>
       </section>
@@ -172,17 +172,21 @@
           <ul>
             {#each data.block.routes as route}
               <li
-                class={[$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(route.id)
-                  ? 'bg-primary-500/20'
-                  : ''}
+                class={`px-4 py-2 ${
+                  [$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(route.id)
+                    ? 'preset-filled-primary-100-900'
+                    : ''
+                }`}
               >
                 <a
-                  class="text-primary-500"
+                  class={[$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(route.id)
+                    ? 'text-white'
+                    : 'text-primary-500'}
                   href={`${basePath}/routes/${route.slug.length === 0 ? route.id : route.slug}`}
-                  on:mouseenter={() => highlightedRouteStore.set(route.id)}
-                  on:mouseleave={() => highlightedRouteStore.set(null)}
-                  on:click={() => selectedRouteStore.set(route.id)}
-                  on:keydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
+                  onmouseenter={() => highlightedRouteStore.set(route.id)}
+                  onmouseleave={() => highlightedRouteStore.set(null)}
+                  onclick={() => selectedRouteStore.set(route.id)}
+                  onkeydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
                 >
                   <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
                 </a>
@@ -194,7 +198,7 @@
 
       {#if data.session?.user != null}
         <div class="flex justify-center mt-4">
-          <a class="btn variant-filled-primary" href={`${basePath}/routes/add`}>Add route</a>
+          <a class="btn preset-filled-primary-500" href={`${basePath}/routes/add`}>Add route</a>
         </div>
       {/if}
     </section>

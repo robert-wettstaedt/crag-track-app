@@ -2,82 +2,71 @@
   import { invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import Logo from '$lib/assets/logo.png'
   import Breadcrumb from '$lib/components/Breadcrumb'
   import { SignIn, SignOut } from '@auth/sveltekit/components'
-  import { arrow, autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom'
   import '@fortawesome/fontawesome-free/css/all.css'
-  import {
-    AppBar,
-    AppRail,
-    AppRailAnchor,
-    AppShell,
-    initializeStores,
-    Modal,
-    popup,
-    SlideToggle,
-    storePopup,
-    Toast,
-  } from '@skeletonlabs/skeleton'
+  import { AppBar, Nav, Popover, Switch } from '@skeletonlabs/skeleton-svelte'
   import '../../app.postcss'
 
-  export let data
-
-  storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
-  initializeStores()
+  let { data, children } = $props()
 </script>
 
 <svelte:head>
   <title>Crag Track</title>
 </svelte:head>
 
-<Modal />
-<Toast position="t" />
+<div class="grid h-screen grid-rows-[auto_1fr_auto]">
+  <AppBar>
+    {#snippet lead()}
+      <a class="flex items-center gap-2" href="/">
+        <img src={Logo} alt="Crag Track" width={32} height={32} />
 
-<!-- App Shell -->
-<AppShell>
-  <svelte:fragment slot="header">
-    <!-- App Bar -->
-    <AppBar>
-      <svelte:fragment slot="lead">
         <strong class="text-xl uppercase">Crag Track</strong>
-      </svelte:fragment>
+      </a>
+    {/snippet}
 
-      <svelte:fragment slot="trail">
-        {#if $page.data.session?.user == null}
-          <SignIn>
-            <div slot="submitButton" class="buttonPrimary">Sign in</div>
-          </SignIn>
-        {:else}
-          <i
-            class="fa-solid fa-circle-user text-3xl"
-            use:popup={{ event: 'click', target: 'popup-user', placement: 'bottom-end' }}
-          />
+    {#snippet trail()}
+      {#if $page.data.session?.user == null}
+        <SignIn>
+          {#snippet submitButton()}
+            <div class="buttonPrimary">Sign in</div>
+          {/snippet}
+        </SignIn>
+      {:else}
+        <Popover
+          arrow
+          arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+          contentBase="card bg-surface-200-800 p-4 w-74 shadow-xl"
+          positioning={{ placement: 'bottom' }}
+        >
+          {#snippet trigger()}
+            <i class="fa-solid fa-circle-user text-3xl"></i>
+          {/snippet}
 
-          <div class="card p-4 w-72 shadow-xl" data-popup="popup-user">
+          {#snippet content()}
             <div class="mb-4">
               Hi, {data.user?.userName}
             </div>
 
             <nav class="list-nav">
-              <div class="flex items-center px-4 py-2">
+              <div class="flex items-center p-2">
                 Grading scale:
 
                 <span class="mx-2">FB</span>
 
-                <SlideToggle
+                <Switch
                   checked={data.user?.userSettings?.gradingScale === 'V'}
                   name="gradingScale"
-                  on:change={async (event) => {
-                    const response = await fetch(
-                      `/api/users/settings?gradingScale=${event.target?.checked ? 'V' : 'FB'}`,
-                      { method: 'POST' },
-                    )
+                  onCheckedChange={async (event) => {
+                    const response = await fetch(`/api/users/settings?gradingScale=${event.checked ? 'V' : 'FB'}`, {
+                      method: 'POST',
+                    })
 
                     if (response.ok) {
                       invalidateAll()
                     }
                   }}
-                  size="sm"
                 />
 
                 <span class="mx-2">V</span>
@@ -85,84 +74,65 @@
 
               <ul>
                 <li>
-                  <a href={`/users/${data.user?.userName}`}>Profile</a>
+                  <a class="flex hover:preset-filled-primary-100-900 p-2" href={`/users/${data.user?.userName}`}>
+                    Profile
+                  </a>
                 </li>
 
                 {#if !PUBLIC_DEMO_MODE}
-                  <li class="list-item-sign-out">
-                    <SignOut>
-                      <span slot="submitButton">Sign out</span>
+                  <li>
+                    <SignOut
+                      class="flex [&>button]:flex [&>button]:p-2 [&>button]:w-full hover:[&>button]:preset-filled-primary-100-900"
+                    >
+                      {#snippet submitButton()}
+                        <span>Sign out</span>
+                      {/snippet}
                     </SignOut>
                   </li>
                 {/if}
               </ul>
             </nav>
 
-            <div class="arrow bg-surface-100-800-token" />
-          </div>
-        {/if}
-      </svelte:fragment>
-    </AppBar>
-  </svelte:fragment>
+            <div class="arrow bg-surface-100-800-token"></div>
+          {/snippet}
+        </Popover>
+      {/if}
+    {/snippet}
+  </AppBar>
 
-  <svelte:fragment slot="sidebarLeft">
-    <AppRail>
-      <svelte:fragment slot="lead">
-        <AppRailAnchor href="/" selected={$page.url.pathname === '/'}>
-          <svelte:fragment slot="lead">
-            <i class="fa-solid fa-house" />
-          </svelte:fragment>
+  <Nav.Rail base="fixed top-[68px] h-screen">
+    {#snippet header()}
+      <Nav.Tile href="/" label="Home">
+        <i class="fa-solid fa-house"></i>
+      </Nav.Tile>
+    {/snippet}
 
-          Home
-        </AppRailAnchor>
-      </svelte:fragment>
+    {#snippet tiles()}
+      <Nav.Tile href="/areas" label="Areas">
+        <i class="fa-solid fa-layer-group"></i>
+      </Nav.Tile>
 
-      <AppRailAnchor href="/areas" selected={$page.url.pathname.startsWith('/areas')}>
-        <svelte:fragment slot="lead">
-          <i class="fa-solid fa-layer-group" />
-        </svelte:fragment>
+      <Nav.Tile href="/ascents" label="Ascents">
+        <i class="fa-solid fa-check-double"></i>
+      </Nav.Tile>
 
-        Areas
-      </AppRailAnchor>
+      <Nav.Tile href="/routes" label="Routes">
+        <i class="fa-solid fa-route"></i>
+      </Nav.Tile>
 
-      <AppRailAnchor href="/ascents" selected={$page.url.pathname.startsWith('/ascents')}>
-        <svelte:fragment slot="lead">
-          <i class="fa-solid fa-check-double" />
-        </svelte:fragment>
+      <Nav.Tile href="/search" label="Search">
+        <i class="fa-solid fa-search"></i>
+      </Nav.Tile>
 
-        Ascents
-      </AppRailAnchor>
+      <Nav.Tile href="/tags" label="Tags">
+        <i class="fa-solid fa-tags"></i>
+      </Nav.Tile>
+    {/snippet}
+  </Nav.Rail>
 
-      <AppRailAnchor href="/routes" selected={$page.url.pathname.startsWith('/routes')}>
-        <svelte:fragment slot="lead">
-          <i class="fa-solid fa-route" />
-        </svelte:fragment>
-
-        Routes
-      </AppRailAnchor>
-
-      <AppRailAnchor href="/search" selected={$page.url.pathname.startsWith('/search')}>
-        <svelte:fragment slot="lead">
-          <i class="fa-solid fa-search" />
-        </svelte:fragment>
-
-        Search
-      </AppRailAnchor>
-
-      <AppRailAnchor href="/tags" selected={$page.url.pathname.startsWith('/tags')}>
-        <svelte:fragment slot="lead">
-          <i class="fa-solid fa-tags" />
-        </svelte:fragment>
-
-        Tags
-      </AppRailAnchor>
-    </AppRail>
-  </svelte:fragment>
-  <!-- Page Route Content -->
-
-  <div class="p-4">
+  <div class="relative ms-[96px] p-4 overflow-y-auto">
     <Breadcrumb url={$page.url} />
 
-    <slot />
+    {@render children?.()}
   </div>
-</AppShell>
+</div>

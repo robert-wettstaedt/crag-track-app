@@ -2,11 +2,10 @@
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import AreaFormFields from '$lib/components/AreaFormFields'
-  import { AppBar, popup } from '@skeletonlabs/skeleton'
+  import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
-  export let form
-  $: basePath = `/areas/${$page.params.slugs}`
+  let { data, form } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}`)
 </script>
 
 <svelte:head>
@@ -14,57 +13,56 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Edit area</span>
-    &nbsp;
     <a class="anchor" href={basePath}>{data.name}</a>
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-<form action="?/updateArea" method="POST">
-  {#if form?.error != null}
-    <aside class="alert variant-filled-error mt-8">
-      <div class="alert-message">
-        <p>{form.error}</p>
-      </div>
-    </aside>
-  {/if}
+{#if form?.error}
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
+  </aside>
+{/if}
 
-  <div class="mt-8">
-    <AreaFormFields
-      grades={data.grades}
-      gradingScale={data.user?.userSettings?.gradingScale}
-      description={form?.description ?? data.description}
-      name={form?.name ?? data.name}
-      type={form?.type ?? data.type}
-    />
-  </div>
+<form class="card mt-8 p-4 preset-filled-surface-100-900" action="?/updateArea" method="POST">
+  <AreaFormFields
+    grades={data.grades}
+    gradingScale={data.user?.userSettings?.gradingScale}
+    description={form?.description ?? data.description}
+    name={form?.name ?? data.name}
+    type={form?.type ?? data.type}
+  />
 
   <div class="flex justify-between mt-8">
-    <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
+    <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
 
     <div>
-      <button
-        class="btn variant-filled-error"
-        use:popup={{ event: 'click', target: 'popup-delete-area', placement: 'top' }}
-        type="button"
+      <Popover
+        arrow
+        arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+        contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+        positioning={{ placement: 'top' }}
+        triggerBase="btn preset-filled-error-500 !text-white"
       >
-        <i class="fa-solid fa-trash me-2" />Delete area
-      </button>
+        {#snippet trigger()}
+          <i class="fa-solid fa-trash"></i>Delete area
+        {/snippet}
 
-      <button class="btn variant-filled-primary" type="submit">Update area</button>
+        {#snippet content()}
+          <article>
+            <p>Are you sure you want to delete this area?</p>
+          </article>
+
+          <footer class="flex justify-end">
+            <form method="POST" action="?/removeArea" use:enhance>
+              <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+            </form>
+          </footer>
+        {/snippet}
+      </Popover>
+
+      <button class="btn preset-filled-primary-500" type="submit">Update area</button>
     </div>
   </div>
 </form>
-
-<div class="card p-4 shadow-xl" data-popup="popup-delete-area">
-  <p>Are you sure you want to delete this area?</p>
-
-  <div class="flex justify-end gap-2 mt-4">
-    <form method="POST" action="?/removeArea" use:enhance>
-      <button class="btn btn-sm variant-filled-primary" type="submit">Yes</button>
-    </form>
-
-    <button class="btn btn-sm variant-filled-surface">Cancel</button>
-  </div>
-</div>

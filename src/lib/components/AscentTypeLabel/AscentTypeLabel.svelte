@@ -1,14 +1,18 @@
 <script lang="ts">
   import type { Ascent } from '$lib/db/schema'
 
-  export let type: Ascent['type']
-  export let includeIcon = true
-  export let includeText = true
+  interface Props {
+    type: Ascent['type']
+    includeIcon?: boolean
+    includeText?: boolean
+  }
+
+  let { type, includeIcon = true, includeText = true }: Props = $props()
 </script>
 
 {#if type === 'flash'}
   {#if includeIcon}
-    <i class="fa-solid fa-bolt-lightning text-yellow-300 me-2" />
+    <i class="fa-solid fa-bolt-lightning text-yellow-300"></i>
   {/if}
 
   {#if includeText}
@@ -16,7 +20,7 @@
   {/if}
 {:else if type === 'send'}
   {#if includeIcon}
-    <i class="fa-solid fa-circle text-red-500 me-2" />
+    <i class="fa-solid fa-circle text-red-500"></i>
   {/if}
 
   {#if includeText}
@@ -24,7 +28,7 @@
   {/if}
 {:else if type === 'repeat'}
   {#if includeIcon}
-    <i class="fa-solid fa-repeat text-green-500 me-2" />
+    <i class="fa-solid fa-repeat text-green-500"></i>
   {/if}
 
   {#if includeText}
@@ -32,7 +36,7 @@
   {/if}
 {:else}
   {#if includeIcon}
-    <i class="fa-solid fa-person-falling text-blue-3000 me-2" />
+    <i class="fa-solid fa-person-falling text-blue-3000"></i>
   {/if}
 
   {#if includeText}

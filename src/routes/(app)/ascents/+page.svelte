@@ -2,15 +2,11 @@
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
   import AscentsTable from '$lib/components/AscentsTable'
-  import { AppBar, Paginator } from '@skeletonlabs/skeleton'
+  import { AppBar, Pagination } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
+  let { data } = $props()
 
-  const onPageChange = ({ detail }: CustomEvent<number>) => {
-    const url = new URL($page.url)
-    url.searchParams.set('page', String(detail))
-    goto(url)
-  }
+  console.log(data)
 </script>
 
 <svelte:head>
@@ -18,19 +14,25 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">Ascents</svelte:fragment>
+  {#snippet lead()}
+    Ascents
+  {/snippet}
 </AppBar>
 
-<AscentsTable ascents={data.ascents} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
+<div class="card mt-8 p-4 preset-filled-surface-100-900">
+  <AscentsTable ascents={data.ascents} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
+</div>
 
 <div class="mt-8 flex justify-end">
-  <Paginator
-    settings={{
-      amounts: [],
-      limit: data.pagination.pageSize,
-      page: data.pagination.page,
-      size: data.pagination.total,
+  <Pagination
+    data={[]}
+    count={data.pagination.total}
+    pageSize={data.pagination.pageSize}
+    page={data.pagination.page}
+    onPageChange={(detail) => {
+      const url = new URL($page.url)
+      url.searchParams.set('page', String(detail.page))
+      goto(url)
     }}
-    on:page={onPageChange}
   />
 </div>

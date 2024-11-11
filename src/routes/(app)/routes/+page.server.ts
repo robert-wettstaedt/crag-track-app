@@ -8,13 +8,13 @@ export const load = (async ({ parent, url }) => {
   const { user } = await parent()
 
   // Get the 'page' parameter from the URL, defaulting to 0 if not provided
-  const page = Number(url.searchParams.get('page') ?? '0')
+  const page = Number(url.searchParams.get('page') ?? '1')
   // Set the number of results per page
   const pageSize = 20
 
   const routesResult = await db.query.routes.findMany({
     limit: pageSize,
-    offset: page * pageSize,
+    offset: (page - 1) * pageSize,
     orderBy: [desc(routes.rating), asc(routes.gradeFk)],
     where: isNotNull(routes.rating),
     with: {

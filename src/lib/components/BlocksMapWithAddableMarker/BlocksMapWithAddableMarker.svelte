@@ -12,9 +12,13 @@
   import { Vector as VectorSource } from 'ol/source.js'
   import { createEventDispatcher } from 'svelte'
 
-  export let blocks: EnrichedBlock[]
-  export let selectedArea: Area | null = null
-  export let selectedBlock: InferResultType<'blocks', { geolocation: true }> | null = null
+  interface Props {
+    blocks: EnrichedBlock[]
+    selectedArea?: Area | null
+    selectedBlock?: InferResultType<'blocks', { geolocation: true }> | null
+  }
+
+  let { blocks, selectedArea = null, selectedBlock = null }: Props = $props()
 
   const dispatch = createEventDispatcher<{ change: Coordinate }>()
 

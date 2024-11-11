@@ -11,19 +11,26 @@
   import RouteGrade from '$lib/components/RouteGrade'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { Accordion, AccordionItem, AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
+  import { Accordion, AppBar, ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
+  import { run } from 'svelte/legacy'
 
-  export let data
-  $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`
-  $: files = data.files
+  let { data } = $props()
+  let basePath = $derived(
+    `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`,
+  )
+  let files = $state(data.files)
 
-  $: selectedRouteStore.set(data.route.id)
-  $: highlightedRouteStore.set(null)
+  run(() => {
+    selectedRouteStore.set(data.route.id)
+  })
+  run(() => {
+    highlightedRouteStore.set(null)
+  })
 
-  $: grade = data.grades.find((grade) => grade.id === data.route.gradeFk)
+  let grade = $derived(data.grades.find((grade) => grade.id === data.route.gradeFk))
 
-  let syncing = false
+  let syncing = $state(false)
 </script>
 
 <svelte:head>
@@ -36,20 +43,20 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={data.route} />
-  </svelte:fragment>
+  {/snippet}
 
-  <svelte:fragment slot="headline">
-    <dl class="list-dl">
-      <div>
+  {#snippet headline()}
+    <dl>
+      <div class="flex p-2">
         <span class="flex-auto">
           <dt>Created at</dt>
           <dd>{DateTime.fromSQL(data.route.createdAt).toLocaleString(DateTime.DATETIME_MED)}</dd>
         </span>
       </div>
 
-      <div>
+      <div class="flex p-2">
         <span class="flex-auto">
           <dt>Author</dt>
           <dd>
@@ -60,7 +67,7 @@
         </span>
       </div>
 
-      <div>
+      <div class="flex p-2">
         <span class="flex-auto">
           <dt>FA</dt>
           <dd class="flex justify-between items-center">
@@ -81,8 +88,8 @@
             </span>
 
             {#if data.session?.user != null}
-              <a class="btn btn-sm variant-ghost ms-4" href={`${basePath}/edit-first-ascent`}>
-                <i class="fa-solid fa-pen me-2" />Edit FA
+              <a class="btn btn-sm preset-outlined-primary-500 ms-4" href={`${basePath}/edit-first-ascent`}>
+                <i class="fa-solid fa-pen"></i>Edit FA
               </a>
             {/if}
           </dd>
@@ -90,7 +97,7 @@
       </div>
 
       {#if data.route.description != null && data.route.description.length > 0}
-        <div>
+        <div class="flex p-2">
           <span class="flex-auto">
             <dt>Description</dt>
             <dd>
@@ -103,13 +110,13 @@
       {/if}
 
       {#if data.route.tags.length > 0}
-        <div>
+        <div class="flex p-2">
           <span class="flex-auto">
             <dt>Tags</dt>
-            <dd class="flex gap-1">
+            <dd class="flex gap-1 mt-1">
               {#each data.route.tags as tag}
-                <span class="chip variant-filled-surface">
-                  <i class="fa-solid fa-tag me-2" />
+                <span class="chip preset-filled-surface-900-100">
+                  <i class="fa-solid fa-tag me-2"></i>
                   {tag.tagFk}
                 </span>
               {/each}
@@ -118,18 +125,22 @@
         </div>
       {/if}
     </dl>
-  </svelte:fragment>
+  {/snippet}
 
-  <svelte:fragment slot="trail">
+  {#snippet trail()}
     {#if data.route.externalResources?.externalResource8a?.url != null}
-      <a class="btn btn-sm variant-ghost" href={data.route.externalResources.externalResource8a.url} target="_blank">
+      <a
+        class="btn btn-sm preset-outlined-primary-500"
+        href={data.route.externalResources.externalResource8a.url}
+        target="_blank"
+      >
         <img src={Logo8a} alt="8a" width={16} height={16} />
       </a>
     {/if}
 
     {#if data.route.externalResources?.externalResource27crags?.url != null}
       <a
-        class="btn btn-sm variant-ghost"
+        class="btn btn-sm preset-outlined-primary-500"
         href={data.route.externalResources.externalResource27crags.url}
         target="_blank"
       >
@@ -139,7 +150,7 @@
 
     {#if data.route.externalResources?.externalResourceTheCrag?.url != null}
       <a
-        class="btn btn-sm variant-ghost"
+        class="btn btn-sm preset-outlined-primary-500"
         href={data.route.externalResources.externalResourceTheCrag.url}
         target="_blank"
       >
@@ -163,25 +174,27 @@
           }
         }}
       >
-        <button class="btn btn-sm variant-filled-primary me-2" disabled={syncing} type="submit">
+        <button class="btn btn-sm preset-filled-primary-500 me-2" disabled={syncing} type="submit">
           {#if syncing}
-            <ProgressRadial class="me-2" width="w-4" />
+            <span class="me-2">
+              <ProgressRing size="size-sm" value={null} />
+            </span>
           {/if}
 
           Sync external resources
         </button>
       </form>
 
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
-        <i class="fa-solid fa-pen me-2" />Edit route
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
+        <i class="fa-solid fa-pen"></i>Edit route
       </a>
     {/if}
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
 {#await data.references then references}
   {#if references.routes.length > 0}
-    <div class="card mt-4">
+    <div class="card mt-4 p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
       <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
@@ -189,7 +202,7 @@
   {/if}
 {/await}
 
-<div class="card mt-4">
+<div class="card mt-4 p-4 preset-filled-surface-100-900">
   <div class="card-header">Topo</div>
 
   <div class="flex">
@@ -203,7 +216,7 @@
   </div>
 </div>
 
-<div class="card mt-4">
+<div class="card mt-4 p-4 preset-filled-surface-100-900">
   <div class="card-header">Files</div>
 
   <section class="p-4">
@@ -221,9 +234,9 @@
               }}
             >
               {#if file.type === 'send'}
-                <i class="fa-solid fa-circle text-red-500 me-2" />
+                <i class="fa-solid fa-circle text-red-500"></i>
               {:else if file.type === 'attempt'}
-                <i class="fa-solid fa-person-falling text-blue-300 me-2"></i>
+                <i class="fa-solid fa-person-falling text-blue-300"></i>
               {:else if file.type === 'beta'}
                 Beta
               {:else if file.type === 'topo'}
@@ -247,13 +260,13 @@
 
     {#if data.session?.user != null}
       <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/add-file`}>Add file</a>
+        <a class="btn preset-filled-primary-500" href={`${basePath}/add-file`}>Add file</a>
       </div>
     {/if}
   </section>
 </div>
 
-<div class="card mt-4">
+<div class="card mt-4 p-4 preset-filled-surface-100-900">
   <div class="card-header">Ascents</div>
 
   <section class="p-4">
@@ -269,8 +282,8 @@
             </span>
 
             {#if data.session?.user?.email === ascent.author.email}
-              <a class="btn btn-sm variant-ghost" href={`${basePath}/ascents/${ascent.id}/edit`}>
-                <i class="fa-solid fa-pen me-2" />Edit ascent
+              <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/ascents/${ascent.id}/edit`}>
+                <i class="fa-solid fa-pen"></i>Edit ascent
               </a>
             {/if}
           </div>
@@ -290,18 +303,22 @@
           </div>
 
           {#if ascent.notes != null && ascent.notes.length > 0}
-            <div class="rendered-markdown bg-surface-700 p-4 ms-8 mt-4">
+            <div class="rendered-markdown preset-filled-surface-200-800 p-4 ms-8 mt-4">
               {@html ascent.notes}
             </div>
           {/if}
 
           {#if ascent.files.length > 0}
             <div class="ms-5 mt-4">
-              <Accordion>
-                <AccordionItem>
-                  <svelte:fragment slot="lead"><i class="fa-solid fa-file" /></svelte:fragment>
-                  <svelte:fragment slot="summary">{ascent.files.length} files</svelte:fragment>
-                  <svelte:fragment slot="content">
+              <Accordion collapsible>
+                <Accordion.Item value="files">
+                  {#snippet lead()}
+                    <i class="fa-solid fa-file"></i>
+                  {/snippet}
+                  {#snippet control()}
+                    {ascent.files.length} files
+                  {/snippet}
+                  {#snippet panel()}
                     <div class="flex flex-wrap gap-3">
                       {#each ascent.files as file}
                         {#if file.stat != null}
@@ -322,8 +339,8 @@
                         {/if}
                       {/each}
                     </div>
-                  </svelte:fragment>
-                </AccordionItem>
+                  {/snippet}
+                </Accordion.Item>
               </Accordion>
             </div>
           {/if}
@@ -337,7 +354,7 @@
 
     {#if data.session?.user != null}
       <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/ascents/add`}>Log ascent</a>
+        <a class="btn preset-filled-primary-500" href={`${basePath}/ascents/add`}>Log ascent</a>
       </div>
     {/if}
   </section>

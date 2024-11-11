@@ -2,15 +2,9 @@
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
   import RouteName from '$lib/components/RouteName'
-  import { AppBar, Paginator } from '@skeletonlabs/skeleton'
+  import { AppBar, Pagination } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
-
-  const onPageChange = ({ detail }: CustomEvent<number>) => {
-    const url = new URL($page.url)
-    url.searchParams.set('page', String(detail))
-    goto(url)
-  }
+  let { data } = $props()
 </script>
 
 <svelte:head>
@@ -18,31 +12,35 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">Routes</svelte:fragment>
+  {#snippet lead()}
+    Routes
+  {/snippet}
 </AppBar>
 
-<ul class="list mt-8">
+<ul class="card mt-8 p-4 preset-filled-surface-100-900">
   {#each data.routes as route (route.id)}
-    <li class="px-4 py-2 hover:bg-primary-500/10 flex justify-between">
-      <a class="text-primary-500" href={route.pathname}>
+    <li class="hover:preset-tonal-primary flex justify-between">
+      <a class="anchor px-4 py-3 grow hover:text-white" href={route.pathname}>
         <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
       </a>
 
-      <a class="text-primary-500" href={route.block.area.pathname}>
-        {route.block.area.name}
+      <a class="anchor px-4 py-3 hover:text-white" href={route.block.pathname}>
+        {route.block.name}
       </a>
     </li>
   {/each}
 </ul>
 
 <div class="mt-8 flex justify-end">
-  <Paginator
-    settings={{
-      amounts: [],
-      limit: data.pagination.pageSize,
-      page: data.pagination.page,
-      size: data.pagination.total,
+  <Pagination
+    data={[]}
+    count={data.pagination.total}
+    pageSize={data.pagination.pageSize}
+    page={data.pagination.page}
+    onPageChange={(detail) => {
+      const url = new URL($page.url)
+      url.searchParams.set('page', String(detail.page))
+      goto(url)
     }}
-    on:page={onPageChange}
   />
 </div>

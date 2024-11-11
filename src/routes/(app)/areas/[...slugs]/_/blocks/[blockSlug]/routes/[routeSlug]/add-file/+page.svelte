@@ -4,14 +4,13 @@
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import FileBrowser from '$lib/components/FileBrowser'
   import RouteName from '$lib/components/RouteName'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
-  export let form
-  $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`
+  let { data, form } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
 
-  let filePath = form?.path == null ? null : form.path.toString()
-  $: grade = data.grades.find((grade) => grade.id === data.route.gradeFk)
+  let filePath = $state(form?.path == null ? null : form.path.toString())
+  let grade = $derived(data.grades.find((grade) => grade.id === data.route.gradeFk))
 </script>
 
 <svelte:head>
@@ -25,55 +24,50 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Edit files of</span>
-    &nbsp;
     <a class="anchor" href={basePath}>
       <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={data.route} />
     </a>
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-<form method="POST" use:enhance>
-  {#if form?.error != null}
-    <aside class="alert variant-filled-error mt-8">
-      <div class="alert-message">
-        <p>{form.error}</p>
-      </div>
-    </aside>
-  {/if}
+{#if form?.error}
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
+  </aside>
+{/if}
 
-  {#if PUBLIC_DEMO_MODE}
-    <aside class="alert variant-filled-warning mt-4">
-      <i class="fa-solid fa-triangle-exclamation" />
+{#if PUBLIC_DEMO_MODE}
+  <aside class="card preset-tonal-warning mt-8 p-4 flex items-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation"></i>
 
-      <div class="alert-message">
-        <p>File storage is disabled in demo mode</p>
-      </div>
-    </aside>
-  {/if}
+    <p>File storage is disabled in demo mode</p>
+  </aside>
+{/if}
 
-  <div class="mt-8 flex gap-2">
-    <label class="label grow">
-      <span>New file</span>
-      <input name="path" type="hidden" value={filePath} />
+<form class="card mt-8 p-4 preset-filled-surface-100-900" method="POST" use:enhance>
+  <label class="label grow">
+    <span>New file</span>
+    <input name="path" type="hidden" value={filePath} />
 
-      <input name="path" type="hidden" value={filePath} />
+    <input name="path" type="hidden" value={filePath} />
+    <div class="ring ring-surface-800 rounded">
       <FileBrowser bind:value={filePath} />
-    </label>
+    </div>
+  </label>
 
-    <label class="label">
-      <span>Type</span>
-      <select class="select" name="type" value={form?.type ?? 'beta'}>
-        <option value="beta">Beta</option>
-        <option value="topo">Topo</option>
-        <option value="other">Other</option>
-      </select>
-    </label>
-  </div>
+  <label class="label mt-4">
+    <span>Type</span>
+    <select class="select" name="type" value={form?.type ?? 'beta'}>
+      <option value="beta">Beta</option>
+      <option value="topo">Topo</option>
+      <option value="other">Other</option>
+    </select>
+  </label>
 
   <div class="flex justify-between mt-8">
-    <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary" disabled={filePath == null} type="submit">Select</button>
+    <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
+    <button class="btn preset-filled-primary-500" disabled={filePath == null} type="submit">Select</button>
   </div>
 </form>

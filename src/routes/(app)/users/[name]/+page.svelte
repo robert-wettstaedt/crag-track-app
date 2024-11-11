@@ -6,11 +6,12 @@
   import RouteName from '$lib/components/RouteName'
   import Vega from '$lib/components/Vega'
   import { getGradeColor } from '$lib/grades'
-  import { AppBar, TabAnchor, TabGroup } from '@skeletonlabs/skeleton'
+  import { AppBar, Tabs } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
-  export let data
-  export let form
+  let { data, form } = $props()
+
+  let tabSet: 'sends' | 'open-projects' | 'finished-projects' | 'settings' = $state('sends')
 
   const gradingScale = data.user?.userSettings?.gradingScale ?? 'FB'
 
@@ -30,29 +31,26 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     {data.user?.userName}
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-<div class="card mt-4 p-4">
-  <TabGroup>
-    <TabAnchor href={$page.url.pathname} selected={$page.url.hash === ''}>Sends</TabAnchor>
+<div class="card mt-8 p-4 preset-filled-surface-100-900">
+  <Tabs bind:value={tabSet}>
+    {#snippet list()}
+      <Tabs.Control value="sends">Sends</Tabs.Control>
 
-    <TabAnchor href={$page.url.pathname + '#open-projects'} selected={$page.url.hash === '#open-projects'}>
-      Open projects
-    </TabAnchor>
+      <Tabs.Control value="open-projects">Open projects</Tabs.Control>
+      <Tabs.Control value="finished-projects">Finished projects</Tabs.Control>
 
-    <TabAnchor href={$page.url.pathname + '#finished-projects'} selected={$page.url.hash === '#finished-projects'}>
-      Finished projects
-    </TabAnchor>
+      {#if $page.data.session?.user?.email === data.user?.email}
+        <Tabs.Control value="settings">Settings</Tabs.Control>
+      {/if}
+    {/snippet}
 
-    {#if $page.data.session?.user?.email === data.user?.email}
-      <TabAnchor href={$page.url.pathname + '#settings'} selected={$page.url.hash === '#settings'}>Settings</TabAnchor>
-    {/if}
-
-    <svelte:fragment slot="panel">
-      {#if $page.url.hash === ''}
+    {#snippet content()}
+      <Tabs.Panel value="sends">
         <Vega
           spec={{
             background: 'transparent',
@@ -103,11 +101,13 @@
             theme: 'dark',
           }}
         />
-      {:else if $page.url.hash === '#open-projects'}
+      </Tabs.Panel>
+
+      <Tabs.Panel value="open-projects">
         <nav class="list-nav">
           <ul>
             {#each data.openProjects as attempt}
-              <li class="flex justify-between w-full hover:bg-primary-500/10">
+              <li class="flex justify-between w-full p-3 hover:preset-tonal-primary">
                 <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
                   <dt>
                     <RouteName grades={data.grades} {gradingScale} route={attempt.route} />
@@ -119,17 +119,17 @@
                   </dd>
                 </a>
 
-                <ol class="breadcrumb w-auto pe-4">
-                  <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.block.area.pathname}>
+                <ol class="flex items-center gap-2 w-auto pe-4">
+                  <li>
+                    <a class="anchor" href={attempt.route.block.area.pathname}>
                       {attempt.route.block.area.name}
                     </a>
                   </li>
 
-                  <li class="crumb-separator" aria-hidden>&rsaquo;</li>
+                  <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
 
-                  <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.block.pathname}>
+                  <li>
+                    <a class="anchor" href={attempt.route.block.pathname}>
                       {attempt.route.block.name}
                     </a>
                   </li>
@@ -138,11 +138,13 @@
             {/each}
           </ul>
         </nav>
-      {:else if $page.url.hash === '#finished-projects'}
+      </Tabs.Panel>
+
+      <Tabs.Panel value="finished-projects">
         <nav class="list-nav">
           <ul>
             {#each data.finishedProjects as attempt}
-              <li class="flex justify-between w-full hover:bg-primary-500/10">
+              <li class="flex justify-between w-full p-3 hover:preset-tonal-primary">
                 <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
                   <dt>
                     <RouteName grades={data.grades} {gradingScale} route={attempt.route} />
@@ -154,17 +156,17 @@
                   </dd>
                 </a>
 
-                <ol class="breadcrumb w-auto pe-4">
-                  <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.block.area.pathname}>
+                <ol class="flex items-center gap-2 w-auto pe-4">
+                  <li>
+                    <a class="anchor" href={attempt.route.block.area.pathname}>
                       {attempt.route.block.area.name}
                     </a>
                   </li>
 
-                  <li class="crumb-separator" aria-hidden>&rsaquo;</li>
+                  <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
 
-                  <li class="crumb">
-                    <a class="anchor !p-0 hover:!bg-transparent" href={attempt.route.block.pathname}>
+                  <li>
+                    <a class="anchor" href={attempt.route.block.pathname}>
                       {attempt.route.block.name}
                     </a>
                   </li>
@@ -173,7 +175,9 @@
             {/each}
           </ul>
         </nav>
-      {:else if $page.url.hash === '#settings'}
+      </Tabs.Panel>
+
+      <Tabs.Panel value="settings">
         {#if $page.data.session?.user?.email === data.user?.email}
           <form method="POST">
             {#if form?.error}
@@ -227,14 +231,14 @@
             </label>
 
             <div class="flex justify-end mt-8">
-              <button class="btn variant-filled-primary" type="submit">
-                <i class="fa-solid fa-floppy-disk me-2" />
+              <button class="btn preset-filled-primary-500" type="submit">
+                <i class="fa-solid fa-floppy-disk"></i>
                 Save settings
               </button>
             </div>
           </form>
         {/if}
-      {/if}
-    </svelte:fragment>
-  </TabGroup>
+      </Tabs.Panel>
+    {/snippet}
+  </Tabs>
 </div>

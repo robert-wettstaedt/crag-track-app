@@ -5,7 +5,7 @@
   import type { InferResultType } from '$lib/db/types'
   import type { EnrichedBlock } from '$lib/db/utils'
   import { colorScheme, type TopoDTO } from '$lib/topo'
-  import { Ratings } from '@skeletonlabs/skeleton'
+  import { Rating } from '@skeletonlabs/skeleton-svelte'
 
   type Block = InferResultType<
     'blocks',
@@ -24,12 +24,15 @@
   > &
     EnrichedBlock & { topos: TopoDTO[] }
 
-  export let name: string
-  export let blocks: Block[]
-  export let getBlockKey: GetBlockKey = null
+  interface Props {
+    name: string
+    blocks: Block[]
+    getBlockKey?: GetBlockKey
+    grades: Grade[]
+    gradingScale?: UserSettings['gradingScale']
+  }
 
-  export let grades: Grade[]
-  export let gradingScale: UserSettings['gradingScale'] = 'FB'
+  let { name, blocks, getBlockKey = null, grades, gradingScale = 'FB' }: Props = $props()
 </script>
 
 <section>
@@ -74,11 +77,11 @@
 
                   {#if route.rating != null}
                     <div>
-                      <Ratings value={route.rating} max={3} justify="start" spacing="">
-                        <svelte:fragment slot="full">
-                          <i class="fa-solid fa-star text-warning-500" /></svelte:fragment
-                        >
-                      </Ratings>
+                      <Rating value={route.rating} count={3} readOnly>
+                        {#snippet iconFull()}
+                          <i class="fa-solid fa-star text-warning-500"></i>
+                        {/snippet}
+                      </Rating>
                     </div>
                   {/if}
                 </h3>
@@ -125,7 +128,7 @@
               class="text-xs text-white bg-black/50 p-1 absolute top-4 right-4 z-50"
               style="print-color-adjust: exact !important"
             >
-              <i class="fa-solid fa-location-dot me-2" />
+              <i class="fa-solid fa-location-dot"></i>
               {block.geolocation.lat.toFixed(5)}, {block.geolocation.long.toFixed(5)}
             </p>
           {/if}

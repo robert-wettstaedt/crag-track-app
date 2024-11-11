@@ -2,11 +2,10 @@
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import AreaFormFields from '$lib/components/AreaFormFields'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
-  export let form
-  $: basePath = `/areas/${$page.params.slugs}`
+  let { data, form } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}`)
 </script>
 
 <svelte:head>
@@ -18,40 +17,34 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Create area</span>
     {#if data.parent != null}
-      &nbsp;
       <span>in</span>
-      &nbsp;
       <a class="anchor" href={basePath}>{data.parent.name}</a>
     {/if}
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-<form method="POST" use:enhance>
-  {#if form?.error}
-    <aside class="alert variant-filled-error mt-8">
-      <div class="alert-message">
-        <p>{form.error}</p>
-      </div>
-    </aside>
-  {/if}
+{#if form?.error}
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
+  </aside>
+{/if}
 
-  <div class="mt-8">
-    <AreaFormFields
-      grades={data.grades}
-      gradingScale={data.user?.userSettings?.gradingScale}
-      description={form?.description ?? ''}
-      name={form?.name ?? ''}
-      type={form?.type ?? 'area'}
-    />
-  </div>
+<form class="card mt-8 p-4 preset-filled-surface-100-900" method="POST" use:enhance>
+  <AreaFormFields
+    grades={data.grades}
+    gradingScale={data.user?.userSettings?.gradingScale}
+    description={form?.description ?? ''}
+    name={form?.name ?? ''}
+    type={form?.type ?? 'area'}
+  />
 
   <div class="flex justify-between mt-8">
-    <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary" type="submit">
-      <i class="fa-solid fa-floppy-disk me-2" /> Save area
+    <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
+    <button class="btn preset-filled-primary-500" type="submit">
+      <i class="fa-solid fa-floppy-disk"></i> Save area
     </button>
   </div>
 </form>

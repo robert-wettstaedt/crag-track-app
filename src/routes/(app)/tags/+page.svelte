@@ -1,9 +1,8 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
-  export let form
+  let { data, form } = $props()
 </script>
 
 <svelte:head>
@@ -11,27 +10,26 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">Tags</svelte:fragment>
+  {#snippet lead()}
+    Tags
+  {/snippet}
 
-  <svelte:fragment slot="trail">
+  {#snippet trail()}
     {#if data.session?.user != null}
-      <a class="btn btn-sm variant-soft-primary" href="/tags/add">
-        <i class="fa-solid fa-plus me-2" /> Add tag
+      <a class="btn btn-sm preset-filled-primary-500" href="/tags/add">
+        <i class="fa-solid fa-plus"></i> Add tag
       </a>
     {/if}
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
 {#if form?.error}
-  <aside class="alert variant-filled-error mt-8">
-    <div class="alert-message">
-      <p>{form.error}</p>
-    </div>
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
   </aside>
 {/if}
 
-<div class="table-container">
-  <!-- Native Table Element -->
+<div class="card mt-8 p-4 preset-filled-surface-100-900 table-wrap">
   <table class="table table-hover">
     <thead>
       <tr>
@@ -39,20 +37,41 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>
+
+    <tbody class="hover:[&>tr]:preset-tonal-primary">
       {#each data.tags as tag}
         <tr>
           <td>{tag.id}</td>
 
           <td>
-            <div class="flex gap-2">
-              <a href="/tags/{tag.id}/edit" class="btn btn-sm variant-filled-primary">Edit</a>
+            <div class="flex items-center gap-2">
+              <a href="/tags/{tag.id}/edit" class="btn btn-sm preset-filled-primary-500">Edit</a>
 
-              <form action="?/delete" method="POST" use:enhance>
-                <input type="hidden" name="id" value={tag.id} />
+              <Popover
+                arrow
+                arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+                contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+                positioning={{ placement: 'top' }}
+                triggerBase="btn btn-sm preset-filled-error-500 !text-white"
+              >
+                {#snippet trigger()}
+                  <i class="fa-solid fa-trash"></i>Delete
+                {/snippet}
 
-                <button type="submit" class="btn btn-sm variant-filled-error">Delete</button>
-              </form>
+                {#snippet content()}
+                  <article>
+                    <p>Are you sure you want to delete this tag?</p>
+                  </article>
+
+                  <footer class="flex justify-end">
+                    <form action="?/delete" method="POST" use:enhance>
+                      <input type="hidden" name="id" value={tag.id} />
+
+                      <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+                    </form>
+                  </footer>
+                {/snippet}
+              </Popover>
             </div>
           </td>
         </tr>

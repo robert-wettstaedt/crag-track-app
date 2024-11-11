@@ -1,59 +1,47 @@
 <script lang="ts">
   import type { Grade, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
-  import type { EnrichedRoute } from '$lib/db/utils'
-  import { getGradeColor } from '$lib/grades'
-  import { Table } from '@skeletonlabs/skeleton'
+  import {} from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
+  import RouteName from '../RouteName'
 
-  export let ascents: InferResultType<'ascents', { author: true; route: true }>[]
-  export let grades: Grade[]
-  export let gradingScale: UserSettings['gradingScale'] = 'FB'
+  interface Props {
+    ascents: InferResultType<'ascents', { author: true; route: true }>[]
+    grades: Grade[]
+    gradingScale?: UserSettings['gradingScale']
+  }
 
-  $: body = ascents.map((ascent) => {
-    const { dateTime, route, type } = ascent
-
-    const climber = `<a class="anchor" href="/users/${ascent.author.userName}">${ascent.author.userName}</a>`
-
-    const formattedDateTime = DateTime.fromSQL(dateTime).toLocaleString(DateTime.DATE_FULL)
-
-    const routeGrade = (() => {
-      const grade = grades.find((grade) => grade.id === route.gradeFk)
-
-      if (grade == null) {
-        return ''
-      }
-
-      return `<span class="badge text-white" style="background: ${getGradeColor(grade)}">${grade[gradingScale]}</span>`
-    })()
-
-    const personalGrade = (() => {
-      const grade = grades.find((grade) => grade.id === ascent.gradeFk)
-
-      if (grade == null) {
-        return ''
-      }
-
-      return `<span class="badge text-white" style="background: ${getGradeColor(grade)}">${grade[gradingScale]}</span>`
-    })()
-
-    const enrichedRoute = route as EnrichedRoute
-    const routeName = `<a class="anchor" href="${enrichedRoute.pathname}">${route.name.length === 0 ? '&lt;no name&gt;' : route.name}</a>`
-
-    const formattedType =
-      type === 'flash'
-        ? '<i class="fa-solid fa-bolt-lightning text-yellow-300 me-2"></i> Flash'
-        : type === 'send'
-          ? '<i class="fa-solid fa-circle text-red-500 me-2"></i> Send'
-          : '<i class="fa-solid fa-person-falling text-blue-300 me-2"></i> Attempt'
-
-    return [climber, formattedDateTime, routeName, routeGrade, personalGrade, formattedType]
-  })
+  let { ascents, grades, gradingScale = 'FB' }: Props = $props()
 </script>
 
-<Table
-  source={{
-    head: ['Climber', 'Date time', 'Route name', 'Route grade', 'Personal grade', 'Type'],
-    body,
-  }}
-/>
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Climber</th>
+        <th>Date time</th>
+        <th>Route</th>
+      </tr>
+    </thead>
+
+    <tbody class="hover:[&>tr]:preset-tonal-primary">
+      {#each ascents as ascent}
+        <tr>
+          <td>
+            <a class="anchor hover:text-white" href="/users/{ascent.author.userName}">{ascent.author.userName}</a>
+          </td>
+
+          <td>
+            {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
+          </td>
+
+          <td>
+            <a class="anchor hover:text-white" href={ascent.route.pathname}>
+              <RouteName {grades} route={ascent.route} {gradingScale} />
+            </a>
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+</div>

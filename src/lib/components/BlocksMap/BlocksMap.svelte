@@ -25,18 +25,35 @@
 
   const DEFAULT_ZOOM = 19
 
-  export let blocks: EnrichedBlock[]
-  export let selectedArea: Area | null = null
-  export let selectedBlock: InferResultType<'blocks', { geolocation: true }> | null = null
-  export let heightSubtrahend = 0
-  export let height: number | string | null = null
-  export let zoom: number | null = DEFAULT_ZOOM
-  export let showRelief = true
-  export let showBlocks = true
-  export let showAreas = true
-  export let declutter = true
-  export let getBlockKey: GetBlockKey = null
-  export let parkingLocations: Geolocation[] = []
+  interface Props {
+    blocks: EnrichedBlock[]
+    selectedArea?: Area | null
+    selectedBlock?: InferResultType<'blocks', { geolocation: true }> | null
+    heightSubtrahend?: number
+    height?: number | string | null
+    zoom?: number | null
+    showRelief?: boolean
+    showBlocks?: boolean
+    showAreas?: boolean
+    declutter?: boolean
+    getBlockKey?: GetBlockKey
+    parkingLocations?: Geolocation[]
+  }
+
+  let {
+    blocks,
+    selectedArea = null,
+    selectedBlock = null,
+    heightSubtrahend = 0,
+    height = null,
+    zoom = DEFAULT_ZOOM,
+    showRelief = $bindable(true),
+    showBlocks = true,
+    showAreas = true,
+    declutter = true,
+    getBlockKey = null,
+    parkingLocations = [],
+  }: Props = $props()
 
   interface FeatureData {
     label: string
@@ -415,14 +432,14 @@
   }
 </script>
 
-<svelte:window on:resize={resizeMap} />
+<svelte:window onresize={resizeMap} />
 
 <div class="relative">
-  <div class="map w-full -z-0" use:mapAction />
+  <div class="map w-full -z-0" use:mapAction></div>
 
   <div class="map-controls absolute top-2 right-2 p-2 bg-surface-500/90 text-white">
     <label class="flex items-center space-x-2">
-      <input class="checkbox" bind:checked={showRelief} on:change={onChangeRelief} type="checkbox" />
+      <input class="checkbox" bind:checked={showRelief} onchange={onChangeRelief} type="checkbox" />
       <p>Show Bayern relief</p>
     </label>
   </div>

@@ -3,25 +3,41 @@
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
   import type { Grade, InsertRoute, Route, Tag, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
-  import { Ratings } from '@skeletonlabs/skeleton'
+  import { Rating } from '@skeletonlabs/skeleton-svelte'
   import type { ChangeEventHandler } from 'svelte/elements'
 
-  export let blockId: number
-  export let description: Route['description']
-  export let gradeFk: Route['gradeFk']
-  export let grades: Grade[]
-  export let gradingScale: UserSettings['gradingScale'] | null | undefined
-  export let name: Route['name']
-  export let rating: Route['rating']
-  export let routeTags: string[]
-  export let tags: Tag[]
+  interface Props {
+    blockId: number
+    description: Route['description']
+    gradeFk: Route['gradeFk']
+    grades: Grade[]
+    gradingScale: UserSettings['gradingScale'] | null | undefined
+    name: Route['name']
+    rating: NonNullable<Route['rating']> | undefined
+    routeTags: string[]
+    tags: Tag[]
+  }
 
-  let routeExternalResources: InferResultType<
-    'routeExternalResources',
-    { externalResource8a: true; externalResource27crags: true; externalResourceTheCrag: true }
-  >
+  let {
+    blockId,
+    description = $bindable(),
+    gradeFk = $bindable(),
+    grades,
+    gradingScale,
+    name = $bindable(),
+    rating = $bindable(),
+    routeTags,
+    tags,
+  }: Props = $props()
 
-  let loading = false
+  let routeExternalResources:
+    | InferResultType<
+        'routeExternalResources',
+        { externalResource8a: true; externalResource27crags: true; externalResourceTheCrag: true }
+      >
+    | undefined = $state()
+
+  let loading = $state(false)
 
   const onChangeName: ChangeEventHandler<HTMLInputElement> = async (event) => {
     loading = true
@@ -40,7 +56,7 @@
 
     name = route.name ?? null
     gradeFk = route.gradeFk ?? null
-    rating = route.rating ?? null
+    rating = route.rating ?? undefined
     description = route.description ?? null
     description = route.description ?? null
 
@@ -51,11 +67,11 @@
 
 <p>Name</p>
 <div class="input-group input-group-divider grid-cols-[1fr_auto]">
-  <input class="input" name="name" type="text" placeholder="Enter name..." value={name} on:change={onChangeName} />
+  <input class="input" name="name" type="text" placeholder="Enter name..." value={name} onchange={onChangeName} />
 
   {#if loading}
     <div class="input-group-shim">
-      <i class="fa-solid fa-spinner fa-spin" />
+      <i class="fa-solid fa-spinner fa-spin"></i>
     </div>
   {/if}
 </div>
@@ -77,9 +93,9 @@
 
 <label class="label mt-4">
   <span>Description</span>
-  <textarea hidden name="description" value={description} />
+  <textarea hidden name="description" value={description}></textarea>
 
-  <MarkdownEditor value={description} {grades} {gradingScale} on:change={(event) => (description = event.detail)} />
+  <MarkdownEditor {grades} {gradingScale} bind:value={description} />
 </label>
 
 <label class="label mt-4">
@@ -87,16 +103,14 @@
   <input name="rating" type="hidden" value={rating} />
 </label>
 
-<Ratings
-  interactive
-  justify="start"
-  max={3}
-  on:icon={(event) => (rating = event.detail.index)}
-  value={rating ?? undefined}
->
-  <svelte:fragment slot="empty"><i class="fa-regular fa-star text-3xl text-warning-500" /></svelte:fragment>
-  <svelte:fragment slot="full"><i class="fa-solid fa-star text-3xl text-warning-500" /></svelte:fragment>
-</Ratings>
+<Rating bind:value={rating} count={3}>
+  {#snippet iconEmpty()}
+    <i class="fa-regular fa-star text-3xl text-warning-500"></i>
+  {/snippet}
+  {#snippet iconFull()}
+    <i class="fa-solid fa-star text-3xl text-warning-500"></i>
+  {/snippet}
+</Rating>
 
 <label class="label mt-4">
   <span>Tags</span>

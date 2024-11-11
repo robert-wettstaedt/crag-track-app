@@ -3,17 +3,20 @@
   import type { Grade, UserSettings } from '$lib/db/schema'
   import type { References } from '$lib/references.server'
 
-  export let references: References
+  interface Props {
+    references: References
+    grades: Grade[]
+    gradingScale: UserSettings['gradingScale'] | undefined
+  }
 
-  export let grades: Grade[]
-  export let gradingScale: UserSettings['gradingScale'] | undefined
+  let { references, grades, gradingScale }: Props = $props()
 </script>
 
 <nav class="list-nav">
   <ul>
     {#each references.routes as route}
       <li>
-        <a href={`/routes/${route.id}`}>
+        <a class="anchor px-4 py-3 flex hover:preset-tonal-primary" href={`/routes/${route.id}`}>
           <RouteName {route} {grades} {gradingScale} />
         </a>
       </li>
@@ -21,7 +24,7 @@
 
     {#each references.areas as area}
       <li>
-        <a href={`/areas/${area.id}`}>
+        <a class="anchor px-4 py-3 flex hover:preset-tonal-primary hover:text-white" href={`/areas/${area.id}`}>
           {area.name}
         </a>
       </li>
@@ -29,7 +32,10 @@
 
     {#each references.ascents as ascent}
       <li>
-        <a href={`/routes/${ascent.route.id}`}>
+        <a
+          class="anchor px-4 py-3 flex hover:preset-tonal-primary hover:text-white"
+          href={`/routes/${ascent.route.id}`}
+        >
           {ascent.author.userName}'s tick of&nbsp;<RouteName route={ascent.route} {grades} {gradingScale} />
         </a>
       </li>

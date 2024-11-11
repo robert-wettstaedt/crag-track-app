@@ -5,7 +5,7 @@
   import '@fortawesome/fontawesome-free/css/all.css'
   import '../../../../../app.postcss'
 
-  export let data
+  let { data } = $props()
 
   const noTopos = (
     data.area.areas.length === 0
@@ -15,12 +15,14 @@
 
   const noMaps = data.area.areas.length === 0 ? 2 : data.area.areas.length + 1
 
-  let loadedTopos = 0
-  let loadedMaps = 0
+  let loadedTopos = $state(0)
+  let loadedMaps = $state(0)
 
-  $: if (loadedTopos === noTopos && loadedMaps === noMaps) {
-    window.print()
-  }
+  $effect(() => {
+    if (loadedTopos === noTopos && loadedMaps === noMaps) {
+      window.print()
+    }
+  })
 
   const ALPHABET_START_INDEX = 'a'.charCodeAt(0)
 </script>

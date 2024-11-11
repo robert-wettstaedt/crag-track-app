@@ -1,9 +1,9 @@
 <script>
   import { enhance } from '$app/forms'
   import TagFormFields from '$lib/components/TagFormFields'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
-  export let form
+  let { form } = $props()
 </script>
 
 <svelte:head>
@@ -11,28 +11,24 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Create tag</span>
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-<form method="POST" use:enhance>
-  {#if form?.error}
-    <aside class="alert variant-filled-error mt-8">
-      <div class="alert-message">
-        <p>{form.error}</p>
-      </div>
-    </aside>
-  {/if}
+{#if form?.error}
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
+  </aside>
+{/if}
 
-  <div class="mt-8">
-    <TagFormFields id={form?.id ?? ''} />
-  </div>
+<form class="card mt-8 p-4 preset-filled-surface-100-900" method="POST" use:enhance>
+  <TagFormFields id={form?.id ?? ''} />
 
   <div class="flex justify-between mt-8">
-    <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary" type="submit">
-      <i class="fa-solid fa-floppy-disk me-2" /> Save tag
+    <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
+    <button class="btn preset-filled-primary-500" type="submit">
+      <i class="fa-solid fa-floppy-disk"></i> Save tag
     </button>
   </div>
 </form>

@@ -5,23 +5,30 @@
   import RouteView from './components/Route'
   import { selectedPointTypeStore, selectedRouteStore } from './stores'
 
-  export let topos: TopoDTO[]
-  export let editable = false
-  export let selectedTopoIndex = 0
-  export let getRouteKey: ((route: TopoRouteDTO, index: number) => number) | null = null
+  interface Props {
+    topos: TopoDTO[]
+    editable?: boolean
+    selectedTopoIndex?: number
+    getRouteKey?: ((route: TopoRouteDTO, index: number) => number) | null
+  }
 
-  let img: HTMLImageElement
-  let imgWrapper: HTMLDivElement
-  let height = 0
-  let width = 0
-  let scale = 0
-  let translateX = 0
-  let translateY = 0
+  let { topos = $bindable(), editable = false, selectedTopoIndex = $bindable(0), getRouteKey = null }: Props = $props()
+
+  let img: HTMLImageElement | undefined = $state()
+  let imgWrapper: HTMLDivElement | undefined = $state()
+
+  let height = $state(0)
+  let width = $state(0)
+  let scale = $state(0)
+  let translateX = $state(0)
+  let translateY = $state(0)
   let selectedPoint: PointDTO | undefined = undefined
-  let svg: SVGSVGElement | undefined
+  let svg: SVGSVGElement | undefined = $state()
 
-  $: selectedTopo = topos.at(selectedTopoIndex)
-  $: selectedTopoRoute = topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore)
+  let selectedTopo = $derived(topos.at(selectedTopoIndex))
+  let selectedTopoRoute = $derived(
+    topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore),
+  )
 
   const dispatcher = createEventDispatcher<{ change: TopoRouteDTO; load: void }>()
 
@@ -89,6 +96,10 @@
   }
 
   const getDimensions = () => {
+    if (img == null || imgWrapper == null) {
+      return
+    }
+
     scale = img.width / img.naturalWidth
     height = img.height
     width = img.width
@@ -102,18 +113,18 @@
   }
 </script>
 
-<svelte:window on:resize={getDimensions} />
+<svelte:window onresize={getDimensions} />
 
 {#if editable}
-  <div class="flex justify-between p-2 bg-surface-500">
+  <div class="flex justify-between p-2 preset-filled-surface-100-900">
     {#if $selectedRouteStore == null}
-      <p class="p-1">Select a route to edit</p>
+      <p>Select a route to edit</p>
     {:else}
       <label class="flex items-center space-x-2">
         <input
           checked={selectedTopoRoute?.topType === 'topout'}
           class="checkbox"
-          on:change={onChangeTopType}
+          onchange={onChangeTopType}
           type="checkbox"
         />
 
@@ -122,24 +133,24 @@
 
       <div class="flex gap-1">
         <button
-          class={`btn btn-sm ${$selectedPointTypeStore === 'start' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
+          class={`btn btn-sm ${$selectedPointTypeStore === 'start' ? 'preset-filled-success-500' : 'preset-filled-secondary-500'}`}
           disabled={(selectedTopoRoute?.points ?? []).filter((point) => point.type === 'start').length >= 2}
-          on:click={onChangeType('start')}
+          onclick={onChangeType('start')}
         >
           Start
         </button>
 
         <button
-          class={`btn btn-sm ${$selectedPointTypeStore === 'middle' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
-          on:click={onChangeType('middle')}
+          class={`btn btn-sm ${$selectedPointTypeStore === 'middle' ? 'preset-filled-success-500' : 'preset-filled-secondary-500'}`}
+          onclick={onChangeType('middle')}
         >
           Middle
         </button>
 
         <button
-          class={`btn btn-sm ${$selectedPointTypeStore === 'top' ? 'variant-filled-success' : 'variant-filled-tertiary'}`}
+          class={`btn btn-sm ${$selectedPointTypeStore === 'top' ? 'preset-filled-success-500' : 'preset-filled-secondary-500'}`}
           disabled={(selectedTopoRoute?.points ?? []).filter((point) => point.type === 'top').length >= 1}
-          on:click={onChangeType('top')}
+          onclick={onChangeType('top')}
         >
           Top
         </button>
@@ -156,7 +167,7 @@
           alt={topo.file.stat?.filename}
           bind:this={img}
           class="absolute top-0 left-0 w-full h-full object-cover blur pointer-events-none touch-none"
-          on:load={getDimensions}
+          onload={getDimensions}
           src={`/nextcloud${topo.file.stat?.filename}`}
         />
 
@@ -165,7 +176,7 @@
           bind:this={img}
           class="m-auto relative z-10 pointer-events-none touch-none"
           id="img"
-          on:load={onLoadImage}
+          onload={onLoadImage}
           src={`/nextcloud${topo.file.stat?.filename}`}
         />
       {:else}
@@ -180,7 +191,7 @@
   >
     <svg
       bind:this={svg}
-      on:click={onClickSvg}
+      onclick={onClickSvg}
       role="presentation"
       viewBox={`0 0 ${width} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
@@ -211,16 +222,22 @@
 
   {#if topos.length > 1}
     <div class="flex gap-1 absolute top-2 right-2 z-30">
-      <button class="btn btn-sm variant-ghost-primary" disabled={selectedTopoIndex <= 0} on:click={onPrevTopo}>
-        <i class="fa-solid fa-caret-left" />
+      <button
+        aria-label="Previous Topo"
+        class="btn btn-sm preset-outlined-primary-500-primary"
+        disabled={selectedTopoIndex <= 0}
+        onclick={onPrevTopo}
+      >
+        <i class="fa-solid fa-caret-left"></i>
       </button>
 
       <button
-        class="btn btn-sm variant-ghost-primary"
+        aria-label="Next Topo"
+        class="btn btn-sm preset-outlined-primary-500-primary"
         disabled={selectedTopoIndex >= topos.length - 1}
-        on:click={onNextTopo}
+        onclick={onNextTopo}
       >
-        <i class="fa-solid fa-caret-right" />
+        <i class="fa-solid fa-caret-right"></i>
       </button>
     </div>
   {/if}

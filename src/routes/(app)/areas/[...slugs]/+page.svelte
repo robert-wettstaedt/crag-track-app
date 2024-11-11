@@ -3,16 +3,14 @@
   import { convertException } from '$lib'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
-  import { AppBar, getToastStore, ProgressRadial } from '@skeletonlabs/skeleton'
+  import { AppBar, ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
-  const toastStore = getToastStore()
+  let { data } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}`)
+  let files = $state(data.files)
 
-  export let data
-  $: basePath = `/areas/${$page.params.slugs}`
-  $: files = data.files
-
-  let loadingDownload = false
+  let loadingDownload = $state(false)
 
   const onDownloadGpx = async () => {
     loadingDownload = true
@@ -35,13 +33,7 @@
       window.URL.revokeObjectURL(url)
     } catch (exception) {
       const error = convertException(exception)
-
-      toastStore.trigger({
-        background: 'variant-filled-error',
-        hideDismiss: true,
-        message: error,
-        timeout: 10_000,
-      })
+      alert(error)
     }
 
     loadingDownload = false
@@ -53,14 +45,14 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     {data.area.name}
-  </svelte:fragment>
+  {/snippet}
 
-  <svelte:fragment slot="headline">
-    <dl class="list-dl">
+  {#snippet headline()}
+    <dl>
       {#if data.area.description != null && data.area.description.length > 0}
-        <div>
+        <div class="flex p-2">
           <span class="flex-auto">
             <dt>Description</dt>
             <dd>
@@ -72,67 +64,69 @@
         </div>
       {/if}
 
-      <div>
+      <div class="flex p-2">
         <span class="flex-auto">
           <dt>Created at</dt>
           <dd>{DateTime.fromSQL(data.area.createdAt).toLocaleString(DateTime.DATETIME_MED)}</dd>
         </span>
       </div>
 
-      <div>
+      <div class="flex p-2">
         <span class="flex-auto">
           <dt>Author</dt>
           <dd>{data.area.author.userName}</dd>
         </span>
       </div>
 
-      <div>
+      <div class="flex p-2">
         <span class="flex-auto">
           <dt>Type</dt>
           <dd>{data.area.type}</dd>
         </span>
       </div>
     </dl>
-  </svelte:fragment>
+  {/snippet}
 
-  <svelte:fragment slot="trail">
+  {#snippet trail()}
     {#if data.session?.user != null}
       {#if data.area.type === 'crag'}
-        <a class="btn btn-sm variant-ghost" href={`${basePath}/export`}>
-          <i class="fa-solid fa-file-export me-2" />Export PDF
+        <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
+          <i class="fa-solid fa-file-export"></i>Export PDF
         </a>
       {/if}
 
-      <button class="btn btn-sm variant-ghost" disabled={loadingDownload} on:click={onDownloadGpx}>
+      <button class="btn btn-sm preset-outlined-primary-500" disabled={loadingDownload} onclick={onDownloadGpx}>
         {#if loadingDownload}
-          <ProgressRadial class="me-2" width="w-4" />
+          <span>
+            <ProgressRing size="size-4" value={null} />
+          </span>
         {:else}
-          <i class="fa-solid fa-map-location-dot me-2" />
+          <i class="fa-solid fa-map-location-dot"></i>
         {/if}
 
         Export GPX
       </button>
 
       {#if data.area.type === 'crag'}
-        <a class="btn btn-sm variant-ghost" href={`${basePath}/edit-parking-location`}>
-          <i class="fa-solid fa-parking me-2" />Add parking location
+        <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-parking-location`}>
+          <i class="fa-solid fa-parking"></i>Add parking location
         </a>
       {/if}
 
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/sync-external-resources`}>
-        <i class="fa-solid fa-sync me-2" />Sync external resources
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/sync-external-resources`}>
+        <i class="fa-solid fa-sync"></i>Sync external resources
       </a>
 
-      <a class="btn btn-sm variant-ghost" href={`${basePath}/edit`}>
-        <i class="fa-solid fa-pen me-2" />Edit area
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
+        <i class="fa-solid fa-pen"></i>Edit area
       </a>
     {/if}
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
 {#await data.references then references}
   {#if references.routes.length > 0}
-    <div class="card mt-4">
+    <div class="card mt-4 p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
       <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
@@ -140,7 +134,7 @@
   {/if}
 {/await}
 
-<div class="card mt-4">
+<div class="card mt-4 p-4 preset-filled-surface-100-900">
   <div class="card-header">Location</div>
 
   <section class="pt-4">
@@ -157,7 +151,7 @@
   </section>
 </div>
 
-<div class="card mt-4">
+<div class="card mt-4 p-4 preset-filled-surface-100-900">
   <div class="card-header">Topos</div>
 
   <section class="p-4">
@@ -192,14 +186,14 @@
 
     {#if data.session?.user != null}
       <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/add-topo`}> Add topos </a>
+        <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
       </div>
     {/if}
   </section>
 </div>
 
 {#if data.canAddArea || data.area.areas.length > 0}
-  <div class="card mt-4">
+  <div class="card mt-4 p-4 preset-filled-surface-100-900">
     <div class="card-header">Areas</div>
 
     <section class="p-4">
@@ -208,7 +202,7 @@
       {:else}
         <div class="flex flex-wrap gap-2">
           {#each data.area.areas as area}
-            <a class="card card-hover variant-ghost p-4" href={`${basePath}/${area.slug}-${area.id}`}>
+            <a class="card card-hover preset-outlined-primary-500 p-4" href={`${basePath}/${area.slug}-${area.id}`}>
               <dt>Name</dt>
               <dd>
                 {area.name}
@@ -220,14 +214,14 @@
 
       {#if data.session?.user != null && data.canAddArea}
         <div class="flex justify-center mt-4">
-          <a class="btn variant-filled-primary" href={`${basePath}/add`}>Add area</a>
+          <a class="btn preset-filled-primary-500" href={`${basePath}/add`}>Add area</a>
         </div>
       {/if}
     </section>
   </div>
 {/if}
 
-<div class="card mt-4">
+<div class="card mt-4 p-4 preset-filled-surface-100-900">
   <div class="card-header">Blocks</div>
 
   <section class="p-4">
@@ -236,7 +230,7 @@
     {:else}
       <div class="flex flex-wrap gap-2">
         {#each data.area.blocks as block}
-          <a class="card card-hover variant-ghost p-4" href={`${basePath}/_/blocks/${block.slug}`}>
+          <a class="card card-hover preset-outlined-primary-500 p-4" href={`${basePath}/_/blocks/${block.slug}`}>
             <dt>Name</dt>
             <dd>
               {block.name}
@@ -248,7 +242,7 @@
 
     {#if data.session?.user != null}
       <div class="flex justify-center mt-4">
-        <a class="btn variant-filled-primary" href={`${basePath}/_/blocks/add`}>Add block</a>
+        <a class="btn preset-filled-primary-500" href={`${basePath}/_/blocks/add`}>Add block</a>
       </div>
     {/if}
   </section>

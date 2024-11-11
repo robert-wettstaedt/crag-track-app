@@ -1,16 +1,15 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
-  import { AppBar, popup, Tab, TabGroup } from '@skeletonlabs/skeleton'
+  import { AppBar, Popover, Tabs } from '@skeletonlabs/skeleton-svelte'
   import type { Coordinate } from 'ol/coordinate'
   import type { ChangeEventHandler } from 'svelte/elements'
 
-  export let data
-  export let form
-  $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`
+  let { data, form } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
 
-  let coordinate: Coordinate | null = null
-  let tabSet = 0
+  let coordinate: Coordinate | null = $state(null)
+  let tabSet = $state('map')
 
   const onChange = ({ detail }: CustomEvent<Coordinate>) => (coordinate = detail)
 
@@ -32,86 +31,87 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Edit geolocation of</span>
-    &nbsp;
     <a class="anchor" href={basePath}>{data.block.name}</a>
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-<form action="?/updateLocation" method="POST" use:enhance>
-  {#if form?.error != null}
-    <aside class="alert variant-filled-error mt-8">
-      <div class="alert-message">
-        <p>{form.error}</p>
-      </div>
-    </aside>
-  {/if}
+{#if form?.error}
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
+  </aside>
+{/if}
 
-  <div class="mt-8">
-    <TabGroup>
-      <Tab bind:group={tabSet} name="tab1" value={0}>
-        <span>Map</span>
-      </Tab>
-      <Tab bind:group={tabSet} name="tab2" value={1}>
-        <span>Lat Long</span>
-      </Tab>
+<form class="card mt-8 p-4 preset-filled-surface-100-900" action="?/updateLocation" method="POST" use:enhance>
+  <Tabs bind:value={tabSet}>
+    {#snippet list()}
+      <Tabs.Control value="map">Map</Tabs.Control>
+      <Tabs.Control value="latlong">Lat Long</Tabs.Control>
+    {/snippet}
 
-      <svelte:fragment slot="panel">
-        {#if tabSet === 0}
-          {#await import('$lib/components/BlocksMapWithAddableMarker') then BlocksMap}
-            <BlocksMap.default
-              blocks={data.blocks}
-              selectedArea={data.block.area}
-              selectedBlock={data.block}
-              on:change={onChange}
-            />
-          {/await}
+    {#snippet content()}
+      <Tabs.Panel value="map">
+        {#await import('$lib/components/BlocksMapWithAddableMarker') then BlocksMap}
+          <BlocksMap.default
+            blocks={data.blocks}
+            selectedArea={data.block.area}
+            selectedBlock={data.block}
+            on:change={onChange}
+          />
+        {/await}
 
-          <input hidden name="lat" value={form?.lat ?? coordinate?.at(1)} />
-          <input hidden name="long" value={form?.long ?? coordinate?.at(0)} />
-        {:else if tabSet === 1}
-          <div class="flex flex-col gap-4">
-            <label class="label">
-              <span>Latitude</span>
-              <input class="input" name="lat" on:change={onChangeLat} value={form?.lat ?? coordinate?.at(1) ?? ''} />
-            </label>
+        <input hidden name="lat" value={form?.lat ?? coordinate?.at(1)} />
+        <input hidden name="long" value={form?.long ?? coordinate?.at(0)} />
+      </Tabs.Panel>
 
-            <label class="label">
-              <span>Longitude</span>
-              <input class="input" name="long" on:change={onChangeLong} value={form?.long ?? coordinate?.at(0) ?? ''} />
-            </label>
-          </div>
-        {/if}
-      </svelte:fragment>
-    </TabGroup>
-  </div>
+      <Tabs.Panel value="latlong">
+        <div class="flex flex-col gap-4">
+          <label class="label">
+            <span>Latitude</span>
+            <input class="input" name="lat" onchange={onChangeLat} value={form?.lat ?? coordinate?.at(1) ?? ''} />
+          </label>
+
+          <label class="label">
+            <span>Longitude</span>
+            <input class="input" name="long" onchange={onChangeLong} value={form?.long ?? coordinate?.at(0) ?? ''} />
+          </label>
+        </div>
+      </Tabs.Panel>
+    {/snippet}
+  </Tabs>
 
   <div class="flex justify-between mt-8">
-    <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
+    <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
 
     <div>
-      <button
-        class="btn variant-filled-error"
-        use:popup={{ event: 'click', target: 'popup-delete-geolocation', placement: 'top' }}
-        type="button"
+      <Popover
+        arrow
+        arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+        contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+        positioning={{ placement: 'top' }}
+        triggerBase="btn preset-filled-error-500 !text-white"
       >
-        <i class="fa-solid fa-trash me-2" />Delete geolocation
-      </button>
+        {#snippet trigger()}
+          <i class="fa-solid fa-trash"></i>Delete geolocation
+        {/snippet}
 
-      <button class="btn variant-filled-primary" disabled={coordinate == null} type="submit">Update geolocation</button>
+        {#snippet content()}
+          <article>
+            <p>Are you sure you want to delete the geolocation of this block?</p>
+          </article>
+
+          <footer class="flex justify-end">
+            <form method="POST" action="?/removeGeolocation" use:enhance>
+              <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+            </form>
+          </footer>
+        {/snippet}
+      </Popover>
+
+      <button class="btn preset-filled-primary-500" disabled={coordinate == null} type="submit">
+        Update geolocation
+      </button>
     </div>
   </div>
 </form>
-
-<div class="card p-4 shadow-xl" data-popup="popup-delete-geolocation">
-  <p>Are you sure you want to delete the geolocation of this block?</p>
-
-  <div class="flex justify-end gap-2 mt-4">
-    <form method="POST" action="?/removeGeolocation" use:enhance>
-      <button class="btn btn-sm variant-filled-primary" type="submit">Yes</button>
-    </form>
-
-    <button class="btn btn-sm variant-filled-surface">Cancel</button>
-  </div>
-</div>

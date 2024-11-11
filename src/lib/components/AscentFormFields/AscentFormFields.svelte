@@ -4,27 +4,33 @@
   import FileBrowser from '$lib/components/FileBrowser'
   import MarkdownEditor from '$lib/components/MarkdownEditor'
   import type { Ascent, File, Grade, UserSettings } from '$lib/db/schema'
-  import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton'
+  import { Modal } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
   import type { MouseEventHandler } from 'svelte/elements'
+  import { run } from 'svelte/legacy'
 
-  export let dateTime: Ascent['dateTime']
-  export let filePaths: File['path'][] = ['']
-  export let gradeFk: Ascent['gradeFk']
-  export let grades: Grade[]
-  export let gradingScale: UserSettings['gradingScale'] | null | undefined
-  export let notes: Ascent['notes']
-  export let type: Ascent['type'] | null
+  interface Props {
+    dateTime: Ascent['dateTime']
+    filePaths?: File['path'][]
+    gradeFk: Ascent['gradeFk']
+    grades: Grade[]
+    gradingScale: UserSettings['gradingScale'] | null | undefined
+    notes: Ascent['notes']
+    type: Ascent['type'] | null
+  }
 
-  $: (() => {
-    const lastFile = filePaths.at(-1)
+  let { dateTime, filePaths = $bindable(['']), gradeFk, grades, gradingScale, notes, type }: Props = $props()
+  let modalOpen = $state(false)
 
-    if (lastFile != null && lastFile.length > 0) {
-      filePaths = [...filePaths, '']
-    }
-  })()
+  run(() => {
+    ;(() => {
+      const lastFile = filePaths.at(-1)
 
-  const modalStore = getModalStore()
+      if (lastFile != null && lastFile.length > 0) {
+        filePaths = [...filePaths, '']
+      }
+    })()
+  })
 
   const onRemoveFile =
     (index: number): MouseEventHandler<HTMLButtonElement> =>
@@ -35,31 +41,6 @@
       if (filePaths.length === 0) {
         filePaths = ['']
       }
-    }
-
-  const onChooseFile =
-    (index: number): MouseEventHandler<HTMLButtonElement> =>
-    (event) => {
-      event.preventDefault()
-
-      const modal: ModalSettings = {
-        backdropClasses: '!overflow-y-auto',
-        component: {
-          ref: FileBrowser,
-          props: {
-            onChange: (value: string | null) => {
-              if (value != null) {
-                filePaths[index] = value
-                modalStore.close()
-              }
-            },
-          },
-        },
-        title: 'File Browser',
-        type: 'component',
-      }
-
-      modalStore.trigger(modal)
     }
 </script>
 
@@ -95,12 +76,10 @@
 </label>
 
 {#if PUBLIC_DEMO_MODE}
-  <aside class="alert variant-filled-warning mt-4">
-    <i class="fa-solid fa-triangle-exclamation" />
+  <aside class="card preset-tonal-warning mt-8 p-4 flex items-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation"></i>
 
-    <div class="alert-message">
-      <p>File storage is disabled in demo mode</p>
-    </div>
+    <p>File storage is disabled in demo mode</p>
   </aside>
 {/if}
 
@@ -109,7 +88,7 @@
     <label class="label">
       <span>File {filePaths.length > 1 ? index + 1 : ''}</span>
 
-      <div class="flex">
+      <div class="flex items-center gap-2">
         {#if filePath.length > 0}
           <img alt="" height="42" src={`/nextcloud${filePath}/preview?x=42&y=42&mimeFallback=true&a=0`} width="42" />
         {/if}
@@ -118,9 +97,40 @@
         <input name="file.path" type="hidden" value={filePath} />
 
         {#if filePath.length === 0}
-          <button class="btn variant-filled-primary" on:click={onChooseFile(index)}>Choose</button>
+          <Modal
+            bind:open={modalOpen}
+            triggerBase="btn preset-filled-primary-500"
+            contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl max-w-screen-sm"
+            backdropClasses="backdrop-blur-sm"
+          >
+            {#snippet trigger()}
+              Choose
+            {/snippet}
+
+            {#snippet content()}
+              <header class="flex justify-between">
+                <h2 class="h2">File Browser</h2>
+              </header>
+
+              <article>
+                <FileBrowser
+                  onChange={(value: string | null) => {
+                    if (value != null) {
+                      filePaths[index] = value
+                      modalOpen = false
+                    }
+                  }}
+                />
+              </article>
+
+              <footer class="flex justify-end gap-4">
+                <button type="button" class="btn preset-tonal" onclick={() => (modalOpen = false)}>Cancel</button>
+                <button type="button" class="btn preset-filled" onclick={() => (modalOpen = false)}>Confirm</button>
+              </footer>
+            {/snippet}
+          </Modal>
         {:else}
-          <button class="btn variant-filled-error" on:click={onRemoveFile(index)}>Remove</button>
+          <button class="btn preset-filled-error-500 !text-white" onclick={onRemoveFile(index)}>Remove</button>
         {/if}
       </div>
     </label>
@@ -129,7 +139,7 @@
 
 <label class="label mt-4">
   <span>Notes</span>
-  <textarea hidden name="notes" value={notes} />
+  <textarea hidden name="notes" value={notes}></textarea>
 
-  <MarkdownEditor {grades} {gradingScale} value={notes} on:change={(event) => (notes = event.detail)} />
+  <MarkdownEditor {grades} {gradingScale} bind:value={notes} />
 </label>

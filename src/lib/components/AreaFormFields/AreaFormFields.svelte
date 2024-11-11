@@ -1,12 +1,16 @@
 <script lang="ts">
+  import MarkdownEditor from '$lib/components/MarkdownEditor'
   import type { Area, Grade, UserSettings } from '$lib/db/schema'
-  import MarkdownEditor from '../MarkdownEditor'
 
-  export let description: Area['description']
-  export let name: Area['name']
-  export let type: Area['type']
-  export let grades: Grade[]
-  export let gradingScale: UserSettings['gradingScale'] | null | undefined
+  interface Props {
+    description: Area['description']
+    name: Area['name']
+    type: Area['type']
+    grades: Grade[]
+    gradingScale: UserSettings['gradingScale'] | null | undefined
+  }
+
+  let { description = $bindable(), name, type, grades, gradingScale }: Props = $props()
 </script>
 
 <label class="label">
@@ -16,9 +20,9 @@
 
 <label class="label mt-4">
   <span>Description</span>
-  <textarea hidden name="description" value={description} />
+  <textarea hidden name="description" value={description}></textarea>
 
-  <MarkdownEditor {grades} {gradingScale} value={description} on:change={(event) => (description = event.detail)} />
+  <MarkdownEditor {grades} {gradingScale} bind:value={description} />
 </label>
 
 <label class="label mt-4">

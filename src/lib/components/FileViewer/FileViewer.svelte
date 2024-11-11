@@ -2,14 +2,19 @@
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
   import type { File } from '$lib/db/schema'
-  import { ProgressRadial } from '@skeletonlabs/skeleton'
+  import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { createEventDispatcher } from 'svelte'
   import type { FileStat } from 'webdav'
 
   const dispatcher = createEventDispatcher<{ delete: void }>()
 
-  export let file: File
-  export let stat: FileStat
+  interface Props {
+    file: File
+    stat: FileStat
+    children?: import('svelte').Snippet
+  }
+
+  let { file, stat, children }: Props = $props()
 
   const search = new URLSearchParams({ file: stat.basename }).toString()
   const resourcePath = `/nextcloud${stat.filename}`
@@ -20,8 +25,8 @@
     dispatcher('delete')
   }
 
-  let mediaIsLoading = stat.mime?.includes('image') ?? false
-  let mediaHasError = false
+  let mediaIsLoading = $state(stat.mime?.includes('image') ?? false)
+  let mediaHasError = $state(false)
   const mediaAction = (el: HTMLElement) => {
     const onError = () => (mediaHasError = true)
     const onLoad = () => (mediaIsLoading = false)
@@ -43,9 +48,9 @@
   }
 </script>
 
-<svelte:window on:keyup={(event) => event.key === 'Escape' && goto($page.url.pathname)} />
+<svelte:window onkeyup={(event) => event.key === 'Escape' && goto($page.url.pathname)} />
 
-<a class="card bg-initial card-hover" href={`${$page.url.pathname}/?${search}`}>
+<a class="card card-hover preset-filled-surface-200-800 overflow-hidden" href={`${$page.url.pathname}/?${search}`}>
   <div class="relative">
     {#if mediaHasError}
       <aside class="alert variant-filled-error">
@@ -57,7 +62,7 @@
     {:else}
       {#if mediaIsLoading}
         <div class="absolute w-full h-full flex justify-center items-center bg-black/10">
-          <ProgressRadial />
+          <ProgressRing value={null} />
         </div>
       {/if}
       {#if stat.mime?.includes('image')}
@@ -77,9 +82,9 @@
     {/if}
   </div>
 
-  {#if $$slots.default}
-    <div class="card-footer pt-3">
-      <slot />
+  {#if children}
+    <div class="card-footer p-3">
+      {@render children?.()}
     </div>
   {/if}
 </a>
@@ -96,7 +101,7 @@
     {:else}
       {#if mediaIsLoading}
         <div class="absolute w-full h-full flex justify-center items-center bg-black/80">
-          <ProgressRadial />
+          <ProgressRing value={null} />
         </div>
       {/if}
       {#if stat.mime?.includes('image')}
@@ -115,12 +120,22 @@
       {/if}
     {/if}
 
-    <button class="btn btn-icon variant-filled fixed top-8 right-24" on:click={onDelete} title="Delete">
-      <i class="fa-solid fa-trash" />
+    <button
+      aria-label="Delete"
+      class="btn btn-icon preset-filled-error-500 fixed top-8 right-20 !text-white"
+      onclick={onDelete}
+      title="Delete"
+    >
+      <i class="fa-solid fa-trash"></i>
     </button>
 
-    <a class="btn btn-icon variant-filled-primary fixed top-8 right-8" href={$page.url.pathname} title="Close">
-      <i class="fa-solid fa-x" />
+    <a
+      aria-label="Close"
+      class="btn btn-icon preset-filled-primary-500 fixed top-8 right-8"
+      href={$page.url.pathname}
+      title="Close"
+    >
+      <i class="fa-solid fa-x"></i>
     </a>
   </div>
 {/if}

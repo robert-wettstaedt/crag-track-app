@@ -3,13 +3,12 @@
   import { page } from '$app/stores'
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import FileBrowser from '$lib/components/FileBrowser'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
-  export let form
-  $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`
+  let { data, form } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
 
-  let filePath = form?.path == null ? null : form.path.toString()
+  let filePath = $state(form?.path == null ? null : form.path.toString())
 </script>
 
 <svelte:head>
@@ -17,42 +16,35 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Edit topos of</span>
-    &nbsp;
     <a class="anchor" href={basePath}>{data.block.name}</a>
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-<form method="POST" use:enhance>
-  {#if form?.error != null}
-    <aside class="alert variant-filled-error mt-8">
-      <div class="alert-message">
-        <p>{form.error}</p>
-      </div>
-    </aside>
-  {/if}
+{#if form?.error}
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
+  </aside>
+{/if}
 
-  <div class="mt-8">
-    {#if PUBLIC_DEMO_MODE}
-      <aside class="alert variant-filled-warning mb-4">
-        <i class="fa-solid fa-triangle-exclamation" />
+{#if PUBLIC_DEMO_MODE}
+  <aside class="card preset-tonal-warning mt-8 p-4 flex items-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation"></i>
 
-        <div class="alert-message">
-          <p>File storage is disabled in demo mode</p>
-        </div>
-      </aside>
-    {/if}
+    <p>File storage is disabled in demo mode</p>
+  </aside>
+{/if}
 
-    <label class="label">
-      <span>New file</span>
-      <input name="path" type="hidden" value={filePath} />
-      <FileBrowser bind:value={filePath} />
-    </label>
-  </div>
+<form class="card mt-8 p-4 preset-filled-surface-100-900" method="POST" use:enhance>
+  <label class="label">
+    <span>New file</span>
+    <input name="path" type="hidden" value={filePath} />
+    <FileBrowser bind:value={filePath} />
+  </label>
 
   <div class="flex justify-between mt-8">
-    <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary" type="submit">Add file</button>
+    <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
+    <button class="btn preset-filled-primary-500" type="submit">Add file</button>
   </div>
 </form>

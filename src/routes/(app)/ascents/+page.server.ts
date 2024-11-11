@@ -8,14 +8,14 @@ export const load = (async ({ url }) => {
   // Get the 'orderBy' parameter from the URL, defaulting to 'dateTime' if not provided
   const orderBy = (url.searchParams.get('orderBy') ?? 'dateTime') as keyof Ascent
   // Get the 'page' parameter from the URL, defaulting to 0 if not provided
-  const page = Number(url.searchParams.get('page') ?? '0')
+  const page = Number(url.searchParams.get('page') ?? '1')
   // Set the number of results per page
   const pageSize = 15
 
   // Query the database for ascents, ordering by the specified field, with pagination
   const ascentsResults = await db.query.ascents.findMany({
     orderBy: desc(ascents[orderBy]),
-    offset: page * pageSize,
+    offset: (page - 1) * pageSize,
     limit: pageSize,
     with: {
       author: true,

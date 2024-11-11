@@ -5,9 +5,13 @@
 
   type RouteWithAscents = InferResultType<'routes', { ascents: true }>
 
-  export let route: (Omit<RouteWithAscents, 'ascents'> & Partial<Pick<RouteWithAscents, 'ascents'>>) | undefined
-  export let grades: Grade[]
-  export let gradingScale: UserSettings['gradingScale'] = 'FB'
+  interface Props {
+    route: (Omit<RouteWithAscents, 'ascents'> & Partial<Pick<RouteWithAscents, 'ascents'>>) | undefined
+    grades: Grade[]
+    gradingScale?: UserSettings['gradingScale']
+  }
+
+  let { route, grades, gradingScale = 'FB' }: Props = $props()
 
   const send = route?.ascents?.find((ascent) => ascent.type === 'send')
 

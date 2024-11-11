@@ -2,11 +2,10 @@
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import BlockFormFields from '$lib/components/BlockFormFields'
-  import { AppBar } from '@skeletonlabs/skeleton'
+  import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
-  export let form
-  $: basePath = `/areas/${$page.params.slugs}`
+  let { data, form } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}`)
 </script>
 
 <svelte:head>
@@ -14,30 +13,25 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Create block in</span>
-    &nbsp;
     <a class="anchor" href={basePath}>{data.area.name}</a>
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-<form method="POST" use:enhance>
-  {#if form?.error}
-    <aside class="alert variant-filled-error mt-8">
-      <div class="alert-message">
-        <p>{form.error}</p>
-      </div>
-    </aside>
-  {/if}
+{#if form?.error}
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
+  </aside>
+{/if}
 
-  <div class="mt-8">
-    <BlockFormFields name={form?.name ?? ''} />
-  </div>
+<form class="card mt-8 p-4 preset-filled-surface-100-900" method="POST" use:enhance>
+  <BlockFormFields name={form?.name ?? ''} />
 
   <div class="flex justify-between mt-8">
-    <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
-    <button class="btn variant-filled-primary" type="submit">
-      <i class="fa-solid fa-floppy-disk me-2" /> Save block
+    <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
+    <button class="btn preset-filled-primary-500" type="submit">
+      <i class="fa-solid fa-floppy-disk"></i> Save block
     </button>
   </div>
 </form>

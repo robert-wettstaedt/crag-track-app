@@ -4,19 +4,19 @@
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
   import RouteName from '$lib/components/RouteName'
   import type { InferResultType } from '$lib/db/types'
-  import { AppBar, ProgressRadial } from '@skeletonlabs/skeleton'
+  import { AppBar, ProgressRing } from '@skeletonlabs/skeleton-svelte'
 
-  export let data
-  $: basePath = `/areas/${$page.params.slugs}`
+  let { data } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}`)
 
-  let error: string | null = null
-  let loading = false
+  let error: string | null = $state(null)
+  let loading = $state(false)
   let values:
     | InferResultType<
         'routeExternalResources',
         { externalResource8a: true; externalResource27crags: true; externalResourceTheCrag: true }
       >[]
-    | undefined = undefined
+    | undefined = $state(undefined)
 
   async function syncExternalResources() {
     try {
@@ -59,11 +59,10 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Sync external resources of</span>
-    &nbsp;
     <a class="anchor" href={basePath}>{data.area.name}</a>
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
 {#if error != null}
@@ -74,17 +73,17 @@
   </aside>
 {/if}
 
-<div class="mt-8 w-full text-token card p-4 space-y-4">
+<div class="mt-8 w-full text-token card mt-8 p-4 preset-filled-surface-100-900 space-y-4">
   {#each data.blocks as block}
     <p class="font-bold">{block.name}</p>
 
-    <ul class="list">
+    <ul>
       {#each block.routes as route}
         <li class="flex items-center justify-between p-1 hover:bg-surface-400">
           <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
 
           {#if loading && values?.find((value) => value.routeFk === route.id) == null}
-            <ProgressRadial class="w-4" />
+            <ProgressRing size="size-4" value={null} />
           {:else}
             <RouteExternalResourceLinks
               iconSize={16}
@@ -100,16 +99,18 @@
 </div>
 
 <div class="flex justify-between mt-8">
-  <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
+  <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
 
   <button
-    class="btn variant-filled-primary"
+    class="btn preset-filled-primary-500"
     disabled={loading || values != null}
-    on:click={syncExternalResources}
+    onclick={syncExternalResources}
     type="submit"
   >
     {#if loading}
-      <ProgressRadial class="me-2" width="w-4" />
+      <span class="me-2">
+        <ProgressRing size="size-4" value={null} />
+      </span>
     {/if}
 
     Sync external resources

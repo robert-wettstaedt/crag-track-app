@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type Coordinates = Pick<PointDTO, 'x' | 'y'>
 
   export interface Line {
@@ -10,36 +10,38 @@
 
 <script lang="ts">
   import { colorScheme, type PointDTO, type TopoRouteDTO } from '$lib/topo'
-  import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
   import type { MouseEventHandler } from 'svelte/elements'
   import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from '../../stores'
 
-  export let key: number | undefined
-  export let editable = false
-  export let route: TopoRouteDTO
-  export let scale: number
-  export let svg: SVGSVGElement
+  interface Props {
+    key: number | undefined
+    editable?: boolean
+    route: TopoRouteDTO
+    scale: number
+    svg: SVGSVGElement
+  }
 
-  $: selected = $selectedRouteStore === route.routeFk
-  $: highlighted = $highlightedRouteStore === route.routeFk
+  let { key, editable = false, route = $bindable(), scale, svg }: Props = $props()
 
-  $: cursorClass = selected && editable ? 'cursor-move' : 'cursor-pointer'
+  let selected = $derived($selectedRouteStore === route.routeFk)
+  let highlighted = $derived($highlightedRouteStore === route.routeFk)
 
-  $: color = key == null ? undefined : colorScheme[key]
+  let cursorClass = $derived(selected && editable ? 'cursor-move' : 'cursor-pointer')
 
-  console.log(color)
+  let color = $derived(key == null ? undefined : colorScheme[key])
 
-  $: strokeClass = highlighted ? 'stroke-green-400' : selected ? 'stroke-white' : 'stroke-red-700'
-  $: fillClass = highlighted ? 'fill-green-400' : selected ? 'fill-white' : 'fill-red-700'
-  $: strokeWidth = highlighted || selected ? 4 : 2
+  let strokeClass = $derived(highlighted ? 'stroke-green-400' : selected ? 'stroke-white' : 'stroke-red-700')
+  let fillClass = $derived(highlighted ? 'fill-green-400' : selected ? 'fill-white' : 'fill-red-700')
+  let strokeWidth = $derived(highlighted || selected ? 4 : 2)
 
-  $: bgStrokeClass = 'stroke-black opacity-50'
-  $: bgFillClass = 'fill-black opacity-50'
-  $: bgStrokeWidth = highlighted || selected ? 6 : 4
+  let bgStrokeClass = $derived('stroke-black opacity-50')
+  let bgFillClass = $derived('fill-black opacity-50')
+  let bgStrokeWidth = $derived(highlighted || selected ? 6 : 4)
 
   let selectedPoint: PointDTO | undefined = undefined
-  let lines: Array<Line> = []
-  let center: Coordinates | undefined = undefined
+  let lines: Array<Line> = $state([])
+  let center: Coordinates | undefined = $state(undefined)
 
   let prevEventPosition: Coordinates | undefined = undefined
   let isMoving = false
@@ -217,19 +219,19 @@
     }
   })
 
-  afterUpdate(() => {
-    calcLines()
-  })
+  // $effect(() => {
+  //   calcLines()
+  // })
 </script>
 
 <g
   class="cursor-pointer"
   role="presentation"
-  on:click={onSelect}
-  on:mouseover={onFocus}
-  on:mouseout={onBlur}
-  on:focus={onFocus}
-  on:blur={onBlur}
+  onclick={onSelect}
+  onmouseover={onFocus}
+  onmouseout={onBlur}
+  onfocus={onFocus}
+  onblur={onBlur}
 >
   {#each lines as line}
     <line

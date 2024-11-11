@@ -9,17 +9,19 @@
   import { basicSetup } from 'codemirror'
   import debounce from 'lodash.debounce'
   import memoize from 'lodash.memoize'
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import { onDestroy, onMount } from 'svelte'
 
-  export let value: string | null
-  export let grades: schema.Grade[]
-  export let gradingScale: schema.UserSettings['gradingScale'] | null | undefined
+  interface Props {
+    value: string | null
+    grades: schema.Grade[]
+    gradingScale: schema.UserSettings['gradingScale'] | null | undefined
+  }
 
-  const dispatch = createEventDispatcher<{ change: string }>()
+  let { value = $bindable(), grades, gradingScale }: Props = $props()
 
-  let element: HTMLDivElement
+  let element: HTMLDivElement | undefined = $state()
   let view: EditorView | null = null
-  let valueHtml = ''
+  let valueHtml = $state('')
 
   const loadData = async (query: string): Promise<SearchResults | null> => {
     const response = await fetch(`/api/search?q=${query}`)
@@ -108,8 +110,7 @@
   const transactionHandler: EditorViewConfig['dispatchTransactions'] = async (trs, view) => {
     view.update(trs)
 
-    const value = view.state.doc.toString()
-    dispatch('change', value)
+    value = view.state.doc.toString()
     valueHtml = await convertMarkdownToHtml(value)
   }
 
@@ -139,7 +140,7 @@
 </script>
 
 <div class="grid grid-cols-2 gap-4">
-  <div bind:this={element} class="bg-surface-700" />
+  <div bind:this={element} class="bg-surface-700"></div>
 
   <div class="rendered-markdown min-h-64 bg-surface-700 px-3 py-2">
     {@html valueHtml}

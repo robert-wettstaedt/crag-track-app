@@ -1,29 +1,36 @@
 <script lang="ts">
   import { convertException } from '$lib'
   import { onMount } from 'svelte'
+  import { run } from 'svelte/legacy'
   import type { FileStat } from 'webdav'
   import FilePreview from './components/FilePreview'
 
-  export let value: string | null = null
-  export let onChange: ((value: string | null) => void) | null = null
+  interface Props {
+    value?: string | null
+    onChange?: ((value: string | null) => void) | null
+  }
 
-  let currentDir: string[] = []
-  let data: FileStat[] = []
-  let loading = false
-  let error: string | null = null
+  let { value = $bindable(null), onChange = null }: Props = $props()
 
-  $: (() => {
-    const file = data.at(0)
+  let currentDir: string[] = $state([])
+  let data: FileStat[] = $state([])
+  let loading = $state(false)
+  let error: string | null = $state(null)
 
-    if (file?.type === 'file' && currentDir.at(-1) === file?.basename) {
-      value = file.filename
-      currentDir = value.split('/').filter((d) => d !== '')
-    } else {
-      value = null
-    }
+  run(() => {
+    ;(() => {
+      const file = data.at(0)
 
-    onChange?.(value)
-  })()
+      if (file?.type === 'file' && currentDir.at(-1) === file?.basename) {
+        value = file.filename
+        currentDir = value.split('/').filter((d) => d !== '')
+      } else {
+        value = null
+      }
+
+      onChange?.(value)
+    })()
+  })
 
   const fetchData = async () => {
     loading = true
@@ -68,45 +75,49 @@
 </script>
 
 {#if error == null}
-  <div class="card p-4">
-    <ol class="breadcrumb">
-      <li class="crumb">
-        <button on:click={navigateTo.bind(null, [])}>
-          <i class="fa-solid fa-home" /> All files
+  <div class="card preset-filled-surface-100-900 p-4">
+    <ol class="flex items-center gap-4">
+      <li>
+        <button onclick={navigateTo.bind(null, [])}>
+          <i class="fa-solid fa-home"></i> All files
         </button>
       </li>
 
       {#if currentDir.length > 0}
-        <li class="crumb-separator" aria-hidden="true">&rsaquo;</li>
+        <li class="opacity-50" aria-hidden="true">&rsaquo;</li>
       {/if}
 
       {#each currentDir as dir, index}
-        <li class="crumb">
-          <button on:click={navigateTo.bind(null, currentDir.slice(0, index + 1))}>{dir}</button>
+        <li>
+          <button onclick={navigateTo.bind(null, currentDir.slice(0, index + 1))}>{dir}</button>
         </li>
 
         {#if index !== currentDir.length - 1}
-          <li class="crumb-separator" aria-hidden="true">&rsaquo;</li>
+          <li class="opacity-50" aria-hidden="true">&rsaquo;</li>
         {/if}
       {/each}
     </ol>
 
-    <ul class="list mt-8">
+    <ul class="mt-8">
       {#if loading}
         {#each { length: 6 } as _}
-          <li class="px-4 py-2 hover:bg-primary-500/10 cursor-pointer">
-            <span class="placeholder-circle w-4" />
+          <li class="flex items-center gap-4 px-4 py-2 hover:preset-filled-primary-100-900 cursor-pointer">
+            <span class="placeholder-circle w-4"></span>
 
             <span class="flex-auto">
-              <div class="placeholder" />
+              <div class="placeholder"></div>
             </span>
           </li>
         {/each}
       {:else}
         {#if currentDir.length > 0}
-          <li class="px-4 py-2 hover:bg-primary-500/10 cursor-pointer" on:click={navigateUp} role="presentation">
+          <li
+            class="flex items-center gap-4 px-4 py-2 hover:preset-filled-primary-100-900 cursor-pointer"
+            onclick={navigateUp}
+            role="presentation"
+          >
             <span class="w-8 flex items-center justify-center">
-              <i class="fa-solid fa-folder text-3xl" />
+              <i class="fa-solid fa-folder text-3xl"></i>
             </span>
 
             <span class="flex-auto">..</span>
@@ -116,8 +127,8 @@
         {#if value == null}
           {#each data as file}
             <li
-              class="px-4 py-2 hover:bg-primary-500/10 cursor-pointer"
-              on:click={navigateIn.bind(null, file.basename)}
+              class="flex items-center gap-4 px-4 py-2 hover:preset-filled-primary-100-900 cursor-pointer"
+              onclick={navigateIn.bind(null, file.basename)}
               role="presentation"
             >
               <span class="w-8 flex items-center justify-center">
@@ -138,9 +149,7 @@
     {/if}
   </div>
 {:else}
-  <aside class="alert variant-filled-error">
-    <div class="alert-message">
-      <p>{error}</p>
-    </div>
+  <aside class="card preset-tonal-error">
+    <p>{error}</p>
   </aside>
 {/if}

@@ -4,14 +4,13 @@
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import { convertPointsToPath, type TopoRouteDTO } from '$lib/topo'
-  import { AppBar, popup } from '@skeletonlabs/skeleton'
+  import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
-  export let form
-  export let data
-  $: basePath = `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`
+  let { form, data = $bindable() } = $props()
+  let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
 
-  let dirtyRoutes: number[] = []
-  let selectedTopoIndex = 0
+  let dirtyRoutes: number[] = $state([])
+  let selectedTopoIndex = $state(0)
 
   const onChangeTopo = (event: CustomEvent<TopoRouteDTO>) => {
     if (event.detail.routeFk != null) {
@@ -26,18 +25,15 @@
 </svelte:head>
 
 <AppBar>
-  <svelte:fragment slot="lead">
+  {#snippet lead()}
     <span>Draw topo of</span>
-    &nbsp;
     <a class="anchor" href={basePath}>{data.block.name}</a>
-  </svelte:fragment>
+  {/snippet}
 </AppBar>
 
-{#if form?.error != null}
-  <aside class="alert variant-filled-error mt-8">
-    <div class="alert-message">
-      <p>{form.error}</p>
-    </div>
+{#if form?.error}
+  <aside class="card preset-tonal-warning mt-8 p-4">
+    <p>{form.error}</p>
   </aside>
 {/if}
 
@@ -47,22 +43,25 @@
   </section>
 
   <section class="p-4 w-1/3">
-    <div class="card h-full flex flex-col justify-between">
+    <div class="card preset-filled-surface-100-900 p-4 h-full flex flex-col justify-between">
       <nav class="list-nav">
         <ul>
           {#each data.block.routes as route}
             <li
-              class={[$selectedRouteStore, $highlightedRouteStore].includes(route.id) && route.hasTopo
-                ? 'bg-primary-500/20'
-                : ''}
+              class={`px-4 py-2 ${
+                [$selectedRouteStore, $highlightedRouteStore].includes(route.id) ? 'preset-filled-primary-100-900' : ''
+              }`}
             >
               {#if route.hasTopo}
-                <button
-                  class="text-primary-500 list-option w-full flex justify-between"
-                  on:mouseenter={() => highlightedRouteStore.set(route.id)}
-                  on:mouseleave={() => highlightedRouteStore.set(null)}
-                  on:click={() => selectedRouteStore.set(route.id)}
-                  on:keydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
+                <span
+                  class={`text-primary-500 list-option w-full flex justify-between cursor-pointer ${
+                    [$selectedRouteStore, $highlightedRouteStore].includes(route.id) ? 'text-white' : ''
+                  }`}
+                  onmouseenter={() => highlightedRouteStore.set(route.id)}
+                  onmouseleave={() => highlightedRouteStore.set(null)}
+                  onclick={() => selectedRouteStore.set(route.id)}
+                  onkeydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
+                  role="presentation"
                 >
                   <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
 
@@ -109,15 +108,34 @@
 
                       <button class="btn btn-sm variant-soft-primary" type="submit">Save</button>
                     </form>
-                  {:else}
-                    <button
-                      class="btn btn-sm variant-soft-error"
-                      use:popup={{ event: 'click', target: `popup-delete-route-${route.id}`, placement: 'top' }}
+                  {:else if [$selectedRouteStore].includes(route.id)}
+                    <Popover
+                      arrow
+                      arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+                      contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+                      positioning={{ placement: 'top' }}
+                      triggerBase="btn btn-sm preset-filled-error-500 !text-white"
                     >
-                      <i class="fa-solid fa-trash" />
-                    </button>
+                      {#snippet trigger()}
+                        <i class="fa-solid fa-trash"></i>
+                      {/snippet}
+
+                      {#snippet content()}
+                        <article>
+                          <p>Are you sure you want to delete this route's topo?</p>
+                        </article>
+
+                        <footer class="flex justify-end">
+                          <form method="POST" action="?/removeRoute" use:enhance>
+                            <input hidden name="routeFk" value={route.id} />
+                            <input hidden name="topoFk" value={data.topos[selectedTopoIndex].id} />
+                            <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+                          </form>
+                        </footer>
+                      {/snippet}
+                    </Popover>
                   {/if}
-                </button>
+                </span>
               {:else}
                 <span class="text-primary-500 list-option hover:!bg-inherit flex justify-between">
                   <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
@@ -126,60 +144,49 @@
                     <input hidden name="routeFk" value={form?.routeFk ?? route.id} />
                     <input hidden name="topoFk" value={form?.topoFk ?? data.topos[selectedTopoIndex].id} />
 
-                    <button class="btn btn-sm variant-ringed-primary" type="submit">Add topo</button>
+                    <button class="btn btn-sm preset-outlined-primary-500" type="submit">Add topo</button>
                   </form>
                 </span>
               {/if}
-
-              <div class="card p-4 shadow-xl" data-popup="popup-delete-route-{route.id}">
-                <p>Are you sure you want to delete this route's topo?</p>
-
-                <div class="flex justify-end gap-2 mt-4">
-                  <form method="POST" action="?/removeRoute" use:enhance>
-                    <input hidden name="routeFk" value={route.id} />
-                    <input hidden name="topoFk" value={data.topos[selectedTopoIndex].id} />
-
-                    <button class="btn btn-sm variant-filled-primary" type="submit">Yes</button>
-                  </form>
-
-                  <button class="btn btn-sm variant-filled-surface">Cancel</button>
-                </div>
-              </div>
             </li>
           {/each}
         </ul>
       </nav>
 
-      <div class="flex gap-2">
-        <button
-          class="btn variant-filled-error w-full"
-          use:popup={{ event: 'click', target: 'popup-delete-topo', placement: 'top' }}
+      <div class="flex justify-between">
+        <Popover
+          arrow
+          arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+          contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+          positioning={{ placement: 'top' }}
+          triggerBase="btn preset-filled-error-500 !text-white"
         >
-          <i class="fa-solid fa-trash me-2" />Remove image
-        </button>
+          {#snippet trigger()}
+            <i class="fa-solid fa-trash"></i>Remove image
+          {/snippet}
 
-        <a class="btn variant-filled-primary w-full" href="{basePath}/add-topo">
-          <i class="fa-solid fa-plus me-2" />Add image
+          {#snippet content()}
+            <article>
+              <p>Are you sure you want to delete this image?</p>
+            </article>
+
+            <footer class="flex justify-end">
+              <form method="POST" action="?/removeTopo" use:enhance>
+                <input hidden name="id" value={data.topos[selectedTopoIndex].id} />
+                <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+              </form>
+            </footer>
+          {/snippet}
+        </Popover>
+
+        <a class="btn preset-filled-primary-500" href="{basePath}/add-topo">
+          <i class="fa-solid fa-plus"></i>Add image
         </a>
       </div>
     </div>
   </section>
 </div>
 
-<div class="card p-4 shadow-xl" data-popup="popup-delete-topo">
-  <p>Are you sure you want to delete this image?</p>
-
-  <div class="flex justify-end gap-2 mt-4">
-    <form method="POST" action="?/removeTopo" use:enhance>
-      <input hidden name="id" value={data.topos[selectedTopoIndex].id} />
-
-      <button class="btn btn-sm variant-filled-primary" type="submit">Yes</button>
-    </form>
-
-    <button class="btn btn-sm variant-filled-surface">Cancel</button>
-  </div>
-</div>
-
 <div class="flex justify-between mt-8">
-  <button class="btn variant-ghost" on:click={() => history.back()} type="button">Cancel</button>
+  <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
 </div>

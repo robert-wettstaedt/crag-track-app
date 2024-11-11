@@ -1,7 +1,11 @@
 <script lang="ts">
   import type { Tag } from '$lib/db/schema'
 
-  export let id: Tag['id']
+  interface Props {
+    id: Tag['id']
+  }
+
+  let { id }: Props = $props()
 </script>
 
 <label class="label">

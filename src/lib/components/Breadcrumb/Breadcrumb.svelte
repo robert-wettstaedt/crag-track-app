@@ -1,14 +1,20 @@
 <script lang="ts">
-  export let url: URL
+  import { run } from 'svelte/legacy'
+
+  interface Props {
+    url: URL
+  }
+
+  let { url }: Props = $props()
 
   interface Crumb {
     href: string
     label: string
   }
 
-  let crumbs: Crumb[]
+  let crumbs: Crumb[] = $state([])
 
-  $: {
+  run(() => {
     // Remove zero-length tokens.
     const tokens = url.pathname.split('/').filter((token) => token !== '')
 
@@ -26,18 +32,18 @@
 
     // Add a way to get home too.
     crumbs.unshift({ label: 'home', href: '/' })
-  }
+  })
 </script>
 
 {#if crumbs.length > 2}
-  <ol class="breadcrumb mb-8">
+  <ol class="flex items-center gap-4 mb-8">
     {#each crumbs as crumb, i}
-      <li class="crumb">
+      <li>
         <a class="anchor" href={crumb.href}>{crumb.label}</a>
       </li>
 
       {#if i < crumbs.length - 1}
-        <li class="crumb-separator" aria-hidden>/</li>
+        <li class="opacity-50" aria-hidden="true">/</li>
       {/if}
     {/each}
   </ol>
