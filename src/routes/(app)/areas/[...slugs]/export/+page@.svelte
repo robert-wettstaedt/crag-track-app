@@ -122,7 +122,7 @@
       grades={data.grades}
       gradingScale={data.gradingScale}
       name={area.name}
-      on:load={() => loadedTopos++}
+      onLoadTopo={() => loadedTopos++}
       on:rendercomplete={() => loadedMaps++}
     />
   {/each}
@@ -133,7 +133,7 @@
     grades={data.grades}
     gradingScale={data.gradingScale}
     name="Blöcke"
-    on:load={() => loadedTopos++}
+    onLoadTopo={() => loadedTopos++}
     on:rendercomplete={() => loadedMaps++}
   />
 {/if}

@@ -10,19 +10,25 @@
 
 <script lang="ts">
   import { colorScheme, type PointDTO, type TopoRouteDTO } from '$lib/topo'
-  import { createEventDispatcher, onMount } from 'svelte'
-  import type { MouseEventHandler } from 'svelte/elements'
+  import * as d3 from 'd3'
+  import { onMount } from 'svelte'
   import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from '../../stores'
+  import { calcCenter, calcLines } from './lib'
 
   interface Props {
     key: number | undefined
     editable?: boolean
+    onChange?: (route: TopoRouteDTO) => void
     route: TopoRouteDTO
+    routes: TopoRouteDTO[]
     scale: number
-    svg: SVGSVGElement
+    height: number
+    width: number
   }
 
-  let { key, editable = false, route = $bindable(), scale, svg }: Props = $props()
+  let { key, editable = false, onChange, route = $bindable(), routes, scale, height, width }: Props = $props()
+
+  let group: SVGGElement | undefined = $state()
 
   let selected = $derived($selectedRouteStore === route.routeFk)
   let highlighted = $derived($highlightedRouteStore === route.routeFk)
@@ -39,110 +45,12 @@
   let bgFillClass = $derived('fill-black opacity-50')
   let bgStrokeWidth = $derived(highlighted || selected ? 6 : 4)
 
-  let selectedPoint: PointDTO | undefined = undefined
-  let lines: Array<Line> = $state([])
-  let center: Coordinates | undefined = $state(undefined)
+  let selectedPoint: PointDTO | undefined = $state(undefined)
 
-  let prevEventPosition: Coordinates | undefined = undefined
-  let isMoving = false
+  let lines = $derived(calcLines(route.points))
+  let center = $derived(calcCenter(lines))
 
-  const dispatcher = createEventDispatcher<{ change: TopoRouteDTO }>()
-
-  const onSelect: MouseEventHandler<SVGGElement> = (event) => {
-    if (!selected && $selectedPointTypeStore == null) {
-      event.stopImmediatePropagation()
-      selectedRouteStore.set(route.routeFk)
-      highlightedRouteStore.set(null)
-    }
-  }
-
-  const onFocus = () => {
-    if (!selected) {
-      highlightedRouteStore.set(route.routeFk)
-    }
-  }
-
-  const onBlur = () => {
-    highlightedRouteStore.set(null)
-  }
-
-  const calcCenter = () => {
-    const totalLength = lines.reduce((total, line) => total + line.length, 0)
-    let centerLength = totalLength / 2
-
-    for (let index = 0; index < lines.length; index++) {
-      const line = lines[index]
-
-      if (centerLength > line.length) {
-        centerLength -= line.length
-        continue
-      }
-
-      const ratio = centerLength / line.length
-      center = {
-        x: (1 - ratio) * line.from.x + ratio * line.to.x,
-        y: (1 - ratio) * line.from.y + ratio * line.to.y,
-      }
-      return
-    }
-  }
-
-  const calcLines = () => {
-    const startPoints = route.points.filter((point) => point.type === 'start')
-    let startPoint: Coordinates | undefined = startPoints.at(0)
-    lines = []
-
-    if (startPoints.length === 2) {
-      const [from, to] = startPoints
-
-      lines = [...lines, { from, to, length: 0 }]
-      startPoint = {
-        x: (from.x + to.x) / 2,
-        y: (from.y + to.y) / 2,
-      }
-    }
-
-    if (startPoint == null) {
-      return
-    }
-
-    const nonStartPoints = route.points
-      .filter((point) => point.type !== 'start')
-      .toSorted((a, b) => {
-        const aDist = Math.sqrt(Math.pow(startPoint.x - a.x, 2) + Math.pow(startPoint.y - a.y, 2))
-        const bDist = Math.sqrt(Math.pow(startPoint.x - b.x, 2) + Math.pow(startPoint.y - b.y, 2))
-
-        return aDist - bDist
-      })
-
-    const linesToAdd = [startPoint, ...nonStartPoints].flatMap((from, index, arr): Line[] => {
-      const to = arr.at(index + 1)
-
-      if (to == null) {
-        return []
-      }
-
-      return [{ from, to, length: Math.sqrt(Math.pow(to.x - from.x, 2) + Math.pow(to.y - from.y, 2)) }]
-    })
-
-    lines = [...lines, ...linesToAdd]
-
-    calcCenter()
-  }
-
-  const onClickSvg = (event: MouseEvent) => {
-    const targetId = (event.target as HTMLElement).attributes.getNamedItem('data-id')?.value
-    const selectedPoint = route.points.find((point) => point.id === targetId)
-
-    if (selectedPoint == null) {
-      selectedRouteStore.set(null)
-    }
-
-    isMoving = false
-    prevEventPosition = undefined
-  }
-
-  const onContextMenuSvg = (event: MouseEvent) => {
+  const onContextMenu = (event: MouseEvent) => {
     event.preventDefault()
 
     const targetId = (event.target as HTMLElement).attributes.getNamedItem('data-id')?.value
@@ -152,87 +60,74 @@
       return
     }
 
-    const points = route.points.filter((_point) => _point.id !== point.id)
+    route.points = route.points.filter((_point) => _point.id !== point.id)
     selectedPoint = undefined
-    route.points = points
-    dispatcher('change', route)
-    calcLines()
-  }
-
-  const onMouseMoveSvg = (event: MouseEvent) => {
-    if (!selected || event.buttons === 0 || !editable) {
-      selectedPoint = undefined
-      return
-    }
-
-    const targetId = (event.target as HTMLElement).attributes.getNamedItem('data-id')?.value
-    const point = selectedPoint ?? route.points.find((point) => point.id === targetId)
-
-    if (point != null) {
-      isMoving = false
-      prevEventPosition = undefined
-
-      if (selectedPoint == null) {
-        selectedPoint = point
-      }
-
-      point.x = Math.ceil(event.layerX / scale)
-      point.y = Math.ceil(event.layerY / scale)
-
-      route.points = route.points
-
-      dispatcher('change', route)
-    } else if (targetId === 'line') {
-      isMoving = true
-    }
-
-    if (isMoving) {
-      if (prevEventPosition != null) {
-        const delta: Coordinates = {
-          x: event.layerX - prevEventPosition.x,
-          y: event.layerY - prevEventPosition.y,
-        }
-
-        route.points = route.points.map((point) => ({
-          ...point,
-          x: point.x + delta.x,
-          y: point.y + delta.y,
-        }))
-
-        dispatcher('change', route)
-      }
-
-      prevEventPosition = { x: event.layerX, y: event.layerY }
-    }
+    onChange?.(route)
   }
 
   onMount(() => {
-    svg.addEventListener('click', onClickSvg)
-    svg.addEventListener('contextmenu', onContextMenuSvg)
-    svg.addEventListener('mousemove', onMouseMoveSvg)
-    calcLines()
+    if (group != null) {
+      const drag = d3
+        .drag()
+        .on('start', (event) => {
+          event.sourceEvent.preventDefault()
 
-    return () => {
-      svg.removeEventListener('click', onClickSvg)
-      svg.removeEventListener('contextmenu', onContextMenuSvg)
-      svg.removeEventListener('mousemove', onMouseMoveSvg)
+          const targetId = (event.sourceEvent.target as Element).attributes.getNamedItem('data-id')?.value
+          selectedPoint = route.points.find((point) => point.id === targetId)
+
+          if (!selected && $selectedPointTypeStore == null) {
+            selectedRouteStore.set(route.routeFk)
+            highlightedRouteStore.set(null)
+          }
+        })
+        .on('drag', (event) => {
+          if (!editable) {
+            return
+          }
+
+          const points = selectedPoint == null ? route.points : [selectedPoint]
+
+          const correction = points.reduce(
+            (r, point) => {
+              const pos = {
+                x: point.x + event.dx,
+                y: point.y + event.dy,
+              }
+              const norm = {
+                x: Math.min(Math.max(0, pos.x), width / scale),
+                y: Math.min(Math.max(0, pos.y), height / scale),
+              }
+              const diff = {
+                x: norm.x - pos.x,
+                y: norm.y - pos.y,
+              }
+              return r == null
+                ? diff
+                : {
+                    x: Math.abs(diff.x) > Math.abs(r.x) ? diff.x : r.x,
+                    y: Math.abs(diff.y) > Math.abs(r.y) ? diff.y : r.y,
+                  }
+            },
+            null as Coordinates | null,
+          )
+
+          points.forEach((point) => {
+            point.x = Math.round(point.x + event.dx + (correction?.x ?? 0))
+            point.y = Math.round(point.y + event.dy + (correction?.y ?? 0))
+          })
+
+          onChange?.(route)
+        })
+        .on('end', () => {
+          selectedPoint = undefined
+        })
+
+      d3.select(group).call(drag)
     }
   })
-
-  // $effect(() => {
-  //   calcLines()
-  // })
 </script>
 
-<g
-  class="cursor-pointer"
-  role="presentation"
-  onclick={onSelect}
-  onmouseover={onFocus}
-  onmouseout={onBlur}
-  onfocus={onFocus}
-  onblur={onBlur}
->
+<g class="cursor-pointer" role="presentation" bind:this={group} oncontextmenu={onContextMenu}>
   {#each lines as line}
     <line
       class={color == null ? bgStrokeClass : undefined}

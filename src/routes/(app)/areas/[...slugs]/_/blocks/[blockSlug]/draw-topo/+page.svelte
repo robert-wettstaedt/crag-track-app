@@ -3,19 +3,25 @@
   import { page } from '$app/stores'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { convertPointsToPath, type TopoRouteDTO } from '$lib/topo'
+  import { convertPointsToPath, type TopoDTO, type TopoRouteDTO } from '$lib/topo'
   import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
-  let { form, data = $bindable() } = $props()
+  let { form, data } = $props()
+
+  // https://github.com/sveltejs/kit/issues/12999
+  let topos = $state(data.topos)
+  $effect(() => {
+    topos = data.topos
+  })
+
   let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
 
   let dirtyRoutes: number[] = $state([])
   let selectedTopoIndex = $state(0)
 
-  const onChangeTopo = (event: CustomEvent<TopoRouteDTO>) => {
-    if (event.detail.routeFk != null) {
-      dirtyRoutes = Array.from(new Set([...dirtyRoutes, event.detail.routeFk]))
-      data.topos = data.topos
+  const onChangeTopo = (value: TopoDTO[], changedRoute: TopoRouteDTO) => {
+    if (changedRoute.routeFk != null) {
+      dirtyRoutes = Array.from(new Set([...dirtyRoutes, changedRoute.routeFk]))
     }
   }
 </script>
@@ -39,7 +45,7 @@
 
 <div class="mt-8 flex">
   <section class="p-4 w-2/3">
-    <TopoViewer editable={true} bind:selectedTopoIndex bind:topos={data.topos} on:change={onChangeTopo} />
+    <TopoViewer editable={true} bind:selectedTopoIndex bind:topos onChange={onChangeTopo} />
   </section>
 
   <section class="p-4 w-1/3">
@@ -80,19 +86,18 @@
                       }}
                     >
                       <input hidden name="routeFk" value={form?.routeFk ?? route.id} />
-                      <input hidden name="topoFk" value={form?.topoFk ?? data.topos[selectedTopoIndex].id} />
+                      <input hidden name="topoFk" value={form?.topoFk ?? topos[selectedTopoIndex].id} />
                       <input
                         hidden
                         name="id"
                         value={form?.id ??
-                          data.topos.flatMap((topo) => topo.routes).find((topoRoute) => topoRoute.routeFk === route.id)
-                            ?.id}
+                          topos.flatMap((topo) => topo.routes).find((topoRoute) => topoRoute.routeFk === route.id)?.id}
                       />
                       <input
                         hidden
                         name="topType"
                         value={form?.topType ??
-                          data.topos.flatMap((topo) => topo.routes).find((topoRoute) => topoRoute.routeFk === route.id)
+                          topos.flatMap((topo) => topo.routes).find((topoRoute) => topoRoute.routeFk === route.id)
                             ?.topType}
                       />
                       <input
@@ -100,9 +105,8 @@
                         name="path"
                         value={form?.path ??
                           convertPointsToPath(
-                            data.topos
-                              .flatMap((topo) => topo.routes)
-                              .find((topoRoute) => topoRoute.routeFk === route.id)?.points ?? [],
+                            topos.flatMap((topo) => topo.routes).find((topoRoute) => topoRoute.routeFk === route.id)
+                              ?.points ?? [],
                           )}
                       />
 
@@ -128,7 +132,7 @@
                         <footer class="flex justify-end">
                           <form method="POST" action="?/removeRoute" use:enhance>
                             <input hidden name="routeFk" value={route.id} />
-                            <input hidden name="topoFk" value={data.topos[selectedTopoIndex].id} />
+                            <input hidden name="topoFk" value={topos[selectedTopoIndex].id} />
                             <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
                           </form>
                         </footer>
@@ -142,7 +146,7 @@
 
                   <form method="POST" action="?/addRoute" use:enhance>
                     <input hidden name="routeFk" value={form?.routeFk ?? route.id} />
-                    <input hidden name="topoFk" value={form?.topoFk ?? data.topos[selectedTopoIndex].id} />
+                    <input hidden name="topoFk" value={form?.topoFk ?? topos[selectedTopoIndex].id} />
 
                     <button class="btn btn-sm preset-outlined-primary-500" type="submit">Add topo</button>
                   </form>
@@ -172,7 +176,7 @@
 
             <footer class="flex justify-end">
               <form method="POST" action="?/removeTopo" use:enhance>
-                <input hidden name="id" value={data.topos[selectedTopoIndex].id} />
+                <input hidden name="id" value={topos[selectedTopoIndex].id} />
                 <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
               </form>
             </footer>

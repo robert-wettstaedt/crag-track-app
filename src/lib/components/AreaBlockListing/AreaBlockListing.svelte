@@ -30,9 +30,10 @@
     getBlockKey?: GetBlockKey
     grades: Grade[]
     gradingScale?: UserSettings['gradingScale']
+    onLoadTopo?: () => void
   }
 
-  let { name, blocks, getBlockKey = null, grades, gradingScale = 'FB' }: Props = $props()
+  let { name, blocks, getBlockKey = null, grades, gradingScale = 'FB', onLoadTopo }: Props = $props()
 </script>
 
 <section>
@@ -120,7 +121,7 @@
           {#if topo.file?.stat == null}
             <p class="text-center w-full">Error loading file: {topo.file?.error ?? ''}</p>
           {:else}
-            <TopoViewer getRouteKey={(_, index) => index + 1} topos={[topo]} on:load />
+            <TopoViewer getRouteKey={(_, index) => index + 1} onLoad={onLoadTopo} topos={[topo]} />
           {/if}
 
           {#if block.geolocation?.lat != null && block.geolocation?.long != null}

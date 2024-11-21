@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { areas, blocks, users, type UserSettings } from '$lib/db/schema'
+import { areas, blocks, routes, users, type UserSettings } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { convertMarkdownToHtml } from '$lib/markdown'

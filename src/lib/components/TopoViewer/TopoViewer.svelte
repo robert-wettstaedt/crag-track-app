@@ -1,18 +1,27 @@
 <script lang="ts">
   import type { PointDTO, TopoDTO, TopoRouteDTO } from '$lib/topo'
-  import { createEventDispatcher } from 'svelte'
+  import * as d3 from 'd3'
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import RouteView from './components/Route'
   import { selectedPointTypeStore, selectedRouteStore } from './stores'
 
   interface Props {
-    topos: TopoDTO[]
     editable?: boolean
-    selectedTopoIndex?: number
     getRouteKey?: ((route: TopoRouteDTO, index: number) => number) | null
+    onChange?: (value: TopoDTO[], changedRoute: TopoRouteDTO) => void
+    onLoad?: () => void
+    selectedTopoIndex?: number
+    topos: TopoDTO[]
   }
 
-  let { topos = $bindable(), editable = false, selectedTopoIndex = $bindable(0), getRouteKey = null }: Props = $props()
+  let {
+    topos = $bindable(),
+    editable = false,
+    getRouteKey = null,
+    onChange,
+    onLoad,
+    selectedTopoIndex = $bindable(0),
+  }: Props = $props()
 
   let img: HTMLImageElement | undefined = $state()
   let imgWrapper: HTMLDivElement | undefined = $state()
@@ -24,13 +33,14 @@
   let translateY = $state(0)
   let selectedPoint: PointDTO | undefined = undefined
   let svg: SVGSVGElement | undefined = $state()
+  let clicked = false
+
+  let zoomTransform: d3.ZoomTransform | undefined = $state()
 
   let selectedTopo = $derived(topos.at(selectedTopoIndex))
   let selectedTopoRoute = $derived(
     topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore),
   )
-
-  const dispatcher = createEventDispatcher<{ change: TopoRouteDTO; load: void }>()
 
   selectedRouteStore.subscribe(() => {
     $selectedPointTypeStore = null
@@ -41,6 +51,11 @@
   })
 
   const onClickSvg: MouseEventHandler<SVGElement> = (event) => {
+    if (!editable && !clicked) {
+      clicked = true
+      initZoom()
+    }
+
     if ($selectedRouteStore != null && $selectedPointTypeStore != null) {
       if (selectedTopoRoute == null) {
         return
@@ -49,8 +64,8 @@
       const point: PointDTO = {
         id: crypto.randomUUID(),
         type: $selectedPointTypeStore,
-        x: Math.ceil(event.layerX / scale),
-        y: Math.ceil(event.layerY / scale),
+        x: Math.ceil((event.layerX - (zoomTransform?.x ?? 0)) / scale / (zoomTransform?.k ?? 1)),
+        y: Math.ceil((event.layerY - (zoomTransform?.y ?? 0)) / scale / (zoomTransform?.k ?? 1)),
       }
 
       const closePoint = topos
@@ -64,15 +79,18 @@
 
       selectedTopoRoute.points = [...selectedTopoRoute.points, point]
       $selectedPointTypeStore = null
-      dispatcher('change', selectedTopoRoute)
+      onChange?.(topos, selectedTopoRoute)
+    }
+
+    if ($selectedRouteStore != null && $selectedPointTypeStore == null && (event.target as Element).tagName === 'svg') {
+      selectedRouteStore.set(null)
     }
   }
 
   const onChangeTopType: ChangeEventHandler<HTMLInputElement> = (event) => {
     if (selectedTopoRoute != null) {
       selectedTopoRoute.topType = event.currentTarget.checked ? 'topout' : 'top'
-      topos = topos
-      dispatcher('change', selectedTopoRoute)
+      onChange?.(topos, selectedTopoRoute)
     }
   }
 
@@ -80,9 +98,12 @@
     $selectedPointTypeStore = $selectedPointTypeStore === type ? null : type
   }
 
-  const onChangeRoute = (event: CustomEvent<TopoRouteDTO>) => {
-    topos = topos
-    dispatcher('change', event.detail)
+  const onChangeRoute = (index: number) => (value: TopoRouteDTO) => {
+    if (selectedTopo != null) {
+      selectedTopo.routes[index] = value
+    }
+
+    onChange?.(topos, value)
   }
 
   const onPrevTopo = () => {
@@ -107,9 +128,36 @@
     translateY = img.getBoundingClientRect().y - imgWrapper.getBoundingClientRect().y
   }
 
+  const initZoom = () => {
+    if (svg == null) {
+      return
+    }
+
+    const zoom = d3
+      .zoom()
+      .extent([
+        [0, 0],
+        [width, height],
+      ])
+      .translateExtent([
+        [-width / 2, -height / 2],
+        [width * 1.5, height * 1.5],
+      ])
+      .scaleExtent([0.5, 9])
+      .on('zoom', (event: { transform: d3.ZoomTransform }) => {
+        zoomTransform = event.transform
+      })
+
+    d3.select(svg).call(zoom)
+  }
+
   const onLoadImage = () => {
     getDimensions()
-    dispatcher('load')
+    onLoad?.()
+
+    if (editable) {
+      initZoom()
+    }
   }
 </script>
 
@@ -174,10 +222,13 @@
         <img
           alt={topo.file.stat?.filename}
           bind:this={img}
-          class="m-auto relative z-10 pointer-events-none touch-none"
+          class="m-auto relative z-10 pointer-events-none touch-none origin-top-left"
           id="img"
           onload={onLoadImage}
           src={`/nextcloud${topo.file.stat?.filename}`}
+          style={zoomTransform == null
+            ? undefined
+            : `transform: translate(${zoomTransform.x}px, ${zoomTransform.y}px) scale(${zoomTransform.k})`}
         />
       {:else}
         <p>Error loading image</p>
@@ -196,14 +247,24 @@
       viewBox={`0 0 ${width} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {#if svg != null && selectedTopo != null}
-        {#each selectedTopo.routes as route, index}
-          {#if $selectedRouteStore !== route.routeFk}
-            <RouteView {editable} {route} {scale} {svg} key={getRouteKey?.(route, index)} on:change={onChangeRoute} />
-          {/if}
-        {/each}
+      <g transform={zoomTransform?.toString()}>
+        {#if svg != null && selectedTopo != null}
+          {#each selectedTopo.routes as route, index}
+            <!-- {#if $selectedRouteStore !== route.routeFk} -->
+            <RouteView
+              {editable}
+              {height}
+              {scale}
+              {width}
+              bind:route={selectedTopo.routes[index]}
+              key={getRouteKey?.(route, index)}
+              onChange={onChangeRoute(index)}
+              routes={selectedTopo.routes}
+            />
+            <!-- {/if} -->
+          {/each}
 
-        {#if selectedTopoRoute != null}
+          <!-- {#if selectedTopoRoute != null}
           <RouteView
             {editable}
             {scale}
@@ -213,10 +274,11 @@
               selectedTopo.routes.findIndex((route) => route.routeFk === $selectedRouteStore),
             )}
             route={selectedTopoRoute}
-            on:change={onChangeRoute}
+            routes={selectedTopo.routes}
           />
+        {/if} -->
         {/if}
-      {/if}
+      </g>
     </svg>
   </div>
 
