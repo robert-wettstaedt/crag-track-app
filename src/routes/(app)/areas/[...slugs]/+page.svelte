@@ -33,7 +33,6 @@
       window.URL.revokeObjectURL(url)
     } catch (exception) {
       const error = convertException(exception)
-      alert(error)
     }
 
     loadingDownload = false
