@@ -327,7 +327,7 @@ const renderRoute = (
 ): string => {
   return `
     <div style="margin-top: 4px;">
-      <h3 ${key == null ? '' : `style="background-color: ${colorScheme[key + 1]}; color: white; padding: 0.25rem 0.5rem;`}">
+      <h3 ${key == null ? '' : `style="background-color: ${colorScheme[key + 1]}; color: white; padding: 0.25rem 0.5rem;"`}>
         ${key == null ? '' : `<strong>${key + 1}.</strong>`}
 
         ${renderRouteName(route, grades, gradingScale)}
