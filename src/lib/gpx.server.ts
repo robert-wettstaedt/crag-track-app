@@ -1,10 +1,11 @@
 import { getToposOfArea } from '$lib/blocks.server'
 import Route from '$lib/components/TopoViewer/components/Route'
+import Labels from '$lib/components/TopoViewer/components/Labels'
 import * as schema from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { getNextcloud, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
-import { colorScheme, type TopoRouteDTO } from '$lib/topo'
+import { type TopoRouteDTO } from '$lib/topo'
 import type { Session } from '@auth/sveltekit'
 import { error } from '@sveltejs/kit'
 import { eq, inArray } from 'drizzle-orm'
@@ -328,7 +329,7 @@ const renderRoute = (
 ): string => {
   return `
     <div style="margin-top: 4px;">
-      <h3 ${key == null ? '' : `style="background-color: ${colorScheme[key + 1]}; color: white; padding: 0.25rem 0.5rem;"`}>
+      <h3>
         ${key == null ? '' : `<strong>${key + 1}.</strong>`}
 
         ${renderRouteName(route, grades, gradingScale)}
@@ -342,27 +343,39 @@ const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: T
   const { base64, scale, height = 0, width = 0 } = topo.file
 
   return `
-    <img src="data:image/jpeg;base64,${base64}" width="${width}" height="${height}" />
+    <div style="position: relative;">
+      <img src="data:image/jpeg;base64,${base64}" width="${width}" height="${height}" />
 
-    <svg
-      height="${height}"
-      style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"
-      viewBox="0 0 ${width} ${height}"
-      width="${width}"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      ${topo.routes.map(
-        (route, index) =>
-          render(Route, {
-            props: {
-              height,
-              key: index + 1,
-              route,
-              scale,
-              width,
-            },
-          }).body,
-      )}
+      <svg
+        height="${height}"
+        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"
+        viewBox="0 0 ${width} ${height}"
+        width="${width}"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        ${topo.routes.map(
+          (route) =>
+            render(Route, {
+              props: {
+                height,
+                route,
+                scale,
+                width,
+              },
+            }).body,
+        )}
+      </svg>
+
+      ${
+        render(Labels, {
+          props: {
+            routes: topo.routes,
+            scale,
+            getRouteKey: (_, index) => index + 1,
+          },
+        }).body
+      }
+    </div>
   `
 }
 

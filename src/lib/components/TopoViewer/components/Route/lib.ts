@@ -3,17 +3,12 @@ import type { Coordinates, Line } from './Route.svelte'
 
 export const calcLines = (points: PointDTO[]): Line[] => {
   const startPoints = points.filter((point) => point.type === 'start')
-  let startPoint: Coordinates | undefined = startPoints.at(0)
+  const startPoint = calcMiddlePoint(startPoints)
   const lines: Array<Line> = []
 
   if (startPoints.length === 2) {
     const [from, to] = startPoints
-
     lines.push({ from, to, length: 0 })
-    startPoint = {
-      x: (from.x + to.x) / 2,
-      y: (from.y + to.y) / 2,
-    }
   }
 
   if (startPoint == null) {
@@ -42,22 +37,14 @@ export const calcLines = (points: PointDTO[]): Line[] => {
   return [...lines, ...linesToAdd]
 }
 
-export const calcCenter = (lines: Line[]): Coordinates | undefined => {
-  const totalLength = lines.reduce((total, line) => total + line.length, 0)
-  let centerLength = totalLength / 2
+export const calcMiddlePoint = (points: PointDTO[]): Coordinates | undefined => {
+  const coordinate = points.reduce(
+    (coordinate, point, _, arr) => ({
+      x: (coordinate?.x ?? 0) + point.x / arr.length,
+      y: (coordinate?.y ?? 0) + point.y / arr.length,
+    }),
+    undefined as Coordinates | undefined,
+  )
 
-  for (let index = 0; index < lines.length; index++) {
-    const line = lines[index]
-
-    if (centerLength > line.length) {
-      centerLength -= line.length
-      continue
-    }
-
-    const ratio = centerLength / line.length
-    return {
-      x: (1 - ratio) * line.from.x + ratio * line.to.x,
-      y: (1 - ratio) * line.from.y + ratio * line.to.y,
-    }
-  }
+  return coordinate
 }

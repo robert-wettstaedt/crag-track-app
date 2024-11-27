@@ -376,11 +376,19 @@
 
       const extent = boundingExtent(coordinates)
 
-      map.getView().fit(extent, { maxZoom: zoom ?? DEFAULT_ZOOM, padding: [250, 250, 250, 250] })
+      try {
+        map.getView().fit(extent, { maxZoom: zoom ?? DEFAULT_ZOOM, padding: [250, 250, 250, 250] })
+      } catch (error) {
+        console.error(error)
+      }
 
       if (zoom == null) {
         setTimeout(() => {
-          map.getView().fit(extent, { maxZoom: 22, padding: [250, 250, 250, 250] })
+          try {
+            map.getView().fit(extent, { maxZoom: 22, padding: [250, 250, 250, 250] })
+          } catch (error) {
+            console.error(error)
+          }
           dispatch('rendercomplete')
         }, 1000)
       } else {

@@ -9,14 +9,13 @@
 </script>
 
 <script lang="ts">
-  import { colorScheme, type PointDTO, type TopoRouteDTO } from '$lib/topo'
+  import { type PointDTO, type TopoRouteDTO } from '$lib/topo'
   import * as d3 from 'd3'
   import { onMount } from 'svelte'
   import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from '../../stores'
-  import { calcCenter, calcLines } from './lib'
+  import { calcLines } from './lib'
 
   interface Props {
-    key: number | undefined
     editable?: boolean
     onChange?: (route: TopoRouteDTO) => void
     route: TopoRouteDTO
@@ -25,7 +24,7 @@
     width: number
   }
 
-  let { key, editable = false, onChange, route = $bindable(), scale, height, width }: Props = $props()
+  let { editable = false, onChange, route = $bindable(), scale, height, width }: Props = $props()
 
   let group: SVGGElement | undefined = $state()
 
@@ -34,20 +33,16 @@
 
   let cursorClass = $derived(selected && editable ? 'cursor-move' : 'cursor-pointer')
 
-  let color = $derived(key == null ? undefined : colorScheme[key])
+  let color = $derived(highlighted ? '#2ca02c' : selected ? 'white' : '#ff7f0e')
+  let bgColor = 'black'
+  let bgOpacity = 0.5
 
-  let strokeClass = $derived(highlighted ? 'stroke-green-400' : selected ? 'stroke-white' : 'stroke-red-700')
-  let fillClass = $derived(highlighted ? 'fill-green-400' : selected ? 'fill-white' : 'fill-red-700')
   let strokeWidth = $derived(highlighted || selected ? 4 : 2)
-
-  let bgStrokeClass = $derived('stroke-black opacity-50')
-  let bgFillClass = $derived('fill-black opacity-50')
   let bgStrokeWidth = $derived(highlighted || selected ? 6 : 4)
 
   let selectedPoint: PointDTO | undefined = $state(undefined)
 
   let lines = $derived(calcLines(route.points))
-  let center = $derived(calcCenter(lines))
 
   const onContextMenu = (event: MouseEvent) => {
     event.preventDefault()
@@ -129,11 +124,11 @@
 <g bind:this={group} class="cursor-pointer" oncontextmenu={onContextMenu} role="presentation">
   {#each lines as line}
     <line
-      class={color == null ? bgStrokeClass : undefined}
       data-id="line"
       data-route-id={route.routeFk}
-      stroke={color}
+      opacity={bgOpacity}
       stroke-width={bgStrokeWidth}
+      stroke={bgColor}
       x1={line.from.x * scale}
       x2={line.to.x * scale}
       y1={line.from.y * scale}
@@ -141,7 +136,6 @@
     />
 
     <line
-      class={color == null ? strokeClass : undefined}
       data-id="line"
       data-route-id={route.routeFk}
       stroke={color}
@@ -156,31 +150,35 @@
   {#each route.points as point}
     {#if point.type === 'start'}
       <circle
-        class={`${bgStrokeClass} ${cursorClass}`}
+        class={cursorClass}
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
         data-route-id={route.routeFk}
         fill="transparent"
         id="start-bg-outer"
+        opacity={bgOpacity}
         r={highlighted || selected ? 12 : 11}
         role="presentation"
+        stroke={bgColor}
       />
 
       <circle
-        class={`${bgStrokeClass} ${cursorClass}`}
+        class={cursorClass}
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
         data-route-id={route.routeFk}
         fill="transparent"
         id="start-bg-inner"
+        opacity={bgOpacity}
         r={highlighted || selected ? 8 : 9}
         role="presentation"
+        stroke={bgColor}
       />
 
       <circle
-        class={`${color == null ? strokeClass : ''} ${cursorClass}`}
+        class={cursorClass}
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
@@ -189,23 +187,24 @@
         id="start"
         r={10}
         role="presentation"
-        stroke={color}
         stroke-width={strokeWidth}
+        stroke={color}
       />
     {:else if point.type === 'middle'}
       <circle
-        class={`${bgFillClass} ${cursorClass}`}
+        class={cursorClass}
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
         data-route-id={route.routeFk}
-        fill="transparent"
+        fill={bgColor}
         id="middle-bg"
+        opacity={bgOpacity}
         r={6}
       />
 
       <circle
-        class={`${color == null ? fillClass : ''} ${cursorClass}`}
+        class={cursorClass}
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
@@ -217,33 +216,37 @@
     {:else if point.type === 'top'}
       {#if route.topType === 'topout'}
         <polyline
-          class={`${bgStrokeClass} ${cursorClass}`}
+          class={cursorClass}
           data-id={point.id}
           data-route-id={route.routeFk}
           fill="transparent"
           id="topout-bg"
+          opacity={bgOpacity}
           points={`${point.x * scale - 20},${point.y * scale + 20} ${point.x * scale},${point.y * scale}, ${point.x * scale + 20},${point.y * scale + 20}`}
           stroke-width={bgStrokeWidth}
+          stroke={bgColor}
         />
 
         <polyline
-          class={`${color == null ? strokeClass : ''} ${cursorClass}`}
+          class={cursorClass}
           data-id={point.id}
           data-route-id={route.routeFk}
           fill="transparent"
           id="topout"
           points={`${point.x * scale - 20},${point.y * scale + 20} ${point.x * scale},${point.y * scale}, ${point.x * scale + 20},${point.y * scale + 20}`}
-          stroke={color}
           stroke-width={strokeWidth}
+          stroke={color}
         />
       {:else}
         <line
-          class={`${bgStrokeClass} ${cursorClass}`}
+          class={cursorClass}
           data-id={point.id}
           data-route-id={route.routeFk}
           fill="transparent"
           id="top-bg"
+          opacity={bgOpacity}
           stroke-width={bgStrokeWidth}
+          stroke={bgColor}
           x1={point.x * scale - 20}
           x2={point.x * scale + 20}
           y1={point.y * scale}
@@ -251,13 +254,13 @@
         />
 
         <line
-          class={`${color == null ? strokeClass : ''} ${cursorClass}`}
+          class={cursorClass}
           data-id={point.id}
           data-route-id={route.routeFk}
           fill="transparent"
           id="top"
-          stroke={color}
           stroke-width={strokeWidth}
+          stroke={color}
           x1={point.x * scale - 20}
           x2={point.x * scale + 20}
           y1={point.y * scale}
@@ -266,26 +269,4 @@
       {/if}
     {/if}
   {/each}
-
-  {#if center != null && key != null}
-    <rect
-      class={bgFillClass}
-      height={40 * scale}
-      id="key-bg"
-      width={40 * scale}
-      x={center.x * scale - 50 * scale}
-      y={center.y * scale - 60 * scale}
-    />
-
-    <text
-      class={color == null ? fillClass : ''}
-      fill={color}
-      font-size={25 * scale}
-      id="key"
-      x={center.x * scale - 38 * scale}
-      y={center.y * scale - 30 * scale}
-    >
-      {key}
-    </text>
-  {/if}
 </g>

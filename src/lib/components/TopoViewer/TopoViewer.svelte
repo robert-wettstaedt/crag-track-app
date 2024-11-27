@@ -4,6 +4,7 @@
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import RouteView from './components/Route'
   import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from './stores'
+  import Labels from './components/Labels'
 
   interface Props {
     editable?: boolean
@@ -264,30 +265,31 @@
     class="absolute z-20"
     style={`left: ${translateX}px; right: ${translateX}px; top: ${translateY}px; bottom: ${translateY}px`}
   >
-    <svg
-      bind:this={svg}
-      onclick={onClickSvg}
-      onmousemove={onMouseMoveSvg}
-      role="presentation"
-      viewBox={`0 0 ${width} ${height}`}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g transform={zoomTransform?.toString()}>
-        {#if svg != null && selectedTopo != null}
-          {#each selectedTopo.routes as route, index}
+    {#if selectedTopo != null}
+      <svg
+        bind:this={svg}
+        onclick={onClickSvg}
+        onmousemove={onMouseMoveSvg}
+        role="presentation"
+        viewBox={`0 0 ${width} ${height}`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g transform={zoomTransform?.toString()}>
+          {#each selectedTopo.routes as _, index}
             <RouteView
               {editable}
               {height}
               {scale}
               {width}
               bind:route={selectedTopo.routes[index]}
-              key={getRouteKey?.(route, index)}
               onChange={onChangeRoute(index)}
             />
           {/each}
-        {/if}
-      </g>
-    </svg>
+        </g>
+      </svg>
+
+      <Labels {getRouteKey} {scale} routes={selectedTopo?.routes} />
+    {/if}
   </div>
 
   {#if topos.length > 1}

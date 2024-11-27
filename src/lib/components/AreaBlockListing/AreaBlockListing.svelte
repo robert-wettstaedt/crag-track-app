@@ -4,7 +4,7 @@
   import type { Grade, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import type { EnrichedBlock } from '$lib/db/utils'
-  import { colorScheme, type TopoDTO } from '$lib/topo'
+  import { type TopoDTO } from '$lib/topo'
   import { Rating } from '@skeletonlabs/skeleton-svelte'
 
   type Block = InferResultType<
@@ -64,10 +64,7 @@
 
             {#each topo.routes.map( (topoRoute) => block.routes.find((route) => route.id === topoRoute.routeFk), ) as route, index}
               {#if route != null}
-                <h3
-                  class="text-lg text-white mt-8 px-2 flex gap-x-2"
-                  style={`background-color: ${colorScheme[index + 1]}; print-color-adjust: exact !important;`}
-                >
+                <h3 class="text-lg mt-8 px-2 flex gap-x-2">
                   <strong>{index + 1}</strong>
 
                   {route.name.length === 0 ? 'Unbekannt' : route.name}
