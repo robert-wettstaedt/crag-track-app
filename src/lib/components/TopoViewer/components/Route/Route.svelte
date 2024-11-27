@@ -20,13 +20,12 @@
     editable?: boolean
     onChange?: (route: TopoRouteDTO) => void
     route: TopoRouteDTO
-    routes: TopoRouteDTO[]
     scale: number
     height: number
     width: number
   }
 
-  let { key, editable = false, onChange, route = $bindable(), routes, scale, height, width }: Props = $props()
+  let { key, editable = false, onChange, route = $bindable(), scale, height, width }: Props = $props()
 
   let group: SVGGElement | undefined = $state()
 
@@ -127,11 +126,12 @@
   })
 </script>
 
-<g class="cursor-pointer" role="presentation" bind:this={group} oncontextmenu={onContextMenu}>
+<g bind:this={group} class="cursor-pointer" oncontextmenu={onContextMenu} role="presentation">
   {#each lines as line}
     <line
       class={color == null ? bgStrokeClass : undefined}
       data-id="line"
+      data-route-id={route.routeFk}
       stroke={color}
       stroke-width={bgStrokeWidth}
       x1={line.from.x * scale}
@@ -143,6 +143,7 @@
     <line
       class={color == null ? strokeClass : undefined}
       data-id="line"
+      data-route-id={route.routeFk}
       stroke={color}
       stroke-width={strokeWidth}
       x1={line.from.x * scale}
@@ -159,6 +160,7 @@
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
+        data-route-id={route.routeFk}
         fill="transparent"
         id="start-bg-outer"
         r={highlighted || selected ? 12 : 11}
@@ -170,6 +172,7 @@
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
+        data-route-id={route.routeFk}
         fill="transparent"
         id="start-bg-inner"
         r={highlighted || selected ? 8 : 9}
@@ -181,6 +184,7 @@
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
+        data-route-id={route.routeFk}
         fill="transparent"
         id="start"
         r={10}
@@ -194,6 +198,7 @@
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
+        data-route-id={route.routeFk}
         fill="transparent"
         id="middle-bg"
         r={6}
@@ -204,6 +209,7 @@
         cx={point.x * scale}
         cy={point.y * scale}
         data-id={point.id}
+        data-route-id={route.routeFk}
         fill={color}
         id="middle"
         r={5}
@@ -213,6 +219,7 @@
         <polyline
           class={`${bgStrokeClass} ${cursorClass}`}
           data-id={point.id}
+          data-route-id={route.routeFk}
           fill="transparent"
           id="topout-bg"
           points={`${point.x * scale - 20},${point.y * scale + 20} ${point.x * scale},${point.y * scale}, ${point.x * scale + 20},${point.y * scale + 20}`}
@@ -222,6 +229,7 @@
         <polyline
           class={`${color == null ? strokeClass : ''} ${cursorClass}`}
           data-id={point.id}
+          data-route-id={route.routeFk}
           fill="transparent"
           id="topout"
           points={`${point.x * scale - 20},${point.y * scale + 20} ${point.x * scale},${point.y * scale}, ${point.x * scale + 20},${point.y * scale + 20}`}
@@ -232,6 +240,7 @@
         <line
           class={`${bgStrokeClass} ${cursorClass}`}
           data-id={point.id}
+          data-route-id={route.routeFk}
           fill="transparent"
           id="top-bg"
           stroke-width={bgStrokeWidth}
@@ -244,6 +253,7 @@
         <line
           class={`${color == null ? strokeClass : ''} ${cursorClass}`}
           data-id={point.id}
+          data-route-id={route.routeFk}
           fill="transparent"
           id="top"
           stroke={color}

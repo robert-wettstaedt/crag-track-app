@@ -3,7 +3,7 @@
   import * as d3 from 'd3'
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import RouteView from './components/Route'
-  import { selectedPointTypeStore, selectedRouteStore } from './stores'
+  import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from './stores'
 
   interface Props {
     editable?: boolean
@@ -37,7 +37,22 @@
 
   let zoomTransform: d3.ZoomTransform | undefined = $state()
 
-  let selectedTopo = $derived(topos.at(selectedTopoIndex))
+  let selectedTopo = $derived.by(() => {
+    const topo = topos.at(selectedTopoIndex)
+    if (topo != null) {
+      const routes = topo.routes.toSorted((a, b) => {
+        const prioA = $highlightedRouteStore === a.routeFk ? 2 : $selectedRouteStore === a.routeFk ? 1 : 0
+        const prioB = $highlightedRouteStore === b.routeFk ? 2 : $selectedRouteStore === b.routeFk ? 1 : 0
+
+        return prioA - prioB
+      })
+
+      return { ...topo, routes }
+    }
+
+    return topo
+  })
+
   let selectedTopoRoute = $derived(
     topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore),
   )
@@ -84,6 +99,15 @@
 
     if ($selectedRouteStore != null && $selectedPointTypeStore == null && (event.target as Element).tagName === 'svg') {
       selectedRouteStore.set(null)
+    }
+  }
+
+  const onMouseMoveSvg: MouseEventHandler<SVGElement> = (event) => {
+    const routeIdStr = (event.target as HTMLElement).attributes.getNamedItem('data-route-id')?.value
+    const routeId = Number(routeIdStr)
+
+    if ($selectedRouteStore !== routeId) {
+      highlightedRouteStore.set(Number.isNaN(routeId) ? null : routeId)
     }
   }
 
@@ -243,6 +267,7 @@
     <svg
       bind:this={svg}
       onclick={onClickSvg}
+      onmousemove={onMouseMoveSvg}
       role="presentation"
       viewBox={`0 0 ${width} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
@@ -250,7 +275,6 @@
       <g transform={zoomTransform?.toString()}>
         {#if svg != null && selectedTopo != null}
           {#each selectedTopo.routes as route, index}
-            <!-- {#if $selectedRouteStore !== route.routeFk} -->
             <RouteView
               {editable}
               {height}
@@ -259,24 +283,8 @@
               bind:route={selectedTopo.routes[index]}
               key={getRouteKey?.(route, index)}
               onChange={onChangeRoute(index)}
-              routes={selectedTopo.routes}
             />
-            <!-- {/if} -->
           {/each}
-
-          <!-- {#if selectedTopoRoute != null}
-          <RouteView
-            {editable}
-            {scale}
-            {svg}
-            key={getRouteKey?.(
-              selectedTopoRoute,
-              selectedTopo.routes.findIndex((route) => route.routeFk === $selectedRouteStore),
-            )}
-            route={selectedTopoRoute}
-            routes={selectedTopo.routes}
-          />
-        {/if} -->
         {/if}
       </g>
     </svg>
