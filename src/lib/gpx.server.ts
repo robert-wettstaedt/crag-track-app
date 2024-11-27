@@ -1,5 +1,5 @@
 import { getToposOfArea } from '$lib/blocks.server'
-import type { Coordinates, Line } from '$lib/components/TopoViewer/components/Route'
+import Route from '$lib/components/TopoViewer/components/Route'
 import * as schema from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
 import { convertMarkdownToHtml } from '$lib/markdown'
@@ -14,6 +14,7 @@ import { minify, type Options } from 'html-minifier'
 import { DateTime } from 'luxon'
 import sharp from 'sharp'
 import stringToColor from 'string-to-color'
+import { render } from 'svelte/server'
 import type { BufferLike, FileStat, ResponseDataDetailed } from 'webdav'
 
 interface TopoFile {
@@ -337,8 +338,8 @@ const renderRoute = (
     </div>`
 }
 
-const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: TopoRouteDTO[] }) => {
-  const { base64, scale, height, width } = topo.file
+const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: TopoRouteDTO[] }): string => {
+  const { base64, scale, height = 0, width = 0 } = topo.file
 
   return `
     <img src="data:image/jpeg;base64,${base64}" width="${width}" height="${height}" />
@@ -350,233 +351,18 @@ const renderTopo = (topo: InferResultType<'topos'> & { file: TopoFile; routes: T
       width="${width}"
       xmlns="http://www.w3.org/2000/svg"
     >
-      ${topo.routes.map((route, index) => {
-        let lines: Array<Line> = []
-        let center = undefined as Coordinates | undefined
-
-        const calcCenter = () => {
-          const totalLength = lines.reduce((total, line) => total + line.length, 0)
-          let centerLength = totalLength / 2
-
-          for (let index = 0; index < lines.length; index++) {
-            const line = lines[index]
-
-            if (centerLength > line.length) {
-              centerLength -= line.length
-              continue
-            }
-
-            const ratio = centerLength / line.length
-            center = {
-              x: (1 - ratio) * line.from.x + ratio * line.to.x,
-              y: (1 - ratio) * line.from.y + ratio * line.to.y,
-            }
-            return
-          }
-        }
-
-        const calcLines = () => {
-          const startPoints = route.points.filter((point) => point.type === 'start')
-          let startPoint: Coordinates | undefined = startPoints.at(0)
-
-          if (startPoints.length === 2) {
-            const [from, to] = startPoints
-
-            lines = [...lines, { from, to, length: 0 }]
-            startPoint = {
-              x: (from.x + to.x) / 2,
-              y: (from.y + to.y) / 2,
-            }
-          }
-
-          if (startPoint == null) {
-            return
-          }
-
-          const nonStartPoints = route.points
-            .filter((point) => point.type !== 'start')
-            .toSorted((a, b) => {
-              const aDist = Math.sqrt(Math.pow(startPoint.x - a.x, 2) + Math.pow(startPoint.y - a.y, 2))
-              const bDist = Math.sqrt(Math.pow(startPoint.x - b.x, 2) + Math.pow(startPoint.y - b.y, 2))
-
-              return aDist - bDist
-            })
-
-          const linesToAdd = [startPoint, ...nonStartPoints].flatMap((from, index, arr): Line[] => {
-            const to = arr.at(index + 1)
-
-            if (to == null) {
-              return []
-            }
-
-            return [{ from, to, length: Math.sqrt(Math.pow(to.x - from.x, 2) + Math.pow(to.y - from.y, 2)) }]
-          })
-
-          lines = [...lines, ...linesToAdd]
-
-          calcCenter()
-        }
-
-        calcLines()
-
-        return `
-          <g>
-            ${lines.map(
-              (line) => `
-                <line
-                  data-id="line"
-                  stroke-width="4"
-                  stroke="black"
-                  x1="${line.from.x * scale}"
-                  x2="${line.to.x * scale}"
-                  y1="${line.from.y * scale}"
-                  y2="${line.to.y * scale}"
-                />
-
-                <line
-                  data-id="line"
-                  stroke-width="2"
-                  stroke=${colorScheme[index + 1]}
-                  x1="${line.from.x * scale}"
-                  x2="${line.to.x * scale}"
-                  y1="${line.from.y * scale}"
-                  y2="${line.to.y * scale}"
-                />
-              `,
-            )}
-
-            ${route.points.map((point) =>
-              point.type === 'start'
-                ? `
-                <circle
-                  cx="${point.x * scale}"
-                  cy="${point.y * scale}"
-                  fill="transparent"
-                  r="11"
-                  role="presentation"
-                  stroke="black"
-                />
-
-                <circle
-                  cx="${point.x * scale}"
-                  cy="${point.y * scale}"
-                  data-id="${point.id}"
-                  fill="transparent"
-                  id="start-bg-inner"
-                  r="9"
-                  role="presentation"
-                  stroke="black"
-                />
-
-                <circle
-                  cx="${point.x * scale}"
-                  cy="${point.y * scale}"
-                  data-id="${point.id}"
-                  fill="transparent"
-                  id="start"
-                  r="10"
-                  role="presentation"
-                  stroke-width="1"
-                  stroke=${colorScheme[index + 1]}
-                />`
-                : point.type === 'middle'
-                  ? `
-                <circle
-                  cx="${point.x * scale}"
-                  cy="${point.y * scale}"
-                  data-id="${point.id}"
-                  fill="black"
-                  fill="transparent"
-                  id="middle-bg"
-                  r="6"
-                />
-
-                <circle
-                  cx="${point.x * scale}"
-                  cy="${point.y * scale}"
-                  data-id="${point.id}"
-                  fill="green"
-                  fill="transparent"
-                  id="middle"
-                  r="5"
-                />
-              `
-                  : point.type === 'top'
-                    ? route.topType === 'topout'
-                      ? `
-                  <polyline
-                    data-id="${point.id}"
-                    fill="transparent"
-                    id="topout-bg"
-                    points=${`${point.x - 20},${point.y + 20} ${point.x},${point.y}, ${point.x + 20},${point.y + 20}`}
-                    stroke-width="4"
-                    stroke="black"
-                  />
-
-                  <polyline
-                    data-id="${point.id}"
-                    fill="transparent"
-                    id="topout"
-                    points=${`${point.x - 20},${point.y + 20} ${point.x},${point.y}, ${point.x + 20},${point.y + 20}`}
-                    stroke-width="2"
-                    stroke=${colorScheme[index + 1]}
-                  />
-                `
-                      : `
-                  <line
-                    data-id="${point.id}"
-                    fill="transparent"
-                    id="top-bg"
-                    stroke-width="4"
-                    stroke="black"
-                    x1="${point.x * scale - 20}"
-                    x2="${point.x * scale + 20}"
-                    y1="${point.y * scale}"
-                    y2="${point.y * scale}"
-                  />
-
-                  <line
-                    data-id="${point.id}"
-                    fill="transparent"
-                    id="top"
-                    stroke-width="2"
-                    stroke=${colorScheme[index + 1]}
-                    x1="${point.x * scale - 20}"
-                    x2="${point.x * scale + 20}"
-                    y1="${point.y * scale}"
-                    y2="${point.y * scale}"
-                  />
-                  `
-                    : '',
-            )}
-
-            ${
-              center == null
-                ? ''
-                : `
-                <rect
-                  fill="black"
-                  height="${40 * scale}"
-                  id="key-bg"
-                  width="${40 * scale}"
-                  x="${center.x * scale - 50 * scale}"
-                  y="${center.y * scale - 60 * scale}"
-                />
-
-                <text
-                  fill=${colorScheme[index + 1]}
-                  font-size="${25 * scale}"
-                  id="key"
-                  x="${center.x * scale - 38 * scale}"
-                  y="${center.y * scale - 30 * scale}"
-                >
-                  ${index + 1}
-                </text>`
-            }
-          </g>
-        `
-      })}
-    </svg>
+      ${topo.routes.map(
+        (route, index) =>
+          render(Route, {
+            props: {
+              height,
+              key: index + 1,
+              route,
+              scale,
+              width,
+            },
+          }).body,
+      )}
   `
 }
 
