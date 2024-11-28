@@ -36,7 +36,7 @@
 </script>
 
 {#if crumbs.length > 2}
-  <ol class="flex items-center gap-4 mb-8">
+  <ol class="flex flex-wrap items-center gap-2 md:gap-4 mb-8">
     {#each crumbs as crumb, i}
       <li>
         <a class="anchor" href={crumb.href}>{crumb.label}</a>

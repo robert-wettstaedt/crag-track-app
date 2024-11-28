@@ -194,7 +194,7 @@
 
 {#await data.references then references}
   {#if references.routes.length > 0}
-    <div class="card mt-4 p-4 preset-filled-surface-100-900">
+    <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
       <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
@@ -202,24 +202,24 @@
   {/if}
 {/await}
 
-<div class="card mt-4 p-4 preset-filled-surface-100-900">
+<div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header">Topo</div>
 
   <div class="flex">
     {#if data.topos.length === 0}
-      <section class="p-4">No topos yet</section>
+      <section class="p-2 md:p-4">No topos yet</section>
     {:else}
-      <section class="p-4 w-2/4 m-auto">
+      <section class="p-2 md:p-4 w-2/4 m-auto">
         <TopoViewer topos={data.topos} />
       </section>
     {/if}
   </div>
 </div>
 
-<div class="card mt-4 p-4 preset-filled-surface-100-900">
+<div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header">Files</div>
 
-  <section class="p-4">
+  <section class="p-2 md:p-4">
     {#if files.length === 0}
       No files yet
     {:else}
@@ -266,10 +266,10 @@
   </section>
 </div>
 
-<div class="card mt-4 p-4 preset-filled-surface-100-900">
+<div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header">Ascents</div>
 
-  <section class="p-4">
+  <section class="p-2 md:p-4">
     {#if data.ascents.length === 0}
       No ascents yet
     {:else}
@@ -303,7 +303,7 @@
           </div>
 
           {#if ascent.notes != null && ascent.notes.length > 0}
-            <div class="rendered-markdown preset-filled-surface-200-800 p-4 ms-8 mt-4">
+            <div class="rendered-markdown preset-filled-surface-200-800 p-2 md:p-4 ms-8 mt-4">
               {@html ascent.notes}
             </div>
           {/if}

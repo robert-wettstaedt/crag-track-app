@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
+  import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
   import { AppBar, Pagination } from '@skeletonlabs/skeleton-svelte'
 
@@ -17,19 +18,17 @@
   {/snippet}
 </AppBar>
 
-<ul class="card mt-8 p-4 preset-filled-surface-100-900">
-  {#each data.routes as route (route.id)}
-    <li class="hover:preset-tonal-primary flex justify-between">
-      <a class="anchor px-4 py-3 grow hover:text-white" href={route.pathname}>
-        <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
-      </a>
-
-      <a class="anchor px-4 py-3 hover:text-white" href={route.block.pathname}>
-        {route.block.name}
-      </a>
-    </li>
-  {/each}
-</ul>
+<div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
+  <GenericList
+    items={data.routes}
+    rightContent={(item) => item.block.name}
+    rightPathname={(item) => item.block.pathname}
+  >
+    {#snippet left(item)}
+      <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={item} />
+    {/snippet}
+  </GenericList>
+</div>
 
 <div class="mt-8 flex justify-end">
   <Pagination

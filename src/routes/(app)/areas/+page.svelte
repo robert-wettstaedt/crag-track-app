@@ -1,4 +1,5 @@
 <script lang="ts">
+  import GenericList from '$lib/components/GenericList'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
   let { data } = $props()
@@ -22,22 +23,14 @@
   {/snippet}
 </AppBar>
 
-<div class="block card p-4 mt-8 preset-filled-surface-100-900">
+<div class="block card p-2 md:p-4 mt-8 preset-filled-surface-100-900">
   {#if data.areas.length === 0}
     No areas yet
   {:else}
-    <nav class="list-nav">
-      <ul>
-        {#each data.areas as area}
-          <li>
-            <a class="flex px-4 py-2 hover:preset-filled-primary-100-900" href={`/areas/${area.slug}-${area.id}`}>
-              <span class="flex-auto">
-                {area.name}
-              </span>
-            </a>
-          </li>
-        {/each}
-      </ul>
-    </nav>
+    <GenericList items={data.areas.map((item) => ({ ...item, pathname: `/areas/${item.slug}-${item.id}` }))}>
+      {#snippet left(item)}
+        {item.name}
+      {/snippet}
+    </GenericList>
   {/if}
 </div>

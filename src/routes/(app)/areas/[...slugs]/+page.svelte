@@ -125,7 +125,7 @@
 
 {#await data.references then references}
   {#if references.routes.length > 0}
-    <div class="card mt-4 p-4 preset-filled-surface-100-900">
+    <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
       <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
@@ -133,7 +133,7 @@
   {/if}
 {/await}
 
-<div class="card mt-4 p-4 preset-filled-surface-100-900">
+<div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header">Location</div>
 
   <section class="pt-4">
@@ -150,10 +150,10 @@
   </section>
 </div>
 
-<div class="card mt-4 p-4 preset-filled-surface-100-900">
+<div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header">Topos</div>
 
-  <section class="p-4">
+  <section class="p-2 md:p-4">
     {#key data.area.id}
       {#if files.length === 0}
         No topos yet
@@ -192,16 +192,19 @@
 </div>
 
 {#if data.canAddArea || data.area.areas.length > 0}
-  <div class="card mt-4 p-4 preset-filled-surface-100-900">
+  <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
     <div class="card-header">Areas</div>
 
-    <section class="p-4">
+    <section class="p-2 md:p-4">
       {#if data.area.areas.length === 0}
         No areas yet
       {:else}
         <div class="flex flex-wrap gap-2">
           {#each data.area.areas as area}
-            <a class="card card-hover preset-outlined-primary-500 p-4" href={`${basePath}/${area.slug}-${area.id}`}>
+            <a
+              class="card card-hover preset-outlined-primary-500 p-2 md:p-4"
+              href={`${basePath}/${area.slug}-${area.id}`}
+            >
               <dt>Name</dt>
               <dd>
                 {area.name}
@@ -220,16 +223,16 @@
   </div>
 {/if}
 
-<div class="card mt-4 p-4 preset-filled-surface-100-900">
+<div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header">Blocks</div>
 
-  <section class="p-4">
+  <section class="p-2 md:p-4">
     {#if data.area.blocks.length === 0}
       No blocks yet
     {:else}
       <div class="flex flex-wrap gap-2">
         {#each data.area.blocks as block}
-          <a class="card card-hover preset-outlined-primary-500 p-4" href={`${basePath}/_/blocks/${block.slug}`}>
+          <a class="card card-hover preset-outlined-primary-500 p-2 md:p-4" href={`${basePath}/_/blocks/${block.slug}`}>
             <dt>Name</dt>
             <dd>
               {block.name}

@@ -114,6 +114,7 @@ export const load = (async ({ locals, params }) => {
     openProjects,
     finishedProjects,
     externalResources,
+    requestedUser: user,
   }
 }) satisfies PageServerLoad
 

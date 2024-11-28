@@ -38,6 +38,8 @@
       </div>
     {/if}
 
-    {route.name.length === 0 ? '<no name>' : route.name}
+    <div class="overflow-hidden text-ellipsis">
+      {route.name.length === 0 ? '<no name>' : route.name}
+    </div>
   </div>
 {/if}

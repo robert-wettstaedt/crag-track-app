@@ -73,7 +73,7 @@
   </aside>
 {/if}
 
-<div class="mt-8 w-full text-token card mt-8 p-4 preset-filled-surface-100-900 space-y-4">
+<div class="mt-8 w-full text-token card mt-8 p-2 md:p-4 preset-filled-surface-100-900 space-y-4">
   {#each data.blocks as block}
     <p class="font-bold">{block.name}</p>
 

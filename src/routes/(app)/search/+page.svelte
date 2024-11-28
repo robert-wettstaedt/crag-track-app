@@ -1,9 +1,10 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
   import { AppBar, Tabs } from '@skeletonlabs/skeleton-svelte'
-  import type { Snapshot } from './$types'
   import { onMount } from 'svelte'
+  import type { Snapshot } from './$types'
 
   let { data } = $props()
 
@@ -48,8 +49,8 @@
 </form>
 
 {#if data.searchResults != null}
-  <div class="mt-8">
-    <Tabs bind:value={tabSet}>
+  <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
+    <Tabs bind:value={tabSet} listClasses="overflow-x-auto overflow-y-hidden">
       {#snippet list()}
         <Tabs.Control value="routes">
           {#snippet lead()}
@@ -82,64 +83,45 @@
 
       {#snippet content()}
         <Tabs.Panel value="routes">
-          <ul>
-            {#each data.searchResults.routes as route}
-              <li class="hover:preset-tonal-primary flex justify-between">
-                <a class="anchor px-4 py-3 grow hover:text-white" href={route.pathname}>
-                  <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
-                </a>
-
-                <a class="anchor px-4 py-3 hover:text-white" href={route.block.pathname}>
-                  {route.block.name}
-                </a>
-              </li>
-            {/each}
-          </ul>
+          <GenericList
+            items={data.searchResults.routes}
+            rightContent={(item) => item.block.name}
+            rightPathname={(item) => item.block.pathname}
+          >
+            {#snippet left(item)}
+              <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={item} />
+            {/snippet}
+          </GenericList>
         </Tabs.Panel>
 
         <Tabs.Panel value="blocks">
-          <nav class="list-nav">
-            <ul>
-              {#each data.searchResults.blocks as block}
-                <li>
-                  <a class="anchor px-4 py-3 flex hover:preset-tonal-primary hover:text-white" href={block.pathname}>
-                    {block.name}
-                  </a>
-                </li>
-              {/each}
-            </ul>
-          </nav>
+          <GenericList items={data.searchResults.blocks}>
+            {#snippet left(item)}
+              {item.name}
+            {/snippet}
+          </GenericList>
         </Tabs.Panel>
 
         <Tabs.Panel value="areas">
-          <nav class="list-nav">
-            <ul>
-              {#each data.searchResults.areas as area}
-                <li>
-                  <a class="anchor px-4 py-3 flex hover:preset-tonal-primary hover:text-white" href={area.pathname}>
-                    {area.name}
-                  </a>
-                </li>
-              {/each}
-            </ul>
-          </nav>
+          <GenericList items={data.searchResults.areas}>
+            {#snippet left(item)}
+              {item.name}
+            {/snippet}
+          </GenericList>
         </Tabs.Panel>
 
         <Tabs.Panel value="users">
-          <nav class="list-nav">
-            <ul>
-              {#each data.searchResults.users as user}
-                <li>
-                  <a
-                    class="anchor px-4 py-3 flex hover:preset-tonal-primary hover:text-white"
-                    href={`/users/${user.userName}`}
-                  >
-                    {user.userName}
-                  </a>
-                </li>
-              {/each}
-            </ul>
-          </nav>
+          <GenericList
+            items={data.searchResults.users.map((user) => ({
+              ...user,
+              name: user.userName,
+              pathname: `/users/${user.userName}`,
+            }))}
+          >
+            {#snippet left(item)}
+              {item.name}
+            {/snippet}
+          </GenericList>
         </Tabs.Panel>
       {/snippet}
     </Tabs>

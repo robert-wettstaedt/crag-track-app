@@ -38,18 +38,18 @@
 </AppBar>
 
 {#if form?.error}
-  <aside class="card preset-tonal-warning mt-8 p-4">
+  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4">
     <p>{form.error}</p>
   </aside>
 {/if}
 
 <div class="mt-8 flex">
-  <section class="p-4 w-2/3">
+  <section class="p-2 md:p-4 w-2/3">
     <TopoViewer editable={true} bind:selectedTopoIndex bind:topos onChange={onChangeTopo} />
   </section>
 
-  <section class="p-4 w-1/3">
-    <div class="card preset-filled-surface-100-900 p-4 h-full flex flex-col justify-between">
+  <section class="p-2 md:p-4 w-1/3">
+    <div class="card preset-filled-surface-100-900 p-2 md:p-4 h-full flex flex-col justify-between">
       <nav class="list-nav">
         <ul>
           {#each data.block.routes as route}
@@ -116,7 +116,7 @@
                     <Popover
                       arrow
                       arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-                      contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+                      contentBase="card bg-surface-200-800 p-2 md:p-4 space-y-4 max-w-[320px]"
                       positioning={{ placement: 'top' }}
                       triggerBase="btn btn-sm preset-filled-error-500 !text-white"
                     >
@@ -161,7 +161,7 @@
         <Popover
           arrow
           arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-          contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+          contentBase="card bg-surface-200-800 p-2 md:p-4 space-y-4 max-w-[320px]"
           positioning={{ placement: 'top' }}
           triggerBase="btn preset-filled-error-500 !text-white"
         >

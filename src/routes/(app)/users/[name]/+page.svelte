@@ -3,8 +3,10 @@
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
+  import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
   import Vega from '$lib/components/Vega'
+  import type { UserSettings } from '$lib/db/schema.js'
   import { getGradeColor } from '$lib/grades'
   import { AppBar, Tabs } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
@@ -13,7 +15,7 @@
 
   let tabSet: 'sends' | 'open-projects' | 'finished-projects' | 'settings' = $state('sends')
 
-  const gradingScale = data.user?.userSettings?.gradingScale ?? 'FB'
+  const gradingScale: UserSettings['gradingScale'] = data.user?.userSettings?.gradingScale ?? 'FB'
 
   const ascents = data.sends.map((ascent) => {
     const grade = data.grades.find((grade) => grade.id === (ascent.gradeFk ?? ascent.route.gradeFk))
@@ -27,24 +29,24 @@
 </script>
 
 <svelte:head>
-  <title>Profile of {data.user?.userName} - Crag Track</title>
+  <title>Profile of {data.requestedUser.userName} - Crag Track</title>
 </svelte:head>
 
 <AppBar>
   {#snippet lead()}
-    {data.user?.userName}
+    {data.requestedUser.userName}
   {/snippet}
 </AppBar>
 
-<div class="card mt-8 p-4 preset-filled-surface-100-900">
-  <Tabs bind:value={tabSet}>
+<div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
+  <Tabs bind:value={tabSet} listClasses="overflow-x-auto overflow-y-hidden">
     {#snippet list()}
       <Tabs.Control value="sends">Sends</Tabs.Control>
 
       <Tabs.Control value="open-projects">Open projects</Tabs.Control>
       <Tabs.Control value="finished-projects">Finished projects</Tabs.Control>
 
-      {#if $page.data.session?.user?.email === data.user?.email}
+      {#if $page.data.session?.user?.email === data.requestedUser.email}
         <Tabs.Control value="settings">Settings</Tabs.Control>
       {/if}
     {/snippet}
@@ -104,81 +106,89 @@
       </Tabs.Panel>
 
       <Tabs.Panel value="open-projects">
-        <nav class="list-nav">
-          <ul>
-            {#each data.openProjects as attempt}
-              <li class="flex justify-between w-full p-3 hover:preset-tonal-primary">
-                <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
-                  <dt>
-                    <RouteName grades={data.grades} {gradingScale} route={attempt.route} />
-                  </dt>
+        <GenericList
+          items={data.openProjects.map((item) => ({
+            ...item,
+            id: item.route.id,
+            name: item.route.name,
+            pathname: item.route.pathname,
+          }))}
+          leftClasses=""
+        >
+          {#snippet left(item)}
+            <dt>
+              <RouteName grades={data.grades} {gradingScale} route={item.route} />
+            </dt>
 
-                  <dd class="text-sm opacity-50">Sessions: {attempt.ascents.length}</dd>
-                  <dd class="text-sm opacity-50">
-                    Last session: {DateTime.fromSQL(attempt.ascents[0].dateTime).toLocaleString(DateTime.DATE_FULL)}
-                  </dd>
+            <dd class="text-sm opacity-50">Sessions: {item.ascents.length}</dd>
+            <dd class="text-sm opacity-50">
+              Last session: {DateTime.fromSQL(item.ascents[0].dateTime).toLocaleString(DateTime.DATE_FULL)}
+            </dd>
+          {/snippet}
+
+          {#snippet right(item)}
+            <ol class="flex items-center gap-2 w-auto p-2">
+              <li>
+                <a class="anchor" href={item.route.block.area.pathname}>
+                  {item.route.block.area.name}
                 </a>
-
-                <ol class="flex items-center gap-2 w-auto pe-4">
-                  <li>
-                    <a class="anchor" href={attempt.route.block.area.pathname}>
-                      {attempt.route.block.area.name}
-                    </a>
-                  </li>
-
-                  <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
-
-                  <li>
-                    <a class="anchor" href={attempt.route.block.pathname}>
-                      {attempt.route.block.name}
-                    </a>
-                  </li>
-                </ol>
               </li>
-            {/each}
-          </ul>
-        </nav>
+
+              <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
+
+              <li>
+                <a class="anchor" href={item.route.block.pathname}>
+                  {item.route.block.name}
+                </a>
+              </li>
+            </ol>
+          {/snippet}
+        </GenericList>
       </Tabs.Panel>
 
       <Tabs.Panel value="finished-projects">
-        <nav class="list-nav">
-          <ul>
-            {#each data.finishedProjects as attempt}
-              <li class="flex justify-between w-full p-3 hover:preset-tonal-primary">
-                <a class="flex flex-col !items-start hover:!bg-transparent" href={attempt.route.pathname}>
-                  <dt>
-                    <RouteName grades={data.grades} {gradingScale} route={attempt.route} />
-                  </dt>
+        <GenericList
+          items={data.finishedProjects.map((item) => ({
+            ...item,
+            id: item.route.id,
+            name: item.route.name,
+            pathname: item.route.pathname,
+          }))}
+          leftClasses=""
+        >
+          {#snippet left(item)}
+            <dt>
+              <RouteName grades={data.grades} {gradingScale} route={item.route} />
+            </dt>
 
-                  <dd class="text-sm opacity-50">Sessions: {attempt.ascents.length}</dd>
-                  <dd class="text-sm opacity-50">
-                    Last session: {DateTime.fromSQL(attempt.ascents[0].dateTime).toLocaleString(DateTime.DATE_FULL)}
-                  </dd>
+            <dd class="text-sm opacity-50">Sessions: {item.ascents.length}</dd>
+            <dd class="text-sm opacity-50">
+              Last session: {DateTime.fromSQL(item.ascents[0].dateTime).toLocaleString(DateTime.DATE_FULL)}
+            </dd>
+          {/snippet}
+
+          {#snippet right(item)}
+            <ol class="flex items-center gap-2 w-auto p-2">
+              <li>
+                <a class="anchor" href={item.route.block.area.pathname}>
+                  {item.route.block.area.name}
                 </a>
-
-                <ol class="flex items-center gap-2 w-auto pe-4">
-                  <li>
-                    <a class="anchor" href={attempt.route.block.area.pathname}>
-                      {attempt.route.block.area.name}
-                    </a>
-                  </li>
-
-                  <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
-
-                  <li>
-                    <a class="anchor" href={attempt.route.block.pathname}>
-                      {attempt.route.block.name}
-                    </a>
-                  </li>
-                </ol>
               </li>
-            {/each}
-          </ul>
-        </nav>
+
+              <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
+
+              <li>
+                <a class="anchor" href={item.route.block.pathname}>
+                  {item.route.block.name}
+                </a>
+              </li>
+            </ol>
+          {/snippet}
+        </GenericList>
       </Tabs.Panel>
 
-      <Tabs.Panel value="settings">
-        {#if $page.data.session?.user?.email === data.user?.email}
+      {#if $page.data.session?.user?.email === data.requestedUser.email}
+        <Tabs.Panel value="settings">
           <form method="POST">
             {#if form?.error}
               <aside class="alert variant-filled-error mt-8">
@@ -237,8 +247,8 @@
               </button>
             </div>
           </form>
-        {/if}
-      </Tabs.Panel>
+        </Tabs.Panel>
+      {/if}
     {/snippet}
   </Tabs>
 </div>

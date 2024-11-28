@@ -6,11 +6,13 @@
   import OlMap from 'ol/Map.js'
   import Overlay from 'ol/Overlay.js'
   import View from 'ol/View.js'
+  import { Attribution, FullScreen, defaults as defaultControls } from 'ol/control.js'
   import type { Coordinate } from 'ol/coordinate'
   import { boundingExtent } from 'ol/extent'
   import { Geometry } from 'ol/geom'
   import Point from 'ol/geom/Point.js'
   import { fromExtent } from 'ol/geom/Polygon'
+  import { DragRotateAndZoom, defaults as defaultInteractions } from 'ol/interaction.js'
   import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer.js'
   import 'ol/ol.css'
   import { Projection, addProjection, fromLonLat } from 'ol/proj.js'
@@ -85,6 +87,11 @@
     }
 
     const map = new OlMap({
+      controls: defaultControls({ attribution: false }).extend([
+        new FullScreen(),
+        new Attribution({ collapsible: true }),
+      ]),
+      interactions: defaultInteractions().extend([new DragRotateAndZoom()]),
       target: element,
       layers: [
         new TileLayer({
@@ -99,7 +106,6 @@
               '© <a href="https://www.eurogeographics.org/" target="_blank">EuroGeographics</a>',
               ATTRIBUTION,
             ],
-
             urls: ['31', '32', '33', '34', '35', '36', '37', '38', '39', '40'].map(
               (instance) => `https://intergeo${instance}.bayernwolke.de/betty/c_dgm_relief/{z}/{x}/{y}`,
             ),
@@ -445,7 +451,7 @@
 <div class="relative">
   <div class="map w-full -z-0" use:mapAction></div>
 
-  <div class="map-controls absolute top-2 right-2 p-2 bg-surface-500/90 text-white">
+  <div class="map-controls absolute top-2 right-8 p-2 bg-surface-500/90 text-white">
     <label class="flex items-center space-x-2">
       <input class="checkbox" bind:checked={showRelief} onchange={onChangeRelief} type="checkbox" />
       <p>Show Bayern relief</p>
@@ -454,6 +460,10 @@
 </div>
 
 <style>
+  :global(.ol-rotate) {
+    top: 3em;
+  }
+
   @media print {
     .map-controls,
     :global(.ol-zoom),

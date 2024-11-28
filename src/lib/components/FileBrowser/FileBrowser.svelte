@@ -75,7 +75,7 @@
 </script>
 
 {#if error == null}
-  <div class="card preset-filled-surface-100-900 p-4">
+  <div class="card preset-filled-surface-100-900 p-2 md:p-4">
     <ol class="flex items-center gap-4">
       <li>
         <button onclick={navigateTo.bind(null, [])}>

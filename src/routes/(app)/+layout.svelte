@@ -4,6 +4,7 @@
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import Logo from '$lib/assets/logo.png'
   import Breadcrumb from '$lib/components/Breadcrumb'
+  import NavTiles from '$lib/components/NavTiles'
   import { SignIn, SignOut } from '@auth/sveltekit/components'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { AppBar, Nav, Popover, Switch } from '@skeletonlabs/skeleton-svelte'
@@ -37,7 +38,7 @@
         <Popover
           arrow
           arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-          contentBase="card bg-surface-200-800 p-4 w-74 shadow-xl"
+          contentBase="card bg-surface-200-800 p-2 md:p-4 w-74 shadow-xl"
           positioning={{ placement: 'bottom' }}
         >
           {#snippet trigger()}
@@ -100,7 +101,17 @@
     {/snippet}
   </AppBar>
 
-  <Nav.Rail base="fixed top-[68px] h-screen">
+  <div class="relative p-2 md:p-4 overflow-y-auto md:ms-[96px]">
+    <Breadcrumb url={$page.url} />
+
+    {@render children?.()}
+  </div>
+
+  <Nav.Bar classes="md:hidden">
+    <NavTiles />
+  </Nav.Bar>
+
+  <Nav.Rail base="hidden md:block fixed top-[68px] h-screen">
     {#snippet header()}
       <Nav.Tile href="/" label="Home">
         <i class="fa-solid fa-house"></i>
@@ -108,31 +119,7 @@
     {/snippet}
 
     {#snippet tiles()}
-      <Nav.Tile href="/areas" label="Areas">
-        <i class="fa-solid fa-layer-group"></i>
-      </Nav.Tile>
-
-      <Nav.Tile href="/ascents" label="Ascents">
-        <i class="fa-solid fa-check-double"></i>
-      </Nav.Tile>
-
-      <Nav.Tile href="/routes" label="Routes">
-        <i class="fa-solid fa-route"></i>
-      </Nav.Tile>
-
-      <Nav.Tile href="/search" label="Search">
-        <i class="fa-solid fa-search"></i>
-      </Nav.Tile>
-
-      <Nav.Tile href="/tags" label="Tags">
-        <i class="fa-solid fa-tags"></i>
-      </Nav.Tile>
+      <NavTiles />
     {/snippet}
   </Nav.Rail>
-
-  <div class="relative ms-[96px] p-4 overflow-y-auto">
-    <Breadcrumb url={$page.url} />
-
-    {@render children?.()}
-  </div>
 </div>

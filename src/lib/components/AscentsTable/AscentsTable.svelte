@@ -26,7 +26,7 @@
 
     <tbody class="hover:[&>tr]:preset-tonal-primary">
       {#each ascents as ascent}
-        <tr>
+        <tr class="whitespace-nowrap">
           <td>
             <a class="anchor hover:text-white" href="/users/{ascent.author.userName}">{ascent.author.userName}</a>
           </td>

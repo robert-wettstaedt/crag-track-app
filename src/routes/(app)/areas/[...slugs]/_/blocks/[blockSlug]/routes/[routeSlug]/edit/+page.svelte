@@ -33,12 +33,12 @@
 </AppBar>
 
 {#if form?.error}
-  <aside class="card preset-tonal-warning mt-8 p-4">
+  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4">
     <p>{form.error}</p>
   </aside>
 {/if}
 
-<form class="card mt-8 p-4 preset-filled-surface-100-900" action="?/updateRoute" method="POST" use:enhance>
+<form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" action="?/updateRoute" method="POST" use:enhance>
   <RouteFormFields
     blockId={data.route.blockFk}
     description={form?.description ?? data.route.description}
@@ -58,7 +58,7 @@
       <Popover
         arrow
         arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-        contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+        contentBase="card bg-surface-200-800 p-2 md:p-4 space-y-4 max-w-[320px]"
         positioning={{ placement: 'top' }}
         triggerBase="btn preset-filled-error-500 !text-white"
       >

@@ -22,13 +22,13 @@
 </AppBar>
 
 {#if form?.error}
-  <aside class="card preset-tonal-warning mt-8 p-4">
+  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4">
     <p>{form.error}</p>
   </aside>
 {/if}
 
 <form
-  class="card mt-8 p-4 preset-filled-surface-100-900"
+  class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900"
   method="POST"
   use:enhance={() => {
     loading = true

@@ -5,8 +5,6 @@
   import { AppBar, Pagination } from '@skeletonlabs/skeleton-svelte'
 
   let { data } = $props()
-
-  console.log(data)
 </script>
 
 <svelte:head>
@@ -19,7 +17,7 @@
   {/snippet}
 </AppBar>
 
-<div class="card mt-8 p-4 preset-filled-surface-100-900">
+<div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
   <AscentsTable ascents={data.ascents} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
 </div>
 

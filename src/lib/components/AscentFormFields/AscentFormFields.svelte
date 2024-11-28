@@ -76,7 +76,7 @@
 </label>
 
 {#if PUBLIC_DEMO_MODE}
-  <aside class="card preset-tonal-warning mt-8 p-4 flex items-center gap-2">
+  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 flex items-center gap-2">
     <i class="fa-solid fa-triangle-exclamation"></i>
 
     <p>File storage is disabled in demo mode</p>
@@ -100,7 +100,7 @@
           <Modal
             bind:open={modalOpen}
             triggerBase="btn preset-filled-primary-500"
-            contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl max-w-screen-sm"
+            contentBase="card bg-surface-100-900 p-2 md:p-4 space-y-4 shadow-xl max-w-screen-sm"
             backdropClasses="backdrop-blur-sm"
           >
             {#snippet trigger()}

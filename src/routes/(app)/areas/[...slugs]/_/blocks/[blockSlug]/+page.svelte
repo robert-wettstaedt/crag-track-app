@@ -68,7 +68,7 @@
 
 {#await data.references then references}
   {#if references.routes.length > 0}
-    <div class="card mt-4 p-4 preset-filled-surface-100-900">
+    <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
       <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
@@ -76,7 +76,7 @@
   {/if}
 {/await}
 
-<div class="card mt-4 p-4 preset-filled-surface-100-900">
+<div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header">Location</div>
 
   <section class="pt-4">
@@ -89,10 +89,10 @@
 </div>
 
 {#if files.length > 0 || data.topos.length === 0}
-  <div class="card mt-4 p-4 preset-filled-surface-100-900">
+  <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
     <div class="card-header">Topos</div>
 
-    <section class="p-4">
+    <section class="p-2 md:p-4">
       {#key data.block.id}
         {#if files.length === 0}
           No topos yet
@@ -148,12 +148,12 @@
   </div>
 {/if}
 
-<div class="card mt-4 p-4 preset-filled-surface-100-900">
+<div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header">Routes</div>
 
-  <div class="flex">
+  <div class="flex flex-wrap">
     {#if data.topos.length > 0}
-      <section class="p-4 w-2/4">
+      <section class="md:p-4 w-full md:w-2/4">
         <div class="relative">
           <TopoViewer topos={data.topos} />
 
@@ -164,7 +164,7 @@
       </section>
     {/if}
 
-    <section class={`p-4 ${data.topos.length === 0 ? 'w-full' : 'w-2/4'}`}>
+    <section class={`md:p-4 w-full ${data.topos.length === 0 ? '' : 'md:w-2/4'}`}>
       {#if data.block.routes.length === 0}
         No routes yet
       {:else}
@@ -172,7 +172,7 @@
           <ul>
             {#each data.block.routes as route}
               <li
-                class={`px-4 py-2 ${
+                class={`px-4 py-2 whitespace-nowrap ${
                   [$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(route.id)
                     ? 'preset-filled-primary-100-900'
                     : ''
