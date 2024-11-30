@@ -43,6 +43,7 @@
     <BlocksMap.default
       {blocks}
       {getBlockKey}
+      collapsibleAttribution={false}
       declutter={false}
       height="210mm"
       on:rendercomplete

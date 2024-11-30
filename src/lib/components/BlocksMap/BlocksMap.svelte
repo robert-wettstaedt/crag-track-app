@@ -28,6 +28,7 @@
   const DEFAULT_ZOOM = 19
 
   interface Props {
+    collapsibleAttribution?: boolean
     blocks: EnrichedBlock[]
     selectedArea?: Area | null
     selectedBlock?: InferResultType<'blocks', { geolocation: true }> | null
@@ -43,6 +44,7 @@
   }
 
   let {
+    collapsibleAttribution = true,
     blocks,
     selectedArea = null,
     selectedBlock = null,
@@ -89,7 +91,7 @@
     const map = new OlMap({
       controls: defaultControls({ attribution: false }).extend([
         new FullScreen(),
-        new Attribution({ collapsible: true }),
+        new Attribution({ collapsible: collapsibleAttribution }),
       ]),
       interactions: defaultInteractions().extend([new DragRotateAndZoom()]),
       target: element,
@@ -467,6 +469,7 @@
   @media print {
     .map-controls,
     :global(.ol-zoom),
+    :global(.ol-full-screen),
     :global(.ol-rotate) {
       display: none;
     }

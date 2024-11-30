@@ -324,5 +324,9 @@
     #img {
       max-height: none;
     }
+
+    img {
+      print-color-adjust: exact !important;
+    }
   }
 </style>

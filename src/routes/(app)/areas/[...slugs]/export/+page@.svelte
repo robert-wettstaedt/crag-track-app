@@ -102,6 +102,7 @@
 
   {#await import('$lib/components/BlocksMap') then BlocksMap}
     <BlocksMap.default
+      collapsibleAttribution={false}
       blocks={data.area.blocks}
       height="210mm"
       on:rendercomplete={() => loadedMaps++}
