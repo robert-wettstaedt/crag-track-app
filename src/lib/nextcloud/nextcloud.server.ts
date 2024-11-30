@@ -1,16 +1,9 @@
-import { NEXTCLOUD_URL } from '$env/static/private'
+import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$env/static/private'
 import { convertException } from '$lib'
 import type { File } from '$lib/db/schema'
 import type { Session } from '@auth/sveltekit'
 import { error } from '@sveltejs/kit'
-import {
-  AuthType,
-  createClient,
-  type FileStat,
-  type ResponseDataDetailed,
-  type SearchResult,
-  type WebDAVClient,
-} from 'webdav'
+import { createClient, type FileStat, type ResponseDataDetailed, type SearchResult, type WebDAVClient } from 'webdav'
 import type { FileDTO } from '.'
 
 /**
@@ -22,16 +15,9 @@ import type { FileDTO } from '.'
  * @throws {Error} - Throws an error if the session is invalid or missing required information.
  */
 export const getNextcloud = (session: Session | null | undefined, path = '/remote.php/dav/files'): WebDAVClient => {
-  if (session?.user?.email == null || session?.accessToken == null) {
-    error(401)
-  }
-
   return createClient(NEXTCLOUD_URL + path, {
-    authType: AuthType.Token,
-    token: {
-      access_token: session.accessToken,
-      token_type: 'Bearer',
-    },
+    username: NEXTCLOUD_USER_NAME,
+    password: NEXTCLOUD_USER_PASSWORD,
   })
 }
 
@@ -44,10 +30,6 @@ export const getNextcloud = (session: Session | null | undefined, path = '/remot
  * @throws {Error} - Throws an error if the session is invalid, the file is not found, or there is an issue with the search request.
  */
 export const searchNextcloudFile = async (session: Session | null | undefined, file: File): Promise<FileStat> => {
-  if (session?.user?.email == null || session?.accessToken == null) {
-    error(401)
-  }
-
   const basename = file.path.split('/').at(-1)
 
   try {
@@ -67,7 +49,7 @@ export const searchNextcloudFile = async (session: Session | null | undefined, f
         </d:select>
         <d:from>
             <d:scope>
-                <d:href>/files/${session.user.email}</d:href>
+                <d:href>/files/${NEXTCLOUD_USER_NAME}</d:href>
                 <d:depth>infinity</d:depth>
             </d:scope>
         </d:from>
@@ -92,7 +74,7 @@ export const searchNextcloudFile = async (session: Session | null | undefined, f
       error(404)
     }
 
-    return { ...stat, filename: stat.filename.replace('/remote.php/dav/files', '') }
+    return { ...stat, filename: stat.filename.replace(`/remote.php/dav/files/${NEXTCLOUD_USER_NAME}`, '') }
   } catch (exception) {
     const { response, status } = exception as { response: Response | undefined; status: number | undefined }
 

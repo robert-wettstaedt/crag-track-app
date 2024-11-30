@@ -1,15 +1,10 @@
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
-import { error } from '@sveltejs/kit'
 import { type BufferLike, type Headers, type ResponseDataDetailed } from 'webdav'
 
 export async function GET({ locals, request, params }) {
   // Authenticate the user session
   const session = await locals.auth()
-
-  // If the user is not authenticated, throw a 401 error
-  if (session?.user == null) {
-    error(401)
-  }
 
   // Extract relevant headers from the request
   const headers = Array.from(request.headers.entries()).reduce((headers, [key, value]) => {
@@ -21,7 +16,7 @@ export async function GET({ locals, request, params }) {
   }, {} as Headers)
 
   // Fetch file contents from Nextcloud with detailed response
-  const result = await getNextcloud(session)?.getFileContents(params.resourcePath, {
+  const result = await getNextcloud(session)?.getFileContents(`${NEXTCLOUD_USER_NAME}/${params.resourcePath}`, {
     details: true,
     headers,
     signal: request.signal,

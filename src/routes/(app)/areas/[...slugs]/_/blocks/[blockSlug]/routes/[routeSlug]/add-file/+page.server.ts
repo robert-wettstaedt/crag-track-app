@@ -7,6 +7,7 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 
 export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
@@ -112,7 +113,7 @@ export const actions = {
     let stat: FileStat | undefined = undefined
     try {
       // Attempt to get the file statistics from Nextcloud
-      stat = (await getNextcloud(session)?.stat(session.user.email + path)) as FileStat | undefined
+      stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
     } catch (exception) {
       // If an exception occurs, return a 400 error with the values and converted exception message
       return fail(400, { ...values, error: convertException(exception) })

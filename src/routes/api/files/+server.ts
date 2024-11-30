@@ -1,3 +1,4 @@
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { convertException } from '$lib'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
@@ -15,10 +16,10 @@ export async function GET({ locals, url }) {
   const nextcloud = getNextcloud(session)
 
   try {
-    const stats = await nextcloud.getDirectoryContents(session.user.email + dir)
+    const stats = await nextcloud.getDirectoryContents(NEXTCLOUD_USER_NAME + dir)
     const modifiedStats = (stats as Array<FileStat>).map((stat) => ({
       ...stat,
-      filename: stat.filename.replace(`/${session.user?.email}`, ''),
+      filename: stat.filename.replace(`/${NEXTCLOUD_USER_NAME}`, ''),
     }))
     return new Response(JSON.stringify(modifiedStats))
   } catch (exception) {

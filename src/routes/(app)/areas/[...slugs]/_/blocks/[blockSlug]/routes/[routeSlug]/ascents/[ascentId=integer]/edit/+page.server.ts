@@ -7,6 +7,7 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 
 export const load = (async ({ locals, params }) => {
   // Query the database to find the ascent with the given id
@@ -86,7 +87,7 @@ export const actions = {
             .filter((filePath) => filePath.trim().length > 0)
             .map(async (filePath) => {
               hasFiles = true
-              const stat = (await getNextcloud(session)?.stat(session.user!.email + filePath)) as FileStat | undefined
+              const stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
 
               if (stat == null) {
                 throw `Unable to read file: "${filePath}"`

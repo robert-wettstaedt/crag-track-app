@@ -9,6 +9,7 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 
 export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
@@ -112,7 +113,7 @@ export const actions = {
 
               try {
                 // Check the file status in Nextcloud
-                const stat = (await getNextcloud(session)?.stat(session.user!.email + filePath)) as FileStat | undefined
+                const stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
 
                 if (stat == null) {
                   throw `Unable to read file: "${filePath}"`
