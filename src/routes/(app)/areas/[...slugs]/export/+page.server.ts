@@ -1,5 +1,5 @@
 import { db } from '$lib/db/db.server'
-import { areas, blocks, routes, users, type UserSettings } from '$lib/db/schema'
+import { areas, blocks, users, type UserSettings } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
 import { convertMarkdownToHtml } from '$lib/markdown'
@@ -48,17 +48,15 @@ const blocksQuery: {
 }
 
 export const load = (async ({ locals, params }) => {
-  const session = await locals.auth()
-
   const { areaId } = convertAreaSlug(params)
 
   const grades = await db.query.grades.findMany()
 
   let gradingScale: UserSettings['gradingScale'] = 'FB'
 
-  if (session?.user?.email != null) {
+  if (locals.user?.email != null) {
     const user = await db.query.users.findFirst({
-      where: eq(users.email, session.user.email),
+      where: eq(users.email, locals.user.email),
       with: {
         userSettings: {
           columns: {
@@ -104,7 +102,7 @@ export const load = (async ({ locals, params }) => {
 
   const enrichedBlocks = await Promise.all(
     allBlocks.map(async (block) => {
-      const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
+      const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo, locals.session)))
       const enrichedBlock = enrichBlock(block)
 
       const enrichedRoutes = await Promise.all(

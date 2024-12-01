@@ -3,8 +3,7 @@ import { getUser } from '$lib/helper.server'
 import { searchResources } from '$lib/search.server'
 
 export const GET = async ({ url, locals }) => {
-  const session = await locals.auth()
-  const user = await getUser(session)
+  const user = await getUser(locals.user)
   const query = url.searchParams.get('q')
 
   try {

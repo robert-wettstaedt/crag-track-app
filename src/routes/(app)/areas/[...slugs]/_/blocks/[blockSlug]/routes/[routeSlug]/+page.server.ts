@@ -14,9 +14,6 @@ export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
   const { areaId, user } = await parent()
 
-  // Authenticate the session
-  const session = await locals.auth()
-
   // Query the database to find the block and its associated routes
   const block = await db.query.blocks.findFirst({
     where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
@@ -73,9 +70,9 @@ export const load = (async ({ locals, params, parent }) => {
   }
 
   // Fetch and enrich files associated with the route
-  const routeFiles = await loadFiles(route.files, session)
+  const routeFiles = await loadFiles(route.files, locals.session)
 
-  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, locals.session)))
 
   // Enrich ascents with additional data and process notes
   const enrichedAscents = await Promise.all(
@@ -85,7 +82,7 @@ export const load = (async ({ locals, params, parent }) => {
       // Fetch and enrich files associated with the ascent
       const files = await loadFiles(
         ascent.files.toSorted((a, b) => a.path.localeCompare(b.path)),
-        session,
+        locals.session,
       )
 
       return {
@@ -113,9 +110,7 @@ export const actions = {
   syncExternalResources: async ({ locals, params }) => {
     const { areaId } = convertAreaSlug(params)
 
-    const session = await locals.auth()
-
-    if (session?.user == null) {
+    if (locals.user == null) {
       // If the user is not authenticated, throw a 401 error
       error(401)
     }
@@ -138,6 +133,6 @@ export const actions = {
       error(404)
     }
 
-    await insertExternalResources(route, block, session)
+    await insertExternalResources(route, block, locals.session)
   },
 }

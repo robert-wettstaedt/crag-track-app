@@ -15,9 +15,7 @@ export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
   const { areaId, user } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
+  if (locals.user == null) {
     // If the user is not authenticated, throw a 401 error
     error(401)
   }
@@ -59,9 +57,7 @@ export const actions = {
     // Convert area slug to get areaId
     const { areaId } = convertAreaSlug(params)
 
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user?.email == null) {
+    if (locals.user?.email == null) {
       // If the user is not authenticated, throw a 401 error
       error(401)
     }
@@ -113,7 +109,9 @@ export const actions = {
 
               try {
                 // Check the file status in Nextcloud
-                const stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
+                const stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as
+                  | FileStat
+                  | undefined
 
                 if (stat == null) {
                   throw `Unable to read file: "${filePath}"`
@@ -135,7 +133,7 @@ export const actions = {
 
     let externalSessions: Awaited<ReturnType<typeof checkExternalSessions>>
     try {
-      externalSessions = await checkExternalSessions(route, session)
+      externalSessions = await checkExternalSessions(route, locals.session)
     } catch (error) {
       return fail(400, { ...values, error: convertException(error) })
     }
@@ -143,7 +141,7 @@ export const actions = {
     let ascent: Ascent
     try {
       // Query the database to find the user by email
-      const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
+      const user = await db.query.users.findFirst({ where: eq(users.email, locals.user.email) })
       if (user == null) {
         throw new Error('User not found')
       }

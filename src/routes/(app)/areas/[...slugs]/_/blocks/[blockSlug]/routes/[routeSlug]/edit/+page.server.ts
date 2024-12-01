@@ -25,9 +25,7 @@ export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
   const { areaId, user } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
+  if (locals.user == null) {
     error(401) // Throw an error if the user is not authenticated
   }
 
@@ -72,9 +70,7 @@ export const actions = {
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
 
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user == null) {
+    if (locals.user == null) {
       error(401) // Throw an error if the user is not authenticated
     }
 
@@ -167,8 +163,7 @@ export const actions = {
   removeRoute: async ({ locals, params }) => {
     const { areaId } = convertAreaSlug(params)
 
-    const session = await locals.auth()
-    if (session?.user == null) {
+    if (locals.user == null) {
       error(401) // Throw an error if the user is not authenticated
     }
 

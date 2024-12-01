@@ -3,7 +3,7 @@ import * as schema from '$lib/db/schema'
 import { geolocations, routes, type Area, type Ascent, type Block, type Route, type UserSettings } from '$lib/db/schema'
 import type { NestedArea } from '$lib/db/types'
 import { buildNestedAreaQuery } from '$lib/db/utils'
-import type { Session } from '@auth/sveltekit'
+import type { Session } from '@supabase/supabase-js'
 import { eq } from 'drizzle-orm'
 import handler27crags from './27crags.server'
 import handler8a from './8a.server'
@@ -217,13 +217,13 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
   }
 }
 
-export const checkExternalSessions = async (route: Route, session: Session) => {
+export const checkExternalSessions = async (route: Route, session: Session | null | undefined) => {
   const routeExternalResource = await db.query.routeExternalResources.findFirst({
     where: eq(schema.routeExternalResources.routeFk, route.id),
   })
 
   const user =
-    session.user?.email == null
+    session?.user?.email == null
       ? null
       : await db.query.users.findFirst({
           where: eq(schema.users.email, session.user.email),

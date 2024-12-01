@@ -5,15 +5,13 @@ import { error } from '@sveltejs/kit'
 import type { FileStat } from 'webdav'
 
 export async function GET({ locals, url }) {
-  const session = await locals.auth()
-
-  if (session?.user == null) {
+  if (locals.user == null) {
     error(401)
   }
 
   const dir = url.searchParams.get('dir') ?? '/'
 
-  const nextcloud = getNextcloud(session)
+  const nextcloud = getNextcloud(locals.session)
 
   try {
     const stats = await nextcloud.getDirectoryContents(NEXTCLOUD_USER_NAME + dir)

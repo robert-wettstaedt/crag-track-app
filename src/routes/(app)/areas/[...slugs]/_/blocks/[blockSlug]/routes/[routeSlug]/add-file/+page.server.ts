@@ -13,9 +13,7 @@ export const load = (async ({ locals, params, parent }) => {
   // Retrieve the areaId from the parent function
   const { areaId, user } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
+  if (locals.user == null) {
     // If the user is not authenticated, throw a 401 error
     error(401)
   }
@@ -60,9 +58,7 @@ export const actions = {
     // Convert the area slug to an area ID
     const { areaId } = convertAreaSlug(params)
 
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user == null) {
+    if (locals.user == null) {
       // If the user is not authenticated, throw a 401 error
       error(401)
     }
@@ -113,7 +109,7 @@ export const actions = {
     let stat: FileStat | undefined = undefined
     try {
       // Attempt to get the file statistics from Nextcloud
-      stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
+      stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
     } catch (exception) {
       // If an exception occurs, return a 400 error with the values and converted exception message
       return fail(400, { ...values, error: convertException(exception) })

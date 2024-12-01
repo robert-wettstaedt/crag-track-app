@@ -1,16 +1,26 @@
 <script lang="ts">
-  import { invalidateAll } from '$app/navigation'
+  import { invalidate, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import Logo from '$lib/assets/logo.png'
   import Breadcrumb from '$lib/components/Breadcrumb'
   import NavTiles from '$lib/components/NavTiles'
-  import { SignIn, SignOut } from '@auth/sveltekit/components'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { AppBar, Nav, Popover, Switch } from '@skeletonlabs/skeleton-svelte'
+  import { onMount } from 'svelte'
   import '../../app.postcss'
 
   let { data, children } = $props()
+
+  onMount(() => {
+    const value = data.supabase.auth.onAuthStateChange((_, newSession) => {
+      if (newSession?.expires_at !== data.session?.expires_at) {
+        invalidate('supabase:auth')
+      }
+    })
+
+    return () => value.data.subscription.unsubscribe()
+  })
 </script>
 
 <svelte:head>
@@ -29,11 +39,7 @@
 
     {#snippet trail()}
       {#if $page.data.session?.user == null}
-        <SignIn>
-          {#snippet submitButton()}
-            <div class="buttonPrimary">Sign in</div>
-          {/snippet}
-        </SignIn>
+        <a href="/auth" class="btn btn-sm preset-filled-primary-500"> Get Started </a>
       {:else}
         <Popover
           arrow
@@ -47,7 +53,7 @@
 
           {#snippet content()}
             <div class="mb-4">
-              Hi, {data.user?.userName}
+              Hi, {data.user?.email}
             </div>
 
             <nav class="list-nav">
@@ -75,20 +81,19 @@
 
               <ul>
                 <li>
-                  <a class="flex hover:preset-filled-primary-100-900 p-2" href={`/users/${data.user?.userName}`}>
+                  <a class="flex hover:preset-filled-primary-100-900 p-2" href={`/users/${data.user?.email}`}>
                     Profile
                   </a>
                 </li>
 
                 {#if !PUBLIC_DEMO_MODE}
                   <li>
-                    <SignOut
-                      class="flex [&>button]:flex [&>button]:p-2 [&>button]:w-full hover:[&>button]:preset-filled-primary-100-900"
+                    <button
+                      class="flex p-2 w-full hover:preset-filled-primary-100-900"
+                      onclick={() => data.supabase.auth.signOut()}
                     >
-                      {#snippet submitButton()}
-                        <span>Sign out</span>
-                      {/snippet}
-                    </SignOut>
+                      Sign out
+                    </button>
                   </li>
                 {/if}
               </ul>
@@ -101,25 +106,27 @@
     {/snippet}
   </AppBar>
 
-  <div class="relative p-2 md:p-4 overflow-y-auto md:ms-[96px]">
+  <div class="relative p-2 md:p-4 overflow-y-auto {$page.data.session?.user == null ? '' : 'md:ms-[96px]'}">
     <Breadcrumb url={$page.url} />
 
     {@render children?.()}
   </div>
 
-  <Nav.Bar classes="md:hidden">
-    <NavTiles />
-  </Nav.Bar>
-
-  <Nav.Rail base="hidden md:block fixed top-[68px] h-screen">
-    {#snippet header()}
-      <Nav.Tile href="/" label="Home">
-        <i class="fa-solid fa-house"></i>
-      </Nav.Tile>
-    {/snippet}
-
-    {#snippet tiles()}
+  {#if $page.data.session?.user != null}
+    <Nav.Bar classes="md:hidden">
       <NavTiles />
-    {/snippet}
-  </Nav.Rail>
+    </Nav.Bar>
+
+    <Nav.Rail base="hidden md:block fixed top-[68px] h-screen">
+      {#snippet header()}
+        <Nav.Tile href="/" label="Home">
+          <i class="fa-solid fa-house"></i>
+        </Nav.Tile>
+      {/snippet}
+
+      {#snippet tiles()}
+        <NavTiles />
+      {/snippet}
+    </Nav.Rail>
+  {/if}
 </div>

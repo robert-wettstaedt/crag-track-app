@@ -10,8 +10,6 @@ import type { PageServerLoad } from './$types'
 export const load = (async ({ locals, params, parent }) => {
   // Retrieve areaId and areaSlug from the parent function
   const { areaId, areaSlug, user } = await parent()
-  // Get the current session from locals
-  const session = await locals.auth()
 
   // Query the database for blocks matching the given slug and areaId
   const blocksResult = await db.query.blocks.findMany({
@@ -59,8 +57,8 @@ export const load = (async ({ locals, params, parent }) => {
     },
   })
 
-  const blockFiles = await loadFiles(block.files, session)
-  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
+  const blockFiles = await loadFiles(block.files, locals.session)
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, locals.session)))
 
   // Return the block, enriched geolocation blocks, and processed files
   return {

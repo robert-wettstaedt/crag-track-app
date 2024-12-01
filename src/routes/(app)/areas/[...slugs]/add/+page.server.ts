@@ -11,10 +11,8 @@ export const load = (async ({ locals, parent }) => {
   // Retrieve areaId and canAddArea from the parent function
   const { areaId, canAddArea } = await parent()
 
-  // Get the current session from locals
-  const session = await locals.auth()
   // If the user is not authenticated, throw a 401 error
-  if (session?.user == null) {
+  if (locals.user == null) {
     error(401)
   }
 
@@ -34,10 +32,8 @@ export const load = (async ({ locals, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
-    // Retrieve the current session from locals
-    const session = await locals.auth()
     // If the user is not authenticated, throw a 401 error
-    if (session?.user?.email == null) {
+    if (locals.user?.email == null) {
       error(401)
     }
 
@@ -81,7 +77,7 @@ export const actions = {
     let createdArea: Area
     try {
       // Find the user in the database by email
-      const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
+      const user = await db.query.users.findFirst({ where: eq(users.email, locals.user.email) })
       if (user == null) {
         throw new Error('User not found')
       }

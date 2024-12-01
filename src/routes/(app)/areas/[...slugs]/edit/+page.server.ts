@@ -12,9 +12,7 @@ export const load = (async ({ locals, parent }) => {
   // Retrieve the areaId from the parent function
   const { areaId } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
+  if (locals.user == null) {
     // If the user is not authenticated, throw a 401 error
     error(401)
   }
@@ -33,9 +31,7 @@ export const load = (async ({ locals, parent }) => {
 
 export const actions = {
   updateArea: async ({ locals, params, request }) => {
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user == null) {
+    if (locals.user == null) {
       // If the user is not authenticated, throw a 401 error
       error(401)
     }
@@ -87,9 +83,7 @@ export const actions = {
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
 
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user == null) {
+    if (locals.user == null) {
       // If the user is not authenticated, throw a 401 error
       error(401)
     }

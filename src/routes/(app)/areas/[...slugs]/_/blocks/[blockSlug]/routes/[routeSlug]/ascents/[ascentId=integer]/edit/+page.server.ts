@@ -25,8 +25,7 @@ export const load = (async ({ locals, params }) => {
   })
 
   // Authenticate the user
-  const session = await locals.auth()
-  if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
+  if (locals.user?.email == null || locals.user.email !== ascent?.author.email) {
     error(401)
   }
 
@@ -36,7 +35,7 @@ export const load = (async ({ locals, params }) => {
   }
 
   // If the user is not the author of the ascent, throw a 401 Unauthorized error
-  if (session.user.email !== ascent.author.email) {
+  if (locals.user.email !== ascent.author.email) {
     error(401)
   }
 
@@ -71,9 +70,7 @@ export const actions = {
       return fail(404, { ...values, error: `Ascent not found ${params.ascentId}` })
     }
 
-    // Authenticate the user
-    const session = await locals.auth()
-    if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
+    if (locals.user?.email == null || locals.user.email !== ascent?.author.email) {
       error(401)
     }
 
@@ -87,7 +84,9 @@ export const actions = {
             .filter((filePath) => filePath.trim().length > 0)
             .map(async (filePath) => {
               hasFiles = true
-              const stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
+              const stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as
+                | FileStat
+                | undefined
 
               if (stat == null) {
                 throw `Unable to read file: "${filePath}"`
@@ -151,9 +150,7 @@ export const actions = {
       return fail(404, { error: `Ascent not found ${params.ascentId}` })
     }
 
-    // Authenticate the user
-    const session = await locals.auth()
-    if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
+    if (locals.user?.email == null || locals.user.email !== ascent?.author.email) {
       error(401)
     }
 

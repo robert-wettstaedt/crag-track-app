@@ -8,11 +8,9 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params }) => {
-  const session = await locals.auth()
-
   // Query the database to find users with the given name
   const usersResult = await db.query.users.findMany({
-    where: eq(users.userName, params.name),
+    where: eq(users.email, params.name),
   })
 
   // Get the first user from the result
@@ -29,7 +27,7 @@ export const load = (async ({ locals, params }) => {
   }
 
   const externalResources =
-    user.email === session?.user?.email
+    user.email === locals.user?.email
       ? await db.query.userSettings.findFirst({
           where: eq(userSettings.userFk, user.id),
         })
@@ -138,9 +136,7 @@ export const actions = {
       error(400, `Multiple users with name ${params.name} found`)
     }
 
-    const session = await locals.auth()
-
-    if (user.email !== session?.user?.email) {
+    if (user.email !== locals.user?.email) {
       error(401)
     }
 

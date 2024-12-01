@@ -5,9 +5,7 @@ import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 
 export async function DELETE({ locals, params }) {
-  // Authenticate the user
-  const session = await locals.auth()
-  if (session?.user?.email == null) {
+  if (locals.user?.email == null) {
     error(401, 'You are not logged in')
   }
 
@@ -36,7 +34,7 @@ export async function DELETE({ locals, params }) {
   // Attempt to find the user in the database
   try {
     user = await db.query.users.findFirst({
-      where: eq(users.email, session.user.email),
+      where: eq(users.email, locals.user.email),
     })
   } catch (exception) {
     error(401, 'User not found')

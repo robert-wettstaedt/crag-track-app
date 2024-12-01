@@ -15,8 +15,7 @@ import type { PageServerLoad } from './$types'
 export const load = (async ({ locals, params, parent }) => {
   const { areaId, areaSlug, user } = await parent()
 
-  const session = await locals.auth()
-  if (session?.user == null) {
+  if (locals.user == null) {
     error(401)
   }
 
@@ -47,7 +46,7 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
-  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, locals.session)))
 
   const enrichedRoutes = block.routes.map((route) => {
     return {

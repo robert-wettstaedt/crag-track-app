@@ -5,7 +5,7 @@ import { asc, count, desc, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ parent, url }) => {
-  const { user } = await parent()
+  const { session } = await parent()
 
   // Get the 'page' parameter from the URL, defaulting to 0 if not provided
   const page = Number(url.searchParams.get('page') ?? '1')
@@ -18,7 +18,7 @@ export const load = (async ({ parent, url }) => {
     orderBy: [desc(routes.rating), asc(routes.gradeFk)],
     where: isNotNull(routes.rating),
     with: {
-      ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+      ascents: session?.user == null ? { limit: 0 } : { where: eq(ascents.createdBy, session.user.id) },
       block: {
         with: {
           area: buildNestedAreaQuery(),

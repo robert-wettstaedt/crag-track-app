@@ -12,9 +12,7 @@ export const load = (async ({ locals, params, parent }) => {
   // Retrieve areaId and areaSlug from the parent function
   const { areaId, areaSlug } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
+  if (locals.user == null) {
     // If the user is not authenticated, throw a 401 error
     error(401)
   }
@@ -50,9 +48,7 @@ export const actions = {
     // Convert area slug to get areaId
     const { areaId } = convertAreaSlug(params)
 
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user?.email == null) {
+    if (locals.user?.email == null) {
       // If the user is not authenticated, throw a 401 error
       error(401)
     }
@@ -105,7 +101,7 @@ export const actions = {
 
     try {
       // Find the user in the database using their email
-      const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
+      const user = await db.query.users.findFirst({ where: eq(users.email, locals.user.email) })
       if (user == null) {
         // If the user is not found, throw an error
         throw new Error('User not found')
@@ -130,7 +126,7 @@ export const actions = {
     }
 
     try {
-      await insertExternalResources(route, block, session)
+      await insertExternalResources(route, block, locals.session)
     } catch (exception) {
       return fail(400, {
         ...values,

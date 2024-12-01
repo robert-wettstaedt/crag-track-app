@@ -12,8 +12,6 @@ import type { PageServerLoad } from './$types'
 export const load = (async ({ locals, parent }) => {
   // Retrieve the areaId from the parent context
   const { areaId } = await parent()
-  // Get the current session from locals
-  const session = await locals.auth()
 
   // Query the database for areas with the specified areaId
   const areasResult = await db.query.areas.findMany({
@@ -53,7 +51,7 @@ export const load = (async ({ locals, parent }) => {
     area.files.map(async (file) => {
       try {
         // Search for the file in Nextcloud
-        const stat = await searchNextcloudFile(session, file)
+        const stat = await searchNextcloudFile(locals.session, file)
 
         // Return the file with its stat information
         return { ...file, error: undefined, stat }

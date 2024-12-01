@@ -20,10 +20,8 @@ export const load = (async ({ params }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
-    // Retrieve the current session from locals
-    const session = await locals.auth()
     // If the user is not authenticated, throw a 401 error
-    if (session?.user?.email == null) {
+    if (locals.user?.email == null) {
       error(401)
     }
 

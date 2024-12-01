@@ -3,14 +3,12 @@ import { users, userSettings } from '$lib/db/schema'
 import { eq } from 'drizzle-orm'
 
 export async function POST({ locals, url }) {
-  const session = await locals.auth()
-
-  if (session?.user?.email == null) {
+  if (locals.user?.email == null) {
     return new Response(null, { status: 401 })
   }
 
   const user = await db.query.users.findFirst({
-    where: eq(users.email, session.user.email),
+    where: eq(users.email, locals.user.email),
   })
 
   if (user == null) {

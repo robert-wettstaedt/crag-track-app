@@ -1,7 +1,7 @@
 import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$env/static/private'
 import { convertException } from '$lib'
 import type { File } from '$lib/db/schema'
-import type { Session } from '@auth/sveltekit'
+import type { Session } from '@supabase/supabase-js'
 import { error } from '@sveltejs/kit'
 import { createClient, type FileStat, type ResponseDataDetailed, type SearchResult, type WebDAVClient } from 'webdav'
 import type { FileDTO } from '.'

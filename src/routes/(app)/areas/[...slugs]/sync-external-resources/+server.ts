@@ -6,9 +6,7 @@ import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
 
 export async function POST({ locals, params, request }) {
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
+  if (locals.user == null) {
     // If the user is not authenticated, throw a 401 error
     error(401)
   }
@@ -27,7 +25,7 @@ export async function POST({ locals, params, request }) {
           return
         }
 
-        const data = await queryExternalResource(route.name, block.id, session)
+        const data = await queryExternalResource(route.name, block.id, locals.session)
 
         const dto: InferResultType<
           'routeExternalResources',
