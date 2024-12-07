@@ -29,12 +29,12 @@
 </script>
 
 <svelte:head>
-  <title>Profile of {data.requestedUser.userName} - Crag Track</title>
+  <title>Profile of {data.requestedUser.username} - Crag Track</title>
 </svelte:head>
 
 <AppBar>
   {#snippet lead()}
-    {data.requestedUser.userName}
+    {data.requestedUser.username}
   {/snippet}
 </AppBar>
 
@@ -46,7 +46,7 @@
       <Tabs.Control value="open-projects">Open projects</Tabs.Control>
       <Tabs.Control value="finished-projects">Finished projects</Tabs.Control>
 
-      {#if $page.data.session?.user?.email === data.requestedUser.email}
+      {#if $page.data.session?.user?.id === data.requestedUser.authUserFk}
         <Tabs.Control value="settings">Settings</Tabs.Control>
       {/if}
     {/snippet}
@@ -187,7 +187,7 @@
         </GenericList>
       </Tabs.Panel>
 
-      {#if $page.data.session?.user?.email === data.requestedUser.email}
+      {#if $page.data.session?.user?.id === data.requestedUser.authUserFk}
         <Tabs.Panel value="settings">
           <form method="POST">
             {#if form?.error}

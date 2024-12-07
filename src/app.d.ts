@@ -1,4 +1,10 @@
+import type { SupabaseToken } from '$lib/auth'
 import type { Session, SupabaseClient, User } from '@supabase/supabase-js'
+
+export interface UserWithPermissions extends User {
+  appRole: SupabaseToken['user_role']
+  appPermissions: SupabaseToken['user_permissions']
+}
 
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
@@ -10,7 +16,7 @@ declare global {
       supabase: SupabaseClient
       safeGetSession: () => Promise<{ session: Session | null; user: User | null }>
       session: Session | null
-      user: User | null
+      user: UserWithPermissions | null
     }
     interface PageData {
       session: Session | null

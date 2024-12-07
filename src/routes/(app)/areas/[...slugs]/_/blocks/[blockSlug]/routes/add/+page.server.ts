@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, generateSlug, routes, routesToTags, users, type Route } from '$lib/db/schema'
 import { insertExternalResources } from '$lib/external-resources/index.server'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
@@ -9,18 +9,21 @@ import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve areaId and areaSlug from the parent function
   const { areaId, areaSlug } = await parent()
 
-  if (locals.user == null) {
-    // If the user is not authenticated, throw a 401 error
-    error(401)
-  }
-
   // Query the database to find blocks matching the given slug and areaId
-  const blocksResult = await db.query.blocks.findMany({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-  })
+  const blocksResult = await db((tx) =>
+    tx.query.blocks.findMany({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+    }),
+  )
   // Get the first block from the result
   const block = blocksResult.at(0)
 
@@ -34,7 +37,7 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
-  const tagsResult = await db.query.tags.findMany()
+  const tagsResult = await db((tx) => tx.query.tags.findMany())
 
   // Return the found block
   return {
@@ -45,13 +48,14 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert area slug to get areaId
     const { areaId } = convertAreaSlug(params)
-
-    if (locals.user?.email == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
-    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -67,9 +71,11 @@ export const actions = {
     }
 
     // Query the database to find the first block matching the given slug and areaId
-    const block = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    })
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      }),
+    )
 
     // If no block is found, return a 400 error with a message
     if (block == null) {
@@ -83,10 +89,12 @@ export const actions = {
 
     if (slug.length > 0) {
       // Query the database to check if a route with the same slug already exists in the block
-      const existingRoutesResult = await db
-        .select()
-        .from(routes)
-        .where(and(eq(routes.slug, slug), eq(routes.blockFk, block.id)))
+      const existingRoutesResult = await db((tx) =>
+        tx
+          .select()
+          .from(routes)
+          .where(and(eq(routes.slug, slug), eq(routes.blockFk, block.id))),
+      )
 
       // If a route with the same slug exists, return a 400 error with a message
       if (existingRoutesResult.length > 0) {
@@ -101,17 +109,19 @@ export const actions = {
 
     try {
       // Find the user in the database using their email
-      const user = await db.query.users.findFirst({ where: eq(users.email, locals.user.email) })
+      const user = await db((tx) => tx.query.users.findFirst({ where: eq(users.authUserFk, locals.user!.id) }))
       if (user == null) {
         // If the user is not found, throw an error
         throw new Error('User not found')
       }
 
       // Insert the new route into the database
-      const result = await db
-        .insert(routes)
-        .values({ ...values, createdBy: user.id, blockFk: block.id, slug })
-        .returning()
+      const result = await db((tx) =>
+        tx
+          .insert(routes)
+          .values({ ...values, createdBy: user.id, blockFk: block.id, slug })
+          .returning(),
+      )
       route = result[0]
     } catch (exception) {
       return fail(400, { ...values, error: `Unable to create route: ${convertException(exception)}` })
@@ -119,14 +129,14 @@ export const actions = {
 
     try {
       if (values.tags.length > 0) {
-        await db.insert(routesToTags).values(values.tags.map((tag) => ({ routeFk: route.id, tagFk: tag })))
+        await db((tx) => tx.insert(routesToTags).values(values.tags.map((tag) => ({ routeFk: route.id, tagFk: tag }))))
       }
     } catch (exception) {
       return fail(400, { ...values, error: `Unable to create tags: ${convertException(exception)}` })
     }
 
     try {
-      await insertExternalResources(route, block, locals.session)
+      await insertExternalResources(route, block, locals)
     } catch (exception) {
       return fail(400, {
         ...values,

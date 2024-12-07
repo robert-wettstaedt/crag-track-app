@@ -1,9 +1,9 @@
-import { db } from '$lib/db/db.server'
 import type { User } from '$lib/db/schema'
 import * as schema from '$lib/db/schema'
 import type { EnrichedArea, EnrichedBlock, EnrichedRoute } from '$lib/db/utils'
 import { buildNestedAreaQuery, enrichArea, enrichBlock, enrichRoute } from '$lib/db/utils'
-import { eq, like, or } from 'drizzle-orm'
+import { eq, ilike } from 'drizzle-orm'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 export interface SearchResults {
   routes: EnrichedRoute[]
@@ -19,6 +19,7 @@ export interface SearchedResources {
 export const searchResources = async (
   query: string | null | undefined,
   user: schema.User | undefined,
+  db: PostgresJsDatabase<typeof schema>,
 ): Promise<SearchedResources> => {
   // If the query is null or less than 3 characters, return early
   if (query == null || query.length < 3) {
@@ -30,7 +31,7 @@ export const searchResources = async (
 
   // Query the database for areas matching the search string
   const areasResult = await db.query.areas.findMany({
-    where: like(schema.areas.name, searchString),
+    where: ilike(schema.areas.name, searchString),
     with: {
       parent: buildNestedAreaQuery(), // Include nested parent area information
     },
@@ -38,7 +39,7 @@ export const searchResources = async (
 
   // Query the database for blocks matching the search string
   const blocksResult = await db.query.blocks.findMany({
-    where: like(schema.blocks.name, searchString),
+    where: ilike(schema.blocks.name, searchString),
     with: {
       area: buildNestedAreaQuery(), // Include nested area information
       geolocation: true,
@@ -47,7 +48,7 @@ export const searchResources = async (
 
   // Query the database for routes matching the search string
   const routesResult = await db.query.routes.findMany({
-    where: like(schema.routes.name, searchString),
+    where: ilike(schema.routes.name, searchString),
     with: {
       ascents: user == null ? { limit: 0 } : { where: eq(schema.ascents.createdBy, user.id) },
       block: {
@@ -60,7 +61,7 @@ export const searchResources = async (
 
   // Query the database for users matching the search string in email or username
   const usersResult = await db.query.users.findMany({
-    where: or(like(schema.users.email, searchString), like(schema.users.userName, searchString)),
+    where: ilike(schema.users.username, searchString),
   })
 
   return {

@@ -1,0 +1,1 @@
+CREATE POLICY "data.read can read files" ON "files" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((SELECT authorize('data.read')));

@@ -3,6 +3,10 @@ import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { type BufferLike, type Headers, type ResponseDataDetailed } from 'webdav'
 
 export async function GET({ locals, request, params }) {
+  if (!locals.user?.appPermissions?.includes('data.read')) {
+    return new Response(null, { status: 404 })
+  }
+
   // Extract relevant headers from the request
   const headers = Array.from(request.headers.entries()).reduce((headers, [key, value]) => {
     // Include only 'accept' and 'range' headers

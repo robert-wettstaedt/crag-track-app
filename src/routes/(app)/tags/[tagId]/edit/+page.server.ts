@@ -1,13 +1,19 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { routesToTags, tags } from '$lib/db/schema'
 import { validateTagForm, type TagActionFailure, type TagActionValues } from '$lib/forms.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ params }) => {
-  const result = await db.query.tags.findFirst({ where: eq(tags.id, params.tagId) })
+export const load = (async ({ locals, params }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
+  const result = await db((tx) => tx.query.tags.findFirst({ where: eq(tags.id, params.tagId) }))
 
   if (result == null) {
     error(404)
@@ -20,10 +26,11 @@ export const load = (async ({ params }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
-    // If the user is not authenticated, throw a 401 error
-    if (locals.user?.email == null) {
-      error(401)
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
     }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
 
     // Get the form data from the request
     const data = await request.formData()
@@ -38,7 +45,7 @@ export const actions = {
     }
 
     // Check if an area with the same slug already exists
-    const existingTagsResult = await db.query.tags.findMany({ where: eq(tags.id, values.id) })
+    const existingTagsResult = await db((tx) => tx.query.tags.findMany({ where: eq(tags.id, values.id) }))
 
     if (existingTagsResult.length > 0) {
       // If an area with the same name exists, return a 400 error with a message
@@ -46,9 +53,9 @@ export const actions = {
     }
 
     try {
-      await db.insert(tags).values(values)
-      await db.update(routesToTags).set({ tagFk: values.id }).where(eq(routesToTags.tagFk, params.tagId))
-      await db.delete(tags).where(eq(tags.id, params.tagId))
+      await db((tx) => tx.insert(tags).values(values))
+      await db((tx) => tx.update(routesToTags).set({ tagFk: values.id }).where(eq(routesToTags.tagFk, params.tagId)))
+      await db((tx) => tx.delete(tags).where(eq(tags.id, params.tagId)))
     } catch (exception) {
       // If an error occurs during insertion, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })

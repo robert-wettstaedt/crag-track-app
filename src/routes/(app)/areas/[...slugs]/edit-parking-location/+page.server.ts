@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, blocks, geolocations } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
@@ -8,18 +8,21 @@ import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve the areaId from the parent function
   const { areaId } = await parent()
 
-  if (locals.user == null) {
-    // If the user is not authenticated, throw a 401 error
-    error(401)
-  }
-
   // Query the database to find the area with the given areaId
-  const areasResult = await db.query.areas.findMany({
-    where: eq(areas.id, areaId),
-  })
+  const areasResult = await db((tx) =>
+    tx.query.areas.findMany({
+      where: eq(areas.id, areaId),
+    }),
+  )
   const area = areasResult.at(0)
 
   // If the area is not found, throw a 404 error
@@ -28,13 +31,15 @@ export const load = (async ({ locals, parent }) => {
   }
 
   // Query the database for blocks with geolocation data
-  const geolocationBlocksResults = await db.query.blocks.findMany({
-    where: and(isNotNull(blocks.geolocationFk)),
-    with: {
-      area: buildNestedAreaQuery(), // Include nested area information
-      geolocation: true,
-    },
-  })
+  const geolocationBlocksResults = await db((tx) =>
+    tx.query.blocks.findMany({
+      where: and(isNotNull(blocks.geolocationFk)),
+      with: {
+        area: buildNestedAreaQuery(), // Include nested area information
+        geolocation: true,
+      },
+    }),
+  )
 
   return {
     ...area,
@@ -44,13 +49,14 @@ export const load = (async ({ locals, parent }) => {
 
 export const actions = {
   updateParkingLocation: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
-
-    if (locals.user == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
-    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -87,7 +93,7 @@ export const actions = {
     }
 
     // Query the database to find the area with the given areaId
-    const areasResult = await db.query.areas.findMany({ where: eq(areas.id, areaId) })
+    const areasResult = await db((tx) => tx.query.areas.findMany({ where: eq(areas.id, areaId) }))
     const area = areasResult.at(0)
 
     // If the area is not found, throw a 404 error
@@ -100,7 +106,7 @@ export const actions = {
     }
 
     try {
-      await db.insert(geolocations).values({ lat, long, areaFk: area.id })
+      await db((tx) => tx.insert(geolocations).values({ lat, long, areaFk: area.id }))
     } catch (exception) {
       // Handle any exceptions that occur during the update
       return fail(404, { ...values, error: convertException(exception) })
@@ -110,18 +116,21 @@ export const actions = {
   },
 
   removeParkingLocation: async ({ locals, params }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
 
-    if (locals.user == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
-    }
-
     // Query the database to find the area with the given areaId
-    const areasResult = await db.query.areas.findMany({
-      where: eq(areas.id, areaId),
-    })
+    const areasResult = await db((tx) =>
+      tx.query.areas.findMany({
+        where: eq(areas.id, areaId),
+      }),
+    )
     const area = areasResult.at(0)
 
     // If the area is not found, throw a 404 error

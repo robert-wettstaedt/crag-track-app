@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, files, generateSlug, geolocations, topoRoutes, topos } from '$lib/db/schema'
 import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
@@ -9,17 +9,21 @@ import { and, eq, inArray } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve areaId and areaSlug from the parent function
   const { areaId, areaSlug } = await parent()
 
-  if (locals.user == null) {
-    error(401) // Unauthorized error if user is not authenticated
-  }
-
   // Query the database to find blocks matching the provided slug and areaId
-  const blocksResult = await db.query.blocks.findMany({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-  })
+  const blocksResult = await db((tx) =>
+    tx.query.blocks.findMany({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+    }),
+  )
   const block = blocksResult.at(0) // Get the first block from the result
 
   // If no block is found, return a 404 error
@@ -40,13 +44,14 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   updateBlock: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
-
-    if (locals.user == null) {
-      // If no user is found in the session, throw a 401 error
-      error(401)
-    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -63,9 +68,11 @@ export const actions = {
     const slug = generateSlug(values.name)
 
     // Check if a block with the same slug already exists in the area
-    const existingBlocksResult = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, slug), eq(blocks.areaFk, areaId)),
-    })
+    const existingBlocksResult = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, slug), eq(blocks.areaFk, areaId)),
+      }),
+    )
 
     if (existingBlocksResult != null) {
       // If a block with the same slug exists, return a 400 error with a message
@@ -77,35 +84,40 @@ export const actions = {
 
     try {
       // Update the block in the database with the validated values
-      await db
-        .update(blocks)
-        .set({ ...values, slug })
-        .where(and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)))
+      await db((tx) =>
+        tx
+          .update(blocks)
+          .set({ ...values, slug })
+          .where(and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId))),
+      )
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })
     }
 
     // Redirect to the block's page after successful update
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+    redirect(303, `/areas/${params.slugs}/_/blocks/${slug}`)
   },
 
   removeBlock: async ({ locals, params }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert the area slug to get the areaId
     const { areaId, areaSlug } = convertAreaSlug(params)
 
-    if (locals.user == null) {
-      // If no user is found in the session, throw a 401 error
-      error(401)
-    }
-
     // Query the database to find blocks matching the provided slug and areaId
-    const blocksResult = await db.query.blocks.findMany({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      with: {
-        routes: true,
-      },
-    })
+    const blocksResult = await db((tx) =>
+      tx.query.blocks.findMany({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+        with: {
+          routes: true,
+        },
+      }),
+    )
     const block = blocksResult.at(0) // Get the first block from the result
 
     // If no block is found, return a 404 error
@@ -128,21 +140,23 @@ export const actions = {
     }
 
     try {
-      await db.delete(files).where(eq(files.blockFk, block.id))
-      await db.delete(geolocations).where(eq(geolocations.blockFk, block.id))
+      await db((tx) => tx.delete(files).where(eq(files.blockFk, block.id)))
+      await db((tx) => tx.delete(geolocations).where(eq(geolocations.blockFk, block.id)))
 
-      const deletedTopos = await db.delete(topos).where(eq(topos.blockFk, block.id)).returning()
+      const deletedTopos = await db((tx) => tx.delete(topos).where(eq(topos.blockFk, block.id)).returning())
 
       if (deletedTopos.length > 0) {
-        await db.delete(topoRoutes).where(
-          inArray(
-            topoRoutes.topoFk,
-            deletedTopos.map((topo) => topo.id),
+        await db((tx) =>
+          tx.delete(topoRoutes).where(
+            inArray(
+              topoRoutes.topoFk,
+              deletedTopos.map((topo) => topo.id),
+            ),
           ),
         )
       }
 
-      await db.delete(blocks).where(eq(blocks.id, block.id))
+      await db((tx) => tx.delete(blocks).where(eq(blocks.id, block.id)))
     } catch (error) {
       return fail(400, { error: convertException(error) })
     }

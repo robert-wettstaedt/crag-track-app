@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { AppBar } from '@skeletonlabs/skeleton-svelte'
+  import { enhance } from '$app/forms'
+
+  let { form } = $props()
 </script>
 
 <svelte:head>
@@ -7,16 +9,22 @@
 </svelte:head>
 
 <div class="flex justify-center items-center min-h-[80vh]">
-  <div class="card p-8 max-w-md w-full preset-filled-surface-100-900">
+  <div class="card p-8 max-w-lg w-full preset-filled-surface-100-900">
+    {#if form?.error}
+      <aside class="card preset-tonal-warning mb-8 p-2 md:p-4">
+        <p>{form.error}</p>
+      </aside>
+    {/if}
+
     <header class="text-center mb-8">
       <h1 class="h1 mb-2">Welcome Back</h1>
       <p class="opacity-75">Sign in to continue to Crag Track</p>
     </header>
 
-    <form method="POST" action="?/login" class="space-y-4">
+    <form method="POST" class="space-y-4" use:enhance>
       <label class="label">
         <span>Email</span>
-        <input name="email" type="email" placeholder="you@example.com" class="input" required />
+        <input name="email" type="email" placeholder="you@example.com" class="input" required value={form?.email} />
       </label>
 
       <label class="label">
@@ -34,10 +42,10 @@
       <div class="divider my-8"></div>
 
       <div class="flex flex-col gap-4">
-        <button formaction="?/signup" class="btn preset-outlined-primary-500">
+        <a href="/auth/signup" class="btn preset-outlined-primary-500">
           <i class="fa-solid fa-user-plus"></i>
           Create Account
-        </button>
+        </a>
       </div>
     </form>
   </div>

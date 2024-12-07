@@ -1,5 +1,5 @@
 import { getBlocksOfArea } from '$lib/blocks.server'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import type { InferResultType } from '$lib/db/types'
 import { insertExternalResources, queryExternalResource } from '$lib/external-resources/index.server'
 import { convertAreaSlug } from '$lib/helper.server'
@@ -13,7 +13,8 @@ export async function POST({ locals, params, request }) {
 
   const { areaId } = convertAreaSlug(params)
 
-  const { blocks } = await getBlocksOfArea(areaId, db)
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const { blocks } = await db((tx) => getBlocksOfArea(areaId, tx))
 
   const routes = blocks.flatMap((block) => block.routes.map((route) => ({ route, block })))
 
@@ -25,7 +26,7 @@ export async function POST({ locals, params, request }) {
           return
         }
 
-        const data = await queryExternalResource(route.name, block.id, locals.session)
+        const data = await queryExternalResource(route.name, block.id, locals)
 
         const dto: InferResultType<
           'routeExternalResources',
@@ -41,7 +42,7 @@ export async function POST({ locals, params, request }) {
           externalResourceTheCragFk: null,
         }
 
-        await insertExternalResources(route, block, session)
+        await insertExternalResources(route, block, locals)
 
         controller.enqueue(JSON.stringify(dto) + '\n')
       }

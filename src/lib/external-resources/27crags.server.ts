@@ -1,4 +1,4 @@
-import { db, keyv } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient, keyv } from '$lib/db/db.server'
 import {
   generateSlug,
   routeExternalResource27crags,
@@ -129,7 +129,7 @@ export default {
             const cookiesObj = parse(cookies.join('; '))
 
             if (typeof cookiesObj.js_user === 'string') {
-              resolve({ userName: cookiesObj.js_user })
+              resolve({ username: cookiesObj.js_user })
             } else {
               reject(new Error('Your 27crags session is invalid'))
             }
@@ -148,13 +148,16 @@ export default {
     })
   },
 
-  logAscent: async (ascent, externalResourceId, userExternalResource, session) => {
-    const externalResource =
+  logAscent: async (ascent, externalResourceId, userExternalResource, session, locals) => {
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
+    const externalResource = await db(async (tx) =>
       externalResourceId == null
         ? null
-        : await db.query.routeExternalResource27crags.findFirst({
+        : tx.query.routeExternalResource27crags.findFirst({
             where: eq(routeExternalResource27crags.id, externalResourceId),
-          })
+          }),
+    )
 
     if (externalResource == null || userExternalResource.cookie27crags == null) {
       return
@@ -166,7 +169,7 @@ export default {
     formData.append('ascent[details]', ascent.notes ?? '')
     formData.append('ascent[ascent_type]', ascent.type === 'flash' ? ascent.type : 'redpoint')
 
-    const url = `https://27crags.com/climbers/${session.userName}/ascents`
+    const url = `https://27crags.com/climbers/${session.username}/ascents`
 
     const res = await fetch(url, {
       method: 'POST',
@@ -185,4 +188,4 @@ export default {
       throw new Error(`Unable to log 27crags ascent: ${res.status} ${res.statusText}`)
     }
   },
-} as ExternalResourceHandler<RouteExternalResource27crags, { userName: string }>
+} as ExternalResourceHandler<RouteExternalResource27crags, { username: string }>

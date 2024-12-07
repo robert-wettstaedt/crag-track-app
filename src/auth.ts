@@ -1,8 +1,8 @@
+import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
+import { decodeToken } from '$lib/auth'
 import { createServerClient } from '@supabase/ssr'
 import { type Handle, redirect } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
-
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public'
 
 const supabase: Handle = async ({ event, resolve }) => {
   /**
@@ -48,7 +48,18 @@ const supabase: Handle = async ({ event, resolve }) => {
       return { session: null, user: null }
     }
 
-    return { session, user }
+    const { user_permissions, user_role } = decodeToken(session.access_token)
+
+    const authUserWithClaims =
+      user == null
+        ? null
+        : {
+            ...user,
+            appRole: user_role,
+            appPermissions: user_permissions,
+          }
+
+    return { session, user: authUserWithClaims }
   }
 
   return resolve(event, {
@@ -64,8 +75,17 @@ const supabase: Handle = async ({ event, resolve }) => {
 
 const authGuard: Handle = async ({ event, resolve }) => {
   const { session, user } = await event.locals.safeGetSession()
+  const { user_permissions, user_role } = decodeToken(session?.access_token ?? '')
+
   event.locals.session = session
-  event.locals.user = user
+  event.locals.user =
+    user == null
+      ? null
+      : {
+          ...user,
+          appRole: user_role,
+          appPermissions: user_permissions,
+        }
 
   if (event.locals.session == null && event.url.pathname !== '/' && !event.url.pathname.startsWith('/auth')) {
     redirect(303, '/auth')

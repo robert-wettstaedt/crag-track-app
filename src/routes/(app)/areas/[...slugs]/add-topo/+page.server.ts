@@ -1,30 +1,33 @@
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, files } from '$lib/db/schema'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { convertAreaSlug } from '$lib/helper.server'
+import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 
 export const load = (async ({ locals, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve the areaId from the parent context
   const { areaId } = await parent()
 
-  // If the user is not authenticated, throw a 401 error
-  if (locals.user == null) {
-    error(401)
-  }
-
   // Query the database for areas with the specified areaId
-  const areasResult = await db.query.areas.findMany({
-    where: eq(areas.id, areaId),
-    with: {
-      files: true, // Include files associated with the area
-    },
-  })
+  const areasResult = await db((tx) =>
+    tx.query.areas.findMany({
+      where: eq(areas.id, areaId),
+      with: {
+        files: true, // Include files associated with the area
+      },
+    }),
+  )
 
   // Get the last area from the result
   const area = areasResult.at(-1)
@@ -42,13 +45,14 @@ export const load = (async ({ locals, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
-
-    if (locals.user == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
-    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -63,7 +67,7 @@ export const actions = {
     let stat: FileStat | undefined = undefined
     try {
       // Get the file statistics from Nextcloud
-      stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
+      stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
     } catch (exception) {
       // If an error occurs, return a 400 error with the exception details
       return fail(400, { ...values, error: convertException(exception) })
@@ -81,7 +85,7 @@ export const actions = {
 
     try {
       // Insert the file information into the database
-      await db.insert(files).values({ areaFk: areaId, path, type: 'topo' })
+      await db((tx) => tx.insert(files).values({ areaFk: areaId, path, type: 'topo' }))
     } catch (exception) {
       // If the insertion fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })

@@ -40,7 +40,7 @@
 
 <form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" action="?/updateFirstAscent" method="POST" use:enhance>
   <FirstAscentFormFields
-    climberName={form?.climberName ?? data.route.firstAscent?.climber?.userName ?? data.route.firstAscent?.climberName}
+    climberName={form?.climberName ?? data.route.firstAscent?.climber?.username ?? data.route.firstAscent?.climberName}
     climbers={data.climbers}
     year={form?.year ?? data.route.firstAscent?.year}
   />

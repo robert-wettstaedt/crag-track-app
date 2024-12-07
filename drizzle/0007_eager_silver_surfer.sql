@@ -1,0 +1,1 @@
+CREATE POLICY "data.edit can fully access files" ON "files" AS PERMISSIVE FOR ALL TO "authenticated" USING ((SELECT authorize('data.edit'))) WITH CHECK ((SELECT authorize('data.edit')));

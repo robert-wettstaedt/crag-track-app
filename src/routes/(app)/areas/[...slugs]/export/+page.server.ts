@@ -1,4 +1,4 @@
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient, db } from '$lib/db/db.server'
 import { areas, blocks, users, type UserSettings } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
@@ -48,47 +48,53 @@ const blocksQuery: {
 }
 
 export const load = (async ({ locals, params }) => {
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   const { areaId } = convertAreaSlug(params)
 
-  const grades = await db.query.grades.findMany()
+  const grades = await db((tx) => tx.query.grades.findMany())
 
   let gradingScale: UserSettings['gradingScale'] = 'FB'
 
-  if (locals.user?.email != null) {
-    const user = await db.query.users.findFirst({
-      where: eq(users.email, locals.user.email),
-      with: {
-        userSettings: {
-          columns: {
-            gradingScale: true,
+  if (locals.user != null) {
+    const user = await db((tx) =>
+      tx.query.users.findFirst({
+        where: eq(users.authUserFk, locals.user!.id),
+        with: {
+          userSettings: {
+            columns: {
+              gradingScale: true,
+            },
           },
         },
-      },
-    })
+      }),
+    )
 
     gradingScale = user?.userSettings?.gradingScale ?? gradingScale
   }
 
-  const areasResult = await db.query.areas.findMany({
-    where: eq(areas.id, areaId),
-    with: {
-      author: true,
-      blocks: {
-        orderBy: blocks.name,
-        with: blocksQuery,
-      },
-      areas: {
-        orderBy: areas.name,
-        with: {
-          blocks: {
-            orderBy: blocks.name,
-            with: blocksQuery,
+  const areasResult = await db((tx) =>
+    tx.query.areas.findMany({
+      where: eq(areas.id, areaId),
+      with: {
+        author: true,
+        blocks: {
+          orderBy: blocks.name,
+          with: blocksQuery,
+        },
+        areas: {
+          orderBy: areas.name,
+          with: {
+            blocks: {
+              orderBy: blocks.name,
+              with: blocksQuery,
+            },
           },
         },
+        parkingLocations: true,
       },
-      parkingLocations: true,
-    },
-  })
+    }),
+  )
 
   // Get the last area from the result
   const area = areasResult.at(-1)
@@ -108,7 +114,9 @@ export const load = (async ({ locals, params }) => {
       const enrichedRoutes = await Promise.all(
         block.routes.map(async (route) => ({
           ...route,
-          description: route.description == null ? null : await convertMarkdownToHtml(route.description, db, 'strong'),
+          description: await db(async (tx) =>
+            route.description == null ? null : convertMarkdownToHtml(route.description, tx, 'strong'),
+          ),
         })),
       )
 
@@ -121,7 +129,9 @@ export const load = (async ({ locals, params }) => {
     }),
   )
 
-  const description = area.description == null ? null : await convertMarkdownToHtml(area.description, db, 'strong')
+  const description = await db(async (tx) =>
+    area.description == null ? null : convertMarkdownToHtml(area.description, tx, 'strong'),
+  )
 
   return {
     area: {

@@ -4,9 +4,9 @@ import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import type { Session } from '@auth/sveltekit'
 import { error } from '@sveltejs/kit'
 import { eq, isNotNull } from 'drizzle-orm'
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
-export const getBlocksOfArea = async (areaId: number, db: BetterSQLite3Database<typeof schema>) => {
+export const getBlocksOfArea = async (areaId: number, db: PostgresJsDatabase<typeof schema>) => {
   const blocksQuery: {
     area: Parameters<typeof db.query.areas.findMany>[0]
     geolocation: true
@@ -82,7 +82,7 @@ export const getBlocksOfArea = async (areaId: number, db: BetterSQLite3Database<
 
 export const getToposOfArea = async (
   areaId: number,
-  db: BetterSQLite3Database<typeof schema>,
+  db: PostgresJsDatabase<typeof schema>,
   session?: Session | null,
 ) => {
   const blocksQuery: {

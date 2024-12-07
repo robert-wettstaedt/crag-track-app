@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, generateSlug, users, type Area } from '$lib/db/schema'
 import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
@@ -8,16 +8,17 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve areaId and canAddArea from the parent function
   const { areaId, canAddArea } = await parent()
 
-  // If the user is not authenticated, throw a 401 error
-  if (locals.user == null) {
-    error(401)
-  }
-
   // Query the database to find the parent area by areaId
-  const parentAreaResult = await db.query.areas.findFirst({ where: eq(areas.id, areaId) })
+  const parentAreaResult = await db((tx) => tx.query.areas.findFirst({ where: eq(areas.id, areaId) }))
 
   // If the maximum depth for adding areas is reached, throw a 400 error
   if (!canAddArea) {
@@ -32,10 +33,11 @@ export const load = (async ({ locals, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
-    // If the user is not authenticated, throw a 401 error
-    if (locals.user?.email == null) {
-      error(401)
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
     }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
 
     // Get the form data from the request
     const data = await request.formData()
@@ -55,7 +57,7 @@ export const actions = {
       // Convert the area slug from the parameters
       const { areaId, path: areaPath } = convertAreaSlug(params)
       // Find the parent area in the database
-      parentArea = await db.query.areas.findFirst({ where: eq(areas.id, areaId) })
+      parentArea = await db((tx) => tx.query.areas.findFirst({ where: eq(areas.id, areaId) }))
       path = areaPath
     } catch (error) {
       // If an error occurs, set parentArea to undefined and path to an empty array
@@ -67,7 +69,7 @@ export const actions = {
     const slug = generateSlug(values.name)
 
     // Check if an area with the same slug already exists
-    const existingAreasResult = await db.query.areas.findMany({ where: eq(areas.slug, slug) })
+    const existingAreasResult = await db((tx) => tx.query.areas.findMany({ where: eq(areas.slug, slug) }))
 
     if (existingAreasResult.length > 0) {
       // If an area with the same name exists, return a 400 error with a message
@@ -77,17 +79,19 @@ export const actions = {
     let createdArea: Area
     try {
       // Find the user in the database by email
-      const user = await db.query.users.findFirst({ where: eq(users.email, locals.user.email) })
+      const user = await db((tx) => tx.query.users.findFirst({ where: eq(users.authUserFk, locals.user!.id) }))
       if (user == null) {
         throw new Error('User not found')
       }
 
       // Insert the new area into the database
       createdArea = (
-        await db
-          .insert(areas)
-          .values({ ...values, createdBy: user.id, parentFk: parentArea?.id, slug })
-          .returning()
+        await db((tx) =>
+          tx
+            .insert(areas)
+            .values({ ...values, createdBy: user.id, parentFk: parentArea?.id, slug })
+            .returning(),
+        )
       )[0]
     } catch (exception) {
       // If an error occurs during insertion, return a 400 error with the exception message

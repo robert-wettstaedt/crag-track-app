@@ -60,8 +60,8 @@
         <span class="flex-auto">
           <dt>Author</dt>
           <dd>
-            <a class="anchor" href={`/users/${data.route.author.userName}`}>
-              {data.route.author.userName}
+            <a class="anchor" href={`/users/${data.route.author.username}`}>
+              {data.route.author.username}
             </a>
           </dd>
         </span>
@@ -73,8 +73,8 @@
           <dd class="flex justify-between items-center">
             <span>
               {#if data.route.firstAscent?.climber != null}
-                <a class="anchor" href={`/users/${data.route.firstAscent.climber.userName}`}>
-                  {data.route.firstAscent.climber.userName}
+                <a class="anchor" href={`/users/${data.route.firstAscent.climber.username}`}>
+                  {data.route.firstAscent.climber.username}
                 </a>
 
                 &nbsp;
@@ -87,7 +87,7 @@
               {data.route.firstAscent?.year ?? ''}
             </span>
 
-            {#if data.session?.user != null}
+            {#if data.authUser?.appPermissions?.includes('data.edit')}
               <a class="btn btn-sm preset-outlined-primary-500 ms-4" href={`${basePath}/edit-first-ascent`}>
                 <i class="fa-solid fa-pen"></i>Edit FA
               </a>
@@ -158,7 +158,7 @@
       </a>
     {/if}
 
-    {#if data.session?.user != null}
+    {#if data.authUser?.appPermissions?.includes('data.edit')}
       <form
         method="POST"
         action="?/syncExternalResources"
@@ -228,6 +228,7 @@
           {#if file.stat != null}
             <FileViewer
               {file}
+              readOnly={!data.authUser?.appPermissions?.includes('data.edit')}
               stat={file.stat}
               on:delete={() => {
                 files = files.filter((_file) => file.id !== _file.id)
@@ -258,7 +259,7 @@
       </div>
     {/if}
 
-    {#if data.session?.user != null}
+    {#if data.authUser?.appPermissions?.includes('data.edit')}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/add-file`}>Add file</a>
       </div>
@@ -277,11 +278,11 @@
         <div>
           <div class="flex justify-between">
             <span>
-              <a class="anchor" href={`/users/${ascent.author.userName}`}>{ascent.author.userName}</a>
+              <a class="anchor" href={`/users/${ascent.author.username}`}>{ascent.author.username}</a>
               ticked this route on {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
             </span>
 
-            {#if data.session?.user?.email === ascent.author.email}
+            {#if data.session?.user?.id === ascent.author.authUserFk || data.authUser?.appPermissions?.includes('data.edit')}
               <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/ascents/${ascent.id}/edit`}>
                 <i class="fa-solid fa-pen"></i>Edit ascent
               </a>
@@ -324,6 +325,8 @@
                         {#if file.stat != null}
                           <FileViewer
                             {file}
+                            readOnly={!data.authUser?.appPermissions?.includes('data.edit') &&
+                              ascent.author.authUserFk !== data.authUser?.id}
                             stat={file.stat}
                             on:delete={() => {
                               ascent.files = ascent.files.filter((_file) => file.id !== _file.id)
@@ -352,10 +355,8 @@
       {/each}
     {/if}
 
-    {#if data.session?.user != null}
-      <div class="flex justify-center mt-4">
-        <a class="btn preset-filled-primary-500" href={`${basePath}/ascents/add`}>Log ascent</a>
-      </div>
-    {/if}
+    <div class="flex justify-center mt-4">
+      <a class="btn preset-filled-primary-500" href={`${basePath}/ascents/add`}>Log ascent</a>
+    </div>
   </section>
 </div>

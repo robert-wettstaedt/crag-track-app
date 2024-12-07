@@ -1,0 +1,2 @@
+ALTER TABLE "user_settings" ADD COLUMN "auth_user_fk" uuid;--> statement-breakpoint
+CREATE POLICY "users can read own users_settings" ON "user_settings" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((SELECT auth.uid()) = auth_user_fk);

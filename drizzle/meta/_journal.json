@@ -1,40 +1,89 @@
 {
-  "version": "5",
-  "dialect": "sqlite",
+  "version": "7",
+  "dialect": "postgresql",
   "entries": [
     {
+      "idx": 1,
+      "version": "7",
+      "when": 1733757829854,
+      "tag": "0001_stale_quentin_quire",
+      "breakpoints": true
+    },
+    {
       "idx": 2,
-      "version": "6",
-      "when": 1719499418076,
-      "tag": "0002_shallow_penance",
+      "version": "7",
+      "when": 1733758689757,
+      "tag": "0002_high_captain_cross",
       "breakpoints": true
     },
     {
       "idx": 3,
-      "version": "6",
-      "when": 1723192641236,
-      "tag": "0003_sweet_shocker",
+      "version": "7",
+      "when": 1733762761220,
+      "tag": "0003_flaky_bromley",
       "breakpoints": true
     },
     {
       "idx": 4,
-      "version": "6",
-      "when": 1726129661598,
-      "tag": "0004_dear_makkari",
+      "version": "7",
+      "when": 1733764483735,
+      "tag": "0004_bent_living_lightning",
       "breakpoints": true
     },
     {
       "idx": 5,
-      "version": "6",
-      "when": 1726158542515,
-      "tag": "0005_cloudy_princess_powerful",
+      "version": "7",
+      "when": 1733770987431,
+      "tag": "0005_rainy_sinister_six",
       "breakpoints": true
     },
     {
       "idx": 6,
-      "version": "6",
-      "when": 1729520789486,
-      "tag": "0006_supreme_sinister_six",
+      "version": "7",
+      "when": 1733772025193,
+      "tag": "0006_ordinary_silver_centurion",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1733839692756,
+      "tag": "0007_eager_silver_surfer",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1733850375023,
+      "tag": "0008_polite_mongoose",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1733853534522,
+      "tag": "0009_amused_deadpool",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1733853614387,
+      "tag": "0010_flat_gauntlet",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1733854275044,
+      "tag": "0011_giant_shaman",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1733855263927,
+      "tag": "0012_melodic_iron_fist",
       "breakpoints": true
     }
   ]

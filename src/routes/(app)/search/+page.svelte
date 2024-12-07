@@ -114,8 +114,8 @@
           <GenericList
             items={data.searchResults.users.map((user) => ({
               ...user,
-              name: user.userName,
-              pathname: `/users/${user.userName}`,
+              name: user.username,
+              pathname: `/users/${user.username}`,
             }))}
           >
             {#snippet left(item)}

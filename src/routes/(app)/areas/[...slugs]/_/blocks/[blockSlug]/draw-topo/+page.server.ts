@@ -1,4 +1,4 @@
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import {
@@ -13,29 +13,33 @@ import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  const { areaId, areaSlug, user } = await parent()
-
-  if (locals.user == null) {
-    error(401)
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
   }
 
-  const blocksResult = await db.query.blocks.findMany({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    with: {
-      routes: {
-        orderBy: routes.gradeFk,
-        with: {
-          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
+  const { areaId, areaSlug, user } = await parent()
+
+  const blocksResult = await db((tx) =>
+    tx.query.blocks.findMany({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        routes: {
+          orderBy: routes.gradeFk,
+          with: {
+            ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+          },
+        },
+        topos: {
+          with: {
+            file: true,
+            routes: true,
+          },
         },
       },
-      topos: {
-        with: {
-          file: true,
-          routes: true,
-        },
-      },
-    },
-  })
+    }),
+  )
   const block = blocksResult.at(0)
 
   if (block?.topos == null) {
@@ -62,7 +66,13 @@ export const load = (async ({ locals, params, parent }) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  saveRoute: async ({ request }) => {
+  saveRoute: async ({ locals, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     const data = await request.formData()
 
     let values: SaveTopoActionValues
@@ -73,18 +83,26 @@ export const actions = {
       return exception
     }
 
-    await db
-      .update(topoRoutes)
-      .set({
-        path: values.path,
-        routeFk: Number(values.routeFk),
-        topoFk: Number(values.topoFk),
-        topType: values.topType,
-      })
-      .where(eq(topoRoutes.id, Number(values.id)))
+    await db((tx) =>
+      tx
+        .update(topoRoutes)
+        .set({
+          path: values.path,
+          routeFk: Number(values.routeFk),
+          topoFk: Number(values.topoFk),
+          topType: values.topType,
+        })
+        .where(eq(topoRoutes.id, Number(values.id))),
+    )
   },
 
-  addRoute: async ({ request }) => {
+  addRoute: async ({ locals, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Get form data from the request
     const data = await request.formData()
     let values: AddTopoActionValues
@@ -96,12 +114,18 @@ export const actions = {
       return exception as AddTopoActionFailure
     }
 
-    await db
-      .insert(topoRoutes)
-      .values({ topType: 'top', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) })
+    await db((tx) =>
+      tx.insert(topoRoutes).values({ topType: 'top', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) }),
+    )
   },
 
-  removeRoute: async ({ request }) => {
+  removeRoute: async ({ locals, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Get form data from the request
     const data = await request.formData()
     let values: AddTopoActionValues
@@ -113,29 +137,39 @@ export const actions = {
       return exception as AddTopoActionFailure
     }
 
-    await db
-      .delete(topoRoutes)
-      .where(and(eq(topoRoutes.routeFk, Number(values.routeFk)), eq(topoRoutes.topoFk, Number(values.topoFk))))
+    await db((tx) =>
+      tx
+        .delete(topoRoutes)
+        .where(and(eq(topoRoutes.routeFk, Number(values.routeFk)), eq(topoRoutes.topoFk, Number(values.topoFk)))),
+    )
   },
 
-  removeTopo: async ({ params, request }) => {
+  removeTopo: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     const data = await request.formData()
     const id = Number(data.get('id'))
 
-    const topo = await db.query.topos.findFirst({ where: eq(topos.id, id) })
+    const topo = await db((tx) => tx.query.topos.findFirst({ where: eq(topos.id, id) }))
 
     if (topo == null) {
       return fail(404, { error: `Topo with id ${id} not found` })
     }
 
-    await Promise.all([
-      topo.fileFk == null ? null : db.delete(files).where(eq(files.id, topo.fileFk)),
-      db.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)),
-      db.delete(topos).where(eq(topos.id, id)),
-    ])
+    await db((tx) =>
+      Promise.all([
+        topo.fileFk == null ? null : tx.delete(files).where(eq(files.id, topo.fileFk)),
+        tx.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)),
+        tx.delete(topos).where(eq(topos.id, id)),
+      ]),
+    )
 
     if (topo.blockFk != null) {
-      const remainingTopos = await db.query.topos.findMany({ where: eq(topos.blockFk, topo.blockFk) })
+      const remainingTopos = await db((tx) => tx.query.topos.findMany({ where: eq(topos.blockFk, topo.blockFk!) }))
       if (remainingTopos.length === 0) {
         redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
       }

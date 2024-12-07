@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, userSettings, users } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichRoute } from '$lib/db/utils'
 import { validateUserExternalResourceForm, type UserExternalResourceActionValues } from '$lib/forms.server'
@@ -8,10 +8,14 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params }) => {
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Query the database to find users with the given name
-  const usersResult = await db.query.users.findMany({
-    where: eq(users.email, params.name),
-  })
+  const usersResult = await db((tx) =>
+    tx.query.users.findMany({
+      where: eq(users.username, params.name),
+    }),
+  )
 
   // Get the first user from the result
   const user = usersResult.at(0)
@@ -27,27 +31,31 @@ export const load = (async ({ locals, params }) => {
   }
 
   const externalResources =
-    user.email === locals.user?.email
-      ? await db.query.userSettings.findFirst({
-          where: eq(userSettings.userFk, user.id),
-        })
+    user.authUserFk === locals.user?.id
+      ? await db((tx) =>
+          tx.query.userSettings.findFirst({
+            where: eq(userSettings.userFk, user.id),
+          }),
+        )
       : null
 
   // Query the database to find ascents created by the user
-  const ascentsResult = await db.query.ascents.findMany({
-    where: eq(ascents.createdBy, user.id),
-    with: {
-      route: {
-        with: {
-          block: {
-            with: {
-              area: buildNestedAreaQuery(),
+  const ascentsResult = await db((tx) =>
+    tx.query.ascents.findMany({
+      where: eq(ascents.createdBy, user.id),
+      with: {
+        route: {
+          with: {
+            block: {
+              with: {
+                area: buildNestedAreaQuery(),
+              },
             },
           },
         },
       },
-    },
-  })
+    }),
+  )
 
   // Get unique route IDs from the ascents result
   const routeIds = Array.from(new Set(ascentsResult.map((ascent) => ascent.routeFk)))
@@ -118,10 +126,14 @@ export const load = (async ({ locals, params }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Query the database to find users with the given name
-    const usersResult = await db.query.users.findMany({
-      where: eq(users.userName, params.name),
-    })
+    const usersResult = await db((tx) =>
+      tx.query.users.findMany({
+        where: eq(users.username, params.name),
+      }),
+    )
 
     // Get the first user from the result
     const user = usersResult.at(0)
@@ -136,13 +148,15 @@ export const actions = {
       error(400, `Multiple users with name ${params.name} found`)
     }
 
-    if (user.email !== locals.user?.email) {
+    if (user.authUserFk !== locals.user?.id) {
       error(401)
     }
 
-    const externalResources = await db.query.userSettings.findFirst({
-      where: eq(userSettings.userFk, user.id),
-    })
+    const externalResources = await db((tx) =>
+      tx.query.userSettings.findFirst({
+        where: eq(userSettings.userFk, user.id),
+      }),
+    )
 
     // Get the form data from the request
     const data = await request.formData()
@@ -158,13 +172,15 @@ export const actions = {
 
     try {
       if (externalResources == null) {
-        const [result] = await db
-          .insert(userSettings)
-          .values({ userFk: user.id, ...values })
-          .returning()
-        await db.update(users).set({ userSettingsFk: result.id }).where(eq(users.id, user.id))
+        const [result] = await db((tx) =>
+          tx
+            .insert(userSettings)
+            .values({ authUserFk: user.authUserFk, userFk: user.id, ...values })
+            .returning(),
+        )
+        await db((tx) => tx.update(users).set({ userSettingsFk: result.id }).where(eq(users.id, user.id)))
       } else {
-        await db.update(userSettings).set(values).where(eq(userSettings.id, externalResources.id))
+        await db((tx) => tx.update(userSettings).set(values).where(eq(userSettings.id, externalResources.id)))
       }
     } catch (exception) {
       // If an error occurs during insertion, return a 400 error with the exception message

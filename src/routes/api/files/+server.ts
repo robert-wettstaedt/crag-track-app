@@ -1,12 +1,11 @@
 import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { convertException } from '$lib'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
-import { error } from '@sveltejs/kit'
 import type { FileStat } from 'webdav'
 
 export async function GET({ locals, url }) {
-  if (locals.user == null) {
-    error(401)
+  if (!locals.user?.appPermissions?.includes('data.read')) {
+    return new Response(null, { status: 404 })
   }
 
   const dir = url.searchParams.get('dir') ?? '/'

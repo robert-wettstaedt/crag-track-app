@@ -53,7 +53,7 @@
 
           {#snippet content()}
             <div class="mb-4">
-              Hi, {data.user?.email}
+              Hi, {data.user?.username}
             </div>
 
             <nav class="list-nav">
@@ -81,7 +81,7 @@
 
               <ul>
                 <li>
-                  <a class="flex hover:preset-filled-primary-100-900 p-2" href={`/users/${data.user?.email}`}>
+                  <a class="flex hover:preset-filled-primary-100-900 p-2" href={`/users/${data.user?.username}`}>
                     Profile
                   </a>
                 </li>
@@ -114,7 +114,7 @@
 
   {#if $page.data.session?.user != null}
     <Nav.Bar classes="md:hidden">
-      <NavTiles />
+      <NavTiles user={data.authUser} />
     </Nav.Bar>
 
     <Nav.Rail base="hidden md:block fixed top-[68px] h-screen">
@@ -125,7 +125,7 @@
       {/snippet}
 
       {#snippet tiles()}
-        <NavTiles />
+        <NavTiles user={data.authUser} />
       {/snippet}
     </Nav.Rail>
   {/if}

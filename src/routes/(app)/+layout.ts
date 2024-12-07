@@ -1,5 +1,7 @@
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
+import { decodeToken } from '$lib/auth'
 import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ssr'
+import type { UserWithPermissions } from '../../app'
 import type { LayoutLoad } from './$types'
 
 export const load: LayoutLoad = async ({ data, depends, fetch }) => {
@@ -39,5 +41,16 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
     data: { user },
   } = await supabase.auth.getUser()
 
-  return { grades: data.grades, session, supabase, authUser: user, user: data.user }
+  const { user_permissions, user_role } = decodeToken(session?.access_token ?? '')
+
+  const authUserWithClaims: UserWithPermissions | null =
+    user == null
+      ? null
+      : {
+          ...user,
+          appRole: user_role,
+          appPermissions: user_permissions,
+        }
+
+  return { grades: data.grades, session, supabase, authUser: authUserWithClaims, user: data.user }
 }

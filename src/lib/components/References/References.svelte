@@ -36,7 +36,7 @@
           class="anchor px-4 py-3 flex hover:preset-tonal-primary hover:text-white"
           href={`/routes/${ascent.route.id}`}
         >
-          {ascent.author.userName}'s tick of&nbsp;<RouteName route={ascent.route} {grades} {gradingScale} />
+          {ascent.author.username}'s tick of&nbsp;<RouteName route={ascent.route} {grades} {gradingScale} />
         </a>
       </li>
     {/each}

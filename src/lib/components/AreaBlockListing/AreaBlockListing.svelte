@@ -89,8 +89,8 @@
                   <p class="ms-4">
                     FA:
 
-                    {#if (route.firstAscent.climber?.userName ?? route.firstAscent.climberName) != null}
-                      {route.firstAscent.climber?.userName ?? route.firstAscent.climberName}&nbsp;
+                    {#if (route.firstAscent.climber?.username ?? route.firstAscent.climberName) != null}
+                      {route.firstAscent.climber?.username ?? route.firstAscent.climberName}&nbsp;
                     {/if}
 
                     {#if route.firstAscent.year}

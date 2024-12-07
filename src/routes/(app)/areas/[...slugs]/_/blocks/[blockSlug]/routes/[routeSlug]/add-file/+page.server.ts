@@ -1,5 +1,6 @@
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, type File } from '$lib/db/schema'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
@@ -7,32 +8,34 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 
 export const load = (async ({ locals, params, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve the areaId from the parent function
   const { areaId, user } = await parent()
 
-  if (locals.user == null) {
-    // If the user is not authenticated, throw a 401 error
-    error(401)
-  }
-
   // Query the database to find the block with the specified slug and areaId
-  const block = await db.query.blocks.findFirst({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    with: {
-      routes: {
-        where: getRouteDbFilter(params.routeSlug),
-        with: {
-          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
-          files: {
-            where: eq(files.type, 'topo'),
+  const block = await db((tx) =>
+    tx.query.blocks.findFirst({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        routes: {
+          where: getRouteDbFilter(params.routeSlug),
+          with: {
+            ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+            files: {
+              where: eq(files.type, 'topo'),
+            },
           },
         },
       },
-    },
-  })
+    }),
+  )
 
   // Get the first route from the block's routes
   const route = block?.routes?.at(0)
@@ -55,13 +58,14 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert the area slug to an area ID
     const { areaId } = convertAreaSlug(params)
-
-    if (locals.user == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
-    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -74,14 +78,16 @@ export const actions = {
     const values = { path, type }
 
     // Query the database to find the block with the specified slug and areaId
-    const block = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      with: {
-        routes: {
-          where: getRouteDbFilter(params.routeSlug),
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+        with: {
+          routes: {
+            where: getRouteDbFilter(params.routeSlug),
+          },
         },
-      },
-    })
+      }),
+    )
 
     // Get the first route from the block's routes
     const route = block?.routes?.at(0)
@@ -127,12 +133,14 @@ export const actions = {
 
     try {
       // Insert the file information into the database
-      await db.insert(files).values({
-        routeFk: route.id,
-        blockFk: type === 'topo' ? block?.id : undefined,
-        path,
-        type: type as File['type'],
-      })
+      await db((tx) =>
+        tx.insert(files).values({
+          routeFk: route.id,
+          blockFk: type === 'topo' ? block?.id : undefined,
+          path,
+          type: type as File['type'],
+        }),
+      )
     } catch (exception) {
       // If an exception occurs during insertion, return a 404 error with the values and converted exception message
       return fail(404, { ...values, error: convertException(exception) })

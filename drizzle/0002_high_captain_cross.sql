@@ -1,0 +1,2 @@
+CREATE POLICY "users can create own users_settings" ON "user_settings" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((SELECT auth.uid()) = auth_user_fk);--> statement-breakpoint
+CREATE POLICY "users can update own users_settings" ON "user_settings" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ((SELECT auth.uid()) = auth_user_fk);

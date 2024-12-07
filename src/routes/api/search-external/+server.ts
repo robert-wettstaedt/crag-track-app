@@ -4,6 +4,10 @@ import type { InferResultType } from '$lib/db/types'
 import { handler27crags, handler8a, handlerTheCrag, queryExternalResource } from '$lib/external-resources/index.server'
 
 export const GET = async ({ locals, url }) => {
+  if (!locals.user?.appPermissions?.includes('data.read')) {
+    return new Response(null, { status: 404 })
+  }
+
   const query = url.searchParams.get('query')
   const blockId = Number(url.searchParams.get('blockId'))
 
@@ -17,7 +21,7 @@ export const GET = async ({ locals, url }) => {
 
   const grades = await db.query.grades.findMany()
 
-  const { data8a, data27crags, dataTheCrag } = await queryExternalResource(query, blockId, locals.session)
+  const { data8a, data27crags, dataTheCrag } = await queryExternalResource(query, blockId, locals)
 
   const route8a = data8a == null ? null : handler8a.convertToRoute(data8a, grades)
   const route27crags = data27crags == null ? null : handler27crags.convertToRoute(data27crags, grades)

@@ -1,4 +1,4 @@
-import { db, keyv } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient, keyv } from '$lib/db/db.server'
 import { generateSlug, routeExternalResource8a, type RouteExternalResource8a } from '$lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
@@ -165,13 +165,16 @@ export default {
     throw new Error(`Failed 8a session check: ${res.status} ${res.statusText}`)
   },
 
-  logAscent: async function (ascent, externalResourceId, userSettings) {
-    const externalResource =
+  logAscent: async function (ascent, externalResourceId, userSettings, _, locals) {
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
+    const externalResource = await db(async (tx) =>
       externalResourceId == null
         ? null
-        : await db.query.routeExternalResource8a.findFirst({
+        : tx.query.routeExternalResource8a.findFirst({
             where: eq(routeExternalResource8a.id, externalResourceId),
-          })
+          }),
+    )
 
     if (externalResource == null || userSettings.cookie8a == null) {
       return

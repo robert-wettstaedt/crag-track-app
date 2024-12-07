@@ -1,12 +1,10 @@
 import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$env/static/private'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
-import { error } from '@sveltejs/kit'
 import { type Headers } from 'webdav'
 
 export async function GET({ locals, request, params, url }) {
-  // If the user is not authenticated, throw a 401 error
-  if (locals.user == null) {
-    error(401)
+  if (!locals.user?.appPermissions?.includes('data.read')) {
+    return new Response(null, { status: 404 })
   }
 
   // Extract relevant headers from the request
