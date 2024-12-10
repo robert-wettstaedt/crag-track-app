@@ -49,6 +49,7 @@
     "remark-html": "^16.0.1",
     "remark-mentions": "^1.1.0",
     "remark-parse": "^11.0.0",
+    "resend": "^4.0.1",
     "sharp": "^0.33.5",
     "string-to-color": "^2.2.2",
     "svelte-pdf": "^1.0.20",

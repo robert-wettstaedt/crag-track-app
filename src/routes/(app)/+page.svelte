@@ -60,8 +60,17 @@
       </div>
     </section>
   </div>
-{:else}
+{:else if data.authUser.appPermissions?.includes('data.read')}
   {#await import('$lib/components/BlocksMap') then BlocksMap}
     <BlocksMap.default blocks={data.blocks} />
   {/await}
+{:else}
+  <div class="card p-6 max-w-md mx-auto mt-8 preset-filled-surface-100-900">
+    <h2 class="h3 mb-4 text-center">Thank you for signing up for {PUBLIC_APPLICATION_NAME}</h2>
+    <p class="text-center opacity-75 mb-4">
+      We have received your request to access {PUBLIC_APPLICATION_NAME}. Please sit tight while we process your request.
+    </p>
+
+    <p class="text-center opacity-75 mb-4">You will receive an email with further instructions shortly.</p>
+  </div>
 {/if}

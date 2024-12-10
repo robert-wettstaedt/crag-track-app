@@ -112,7 +112,7 @@
     {@render children?.()}
   </div>
 
-  {#if $page.data.session?.user != null}
+  {#if data.authUser?.appPermissions?.includes('data.read')}
     <Nav.Bar classes="md:hidden">
       <NavTiles user={data.authUser} />
     </Nav.Bar>
