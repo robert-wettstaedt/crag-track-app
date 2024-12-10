@@ -243,12 +243,16 @@ export const RoutesRelations = relations(routes, ({ one, many }) => ({
   tags: many(routesToTags),
 }))
 
-export const grades = table('grades', {
-  id: baseFields.id,
+export const grades = table(
+  'grades',
+  {
+    id: baseFields.id,
 
-  FB: text('FB'),
-  V: text('V'),
-}).enableRLS()
+    FB: text('FB'),
+    V: text('V'),
+  },
+  () => [policy('Authenticated users can fully access grades', getPolicyConfig('all', sql`true`))],
+).enableRLS()
 export type Grade = InferSelectModel<typeof grades>
 export type InsertGrade = InferInsertModel<typeof grades>
 

@@ -1,0 +1,1 @@
+CREATE POLICY "Authenticated users can fully access grades" ON "grades" AS PERMISSIVE FOR ALL TO "authenticated" USING (true) WITH CHECK (true);
