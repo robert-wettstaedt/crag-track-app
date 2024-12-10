@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
   import RouteName from '$lib/components/RouteName'
@@ -27,7 +28,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.block.name} - Crag Track</title>
+  <title>{data.block.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { convertException } from '$lib'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
@@ -40,7 +41,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.area.name} - Crag Track</title>
+  <title>{data.area.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

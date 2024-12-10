@@ -1,12 +1,13 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
 </script>
 
 <svelte:head>
-  <title>Tags - Crag Track</title>
+  <title>Tags - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

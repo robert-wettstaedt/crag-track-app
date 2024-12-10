@@ -1,5 +1,6 @@
 <script>
   import { enhance } from '$app/forms'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import TagFormFields from '$lib/components/TagFormFields'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
@@ -7,7 +8,7 @@
 </script>
 
 <svelte:head>
-  <title>Create tag - Crag Track</title>
+  <title>Create tag - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

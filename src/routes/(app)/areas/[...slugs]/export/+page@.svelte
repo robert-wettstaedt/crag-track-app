@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import SaveBouldering from '$lib/assets/Save-Bouldering.jpg'
   import AreaBlockListing from '$lib/components/AreaBlockListing'
   import '@fortawesome/fontawesome-free/css/all.css'
@@ -28,7 +29,7 @@
 </script>
 
 <svelte:head>
-  <title>Exporting {data.area.name} - Crag Track</title>
+  <title>Exporting {data.area.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <section>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
@@ -7,10 +8,10 @@
 </script>
 
 <svelte:head>
-  <title>Crag Track</title>
+  <title>{PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
-{#if data.blocks == null}
+{#if data.authUser == null}
   <div class="container mx-auto px-4">
     <!-- Hero Section -->
     <section class="py-20 text-center">

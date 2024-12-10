@@ -1,7 +1,7 @@
 <script lang="ts">
   import { invalidate, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
-  import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME, PUBLIC_DEMO_MODE } from '$env/static/public'
   import Logo from '$lib/assets/logo.png'
   import Breadcrumb from '$lib/components/Breadcrumb'
   import NavTiles from '$lib/components/NavTiles'
@@ -24,16 +24,16 @@
 </script>
 
 <svelte:head>
-  <title>Crag Track</title>
+  <title>{PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <div class="grid h-screen grid-rows-[auto_1fr_auto]">
   <AppBar>
     {#snippet lead()}
-      <a class="flex items-center gap-2" href="/">
-        <img src={Logo} alt="Crag Track" width={32} height={32} />
+      <a class="flex gap-2" href="/">
+        <img src={Logo} alt={PUBLIC_APPLICATION_NAME} width={32} height={32} />
 
-        <strong class="text-xl uppercase">Crag Track</strong>
+        <strong class="text-xl">{PUBLIC_APPLICATION_NAME}</strong>
       </a>
     {/snippet}
 

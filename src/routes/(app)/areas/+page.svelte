@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import GenericList from '$lib/components/GenericList'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
@@ -6,7 +7,7 @@
 </script>
 
 <svelte:head>
-  <title>Areas - Crag Track</title>
+  <title>Areas - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

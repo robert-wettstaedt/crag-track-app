@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { convertException } from '$lib'
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
   import RouteName from '$lib/components/RouteName'
@@ -55,7 +56,7 @@
 </script>
 
 <svelte:head>
-  <title>Sync external resources of {data.area.name} - Crag Track</title>
+  <title>Sync external resources of {data.area.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

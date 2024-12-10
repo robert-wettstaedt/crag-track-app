@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms'
   import { invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
@@ -38,7 +39,7 @@
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
     {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
-    - Crag Track
+    - {PUBLIC_APPLICATION_NAME}
   </title>
 </svelte:head>
 

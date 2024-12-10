@@ -1,11 +1,12 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
 
   let { form } = $props()
 </script>
 
 <svelte:head>
-  <title>Signup - Crag Track</title>
+  <title>Signup - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <div class="flex justify-center items-center min-h-[80vh]">
@@ -26,7 +27,7 @@
     {:else}
       <header class="text-center mb-8">
         <h1 class="h1 mb-2">Create account</h1>
-        <p class="opacity-75">Sign up to continue to Crag Track</p>
+        <p class="opacity-75">Sign up to continue to {PUBLIC_APPLICATION_NAME}</p>
       </header>
 
       <form method="POST" class="space-y-4" use:enhance>

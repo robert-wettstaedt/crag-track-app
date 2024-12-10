@@ -1,7 +1,7 @@
 <script>
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
-  import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME, PUBLIC_DEMO_MODE } from '$env/static/public'
   import FileBrowser from '$lib/components/FileBrowser'
   import RouteName from '$lib/components/RouteName'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
@@ -19,7 +19,7 @@
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
     {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
-    - Crag Track
+    - {PUBLIC_APPLICATION_NAME}
   </title>
 </svelte:head>
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
-  import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME, PUBLIC_DEMO_MODE } from '$env/static/public'
   import FileBrowser from '$lib/components/FileBrowser'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
@@ -12,7 +12,7 @@
 </script>
 
 <svelte:head>
-  <title>Edit topos of {data.area.name} - Crag Track</title>
+  <title>Edit topos of {data.area.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>
