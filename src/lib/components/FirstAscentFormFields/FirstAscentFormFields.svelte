@@ -17,9 +17,9 @@
   <span>Climber</span>
 
   <Combobox
+    allowCustomValue
     bind:value={climberNameValue}
     data={climbers.map((climber) => ({ label: climber, value: climber }))}
-    inputBehavior="autocomplete"
     name="climberName"
     placeholder="Search..."
   />

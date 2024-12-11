@@ -296,7 +296,7 @@
     <div class="flex gap-1 absolute top-2 right-2 z-30">
       <button
         aria-label="Previous Topo"
-        class="btn btn-sm preset-outlined-primary-500-primary"
+        class="btn btn-sm preset-filled-tertiary-500"
         disabled={selectedTopoIndex <= 0}
         onclick={onPrevTopo}
       >
@@ -305,7 +305,7 @@
 
       <button
         aria-label="Next Topo"
-        class="btn btn-sm preset-outlined-primary-500-primary"
+        class="btn btn-sm preset-filled-tertiary-500"
         disabled={selectedTopoIndex >= topos.length - 1}
         onclick={onNextTopo}
       >
