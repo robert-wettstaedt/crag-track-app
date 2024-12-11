@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
   import RouteName from '$lib/components/RouteName'
@@ -27,7 +28,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.block.name} - Crag Track</title>
+  <title>{data.block.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>
@@ -47,14 +48,18 @@
       <div class="flex p-2">
         <span class="flex-auto">
           <dt>Author</dt>
-          <dd>{data.block.author.userName}</dd>
+          <dd>
+            <a class="anchor" href="/users/{data.block.author.username}">
+              {data.block.author.username}
+            </a>
+          </dd>
         </span>
       </div>
     </dl>
   {/snippet}
 
   {#snippet trail()}
-    {#if data.session?.user != null}
+    {#if data.authUser?.appPermissions?.includes('data.edit')}
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen"></i>Edit block
       </a>
@@ -103,6 +108,8 @@
                 {#if file.stat != null}
                   <FileViewer
                     {file}
+                    readOnly={!data.authUser?.appPermissions?.includes('data.edit') &&
+                      data.block.author.authUserFk !== data.authUser?.id}
                     stat={file.stat}
                     on:delete={() => {
                       files = files.filter((_file) => file.id !== _file.id)
@@ -139,7 +146,7 @@
         {/if}
       {/key}
 
-      {#if data.session?.user != null}
+      {#if data.authUser?.appPermissions?.includes('data.edit')}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
         </div>
@@ -157,9 +164,11 @@
         <div class="relative">
           <TopoViewer topos={data.topos} />
 
-          <a class="btn btn-sm preset-tonal-surface absolute bottom-2 right-2 z-30" href={`${basePath}/draw-topo`}>
-            <i class="fa-solid fa-pen"></i>Edit topo
-          </a>
+          {#if data.authUser?.appPermissions?.includes('data.edit')}
+            <a class="btn btn-sm preset-tonal-surface absolute bottom-2 right-2 z-30" href={`${basePath}/draw-topo`}>
+              <i class="fa-solid fa-pen"></i>Edit topo
+            </a>
+          {/if}
         </div>
       </section>
     {/if}
@@ -196,7 +205,7 @@
         </nav>
       {/if}
 
-      {#if data.session?.user != null}
+      {#if data.authUser?.appPermissions?.includes('data.edit')}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/routes/add`}>Add route</a>
         </div>

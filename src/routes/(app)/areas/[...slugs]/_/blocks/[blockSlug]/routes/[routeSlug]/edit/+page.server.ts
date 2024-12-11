@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import {
   ascents,
   blocks,
@@ -22,28 +22,30 @@ import { and, eq, inArray } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve the areaId from the parent function
   const { areaId, user } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
-    error(401) // Throw an error if the user is not authenticated
-  }
-
   // Query the database to find the block with the given slug and areaId
-  const block = await db.query.blocks.findFirst({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    with: {
-      routes: {
-        where: getRouteDbFilter(params.routeSlug),
-        with: {
-          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
-          tags: true,
+  const block = await db((tx) =>
+    tx.query.blocks.findFirst({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        routes: {
+          where: getRouteDbFilter(params.routeSlug),
+          with: {
+            ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+            tags: true,
+          },
         },
       },
-    },
-  })
+    }),
+  )
 
   // Get the first route from the block's routes
   const route = block?.routes?.at(0)
@@ -58,7 +60,7 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
-  const tagsResult = await db.query.tags.findMany()
+  const tagsResult = await db((tx) => tx.query.tags.findMany())
 
   // Return the found route
   return {
@@ -69,14 +71,14 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   updateRoute: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
-
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user == null) {
-      error(401) // Throw an error if the user is not authenticated
-    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -91,14 +93,16 @@ export const actions = {
     }
 
     // Query the database to find the block with the given slug and areaId
-    const block = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      with: {
-        routes: {
-          where: getRouteDbFilter(params.routeSlug),
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+        with: {
+          routes: {
+            where: getRouteDbFilter(params.routeSlug),
+          },
         },
-      },
-    })
+      }),
+    )
 
     // Get the first route from the block's routes
     const route = block?.routes?.at(0)
@@ -123,10 +127,12 @@ export const actions = {
 
     if (slug != params.routeSlug && slug.length > 0) {
       // Query the database to check if a route with the same slug already exists in the block
-      const existingRoutesResult = await db
-        .select()
-        .from(routes)
-        .where(and(eq(routes.slug, slug), eq(routes.blockFk, block.id)))
+      const existingRoutesResult = await db((tx) =>
+        tx
+          .select()
+          .from(routes)
+          .where(and(eq(routes.slug, slug), eq(routes.blockFk, block.id))),
+      )
 
       // If a route with the same slug exists, return a 400 error with a message
       if (existingRoutesResult.length > 0) {
@@ -143,17 +149,19 @@ export const actions = {
       const { tags, ...rest } = values
 
       // Update the route in the database with the validated values
-      await db
-        .update(routes)
-        .set({ ...rest, slug })
-        .where(eq(routes.id, route.id))
+      await db((tx) =>
+        tx
+          .update(routes)
+          .set({ ...rest, slug })
+          .where(eq(routes.id, route.id)),
+      )
 
       // Delete existing route-to-tag associations for the route
-      await db.delete(routesToTags).where(eq(routesToTags.routeFk, route.id))
+      await db((tx) => tx.delete(routesToTags).where(eq(routesToTags.routeFk, route.id)))
 
       if (tags.length > 0) {
         // Insert new route-to-tag associations for the route
-        await db.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag })))
+        await db((tx) => tx.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag }))))
       }
     } catch (exception) {
       // Return a failure if the update operation fails
@@ -165,33 +173,36 @@ export const actions = {
   },
 
   removeRoute: async ({ locals, params }) => {
-    const { areaId } = convertAreaSlug(params)
-
-    const session = await locals.auth()
-    if (session?.user == null) {
-      error(401) // Throw an error if the user is not authenticated
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
     }
 
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
+    const { areaId } = convertAreaSlug(params)
+
     // Query the database to find the block with the given slug and areaId
-    const block = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      with: {
-        routes: {
-          where: getRouteDbFilter(params.routeSlug),
-          with: {
-            ascents: {
-              with: {
-                files: true,
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+        with: {
+          routes: {
+            where: getRouteDbFilter(params.routeSlug),
+            with: {
+              ascents: {
+                with: {
+                  files: true,
+                },
               },
+              externalResources: true,
+              files: true,
+              firstAscent: true,
+              tags: true,
             },
-            externalResources: true,
-            files: true,
-            firstAscent: true,
-            tags: true,
           },
         },
-      },
-    })
+      }),
+    )
 
     // Get the first route from the block's routes
     const route = block?.routes?.at(0)
@@ -217,42 +228,47 @@ export const actions = {
     }
 
     try {
-      await db.delete(ascents).where(eq(ascents.routeFk, route.id))
-      await db.delete(firstAscents).where(eq(firstAscents.routeFk, route.id))
-      await db.delete(routesToTags).where(eq(routesToTags.routeFk, route.id))
-      await db.delete(files).where(eq(files.routeFk, route.id))
-      await db.delete(topoRoutes).where(eq(topoRoutes.routeFk, route.id))
+      await db((tx) => tx.delete(ascents).where(eq(ascents.routeFk, route.id)))
+      await db((tx) => tx.delete(firstAscents).where(eq(firstAscents.routeFk, route.id)))
+      await db((tx) => tx.delete(routesToTags).where(eq(routesToTags.routeFk, route.id)))
+      await db((tx) => tx.delete(files).where(eq(files.routeFk, route.id)))
+      await db((tx) => tx.delete(topoRoutes).where(eq(topoRoutes.routeFk, route.id)))
 
       if (route.ascents.length > 0) {
-        await db.delete(files).where(
-          inArray(
-            files.ascentFk,
-            route.ascents.map((ascent) => ascent.id),
+        await db((tx) =>
+          tx.delete(files).where(
+            inArray(
+              files.ascentFk,
+              route.ascents.map((ascent) => ascent.id),
+            ),
           ),
         )
       }
 
-      const externalResources = await db
-        .delete(routeExternalResources)
-        .where(eq(routeExternalResources.routeFk, route.id))
-        .returning()
+      const externalResources = await db((tx) =>
+        tx.delete(routeExternalResources).where(eq(routeExternalResources.routeFk, route.id)).returning(),
+      )
 
       const ex8aIds = externalResources.map((er) => er.externalResource8aFk).filter((id) => id != null)
       if (ex8aIds.length > 0) {
-        await db.delete(routeExternalResource8a).where(inArray(routeExternalResource8a.id, ex8aIds))
+        await db((tx) => tx.delete(routeExternalResource8a).where(inArray(routeExternalResource8a.id, ex8aIds)))
       }
 
       const ex27cragsIds = externalResources.map((er) => er.externalResource27cragsFk).filter((id) => id != null)
       if (ex27cragsIds.length > 0) {
-        await db.delete(routeExternalResource27crags).where(inArray(routeExternalResource27crags.id, ex27cragsIds))
+        await db((tx) =>
+          tx.delete(routeExternalResource27crags).where(inArray(routeExternalResource27crags.id, ex27cragsIds)),
+        )
       }
 
       const exTheCragIds = externalResources.map((er) => er.externalResourceTheCragFk).filter((id) => id != null)
       if (exTheCragIds.length > 0) {
-        await db.delete(routeExternalResourceTheCrag).where(inArray(routeExternalResourceTheCrag.id, exTheCragIds))
+        await db((tx) =>
+          tx.delete(routeExternalResourceTheCrag).where(inArray(routeExternalResourceTheCrag.id, exTheCragIds)),
+        )
       }
 
-      await db.delete(routes).where(eq(routes.id, route.id))
+      await db((tx) => tx.delete(routes).where(eq(routes.id, route.id)))
     } catch (exception) {
       return fail(400, { error: convertException(exception) })
     }

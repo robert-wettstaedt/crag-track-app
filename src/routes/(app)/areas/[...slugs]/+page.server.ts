@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, blocks } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
 import { convertMarkdownToHtml } from '$lib/markdown'
@@ -10,26 +10,28 @@ import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve the areaId from the parent context
   const { areaId } = await parent()
-  // Get the current session from locals
-  const session = await locals.auth()
 
   // Query the database for areas with the specified areaId
-  const areasResult = await db.query.areas.findMany({
-    where: eq(areas.id, areaId),
-    with: {
-      author: true, // Include author information
-      blocks: {
-        orderBy: blocks.name, // Order blocks by name
+  const areasResult = await db((tx) =>
+    tx.query.areas.findMany({
+      where: eq(areas.id, areaId),
+      with: {
+        author: true, // Include author information
+        blocks: {
+          orderBy: blocks.name, // Order blocks by name
+        },
+        areas: {
+          orderBy: areas.name, // Order nested areas by name
+        },
+        files: true, // Include files associated with the area
+        parkingLocations: true,
       },
-      areas: {
-        orderBy: areas.name, // Order nested areas by name
-      },
-      files: true, // Include files associated with the area
-      parkingLocations: true,
-    },
-  })
+    }),
+  )
 
   // Get the last area from the result
   const area = areasResult.at(-1)
@@ -40,20 +42,22 @@ export const load = (async ({ locals, parent }) => {
   }
 
   // Query the database for blocks with geolocation data
-  const geolocationBlocksResults = await db.query.blocks.findMany({
-    where: and(isNotNull(blocks.geolocationFk)),
-    with: {
-      area: buildNestedAreaQuery(), // Include nested area information
-      geolocation: true,
-    },
-  })
+  const geolocationBlocksResults = await db((tx) =>
+    tx.query.blocks.findMany({
+      where: and(isNotNull(blocks.geolocationFk)),
+      with: {
+        area: buildNestedAreaQuery(), // Include nested area information
+        geolocation: true,
+      },
+    }),
+  )
 
   // Process each file associated with the area
   const files = await Promise.all(
     area.files.map(async (file) => {
       try {
         // Search for the file in Nextcloud
-        const stat = await searchNextcloudFile(session, file)
+        const stat = await searchNextcloudFile(locals.session, file)
 
         // Return the file with its stat information
         return { ...file, error: undefined, stat }
@@ -65,7 +69,9 @@ export const load = (async ({ locals, parent }) => {
   )
 
   // Process area description from markdown to HTML if description is present
-  const description = area.description == null ? null : await convertMarkdownToHtml(area.description, db)
+  const description = await db(async (tx) =>
+    area.description == null ? null : convertMarkdownToHtml(area.description, tx),
+  )
 
   // Return the area, enriched blocks, and processed files
   return {

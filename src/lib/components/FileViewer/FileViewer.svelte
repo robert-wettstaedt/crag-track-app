@@ -9,12 +9,13 @@
   const dispatcher = createEventDispatcher<{ delete: void }>()
 
   interface Props {
-    file: File
-    stat: FileStat
     children?: import('svelte').Snippet
+    file: File
+    readOnly?: boolean
+    stat: FileStat
   }
 
-  let { file, stat, children }: Props = $props()
+  let { children, file, readOnly = true, stat }: Props = $props()
 
   const search = new URLSearchParams({ file: stat.basename }).toString()
   const resourcePath = `/nextcloud${stat.filename}`
@@ -120,14 +121,16 @@
       {/if}
     {/if}
 
-    <button
-      aria-label="Delete"
-      class="btn btn-icon preset-filled-error-500 fixed top-8 right-20 !text-white"
-      onclick={onDelete}
-      title="Delete"
-    >
-      <i class="fa-solid fa-trash"></i>
-    </button>
+    {#if !readOnly}
+      <button
+        aria-label="Delete"
+        class="btn btn-icon preset-filled-error-500 fixed top-8 right-20 !text-white"
+        onclick={onDelete}
+        title="Delete"
+      >
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    {/if}
 
     <a
       aria-label="Close"

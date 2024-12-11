@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { convertException } from '$lib'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
@@ -40,7 +41,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.area.name} - Crag Track</title>
+  <title>{data.area.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>
@@ -73,7 +74,11 @@
       <div class="flex p-2">
         <span class="flex-auto">
           <dt>Author</dt>
-          <dd>{data.area.author.userName}</dd>
+          <dd>
+            <a class="anchor" href="/users/{data.area.author.username}">
+              {data.area.author.username}
+            </a>
+          </dd>
         </span>
       </div>
 
@@ -87,25 +92,25 @@
   {/snippet}
 
   {#snippet trail()}
-    {#if data.session?.user != null}
-      {#if data.area.type === 'crag'}
-        <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
-          <i class="fa-solid fa-file-export"></i>Export PDF
-        </a>
+    {#if data.area.type === 'crag'}
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
+        <i class="fa-solid fa-file-export"></i>Export PDF
+      </a>
+    {/if}
+
+    <button class="btn btn-sm preset-outlined-primary-500" disabled={loadingDownload} onclick={onDownloadGpx}>
+      {#if loadingDownload}
+        <span>
+          <ProgressRing size="size-4" value={null} />
+        </span>
+      {:else}
+        <i class="fa-solid fa-map-location-dot"></i>
       {/if}
 
-      <button class="btn btn-sm preset-outlined-primary-500" disabled={loadingDownload} onclick={onDownloadGpx}>
-        {#if loadingDownload}
-          <span>
-            <ProgressRing size="size-4" value={null} />
-          </span>
-        {:else}
-          <i class="fa-solid fa-map-location-dot"></i>
-        {/if}
+      Export GPX
+    </button>
 
-        Export GPX
-      </button>
-
+    {#if data.authUser?.appPermissions?.includes('data.edit')}
       {#if data.area.type === 'crag'}
         <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-parking-location`}>
           <i class="fa-solid fa-parking"></i>Add parking location
@@ -164,6 +169,8 @@
               {#if file.stat != null}
                 <FileViewer
                   {file}
+                  readOnly={!data.authUser?.appPermissions?.includes('data.edit') &&
+                    data.area.author.authUserFk !== data.authUser?.id}
                   stat={file.stat}
                   on:delete={() => {
                     files = files.filter((_file) => file.id !== _file.id)
@@ -183,7 +190,7 @@
       {/if}
     {/key}
 
-    {#if data.session?.user != null}
+    {#if data.authUser?.appPermissions?.includes('data.edit')}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
       </div>
@@ -214,7 +221,7 @@
         </div>
       {/if}
 
-      {#if data.session?.user != null && data.canAddArea}
+      {#if data.authUser?.appPermissions?.includes('data.edit') && data.canAddArea}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/add`}>Add area</a>
         </div>
@@ -242,7 +249,7 @@
       </div>
     {/if}
 
-    {#if data.session?.user != null}
+    {#if data.authUser?.appPermissions?.includes('data.edit')}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/_/blocks/add`}>Add block</a>
       </div>

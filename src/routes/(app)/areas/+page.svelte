@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import GenericList from '$lib/components/GenericList'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
@@ -6,7 +7,7 @@
 </script>
 
 <svelte:head>
-  <title>Areas - Crag Track</title>
+  <title>Areas - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>
@@ -15,7 +16,7 @@
   {/snippet}
 
   {#snippet trail()}
-    {#if data.session?.user != null}
+    {#if data.authUser?.appPermissions?.includes('data.edit')}
       <a class="btn btn-sm preset-filled-primary-500" href="/areas/add">
         <i class="fa-solid fa-plus"></i> Add area
       </a>

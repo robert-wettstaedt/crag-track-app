@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
   import { AppBar, Pagination } from '@skeletonlabs/skeleton-svelte'
@@ -9,7 +10,7 @@
 </script>
 
 <svelte:head>
-  <title>Routes - Crag Track</title>
+  <title>Routes - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

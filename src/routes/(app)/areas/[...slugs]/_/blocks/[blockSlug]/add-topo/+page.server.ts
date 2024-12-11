@@ -1,34 +1,35 @@
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, files, topos } from '$lib/db/schema'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { convertAreaSlug } from '$lib/helper.server'
+import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 
 export const load = (async ({ locals, params, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve areaId and areaSlug from the parent function
   const { areaId, areaSlug } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
-    // If no user is found in the session, throw a 401 error
-    error(401)
-  }
-
   // Query the database to find blocks matching the given slug and areaId
-  const blocksResult = await db.query.blocks.findMany({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    with: {
-      files: {
-        where: eq(files.type, 'topo'),
+  const blocksResult = await db((tx) =>
+    tx.query.blocks.findMany({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        files: {
+          where: eq(files.type, 'topo'),
+        },
       },
-    },
-  })
+    }),
+  )
   // Get the first block from the result
   const block = blocksResult.at(0)
 
@@ -50,26 +51,27 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
 
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user == null) {
-      // If no user is found in the session, throw a 401 error
-      error(401)
-    }
-
     // Query the database to find the first block matching the given slug and areaId
-    const block = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      with: {
-        files: {
-          where: eq(files.type, 'topo'),
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+        with: {
+          files: {
+            where: eq(files.type, 'topo'),
+          },
+          topos: true,
         },
-        topos: true,
-      },
-    })
+      }),
+    )
 
     // If no block is found, throw a 404 error
     if (block == null) {
@@ -89,7 +91,7 @@ export const actions = {
     let stat: FileStat | undefined = undefined
     try {
       // Get file statistics from Nextcloud
-      stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
+      stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
     } catch (exception) {
       // If an exception occurs, return a failure response with the error message
       return fail(400, { ...values, error: convertException(exception) })
@@ -106,10 +108,12 @@ export const actions = {
     }
 
     try {
-      const [fileResult] = await db.insert(files).values({ blockFk: block.id, path, type: 'topo' }).returning()
+      const [fileResult] = await db((tx) =>
+        tx.insert(files).values({ blockFk: block.id, path, type: 'topo' }).returning(),
+      )
 
       if (stat.mime?.includes('image')) {
-        await db.insert(topos).values({ blockFk: block.id, fileFk: fileResult.id })
+        await db((tx) => tx.insert(topos).values({ blockFk: block.id, fileFk: fileResult.id }))
       }
     } catch (exception) {
       // If an exception occurs during insertion, return a failure response with the error message

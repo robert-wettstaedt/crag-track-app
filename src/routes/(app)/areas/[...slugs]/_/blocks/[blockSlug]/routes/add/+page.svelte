@@ -1,6 +1,7 @@
 <script lang="ts">
   import { applyAction, enhance } from '$app/forms'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import RouteFormFields from '$lib/components/RouteFormFields'
   import { AppBar, ProgressRing } from '@skeletonlabs/skeleton-svelte'
 
@@ -11,7 +12,7 @@
 </script>
 
 <svelte:head>
-  <title>Create route in {data.block.name} - Crag Track</title>
+  <title>Create route in {data.block.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

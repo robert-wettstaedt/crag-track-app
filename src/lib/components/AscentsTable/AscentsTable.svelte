@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Grade, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
-  import {} from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
   import RouteName from '../RouteName'
 
@@ -15,33 +14,37 @@
 </script>
 
 <div class="table-wrap">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Climber</th>
-        <th>Date time</th>
-        <th>Route</th>
-      </tr>
-    </thead>
-
-    <tbody class="hover:[&>tr]:preset-tonal-primary">
-      {#each ascents as ascent}
-        <tr class="whitespace-nowrap">
-          <td>
-            <a class="anchor hover:text-white" href="/users/{ascent.author.userName}">{ascent.author.userName}</a>
-          </td>
-
-          <td>
-            {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
-          </td>
-
-          <td>
-            <a class="anchor hover:text-white" href={ascent.route.pathname}>
-              <RouteName {grades} route={ascent.route} {gradingScale} />
-            </a>
-          </td>
+  {#if ascents.length === 0}
+    No ascents yet
+  {:else}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Climber</th>
+          <th>Date time</th>
+          <th>Route</th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+
+      <tbody class="hover:[&>tr]:preset-tonal-primary">
+        {#each ascents as ascent}
+          <tr class="whitespace-nowrap">
+            <td>
+              <a class="anchor hover:text-white" href="/users/{ascent.author.username}">{ascent.author.username}</a>
+            </td>
+
+            <td>
+              {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
+            </td>
+
+            <td>
+              <a class="anchor hover:text-white" href={ascent.route.pathname}>
+                <RouteName {grades} route={ascent.route} {gradingScale} />
+              </a>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  {/if}
 </div>

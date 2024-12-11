@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
   import { AppBar, Tabs } from '@skeletonlabs/skeleton-svelte'
@@ -25,7 +26,7 @@
 </script>
 
 <svelte:head>
-  <title>Search - Crag Track</title>
+  <title>Search - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>
@@ -114,8 +115,8 @@
           <GenericList
             items={data.searchResults.users.map((user) => ({
               ...user,
-              name: user.userName,
-              pathname: `/users/${user.userName}`,
+              name: user.username,
+              pathname: `/users/${user.username}`,
             }))}
           >
             {#snippet left(item)}

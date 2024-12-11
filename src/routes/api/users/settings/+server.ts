@@ -1,17 +1,19 @@
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { users, userSettings } from '$lib/db/schema'
 import { eq } from 'drizzle-orm'
 
 export async function POST({ locals, url }) {
-  const session = await locals.auth()
-
-  if (session?.user?.email == null) {
-    return new Response(null, { status: 401 })
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    return new Response(null, { status: 404 })
   }
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.email, session.user.email),
-  })
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
+  const user = await db((tx) =>
+    tx.query.users.findFirst({
+      where: eq(users.authUserFk, locals.user!.id),
+    }),
+  )
 
   if (user == null) {
     return new Response(null, { status: 404 })
@@ -27,7 +29,7 @@ export async function POST({ locals, url }) {
     return new Response('`gradingScale` must be either `FB` or `V`', { status: 400 })
   }
 
-  await db.update(userSettings).set({ gradingScale }).where(eq(userSettings.userFk, user.id))
+  await db((tx) => tx.update(userSettings).set({ gradingScale }).where(eq(userSettings.userFk, user.id)))
 
   return new Response(null, { status: 200 })
 }

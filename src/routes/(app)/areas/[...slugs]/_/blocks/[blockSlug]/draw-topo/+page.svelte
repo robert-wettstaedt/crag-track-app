@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import { convertPointsToPath, type TopoDTO, type TopoRouteDTO } from '$lib/topo'
@@ -27,7 +28,7 @@
 </script>
 
 <svelte:head>
-  <title>Draw topo of {data.block.name} - Crag Track</title>
+  <title>Draw topo of {data.block.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

@@ -1,21 +1,20 @@
 import { getBlocksOfArea } from '$lib/blocks.server'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import type { InferResultType } from '$lib/db/types'
 import { insertExternalResources, queryExternalResource } from '$lib/external-resources/index.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
 
 export async function POST({ locals, params, request }) {
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
+  if (locals.user == null) {
     // If the user is not authenticated, throw a 401 error
     error(401)
   }
 
   const { areaId } = convertAreaSlug(params)
 
-  const { blocks } = await getBlocksOfArea(areaId, db)
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const { blocks } = await db((tx) => getBlocksOfArea(areaId, tx))
 
   const routes = blocks.flatMap((block) => block.routes.map((route) => ({ route, block })))
 
@@ -27,7 +26,7 @@ export async function POST({ locals, params, request }) {
           return
         }
 
-        const data = await queryExternalResource(route.name, block.id, session)
+        const data = await queryExternalResource(route.name, block.id, locals)
 
         const dto: InferResultType<
           'routeExternalResources',
@@ -43,7 +42,7 @@ export async function POST({ locals, params, request }) {
           externalResourceTheCragFk: null,
         }
 
-        await insertExternalResources(route, block, session)
+        await insertExternalResources(route, block, locals)
 
         controller.enqueue(JSON.stringify(dto) + '\n')
       }

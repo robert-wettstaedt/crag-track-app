@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { AppBar, Popover, Tabs } from '@skeletonlabs/skeleton-svelte'
   import type { Coordinate } from 'ol/coordinate'
   import type { ChangeEventHandler } from 'svelte/elements'
@@ -27,7 +28,7 @@
 </script>
 
 <svelte:head>
-  <title>Edit geolocation of {data.block.name} - Crag Track</title>
+  <title>Edit geolocation of {data.block.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

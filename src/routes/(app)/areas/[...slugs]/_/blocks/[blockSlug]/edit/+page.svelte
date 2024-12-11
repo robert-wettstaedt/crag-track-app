@@ -1,6 +1,7 @@
 <script>
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import BlockFormFields from '$lib/components/BlockFormFields'
   import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
@@ -9,7 +10,7 @@
 </script>
 
 <svelte:head>
-  <title>Edit {data.name} - Crag Track</title>
+  <title>Edit {data.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>

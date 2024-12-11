@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, blocks, generateSlug, users } from '$lib/db/schema'
 import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
@@ -8,18 +8,17 @@ import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve the areaId from the parent function
   const { areaId } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
-    // If the user is not authenticated, throw a 401 error
-    error(401)
-  }
-
   // Query the database to find the area with the given areaId
-  const areaResult = await db.query.areas.findFirst({ where: eq(areas.id, areaId) })
+  const areaResult = await db((tx) => tx.query.areas.findFirst({ where: eq(areas.id, areaId) }))
 
   // If the area is not found, throw a 404 error
   if (areaResult == null) {
@@ -34,12 +33,11 @@ export const load = (async ({ locals, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user?.email == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
     }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -60,9 +58,11 @@ export const actions = {
     const { areaId, path } = convertAreaSlug(params)
 
     // Check if a block with the same slug already exists in the area
-    const existingBlocksResult = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, slug), eq(blocks.areaFk, areaId)),
-    })
+    const existingBlocksResult = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, slug), eq(blocks.areaFk, areaId)),
+      }),
+    )
 
     if (existingBlocksResult != null) {
       // If a block with the same slug exists, return a 400 error with a message
@@ -74,14 +74,14 @@ export const actions = {
 
     try {
       // Find the user in the database using their email
-      const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
+      const user = await db((tx) => tx.query.users.findFirst({ where: eq(users.authUserFk, locals.user!.id) }))
       if (user == null) {
         // If the user is not found, throw an error
         throw new Error('User not found')
       }
 
       // Insert the new block into the database
-      await db.insert(blocks).values({ ...values, createdBy: user.id, areaFk: areaId, slug })
+      await db((tx) => tx.insert(blocks).values({ ...values, createdBy: user.id, areaFk: areaId, slug }))
     } catch (exception) {
       // If insertion fails, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })

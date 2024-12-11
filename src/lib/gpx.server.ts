@@ -1,15 +1,15 @@
 import { getToposOfArea } from '$lib/blocks.server'
-import Route from '$lib/components/TopoViewer/components/Route'
 import Labels from '$lib/components/TopoViewer/components/Labels'
+import Route from '$lib/components/TopoViewer/components/Route'
 import * as schema from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { getNextcloud, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { type TopoRouteDTO } from '$lib/topo'
-import type { Session } from '@auth/sveltekit'
+import type { Session } from '@supabase/supabase-js'
 import { error } from '@sveltejs/kit'
 import { eq, inArray } from 'drizzle-orm'
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { encode as encodeHtml } from 'html-entities'
 import { minify, type Options } from 'html-minifier'
 import { DateTime } from 'luxon'
@@ -25,13 +25,9 @@ interface TopoFile {
   scale: number
 }
 
-export const getAreaGPX = async (
-  areaId: number,
-  db: BetterSQLite3Database<typeof schema>,
-  session?: Session | null,
-) => {
+export const getAreaGPX = async (areaId: number, db: PostgresJsDatabase<typeof schema>, session?: Session | null) => {
   if (session == null) {
-    error(401)
+    error(404)
   }
 
   const { area, blocks } = await getToposOfArea(areaId, db, session)
@@ -43,18 +39,15 @@ export const getAreaGPX = async (
   ]
 
   const grades = await db.query.grades.findMany()
-  let gradingScale: schema.UserSettings['gradingScale'] = 'FB'
 
-  if (session.user?.email != null) {
-    const user = await db.query.users.findFirst({
-      where: eq(schema.users.email, session.user.email),
-      with: {
-        userSettings: true,
-      },
-    })
+  const user = await db.query.users.findFirst({
+    where: eq(schema.users.authUserFk, session.user.id),
+    with: {
+      userSettings: true,
+    },
+  })
 
-    gradingScale = user?.userSettings?.gradingScale ?? gradingScale
-  }
+  const gradingScale = user?.userSettings?.gradingScale ?? 'FB'
 
   const enrichedBlocks = await loadBlockFiles(blocks, db, session)
 
@@ -70,8 +63,8 @@ export const getAreaGPX = async (
       <metadata>
         <name>${encodeHtml(area.name)}</name>
         <author>
-          <name>${encodeHtml(area.author.userName)}</name>
-          <email>${encodeHtml(area.author.email)}</email>
+          <name>${encodeHtml(area.author.username)}</name>
+          <email>${encodeHtml(area.author.username)}</email>
         </author>
         <copyright>
           <year>${encodeHtml(String(new Date().getFullYear()))}</year>
@@ -134,7 +127,7 @@ export const getAreaGPX = async (
 
 const loadBlockFiles = async (
   blocks: Awaited<ReturnType<typeof getToposOfArea>>['blocks'],
-  db: BetterSQLite3Database<typeof schema>,
+  db: PostgresJsDatabase<typeof schema>,
   session: Session,
 ) => {
   async function getTopoFile(stat: FileStat) {
@@ -304,7 +297,7 @@ const renderRouteDescription = (
     route.firstAscent == null
       ? null
       : `<p style="margin-top: 16px;">
-            ${(route.firstAscent.climber?.userName ?? route.firstAscent.climberName) == null ? '' : `${route.firstAscent.climber?.userName ?? route.firstAscent.climberName}&nbsp;`}
+            ${(route.firstAscent.climber?.username ?? route.firstAscent.climberName) == null ? '' : `${route.firstAscent.climber?.username ?? route.firstAscent.climberName}&nbsp;`}
 
             ${route.firstAscent.year ?? ''}
           </p>`,

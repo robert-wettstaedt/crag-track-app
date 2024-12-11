@@ -58,7 +58,6 @@
     gradeFk = route.gradeFk ?? null
     rating = route.rating ?? undefined
     description = route.description ?? null
-    description = route.description ?? null
 
     routeExternalResources = rest.routeExternalResources
     loading = false
@@ -70,7 +69,7 @@
   <input class="input" name="name" type="text" placeholder="Enter name..." value={name} onchange={onChangeName} />
 
   {#if loading}
-    <div class="input-group-shim">
+    <div class="btn">
       <i class="fa-solid fa-spinner fa-spin"></i>
     </div>
   {/if}

@@ -1,16 +1,20 @@
-import { db } from '$lib/db/db.server.js'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server.js'
 import * as schema from '$lib/db/schema'
 import { buildNestedAreaQuery } from '$lib/db/utils.js'
 import { error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 
-export const load = async ({ params }) => {
-  const block = await db.query.blocks.findFirst({
-    where: eq(schema.blocks.id, Number(params.id)),
-    with: {
-      area: buildNestedAreaQuery(),
-    },
-  })
+export const load = async ({ locals, params }) => {
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
+  const block = await db((tx) =>
+    tx.query.blocks.findFirst({
+      where: eq(schema.blocks.id, Number(params.id)),
+      with: {
+        area: buildNestedAreaQuery(),
+      },
+    }),
+  )
 
   const path = []
   let parent = block?.area

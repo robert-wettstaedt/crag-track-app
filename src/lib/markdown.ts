@@ -1,6 +1,6 @@
 import * as schema from '$lib/db/schema'
 import { eq } from 'drizzle-orm'
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import type { PhrasingContent, Root } from 'mdast'
 import { findAndReplace, type ReplaceFunction } from 'mdast-util-find-and-replace'
 import remarkHtml from 'remark-html'
@@ -12,7 +12,7 @@ type EncloseOptions = 'anchor' | 'strong'
 
 export const convertMarkdownToHtml = async (
   markdown: string,
-  db?: BetterSQLite3Database<typeof schema>,
+  db?: PostgresJsDatabase<typeof schema>,
   encloseReferences?: EncloseOptions,
 ): Promise<string> => {
   const enrichedMarkdown = await enrichMarkdown(markdown, db)
@@ -36,7 +36,7 @@ export const convertMarkdownToHtml = async (
 export const referenceRegex = '!(areas|blocks|routes):\\d+!'
 export const referenceRegexWithBase64 = '!(areas|blocks|routes):\\d+:[A-Za-z0-9+/=]+!'
 
-const enrichMarkdown = async (markdown: string, db?: BetterSQLite3Database<typeof schema>): Promise<string> => {
+const enrichMarkdown = async (markdown: string, db?: PostgresJsDatabase<typeof schema>): Promise<string> => {
   const matchesIterator = markdown.matchAll(new RegExp(referenceRegex, 'gi'))
   const matches = Array.from(matchesIterator ?? []).reverse()
 

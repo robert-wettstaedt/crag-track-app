@@ -1,6 +1,7 @@
 <script>
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AreaFormFields from '$lib/components/AreaFormFields'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
@@ -10,9 +11,9 @@
 
 <svelte:head>
   {#if data.parent}
-    <title>Create area in {data.parent.name} - Crag Track</title>
+    <title>Create area in {data.parent.name} - {PUBLIC_APPLICATION_NAME}</title>
   {:else}
-    <title>Create area - Crag Track</title>
+    <title>Create area - {PUBLIC_APPLICATION_NAME}</title>
   {/if}
 </svelte:head>
 

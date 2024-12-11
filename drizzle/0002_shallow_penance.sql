@@ -1,1 +1,0 @@
-ALTER TABLE `routes` ADD `rating` integer;

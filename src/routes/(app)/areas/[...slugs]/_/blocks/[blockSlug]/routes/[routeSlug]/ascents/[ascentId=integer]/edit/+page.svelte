@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AscentFormFields from '$lib/components/AscentFormFields'
   import RouteName from '$lib/components/RouteName'
   import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
@@ -25,7 +26,7 @@
     {data.ascent.route.rating == null ? '' : `${Array(data.ascent.route.rating).fill('★').join('')} `}
     {data.ascent.route.name}
     {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
-    - Crag Track
+    - {PUBLIC_APPLICATION_NAME}
   </title>
 </svelte:head>
 

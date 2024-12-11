@@ -3,8 +3,9 @@ import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { type BufferLike, type Headers, type ResponseDataDetailed } from 'webdav'
 
 export async function GET({ locals, request, params }) {
-  // Authenticate the user session
-  const session = await locals.auth()
+  if (!locals.user?.appPermissions?.includes('data.read')) {
+    return new Response(null, { status: 404 })
+  }
 
   // Extract relevant headers from the request
   const headers = Array.from(request.headers.entries()).reduce((headers, [key, value]) => {
@@ -16,7 +17,7 @@ export async function GET({ locals, request, params }) {
   }, {} as Headers)
 
   // Fetch file contents from Nextcloud with detailed response
-  const result = await getNextcloud(session)?.getFileContents(`${NEXTCLOUD_USER_NAME}/${params.resourcePath}`, {
+  const result = await getNextcloud(locals.session)?.getFileContents(`${NEXTCLOUD_USER_NAME}/${params.resourcePath}`, {
     details: true,
     headers,
     signal: request.signal,

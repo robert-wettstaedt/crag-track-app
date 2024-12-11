@@ -2,7 +2,7 @@ import type { db } from '$lib/db/db.server'
 import type { InferResultType, NestedArea, NestedBlock, NestedRoute } from '$lib/db/types'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { convertPathToPoints, type TopoDTO, type TopoRouteDTO } from '$lib/topo'
-import type { Session } from '@auth/sveltekit'
+import type { Session } from '@supabase/supabase-js'
 
 /**
  * The maximum depth for nesting areas.

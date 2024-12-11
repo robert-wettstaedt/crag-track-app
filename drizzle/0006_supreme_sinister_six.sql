@@ -1,1 +1,0 @@
-ALTER TABLE `areas` ADD `description` text;

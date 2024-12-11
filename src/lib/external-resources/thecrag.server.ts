@@ -1,4 +1,4 @@
-import { db, keyv } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient, keyv } from '$lib/db/db.server'
 import { generateSlug, routeExternalResourceTheCrag, type RouteExternalResourceTheCrag } from '$lib/db/schema'
 import * as cheerio from 'cheerio'
 import { eq } from 'drizzle-orm'
@@ -113,13 +113,16 @@ export default {
     }
   },
 
-  checkSession: async function (externalResourceId, userExternalResource) {
-    const externalResource =
+  checkSession: async function (externalResourceId, userExternalResource, locals) {
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
+    const externalResource = await db(async (tx) =>
       externalResourceId == null
         ? null
-        : await db.query.routeExternalResourceTheCrag.findFirst({
+        : tx.query.routeExternalResourceTheCrag.findFirst({
             where: eq(routeExternalResourceTheCrag.id, externalResourceId),
-          })
+          }),
+    )
 
     if (externalResource?.url == null || userExternalResource.cookieTheCrag == null) {
       return null
@@ -148,13 +151,16 @@ export default {
     throw new Error(`Failed theCrag session check: ${res.status} ${res.statusText}`)
   },
 
-  logAscent: async function (ascent, externalResourceId, userExternalResource, session) {
-    const externalResourceTheCrag =
+  logAscent: async function (ascent, externalResourceId, userExternalResource, session, locals) {
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
+    const externalResourceTheCrag = await db(async (tx) =>
       externalResourceId == null
         ? null
-        : await db.query.routeExternalResourceTheCrag.findFirst({
+        : tx.query.routeExternalResourceTheCrag.findFirst({
             where: eq(routeExternalResourceTheCrag.id, externalResourceId),
-          })
+          }),
+    )
 
     if (externalResourceTheCrag == null || userExternalResource.cookieTheCrag == null) {
       return

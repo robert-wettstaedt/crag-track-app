@@ -1,5 +1,5 @@
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, geolocations } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
 import { convertAreaSlug } from '$lib/helper.server'
@@ -8,24 +8,25 @@ import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
+  if (!locals.user?.appPermissions?.includes('data.edit')) {
+    error(404)
+  }
+
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve areaId and areaSlug from the parent function
   const { areaId, areaSlug } = await parent()
 
-  // Get the current session from locals
-  const session = await locals.auth()
-  if (session?.user == null) {
-    // If the user is not authenticated, throw a 401 error
-    error(401)
-  }
-
   // Query the database for blocks matching the given slug and areaId
-  const blocksResult = await db.query.blocks.findMany({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    with: {
-      area: buildNestedAreaQuery(),
-      geolocation: true,
-    },
-  })
+  const blocksResult = await db((tx) =>
+    tx.query.blocks.findMany({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        area: buildNestedAreaQuery(),
+        geolocation: true,
+      },
+    }),
+  )
   // Get the first block from the result
   const block = blocksResult.at(0)
 
@@ -40,13 +41,15 @@ export const load = (async ({ locals, params, parent }) => {
   }
 
   // Query the database for blocks with geolocation data
-  const result = await db.query.blocks.findMany({
-    where: and(isNotNull(blocks.geolocationFk)),
-    with: {
-      area: buildNestedAreaQuery(),
-      geolocation: true,
-    },
-  })
+  const result = await db((tx) =>
+    tx.query.blocks.findMany({
+      where: and(isNotNull(blocks.geolocationFk)),
+      with: {
+        area: buildNestedAreaQuery(),
+        geolocation: true,
+      },
+    }),
+  )
 
   // Return the block and the enriched geolocation blocks
   return {
@@ -57,15 +60,14 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   updateLocation: async ({ locals, params, request }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
-
-    // Get the current session from locals
-    const session = await locals.auth()
-    if (session?.user == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
-    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -102,9 +104,11 @@ export const actions = {
     }
 
     // Query the database for blocks matching the given slug and areaId
-    const blocksResult = await db.query.blocks.findMany({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    })
+    const blocksResult = await db((tx) =>
+      tx.query.blocks.findMany({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      }),
+    )
     // Get the first block from the result
     const block = blocksResult.at(0)
 
@@ -116,12 +120,14 @@ export const actions = {
     try {
       // If the block does not have a geolocation, insert a new geolocation record
       if (block.geolocationFk == null) {
-        const [geolocation] = await db.insert(geolocations).values({ lat, long, blockFk: block.id }).returning()
+        const [geolocation] = await db((tx) =>
+          tx.insert(geolocations).values({ lat, long, blockFk: block.id }).returning(),
+        )
         // Update the block with the new geolocation foreign key
-        await db.update(blocks).set({ geolocationFk: geolocation.id }).where(eq(blocks.id, block.id))
+        await db((tx) => tx.update(blocks).set({ geolocationFk: geolocation.id }).where(eq(blocks.id, block.id)))
       } else {
         // If the block already has a geolocation, update the existing geolocation record
-        await db.update(geolocations).set({ lat, long }).where(eq(geolocations.id, block.geolocationFk))
+        await db((tx) => tx.update(geolocations).set({ lat, long }).where(eq(geolocations.id, block.geolocationFk!)))
       }
     } catch (exception) {
       // Handle any exceptions that occur during the update
@@ -133,20 +139,21 @@ export const actions = {
   },
 
   removeGeolocation: async ({ locals, params }) => {
+    if (!locals.user?.appPermissions?.includes('data.edit')) {
+      error(404)
+    }
+
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
 
-    // Get the current session from locals
-    const session = await locals.auth()
-    if (session?.user == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
-    }
-
     // Query the database for blocks matching the given slug and areaId
-    const blocksResult = await db.query.blocks.findMany({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    })
+    const blocksResult = await db((tx) =>
+      tx.query.blocks.findMany({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      }),
+    )
     // Get the first block from the result
     const block = blocksResult.at(0)
 
@@ -158,11 +165,11 @@ export const actions = {
     try {
       // If the block has a geolocation, delete the geolocation record
       if (block.geolocationFk != null) {
-        await db.delete(geolocations).where(eq(geolocations.id, block.geolocationFk))
+        await db((tx) => tx.delete(geolocations).where(eq(geolocations.id, block.geolocationFk!)))
       }
 
       // Update the block to remove the geolocation foreign key
-      await db.update(blocks).set({ geolocationFk: null }).where(eq(blocks.id, block.id))
+      await db((tx) => tx.update(blocks).set({ geolocationFk: null }).where(eq(blocks.id, block.id)))
     } catch (error) {
       return fail(400, { error: convertException(error) })
     }

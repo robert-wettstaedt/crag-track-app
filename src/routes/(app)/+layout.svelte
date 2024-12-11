@@ -1,39 +1,45 @@
 <script lang="ts">
-  import { invalidateAll } from '$app/navigation'
+  import { invalidate, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
-  import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import Logo from '$lib/assets/logo.png'
   import Breadcrumb from '$lib/components/Breadcrumb'
   import NavTiles from '$lib/components/NavTiles'
-  import { SignIn, SignOut } from '@auth/sveltekit/components'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { AppBar, Nav, Popover, Switch } from '@skeletonlabs/skeleton-svelte'
+  import { onMount } from 'svelte'
   import '../../app.postcss'
 
   let { data, children } = $props()
+
+  onMount(() => {
+    const value = data.supabase.auth.onAuthStateChange((_, newSession) => {
+      if (newSession?.expires_at !== data.session?.expires_at) {
+        invalidate('supabase:auth')
+      }
+    })
+
+    return () => value.data.subscription.unsubscribe()
+  })
 </script>
 
 <svelte:head>
-  <title>Crag Track</title>
+  <title>{PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <div class="grid h-screen grid-rows-[auto_1fr_auto]">
   <AppBar>
     {#snippet lead()}
-      <a class="flex items-center gap-2" href="/">
-        <img src={Logo} alt="Crag Track" width={32} height={32} />
+      <a class="flex gap-2" href="/">
+        <img src={Logo} alt={PUBLIC_APPLICATION_NAME} width={32} height={32} />
 
-        <strong class="text-xl uppercase">Crag Track</strong>
+        <strong class="text-xl">{PUBLIC_APPLICATION_NAME}</strong>
       </a>
     {/snippet}
 
     {#snippet trail()}
       {#if $page.data.session?.user == null}
-        <SignIn>
-          {#snippet submitButton()}
-            <div class="buttonPrimary">Sign in</div>
-          {/snippet}
-        </SignIn>
+        <a href="/auth" class="btn btn-sm preset-filled-primary-500"> Get Started </a>
       {:else}
         <Popover
           arrow
@@ -47,7 +53,7 @@
 
           {#snippet content()}
             <div class="mb-4">
-              Hi, {data.user?.userName}
+              Hi, {data.user?.username}
             </div>
 
             <nav class="list-nav">
@@ -75,22 +81,19 @@
 
               <ul>
                 <li>
-                  <a class="flex hover:preset-filled-primary-100-900 p-2" href={`/users/${data.user?.userName}`}>
+                  <a class="flex hover:preset-filled-primary-100-900 p-2" href={`/users/${data.user?.username}`}>
                     Profile
                   </a>
                 </li>
 
-                {#if !PUBLIC_DEMO_MODE}
-                  <li>
-                    <SignOut
-                      class="flex [&>button]:flex [&>button]:p-2 [&>button]:w-full hover:[&>button]:preset-filled-primary-100-900"
-                    >
-                      {#snippet submitButton()}
-                        <span>Sign out</span>
-                      {/snippet}
-                    </SignOut>
-                  </li>
-                {/if}
+                <li>
+                  <button
+                    class="flex p-2 w-full hover:preset-filled-primary-100-900"
+                    onclick={() => data.supabase.auth.signOut()}
+                  >
+                    Sign out
+                  </button>
+                </li>
               </ul>
             </nav>
 
@@ -101,25 +104,27 @@
     {/snippet}
   </AppBar>
 
-  <div class="relative p-2 md:p-4 overflow-y-auto md:ms-[96px]">
+  <div class="relative p-2 md:p-4 overflow-y-auto {$page.data.session?.user == null ? '' : 'md:ms-[96px]'}">
     <Breadcrumb url={$page.url} />
 
     {@render children?.()}
   </div>
 
-  <Nav.Bar classes="md:hidden">
-    <NavTiles />
-  </Nav.Bar>
+  {#if data.authUser?.appPermissions?.includes('data.read')}
+    <Nav.Bar classes="md:hidden">
+      <NavTiles user={data.authUser} />
+    </Nav.Bar>
 
-  <Nav.Rail base="hidden md:block fixed top-[68px] h-screen">
-    {#snippet header()}
-      <Nav.Tile href="/" label="Home">
-        <i class="fa-solid fa-house"></i>
-      </Nav.Tile>
-    {/snippet}
+    <Nav.Rail base="hidden md:block fixed top-[68px] h-screen">
+      {#snippet header()}
+        <Nav.Tile href="/" label="Home">
+          <i class="fa-solid fa-house"></i>
+        </Nav.Tile>
+      {/snippet}
 
-    {#snippet tiles()}
-      <NavTiles />
-    {/snippet}
-  </Nav.Rail>
+      {#snippet tiles()}
+        <NavTiles user={data.authUser} />
+      {/snippet}
+    </Nav.Rail>
+  {/if}
 </div>

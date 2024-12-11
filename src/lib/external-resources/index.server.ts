@@ -1,9 +1,8 @@
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import * as schema from '$lib/db/schema'
 import { geolocations, routes, type Area, type Ascent, type Block, type Route, type UserSettings } from '$lib/db/schema'
 import type { NestedArea } from '$lib/db/types'
 import { buildNestedAreaQuery } from '$lib/db/utils'
-import type { Session } from '@auth/sveltekit'
 import { eq } from 'drizzle-orm'
 import handler27crags from './27crags.server'
 import handler8a from './8a.server'
@@ -19,40 +18,51 @@ export interface ExternalResourceHandler<ExternalResource, SessionReturnType> {
     userSettings: UserSettings | null | undefined,
   ) => Promise<ExternalResource | null>
   convertToRoute: (data: ExternalResource, grades: schema.Grade[]) => Route
-  checkSession: (externalResourceId: number | null, userSettings: UserSettings) => Promise<SessionReturnType | null>
+  checkSession: (
+    externalResourceId: number | null,
+    userSettings: UserSettings,
+    locals: App.Locals,
+  ) => Promise<SessionReturnType | null>
   logAscent: (
     ascent: Ascent,
     externalResourceId: number | null,
     userSettings: UserSettings,
     session: SessionReturnType,
+    locals: App.Locals,
   ) => Promise<void>
 }
 
-export const queryExternalResource = async (query: string, blockId: number, session: Session | null) => {
-  const block = await db.query.blocks.findFirst({
-    where: eq(schema.blocks.id, Number(blockId)),
-    with: {
-      area: buildNestedAreaQuery(),
-    },
-  })
+export const queryExternalResource = async (query: string, blockId: number, locals: App.Locals) => {
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
+  const block = await db((tx) =>
+    tx.query.blocks.findFirst({
+      where: eq(schema.blocks.id, Number(blockId)),
+      with: {
+        area: buildNestedAreaQuery(),
+      },
+    }),
+  )
 
   if (block == null) {
     throw new Error('Block not found')
   }
 
-  const user =
-    session?.user?.email == null
+  const user = await db(async (tx) =>
+    locals.user?.id == null
       ? null
-      : await db.query.users.findFirst({
-          where: eq(schema.users.email, session.user.email),
-        })
+      : tx.query.users.findFirst({
+          where: eq(schema.users.authUserFk, locals.user.id),
+        }),
+  )
 
-  const userSettings =
+  const userSettings = await db(async (tx) =>
     user == null
       ? null
-      : await db.query.userSettings.findFirst({
+      : tx.query.userSettings.findFirst({
           where: eq(schema.userSettings.userFk, user.id),
-        })
+        }),
+  )
 
   let sector: Area | null = null
   let crag: Area | null = null
@@ -81,13 +91,15 @@ export const queryExternalResource = async (query: string, blockId: number, sess
   return { data8a, data27crags, dataTheCrag }
 }
 
-export const insertExternalResources = async (route: Route, block: Block, session: Session | null) => {
+export const insertExternalResources = async (route: Route, block: Block, locals: App.Locals) => {
   if (route.name.length === 0) {
     return
   }
 
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   let routeName: string | undefined = route.name.replace(/\(.*\)/g, '').trim()
-  let externalResources = await queryExternalResource(routeName, block.id, session)
+  let externalResources = await queryExternalResource(routeName, block.id, locals)
 
   if (
     externalResources?.data8a == null &&
@@ -101,7 +113,7 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
       ?.trim()
 
     if (routeName != null) {
-      externalResources = await queryExternalResource(routeName, block.id, session)
+      externalResources = await queryExternalResource(routeName, block.id, locals)
     }
   }
 
@@ -113,13 +125,15 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
     return
   }
 
-  let resource = await db.query.routeExternalResources.findFirst({
-    where: eq(schema.routeExternalResources.routeFk, route.id),
-  })
+  let resource = await db((tx) =>
+    tx.query.routeExternalResources.findFirst({
+      where: eq(schema.routeExternalResources.routeFk, route.id),
+    }),
+  )
 
   if (resource == null) {
-    ;[resource] = await db.insert(schema.routeExternalResources).values({ routeFk: route.id }).returning()
-    await db.update(routes).set({ externalResourcesFk: resource.id }).where(eq(routes.id, route.id))
+    ;[resource] = await db((tx) => tx.insert(schema.routeExternalResources).values({ routeFk: route.id }).returning())
+    await db((tx) => tx.update(routes).set({ externalResourcesFk: resource!.id }).where(eq(routes.id, route.id)))
   }
 
   const resource8a = await (async () => {
@@ -127,19 +141,23 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
       return null
     }
 
-    let resource8a = await db.query.routeExternalResource8a.findFirst({
-      where: eq(schema.routeExternalResource8a.externalResourcesFk, resource.id),
-    })
+    let resource8a = await db((tx) =>
+      tx.query.routeExternalResource8a.findFirst({
+        where: eq(schema.routeExternalResource8a.externalResourcesFk, resource.id),
+      }),
+    )
 
     if (resource8a == null) {
-      ;[resource8a] = await db
-        .insert(schema.routeExternalResource8a)
-        .values({
-          ...externalResources.data8a,
-          id: undefined,
-          externalResourcesFk: resource.id,
-        })
-        .returning()
+      ;[resource8a] = await db((tx) =>
+        tx
+          .insert(schema.routeExternalResource8a)
+          .values({
+            ...externalResources.data8a,
+            id: undefined,
+            externalResourcesFk: resource.id,
+          })
+          .returning(),
+      )
     }
 
     return resource8a
@@ -150,19 +168,23 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
       return null
     }
 
-    let resource27crags = await db.query.routeExternalResource27crags.findFirst({
-      where: eq(schema.routeExternalResource27crags.externalResourcesFk, resource.id),
-    })
+    let resource27crags = await db((tx) =>
+      tx.query.routeExternalResource27crags.findFirst({
+        where: eq(schema.routeExternalResource27crags.externalResourcesFk, resource.id),
+      }),
+    )
 
     if (resource27crags == null) {
-      ;[resource27crags] = await db
-        .insert(schema.routeExternalResource27crags)
-        .values({
-          ...externalResources.data27crags,
-          id: undefined,
-          externalResourcesFk: resource.id,
-        })
-        .returning()
+      ;[resource27crags] = await db((tx) =>
+        tx
+          .insert(schema.routeExternalResource27crags)
+          .values({
+            ...externalResources.data27crags,
+            id: undefined,
+            externalResourcesFk: resource.id,
+          })
+          .returning(),
+      )
     }
 
     return resource27crags
@@ -173,83 +195,103 @@ export const insertExternalResources = async (route: Route, block: Block, sessio
       return null
     }
 
-    let resourceTheCrag = await db.query.routeExternalResourceTheCrag.findFirst({
-      where: eq(schema.routeExternalResourceTheCrag.externalResourcesFk, resource.id),
-    })
+    let resourceTheCrag = await db((tx) =>
+      tx.query.routeExternalResourceTheCrag.findFirst({
+        where: eq(schema.routeExternalResourceTheCrag.externalResourcesFk, resource.id),
+      }),
+    )
 
     if (resourceTheCrag == null) {
-      ;[resourceTheCrag] = await db
-        .insert(schema.routeExternalResourceTheCrag)
-        .values({
-          ...externalResources.dataTheCrag,
-          id: undefined,
-          externalResourcesFk: resource.id,
-        })
-        .returning()
+      ;[resourceTheCrag] = await db((tx) =>
+        tx
+          .insert(schema.routeExternalResourceTheCrag)
+          .values({
+            ...externalResources.dataTheCrag,
+            id: undefined,
+            externalResourcesFk: resource.id,
+          })
+          .returning(),
+      )
     }
 
     return resourceTheCrag
   })()
 
-  await db
-    .update(schema.routeExternalResources)
-    .set({
-      externalResource8aFk: resource8a?.id,
-      externalResource27cragsFk: resource27crags?.id,
-      externalResourceTheCragFk: resourceTheCrag?.id,
-    })
-    .where(eq(schema.routeExternalResources.id, resource.id))
+  await db((tx) =>
+    tx
+      .update(schema.routeExternalResources)
+      .set({
+        externalResource8aFk: resource8a?.id,
+        externalResource27cragsFk: resource27crags?.id,
+        externalResourceTheCragFk: resourceTheCrag?.id,
+      })
+      .where(eq(schema.routeExternalResources.id, resource.id)),
+  )
 
   if (
     externalResources.data27crags?.latitude != null &&
     externalResources.data27crags?.longitude != null &&
     block.geolocationFk == null
   ) {
-    const [geolocation] = await db
-      .insert(geolocations)
-      .values({
-        blockFk: block.id,
-        lat: externalResources.data27crags.latitude,
-        long: externalResources.data27crags.longitude,
-      })
-      .returning()
-    await db.update(schema.blocks).set({ geolocationFk: geolocation.id }).where(eq(schema.blocks.id, block.id))
+    const [geolocation] = await db((tx) =>
+      tx
+        .insert(geolocations)
+        .values({
+          blockFk: block.id,
+          lat: externalResources.data27crags!.latitude,
+          long: externalResources.data27crags!.longitude,
+        })
+        .returning(),
+    )
+    await db((tx) =>
+      tx.update(schema.blocks).set({ geolocationFk: geolocation.id }).where(eq(schema.blocks.id, block.id)),
+    )
   }
 }
 
-export const checkExternalSessions = async (route: Route, session: Session) => {
-  const routeExternalResource = await db.query.routeExternalResources.findFirst({
-    where: eq(schema.routeExternalResources.routeFk, route.id),
-  })
+export const checkExternalSessions = async (route: Route, locals: App.Locals) => {
+  const db = await createDrizzleSupabaseClient(locals.supabase)
 
-  const user =
-    session.user?.email == null
+  const routeExternalResource = await db((tx) =>
+    tx.query.routeExternalResources.findFirst({
+      where: eq(schema.routeExternalResources.routeFk, route.id),
+    }),
+  )
+
+  const user = await db(async (tx) =>
+    locals.user?.id == null
       ? null
-      : await db.query.users.findFirst({
-          where: eq(schema.users.email, session.user.email),
-        })
+      : tx.query.users.findFirst({
+          where: eq(schema.users.authUserFk, locals.user.id),
+        }),
+  )
 
-  const userSettings =
+  const userSettings = await db(async (tx) =>
     user == null
       ? null
-      : await db.query.userSettings.findFirst({
+      : tx.query.userSettings.findFirst({
           where: eq(schema.userSettings.userFk, user.id),
-        })
+        }),
+  )
 
   if (routeExternalResource == null || userSettings == null) {
     return null
   }
 
   const [session8a, session27crags, sessionTheCrag] = await Promise.all([
-    handler8a.checkSession(routeExternalResource.externalResource8aFk, userSettings),
-    handler27crags.checkSession(routeExternalResource.externalResource27cragsFk, userSettings),
-    handlerTheCrag.checkSession(routeExternalResource.externalResourceTheCragFk, userSettings),
+    handler8a.checkSession(routeExternalResource.externalResource8aFk, userSettings, locals),
+    handler27crags.checkSession(routeExternalResource.externalResource27cragsFk, userSettings, locals),
+    handlerTheCrag.checkSession(routeExternalResource.externalResourceTheCragFk, userSettings, locals),
   ])
 
   return { routeExternalResource, userSettings, session8a, session27crags, sessionTheCrag }
 }
 
-export const logExternalAscent = async (ascent: Ascent, opts: Awaited<ReturnType<typeof checkExternalSessions>>) => {
+export const logExternalAscent = async (
+  ascent: Ascent,
+  opts: Awaited<ReturnType<typeof checkExternalSessions>>,
+  locals: App.Locals,
+) => {
   if (opts == null || ascent.type === 'attempt') {
     return
   }
@@ -259,15 +301,27 @@ export const logExternalAscent = async (ascent: Ascent, opts: Awaited<ReturnType
   await Promise.all([
     session8a == null
       ? Promise.resolve()
-      : handler8a.logAscent(ascent, routeExternalResource.externalResource8aFk, userSettings, session8a),
+      : handler8a.logAscent(ascent, routeExternalResource.externalResource8aFk, userSettings, session8a, locals),
 
     session27crags == null
       ? Promise.resolve()
-      : handler27crags.logAscent(ascent, routeExternalResource.externalResource27cragsFk, userSettings, session27crags),
+      : handler27crags.logAscent(
+          ascent,
+          routeExternalResource.externalResource27cragsFk,
+          userSettings,
+          session27crags,
+          locals,
+        ),
 
     sessionTheCrag == null
       ? Promise.resolve()
-      : handlerTheCrag.logAscent(ascent, routeExternalResource.externalResourceTheCragFk, userSettings, sessionTheCrag),
+      : handlerTheCrag.logAscent(
+          ascent,
+          routeExternalResource.externalResourceTheCragFk,
+          userSettings,
+          sessionTheCrag,
+          locals,
+        ),
   ])
 }
 

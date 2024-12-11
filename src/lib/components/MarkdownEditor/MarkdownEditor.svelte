@@ -114,6 +114,18 @@
     valueHtml = await convertMarkdownToHtml(value)
   }
 
+  $effect(() => {
+    ;(async () => {
+      if (value != null && value !== view?.state.doc.toString()) {
+        view?.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: value },
+        })
+
+        valueHtml = await convertMarkdownToHtml(value)
+      }
+    })()
+  })
+
   onMount(async () => {
     view = new EditorView({
       doc: value ?? '',

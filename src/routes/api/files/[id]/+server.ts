@@ -1,15 +1,11 @@
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { files, users, type User } from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 
 export async function DELETE({ locals, params }) {
-  // Authenticate the user
-  const session = await locals.auth()
-  if (session?.user?.email == null) {
-    error(401, 'You are not logged in')
-  }
+  const db = await createDrizzleSupabaseClient(locals.supabase)
 
   // Convert the file ID from the request parameters to a number
   const fileId = Number(params.id)
@@ -20,38 +16,41 @@ export async function DELETE({ locals, params }) {
 
   // Attempt to find the file in the database
   try {
-    file = await db.query.files.findFirst({
-      where: eq(files.id, fileId),
-      with: {
-        area: true,
-        ascent: true,
-        block: true,
-        route: true,
-      },
-    })
+    file = await db((tx) =>
+      tx.query.files.findFirst({
+        where: eq(files.id, fileId),
+        with: {
+          area: true,
+          ascent: true,
+          block: true,
+          route: true,
+        },
+      }),
+    )
   } catch (exception) {
     error(404)
   }
 
   // Attempt to find the user in the database
   try {
-    user = await db.query.users.findFirst({
-      where: eq(users.email, session.user.email),
-    })
+    user = await db((tx) =>
+      tx.query.users.findFirst({
+        where: eq(users.authUserFk, locals.user!.id),
+      }),
+    )
   } catch (exception) {
-    error(401, 'User not found')
+    error(404)
   }
 
   // Determine the author ID from the file's related entities
   const authorId = file?.area?.createdBy ?? file?.ascent?.createdBy ?? file?.block?.createdBy ?? file?.route?.createdBy
 
-  // Check if the authenticated user is the author of the file
-  if (authorId !== user?.id) {
-    error(401, 'You do not have permissions to delete this file')
+  if (!locals.user?.appPermissions?.includes('data.edit') && authorId !== user?.id) {
+    error(404)
   }
 
   // Delete the file from the database
-  await db.delete(files).where(eq(files.id, fileId))
+  await db((tx) => tx.delete(files).where(eq(files.id, fileId)))
 
   // Return a successful response
   return new Response(null, { status: 200 })

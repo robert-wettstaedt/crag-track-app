@@ -100,7 +100,7 @@ export const validateRouteForm = async (data: FormData): Promise<RouteActionValu
   }
 
   if (rawRating != null && Number.isNaN(rating)) {
-    throw fail(400, { ...values, error: 'rating is not a valid number' })
+    values.rating = null
   }
 
   if (!Array.isArray(tags) || tags.some((tag) => typeof tag !== 'string')) {

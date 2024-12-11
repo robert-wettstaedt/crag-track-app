@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import FirstAscentFormFields from '$lib/components/FirstAscentFormFields'
   import RouteName from '$lib/components/RouteName'
   import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
@@ -19,7 +20,7 @@
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
     {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
-    - Crag Track
+    - {PUBLIC_APPLICATION_NAME}
   </title>
 </svelte:head>
 
@@ -40,7 +41,7 @@
 
 <form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" action="?/updateFirstAscent" method="POST" use:enhance>
   <FirstAscentFormFields
-    climberName={form?.climberName ?? data.route.firstAscent?.climber?.userName ?? data.route.firstAscent?.climberName}
+    climberName={form?.climberName ?? data.route.firstAscent?.climber?.username ?? data.route.firstAscent?.climberName}
     climbers={data.climbers}
     year={form?.year ?? data.route.firstAscent?.year}
   />

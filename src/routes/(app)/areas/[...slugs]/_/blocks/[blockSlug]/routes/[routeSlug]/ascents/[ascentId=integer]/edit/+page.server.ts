@@ -1,5 +1,6 @@
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, files, type File } from '$lib/db/schema'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
@@ -7,37 +8,31 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 
 export const load = (async ({ locals, params }) => {
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Query the database to find the ascent with the given id
-  const ascent = await db.query.ascents.findFirst({
-    where: eq(ascents.id, Number(params.ascentId)),
-    with: {
-      author: true,
-      files: true,
-      route: {
-        with: {
-          ascents: true,
+  const ascent = await db((tx) =>
+    tx.query.ascents.findFirst({
+      where: eq(ascents.id, Number(params.ascentId)),
+      with: {
+        author: true,
+        files: true,
+        route: {
+          with: {
+            ascents: true,
+          },
         },
       },
-    },
-  })
+    }),
+  )
 
-  // Authenticate the user
-  const session = await locals.auth()
-  if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
-    error(401)
-  }
-
-  // If no ascent is found, throw a 404 Not Found error
-  if (ascent == null) {
+  if (
+    ascent == null ||
+    (locals.user?.id !== ascent.author.authUserFk && !locals.user?.appPermissions?.includes('data.edit'))
+  ) {
     error(404)
-  }
-
-  // If the user is not the author of the ascent, throw a 401 Unauthorized error
-  if (session.user.email !== ascent.author.email) {
-    error(401)
   }
 
   // Return the ascent and route data
@@ -48,6 +43,8 @@ export const load = (async ({ locals, params }) => {
 
 export const actions = {
   updateAscent: async ({ locals, params, request }) => {
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Get form data from the request
     const data = await request.formData()
     let values: AscentActionValues
@@ -59,22 +56,21 @@ export const actions = {
       return exception as AscentActionFailure
     }
 
-    const ascent = await db.query.ascents.findFirst({
-      where: eq(ascents.id, Number(params.ascentId)),
-      with: {
-        author: true,
-        route: true,
-      },
-    })
+    const ascent = await db((tx) =>
+      tx.query.ascents.findFirst({
+        where: eq(ascents.id, Number(params.ascentId)),
+        with: {
+          author: true,
+          route: true,
+        },
+      }),
+    )
 
-    if (ascent == null) {
+    if (
+      ascent == null ||
+      (locals.user?.id !== ascent.author.authUserFk && !locals.user?.appPermissions?.includes('data.edit'))
+    ) {
       return fail(404, { ...values, error: `Ascent not found ${params.ascentId}` })
-    }
-
-    // Authenticate the user
-    const session = await locals.auth()
-    if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
-      error(401)
     }
 
     // Check if there are any file paths provided
@@ -87,7 +83,9 @@ export const actions = {
             .filter((filePath) => filePath.trim().length > 0)
             .map(async (filePath) => {
               hasFiles = true
-              const stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
+              const stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as
+                | FileStat
+                | undefined
 
               if (stat == null) {
                 throw `Unable to read file: "${filePath}"`
@@ -105,10 +103,12 @@ export const actions = {
 
     try {
       // Update the ascent in the database
-      await db
-        .update(ascents)
-        .set({ ...values, routeFk: ascent.route.id })
-        .where(eq(ascents.id, ascent.id))
+      await db((tx) =>
+        tx
+          .update(ascents)
+          .set({ ...values, routeFk: ascent.route.id })
+          .where(eq(ascents.id, ascent.id)),
+      )
     } catch (exception) {
       return fail(400, { ...values, error: convertException(exception) })
     }
@@ -118,16 +118,18 @@ export const actions = {
       try {
         const fileType: File['type'] = values.type === 'flash' ? 'send' : values.type
 
-        await db.delete(files).where(eq(files.ascentFk, ascent.id))
+        await db((tx) => tx.delete(files).where(eq(files.ascentFk, ascent.id)))
 
-        await db.insert(files).values(
-          values
-            .filePaths!.filter((filePath) => filePath.trim().length > 0)
-            .map((filePath) => ({
-              ascentFk: ascent.id,
-              path: filePath,
-              type: fileType,
-            })),
+        await db((tx) =>
+          tx.insert(files).values(
+            values
+              .filePaths!.filter((filePath) => filePath.trim().length > 0)
+              .map((filePath) => ({
+                ascentFk: ascent.id,
+                path: filePath,
+                type: fileType,
+              })),
+          ),
         )
       } catch (exception) {
         return fail(400, { ...values, error: convertException(exception) })
@@ -140,26 +142,27 @@ export const actions = {
   },
 
   removeAscent: async ({ locals, params }) => {
-    const ascent = await db.query.ascents.findFirst({
-      where: eq(ascents.id, Number(params.ascentId)),
-      with: {
-        author: true,
-      },
-    })
+    const db = await createDrizzleSupabaseClient(locals.supabase)
 
-    if (ascent == null) {
+    const ascent = await db((tx) =>
+      tx.query.ascents.findFirst({
+        where: eq(ascents.id, Number(params.ascentId)),
+        with: {
+          author: true,
+        },
+      }),
+    )
+
+    if (
+      ascent == null ||
+      (locals.user?.id !== ascent.author.authUserFk && !locals.user?.appPermissions?.includes('data.edit'))
+    ) {
       return fail(404, { error: `Ascent not found ${params.ascentId}` })
     }
 
-    // Authenticate the user
-    const session = await locals.auth()
-    if (session?.user?.email == null || session.user.email !== ascent?.author.email) {
-      error(401)
-    }
-
     try {
-      await db.delete(ascents).where(eq(ascents.id, ascent.id))
-      await db.delete(files).where(eq(files.ascentFk, ascent.id))
+      await db((tx) => tx.delete(ascents).where(eq(ascents.id, ascent.id)))
+      await db((tx) => tx.delete(files).where(eq(files.ascentFk, ascent.id)))
     } catch (error) {
       return fail(400, { error: convertException(error) })
     }

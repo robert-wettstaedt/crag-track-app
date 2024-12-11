@@ -1,7 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
-  import { PUBLIC_DEMO_MODE } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import FileBrowser from '$lib/components/FileBrowser'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
@@ -12,7 +12,7 @@
 </script>
 
 <svelte:head>
-  <title>Edit topos of {data.area.name} - Crag Track</title>
+  <title>Edit topos of {data.area.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>
@@ -25,14 +25,6 @@
 {#if form?.error}
   <aside class="card preset-tonal-warning mt-8 p-2 md:p-4">
     <p>{form.error}</p>
-  </aside>
-{/if}
-
-{#if PUBLIC_DEMO_MODE}
-  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 flex items-center gap-2">
-    <i class="fa-solid fa-triangle-exclamation"></i>
-
-    <p>File storage is disabled in demo mode</p>
   </aside>
 {/if}
 

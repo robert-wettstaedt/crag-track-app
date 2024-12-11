@@ -1,5 +1,6 @@
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { convertException } from '$lib'
-import { db } from '$lib/db/db.server'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, users, type Ascent, type File } from '$lib/db/schema'
 import { checkExternalSessions, logExternalAscent } from '$lib/external-resources/index.server'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
@@ -9,31 +10,27 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 
 export const load = (async ({ locals, params, parent }) => {
+  const db = await createDrizzleSupabaseClient(locals.supabase)
+
   // Retrieve the areaId from the parent function
   const { areaId, user } = await parent()
 
-  // Authenticate the user session
-  const session = await locals.auth()
-  if (session?.user == null) {
-    // If the user is not authenticated, throw a 401 error
-    error(401)
-  }
-
   // Query the database to find the block with the given slug and areaId
-  const block = await db.query.blocks.findFirst({
-    where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    with: {
-      routes: {
-        where: getRouteDbFilter(params.routeSlug),
-        with: {
-          ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+  const block = await db((tx) =>
+    tx.query.blocks.findFirst({
+      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      with: {
+        routes: {
+          where: getRouteDbFilter(params.routeSlug),
+          with: {
+            ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+          },
         },
       },
-    },
-  })
+    }),
+  )
 
   // Get the first route from the block's routes
   const route = block?.routes?.at(0)
@@ -56,12 +53,12 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
+    const db = await createDrizzleSupabaseClient(locals.supabase)
+
     // Convert area slug to get areaId
     const { areaId } = convertAreaSlug(params)
 
-    // Authenticate the user session
-    const session = await locals.auth()
-    if (session?.user?.email == null) {
+    if (locals.user?.email == null) {
       // If the user is not authenticated, throw a 401 error
       error(401)
     }
@@ -79,14 +76,16 @@ export const actions = {
     }
 
     // Query the database to find the block with the given slug and areaId
-    const block = await db.query.blocks.findFirst({
-      where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      with: {
-        routes: {
-          where: getRouteDbFilter(params.routeSlug),
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+        with: {
+          routes: {
+            where: getRouteDbFilter(params.routeSlug),
+          },
         },
-      },
-    })
+      }),
+    )
 
     // Get the first route from the block's routes
     const route = block?.routes?.at(0)
@@ -113,7 +112,9 @@ export const actions = {
 
               try {
                 // Check the file status in Nextcloud
-                const stat = (await getNextcloud(session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
+                const stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as
+                  | FileStat
+                  | undefined
 
                 if (stat == null) {
                   throw `Unable to read file: "${filePath}"`
@@ -135,7 +136,7 @@ export const actions = {
 
     let externalSessions: Awaited<ReturnType<typeof checkExternalSessions>>
     try {
-      externalSessions = await checkExternalSessions(route, session)
+      externalSessions = await checkExternalSessions(route, locals)
     } catch (error) {
       return fail(400, { ...values, error: convertException(error) })
     }
@@ -143,16 +144,18 @@ export const actions = {
     let ascent: Ascent
     try {
       // Query the database to find the user by email
-      const user = await db.query.users.findFirst({ where: eq(users.email, session.user.email) })
+      const user = await db((tx) => tx.query.users.findFirst({ where: eq(users.authUserFk, locals.user!.id) }))
       if (user == null) {
         throw new Error('User not found')
       }
 
       // Insert the ascent into the database
-      const results = await db
-        .insert(ascents)
-        .values({ ...values, routeFk: route.id, createdBy: user.id })
-        .returning()
+      const results = await db((tx) =>
+        tx
+          .insert(ascents)
+          .values({ ...values, routeFk: route.id, createdBy: user.id })
+          .returning(),
+      )
       ascent = results[0]
     } catch (exception) {
       // Return a 400 failure if ascent insertion fails
@@ -165,14 +168,16 @@ export const actions = {
         const fileType: File['type'] = values.type === 'flash' ? 'send' : values.type
 
         // Insert the files into the database
-        await db.insert(files).values(
-          values
-            .filePaths!.filter((filePath) => filePath.trim().length > 0)
-            .map((filePath) => ({
-              ascentFk: ascent.id,
-              path: filePath,
-              type: fileType,
-            })),
+        await db((tx) =>
+          tx.insert(files).values(
+            values
+              .filePaths!.filter((filePath) => filePath.trim().length > 0)
+              .map((filePath) => ({
+                ascentFk: ascent.id,
+                path: filePath,
+                type: fileType,
+              })),
+          ),
         )
       } catch (exception) {
         // Return a 400 failure if file insertion fails
@@ -181,7 +186,7 @@ export const actions = {
     }
 
     try {
-      await logExternalAscent(ascent, externalSessions)
+      await logExternalAscent(ascent, externalSessions, locals)
     } catch (error) {
       return fail(400, {
         ...values,

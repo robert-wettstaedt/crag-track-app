@@ -1,6 +1,13 @@
-<script>
+<script lang="ts">
   import { page } from '$app/stores'
   import { Nav } from '@skeletonlabs/skeleton-svelte'
+  import type { UserWithPermissions } from '../../../app'
+
+  interface Props {
+    user: UserWithPermissions | null | undefined
+  }
+
+  let { user }: Props = $props()
 </script>
 
 <Nav.Tile href="/areas" label="Areas" selected={$page.url.pathname.startsWith('/areas')}>
@@ -19,6 +26,8 @@
   <i class="fa-solid fa-search"></i>
 </Nav.Tile>
 
-<Nav.Tile href="/tags" label="Tags" selected={$page.url.pathname.startsWith('/tags')}>
-  <i class="fa-solid fa-tags"></i>
-</Nav.Tile>
+{#if user?.appPermissions?.includes('data.edit')}
+  <Nav.Tile href="/tags" label="Tags" selected={$page.url.pathname.startsWith('/tags')}>
+    <i class="fa-solid fa-tags"></i>
+  </Nav.Tile>
+{/if}
