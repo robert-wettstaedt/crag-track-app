@@ -1,6 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
-  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME, PUBLIC_DEMO_MODE } from '$env/static/public'
 
   let { form } = $props()
 </script>
@@ -25,12 +25,26 @@
     <form method="POST" class="space-y-4" use:enhance>
       <label class="label">
         <span>Email</span>
-        <input name="email" type="email" placeholder="you@example.com" class="input" required value={form?.email} />
+        <input
+          class="input"
+          name="email"
+          placeholder="you@example.com"
+          required
+          type="email"
+          value={PUBLIC_DEMO_MODE ? 'demo@demo.com' : form?.email}
+        />
       </label>
 
       <label class="label">
         <span>Password</span>
-        <input name="password" type="password" placeholder="Enter your password" class="input" required />
+        <input
+          class="input"
+          name="password"
+          placeholder="Enter your password"
+          required
+          type="password"
+          value={PUBLIC_DEMO_MODE ? 'demo' : undefined}
+        />
       </label>
 
       <div class="flex justify-between items-center mt-8">

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { invalidate, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
-  import { PUBLIC_APPLICATION_NAME, PUBLIC_DEMO_MODE } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import Logo from '$lib/assets/logo.png'
   import Breadcrumb from '$lib/components/Breadcrumb'
   import NavTiles from '$lib/components/NavTiles'
@@ -86,16 +86,14 @@
                   </a>
                 </li>
 
-                {#if !PUBLIC_DEMO_MODE}
-                  <li>
-                    <button
-                      class="flex p-2 w-full hover:preset-filled-primary-100-900"
-                      onclick={() => data.supabase.auth.signOut()}
-                    >
-                      Sign out
-                    </button>
-                  </li>
-                {/if}
+                <li>
+                  <button
+                    class="flex p-2 w-full hover:preset-filled-primary-100-900"
+                    onclick={() => data.supabase.auth.signOut()}
+                  >
+                    Sign out
+                  </button>
+                </li>
               </ul>
             </nav>
 

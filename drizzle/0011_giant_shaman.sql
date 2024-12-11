@@ -1,1 +1,0 @@
-CREATE POLICY "data.read can create files" ON "files" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((SELECT authorize('data.read')));

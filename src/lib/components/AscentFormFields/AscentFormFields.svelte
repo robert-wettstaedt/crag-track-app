@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { PUBLIC_DEMO_MODE } from '$env/static/public'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import FileBrowser from '$lib/components/FileBrowser'
   import MarkdownEditor from '$lib/components/MarkdownEditor'
@@ -74,14 +73,6 @@
     value={DateTime.fromSQL(dateTime).toISODate()}
   />
 </label>
-
-{#if PUBLIC_DEMO_MODE}
-  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 flex items-center gap-2">
-    <i class="fa-solid fa-triangle-exclamation"></i>
-
-    <p>File storage is disabled in demo mode</p>
-  </aside>
-{/if}
 
 {#each filePaths as filePath, index}
   <div class="mt-4">

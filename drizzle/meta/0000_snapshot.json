@@ -1,6 +1,6 @@
 {
-  "id": "6ad4a6c0-7dda-4968-86db-43f3dfc9e8d2",
-  "prevId": "fd07abee-2afb-4d08-ba51-629e95f37021",
+  "id": "a32239a7-600a-4517-afa4-d4a038088159",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -186,7 +186,16 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM public.users u WHERE u.id = created_by AND u.auth_user_fk = (SELECT auth.uid()))"
+          "using": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.users u\n            WHERE\n              u.id = created_by\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        "
+        },
+        "data.read can delete their own ascents": {
+          "name": "data.read can delete their own ascents",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.users u\n            WHERE\n              u.id = created_by\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        "
         },
         "data.edit can fully access ascents": {
           "name": "data.edit can fully access ascents",
@@ -330,6 +339,15 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
+        "data.read can create files": {
+          "name": "data.read can create files",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(SELECT authorize('data.read'))"
+        },
         "data.read can read files": {
           "name": "data.read can read files",
           "as": "PERMISSIVE",
@@ -338,6 +356,24 @@
             "authenticated"
           ],
           "using": "(SELECT authorize('data.read'))"
+        },
+        "data.read can update files belonging to their own ascents": {
+          "name": "data.read can update files belonging to their own ascents",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.ascents a\n              JOIN public.users u ON a.created_by = u.id\n            WHERE\n              a.id = ascent_fk\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        "
+        },
+        "data.read can delete files belonging to their own ascents": {
+          "name": "data.read can delete files belonging to their own ascents",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.ascents a\n              JOIN public.users u ON a.created_by = u.id\n            WHERE\n              a.id = ascent_fk\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        "
         },
         "data.edit can fully access files": {
           "name": "data.edit can fully access files",
@@ -506,7 +542,18 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
+      "policies": {
+        "Authenticated users can fully access grades": {
+          "name": "Authenticated users can fully access grades",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        }
+      },
       "checkConstraints": {},
       "isRLSEnabled": true
     },
