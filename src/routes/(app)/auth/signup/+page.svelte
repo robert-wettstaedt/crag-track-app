@@ -21,7 +21,7 @@
       <header class="text-center mb-8">
         <h1 class="h1 mb-2">Success</h1>
         <p class="opacity-75">
-          We have sent a confirmation to your email address {form.email}. Please verify your email before signin in.
+          We have sent a confirmation to your email address {form.email}. Please verify your email before signing in.
         </p>
       </header>
     {:else}
