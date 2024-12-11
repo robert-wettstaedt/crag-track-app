@@ -3,10 +3,6 @@ import { users, userSettings } from '$lib/db/schema'
 import { eq } from 'drizzle-orm'
 
 export async function POST({ locals, url }) {
-  if (!locals.user?.appPermissions?.includes('data.edit')) {
-    return new Response(null, { status: 404 })
-  }
-
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
   const user = await db((tx) =>

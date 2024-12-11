@@ -53,6 +53,7 @@ const getPolicyConfig = (policyFor: PgPolicyConfig['for'], check: SQL): PgPolicy
       break
 
     case 'all':
+    case 'update':
       config.using = check
       config.withCheck = check
       break

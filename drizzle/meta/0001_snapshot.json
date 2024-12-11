@@ -1,6 +1,6 @@
 {
-  "id": "a32239a7-600a-4517-afa4-d4a038088159",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "f09a6845-6e73-41d8-afb6-c9f53c9aed86",
+  "prevId": "a32239a7-600a-4517-afa4-d4a038088159",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -186,7 +186,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.users u\n            WHERE\n              u.id = created_by\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        "
+          "using": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.users u\n            WHERE\n              u.id = created_by\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        ",
+          "withCheck": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.users u\n            WHERE\n              u.id = created_by\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        "
         },
         "data.read can delete their own ascents": {
           "name": "data.read can delete their own ascents",
@@ -364,7 +365,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.ascents a\n              JOIN public.users u ON a.created_by = u.id\n            WHERE\n              a.id = ascent_fk\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        "
+          "using": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.ascents a\n              JOIN public.users u ON a.created_by = u.id\n            WHERE\n              a.id = ascent_fk\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        ",
+          "withCheck": "\n          EXISTS (\n            SELECT\n              1\n            FROM\n              public.ascents a\n              JOIN public.users u ON a.created_by = u.id\n            WHERE\n              a.id = ascent_fk\n              AND u.auth_user_fk = (SELECT auth.uid())\n          )\n        "
         },
         "data.read can delete files belonging to their own ascents": {
           "name": "data.read can delete files belonging to their own ascents",
@@ -1461,7 +1463,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "(SELECT auth.uid()) = auth_user_fk"
+          "using": "(SELECT auth.uid()) = auth_user_fk",
+          "withCheck": "(SELECT auth.uid()) = auth_user_fk"
         }
       },
       "checkConstraints": {},
