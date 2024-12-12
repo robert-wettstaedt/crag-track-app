@@ -75,8 +75,8 @@
 </script>
 
 {#if error == null}
-  <div class="card preset-filled-surface-100-900 p-2 md:p-4">
-    <ol class="flex items-center gap-4">
+  <div class="card preset-filled-surface-100-900 py-2 md:py-4">
+    <ol class="flex items-center gap-4 px-2 md:px-4">
       <li>
         <button onclick={navigateTo.bind(null, [])}>
           <i class="fa-solid fa-home"></i> All files
@@ -98,7 +98,7 @@
       {/each}
     </ol>
 
-    <ul class="mt-8">
+    <ul class="mt-8 px-2 md:px-4 overflow-x-auto overflow-x-hidden max-h-[300px] md:max-h-[500px]">
       {#if loading}
         {#each { length: 6 } as _}
           <li class="flex items-center gap-4 px-4 py-2 hover:preset-filled-primary-100-900 cursor-pointer">
@@ -135,7 +135,7 @@
                 <FilePreview {file} />
               </span>
 
-              <span class="flex-auto">{file.basename}</span>
+              <span class="flex-auto overflow-hidden text-ellipsis">{file.basename}</span>
             </li>
           {/each}
         {/if}
