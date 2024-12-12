@@ -2,6 +2,7 @@
   import type { Grade, UserSettings } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import { DateTime } from 'luxon'
+  import AscentTypeLabel from '../AscentTypeLabel'
   import RouteName from '../RouteName'
 
   interface Props {
@@ -22,6 +23,7 @@
         <tr>
           <th>Climber</th>
           <th>Date time</th>
+          <th>Type</th>
           <th>Route</th>
         </tr>
       </thead>
@@ -35,6 +37,10 @@
 
             <td>
               {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
+            </td>
+
+            <td>
+              <AscentTypeLabel includeText type={ascent.type} />
             </td>
 
             <td>
