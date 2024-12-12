@@ -22,7 +22,7 @@
     <ul class="overflow-auto">
       {#each items as item (item.id)}
         <li
-          class="hover:preset-tonal-primary flex flex-wrap justify-between whitespace-nowrap border-b-[1px] border-surface-800 rounded"
+          class="hover:preset-tonal-primary flex flex-wrap justify-between whitespace-nowrap border-b-[1px] last:border-none border-surface-800 rounded"
         >
           <a
             class="{leftClasses} px-2 md:px-4 py-3 grow overflow-hidden text-ellipsis hover:text-white w-full md:w-auto"

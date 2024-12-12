@@ -2,9 +2,10 @@
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
-  import { AppBar, Pagination } from '@skeletonlabs/skeleton-svelte'
+  import { Pagination } from '@skeletonlabs/skeleton-svelte'
 
   let { data } = $props()
 </script>

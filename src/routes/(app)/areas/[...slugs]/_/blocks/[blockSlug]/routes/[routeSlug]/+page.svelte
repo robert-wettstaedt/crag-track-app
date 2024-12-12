@@ -12,9 +12,10 @@
   import RouteGrade from '$lib/components/RouteGrade'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { Accordion, AppBar, ProgressRing } from '@skeletonlabs/skeleton-svelte'
+  import { Accordion, ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
   import { run } from 'svelte/legacy'
+  import AppBar from '$lib/components/AppBar'
 
   let { data } = $props()
   let basePath = $derived(
@@ -45,7 +46,12 @@
 
 <AppBar>
   {#snippet lead()}
-    <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={data.route} />
+    <RouteName
+      classes="flex-wrap"
+      grades={data.grades}
+      gradingScale={data.user?.userSettings?.gradingScale}
+      route={data.route}
+    />
   {/snippet}
 
   {#snippet headline()}
@@ -128,7 +134,7 @@
     </dl>
   {/snippet}
 
-  {#snippet trail()}
+  {#snippet actions()}
     {#if data.route.externalResources?.externalResource8a?.url != null}
       <a
         class="btn btn-sm preset-outlined-primary-500"
@@ -136,6 +142,8 @@
         target="_blank"
       >
         <img src={Logo8a} alt="8a" width={16} height={16} />
+
+        <span class="md:hidden"> Show on 8a.nu </span>
       </a>
     {/if}
 
@@ -146,6 +154,8 @@
         target="_blank"
       >
         <img src={Logo27crags} alt="27crags" width={16} height={16} />
+
+        <span class="md:hidden"> Show on 27crags </span>
       </a>
     {/if}
 
@@ -156,6 +166,8 @@
         target="_blank"
       >
         <img src={LogoTheCrag} alt="The Crag" width={16} height={16} />
+
+        <span class="md:hidden"> Show on theCrag </span>
       </a>
     {/if}
 

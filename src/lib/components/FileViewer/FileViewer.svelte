@@ -91,7 +91,7 @@
 </a>
 
 {#if $page.url.searchParams.get('file') === stat.basename}
-  <div class="fixed top-0 left-0 right-0 bottom-0 z-[5000] p-16 bg-black/90">
+  <div class="fixed top-0 left-0 right-0 bottom-0 z-[5000] p-4 md:p-16 bg-black/90">
     {#if mediaHasError}
       <aside class="alert variant-filled-error">
         <div class="alert-message">

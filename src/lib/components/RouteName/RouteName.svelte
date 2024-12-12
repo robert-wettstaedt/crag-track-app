@@ -8,18 +8,19 @@
   type RouteWithAscents = InferResultType<'routes', { ascents: true }>
 
   interface Props {
+    classes?: string
     route: (Omit<RouteWithAscents, 'ascents'> & Partial<Pick<RouteWithAscents, 'ascents'>>) | undefined
     grades: Grade[]
     gradingScale: UserSettings['gradingScale'] | undefined
   }
 
-  let { route, grades, gradingScale }: Props = $props()
+  let { classes, route, grades, gradingScale }: Props = $props()
 
   const lastAscent = route?.ascents?.toSorted((a, b) => a.dateTime.localeCompare(b.dateTime)).at(-1)
 </script>
 
 {#if route != null}
-  <div class="flex gap-x-2 items-center">
+  <div class="flex gap-x-2 items-center {classes}">
     {#if lastAscent != null}
       <AscentTypeLabel includeText={false} type={lastAscent.type} />
     {/if}

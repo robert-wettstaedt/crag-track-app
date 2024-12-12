@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import type { File } from '$lib/db/schema'
-  import { AppBar } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
   let { data } = $props()
@@ -58,7 +58,7 @@
     </dl>
   {/snippet}
 
-  {#snippet trail()}
+  {#snippet actions()}
     {#if data.authUser?.appPermissions?.includes('data.edit')}
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen"></i>Edit block

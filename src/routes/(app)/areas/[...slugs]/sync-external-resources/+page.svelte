@@ -2,10 +2,11 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { convertException } from '$lib'
+  import AppBar from '$lib/components/AppBar'
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
   import RouteName from '$lib/components/RouteName'
   import type { InferResultType } from '$lib/db/types'
-  import { AppBar, ProgressRing } from '@skeletonlabs/skeleton-svelte'
+  import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
 
   let { data } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}`)
@@ -74,13 +75,13 @@
   </aside>
 {/if}
 
-<div class="mt-8 w-full text-token card mt-8 p-2 md:p-4 preset-filled-surface-100-900 space-y-4">
+<div class="mt-8 w-full text-token card mt-8 p-2 md:p-4 preset-filled-surface-100-900 space-y-4 overflow-auto">
   {#each data.blocks as block}
     <p class="font-bold">{block.name}</p>
 
     <ul>
       {#each block.routes as route}
-        <li class="flex items-center justify-between p-1 hover:bg-surface-400">
+        <li class="flex items-center justify-between p-1 hover:bg-surface-400 whitespace-nowrap">
           <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
 
           {#if loading && values?.find((value) => value.routeFk === route.id) == null}

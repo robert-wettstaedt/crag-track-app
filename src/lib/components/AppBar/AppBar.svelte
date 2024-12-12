@@ -1,0 +1,66 @@
+<script lang="ts">
+  import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
+
+  type OrigProps = Parameters<typeof AppBar>[1]
+  type Props = Omit<OrigProps, 'trail'> & { actions?: OrigProps['trail'] }
+
+  const { actions, ...props }: Props = $props()
+</script>
+
+<AppBar {...props} leadClasses="flex-wrap" toolbarClasses="items-center">
+  {#snippet trail()}
+    {#if actions != null}
+      <div class="md:hidden">
+        <Popover
+          positioning={{ placement: 'bottom-end' }}
+          triggerBase="btn preset-outlined-primary-500"
+          contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px] shadow-lg"
+          arrow
+          arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+        >
+          {#snippet trigger()}
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+          {/snippet}
+
+          {#snippet content()}
+            <article class="action-list flex flex-wrap">{@render actions()}</article>
+          {/snippet}
+        </Popover>
+      </div>
+
+      <div class="hidden md:flex space-x-4 rtl:space-x-reverse">
+        {@render actions()}
+      </div>
+    {/if}
+  {/snippet}
+</AppBar>
+
+<style>
+  :global(.action-list .btn),
+  :global(.action-list > *) {
+    background: none;
+    border-radius: 0;
+    box-shadow: none;
+    height: auto;
+    width: 100%;
+    justify-content: start;
+  }
+
+  :global(.action-list > * .btn) {
+    padding: 0;
+  }
+
+  :global(.action-list > *) {
+    border-bottom: 1px solid;
+    display: flex;
+    padding: 0.5rem;
+
+    &:hover {
+      background: rgb(var(--color-primary-500) / var(--tw-bg-opacity, 1));
+    }
+
+    &:last-child {
+      border: none;
+    }
+  }
+</style>

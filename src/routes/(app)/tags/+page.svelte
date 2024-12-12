@@ -1,7 +1,8 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
+  import AppBar from '$lib/components/AppBar'
+  import { Popover } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
 </script>

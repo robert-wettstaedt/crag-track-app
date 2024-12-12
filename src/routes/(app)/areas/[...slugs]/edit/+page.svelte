@@ -2,8 +2,9 @@
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import AppBar from '$lib/components/AppBar'
   import AreaFormFields from '$lib/components/AreaFormFields'
-  import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
+  import { Popover } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}`)
@@ -38,7 +39,7 @@
   <div class="flex justify-between mt-8">
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
 
-    <div>
+    <div class="flex flex-col-reverse gap-8 md:flex-row md:gap-4">
       <Popover
         arrow
         arrowBackground="!bg-surface-200 dark:!bg-surface-800"

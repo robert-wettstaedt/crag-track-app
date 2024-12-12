@@ -3,7 +3,7 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import FileBrowser from '$lib/components/FileBrowser'
-  import { AppBar } from '@skeletonlabs/skeleton-svelte'
+  import AppBar from '$lib/components/AppBar'
 
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}`)

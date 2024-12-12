@@ -22,6 +22,7 @@
     data={climbers.map((climber) => ({ label: climber, value: climber }))}
     name="climberName"
     placeholder="Search..."
+    contentClasses="max-h-[200px] md:max-h-[400px] overflow-auto"
   />
 </label>
 

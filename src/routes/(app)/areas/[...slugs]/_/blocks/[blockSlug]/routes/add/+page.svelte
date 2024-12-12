@@ -2,8 +2,9 @@
   import { applyAction, enhance } from '$app/forms'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import AppBar from '$lib/components/AppBar'
   import RouteFormFields from '$lib/components/RouteFormFields'
-  import { AppBar, ProgressRing } from '@skeletonlabs/skeleton-svelte'
+  import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
 
   let { form, data } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
@@ -54,7 +55,7 @@
     grades={data.grades}
     gradingScale={data.user?.userSettings?.gradingScale}
     name={form?.name ?? ''}
-    rating={form?.rating ?? null}
+    rating={form?.rating ?? undefined}
     routeTags={form?.tags ?? []}
     tags={data.tags}
   />

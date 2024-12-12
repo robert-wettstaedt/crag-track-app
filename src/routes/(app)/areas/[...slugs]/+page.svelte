@@ -2,9 +2,10 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { convertException } from '$lib'
+  import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
-  import { AppBar, ProgressRing } from '@skeletonlabs/skeleton-svelte'
+  import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
   let { data } = $props()
@@ -91,7 +92,7 @@
     </dl>
   {/snippet}
 
-  {#snippet trail()}
+  {#snippet actions()}
     {#if data.area.type === 'crag'}
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
         <i class="fa-solid fa-file-export"></i>Export PDF

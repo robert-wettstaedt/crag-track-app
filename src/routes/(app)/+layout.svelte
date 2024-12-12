@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { invalidate, invalidateAll } from '$app/navigation'
+  import { afterNavigate, invalidate, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import Logo from '$lib/assets/logo.png'
@@ -11,6 +11,7 @@
   import '../../app.postcss'
 
   let { data, children } = $props()
+  let pageEl: HTMLDivElement
 
   onMount(() => {
     const value = data.supabase.auth.onAuthStateChange((_, newSession) => {
@@ -20,6 +21,10 @@
     })
 
     return () => value.data.subscription.unsubscribe()
+  })
+
+  afterNavigate(() => {
+    pageEl?.scrollTo(0, 0)
   })
 </script>
 
@@ -104,7 +109,10 @@
     {/snippet}
   </AppBar>
 
-  <div class="relative p-2 md:p-4 overflow-y-auto {$page.data.session?.user == null ? '' : 'md:ms-[96px]'}">
+  <div
+    bind:this={pageEl}
+    class="relative p-2 md:p-4 overflow-y-auto {$page.data.session?.user == null ? '' : 'md:ms-[96px]'}"
+  >
     <Breadcrumb url={$page.url} />
 
     {@render children?.()}

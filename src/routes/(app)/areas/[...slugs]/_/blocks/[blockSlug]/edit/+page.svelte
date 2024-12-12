@@ -32,7 +32,7 @@
   <div class="flex justify-between mt-8">
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
 
-    <div>
+    <div class="flex flex-col-reverse gap-8 md:flex-row md:gap-4">
       <Popover
         arrow
         arrowBackground="!bg-surface-200 dark:!bg-surface-800"

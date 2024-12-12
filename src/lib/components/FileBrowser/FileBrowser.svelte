@@ -75,7 +75,7 @@
 </script>
 
 {#if error == null}
-  <div class="card preset-filled-surface-100-900 py-2 md:py-4">
+  <div class="card preset-filled-surface-100-900 py-2 md:py-4 max-w-[calc(100vw-1rem)]">
     <ol class="flex items-center gap-4 px-2 md:px-4">
       <li>
         <button onclick={navigateTo.bind(null, [])}>

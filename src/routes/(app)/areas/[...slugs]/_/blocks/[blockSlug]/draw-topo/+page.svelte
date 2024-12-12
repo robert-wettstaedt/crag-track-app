@@ -44,24 +44,24 @@
   </aside>
 {/if}
 
-<div class="mt-8 flex">
-  <section class="p-2 md:p-4 w-2/3">
+<div class="mt-8 flex flex-wrap">
+  <section class="p-2 md:p-4 w-full md:w-2/3">
     <TopoViewer editable={true} bind:selectedTopoIndex bind:topos onChange={onChangeTopo} />
   </section>
 
-  <section class="p-2 md:p-4 w-1/3">
+  <section class="p-2 md:p-4 w-full md:w-1/3 mt-8 md:mt-0">
     <div class="card preset-filled-surface-100-900 p-2 md:p-4 h-full flex flex-col justify-between">
-      <nav class="list-nav">
+      <nav class="list-nav max-h-[300px] md:max-h-[none] overflow-auto">
         <ul>
           {#each data.block.routes as route}
             <li
-              class={`px-4 py-2 ${
+              class={`md:px-4 py-2 ${
                 [$selectedRouteStore, $highlightedRouteStore].includes(route.id) ? 'preset-filled-primary-100-900' : ''
               }`}
             >
               {#if route.hasTopo}
                 <span
-                  class={`text-primary-500 list-option w-full flex justify-between cursor-pointer ${
+                  class={`text-primary-500 list-option w-full flex flex-wrap justify-between whitespace-nowrap cursor-pointer ${
                     [$selectedRouteStore, $highlightedRouteStore].includes(route.id) ? 'text-white' : ''
                   }`}
                   onmouseenter={() => highlightedRouteStore.set(route.id)}
@@ -70,7 +70,9 @@
                   onkeydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
                   role="presentation"
                 >
-                  <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
+                  <div class="px-2 md:px-4 py-3 grow overflow-hidden text-ellipsis w-auto">
+                    <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
+                  </div>
 
                   {#if dirtyRoutes.includes(route.id)}
                     <form
@@ -158,7 +160,7 @@
         </ul>
       </nav>
 
-      <div class="flex justify-between">
+      <div class="flex justify-between flex-wrap mt-8 md:mt-0">
         <Popover
           arrow
           arrowBackground="!bg-surface-200 dark:!bg-surface-800"

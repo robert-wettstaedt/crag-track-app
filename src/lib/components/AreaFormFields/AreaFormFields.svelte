@@ -27,7 +27,7 @@
 
 <label class="label mt-4">
   <span>Type</span>
-  <select class="select" name="type" size="3" value={type}>
+  <select class="select max-h-[300px] overflow-auto" name="type" size="3" value={type}>
     <option value="area">Area</option>
     <option value="crag">Crag</option>
     <option value="sector">Sector</option>

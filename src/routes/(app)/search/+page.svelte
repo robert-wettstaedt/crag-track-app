@@ -1,9 +1,10 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
-  import { AppBar, Tabs } from '@skeletonlabs/skeleton-svelte'
+  import { Tabs } from '@skeletonlabs/skeleton-svelte'
   import { onMount } from 'svelte'
   import type { Snapshot } from './$types'
 

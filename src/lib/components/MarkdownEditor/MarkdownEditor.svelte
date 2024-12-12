@@ -6,6 +6,7 @@
   import { indentWithTab } from '@codemirror/commands'
   import { markdown } from '@codemirror/lang-markdown'
   import { EditorView, keymap, type EditorViewConfig } from '@codemirror/view'
+  import { Tabs } from '@skeletonlabs/skeleton-svelte'
   import { basicSetup } from 'codemirror'
   import debounce from 'lodash.debounce'
   import memoize from 'lodash.memoize'
@@ -22,6 +23,8 @@
   let element: HTMLDivElement | undefined = $state()
   let view: EditorView | null = null
   let valueHtml = $state('')
+
+  let tab: 'write' | 'preview' = $state('write')
 
   const loadData = async (query: string): Promise<SearchResults | null> => {
     const response = await fetch(`/api/search?q=${query}`)
@@ -151,10 +154,25 @@
   })
 </script>
 
-<div class="grid grid-cols-2 gap-4">
-  <div bind:this={element} class="bg-surface-700"></div>
+<Tabs bind:value={tab}>
+  {#snippet list()}
+    <Tabs.Control value="write">Write</Tabs.Control>
+    <Tabs.Control value="preview">Preview</Tabs.Control>
+  {/snippet}
+  {#snippet content()}
+    <Tabs.Panel value="write">
+      <div bind:this={element} class="bg-surface-700 h-64"></div>
+    </Tabs.Panel>
+    <Tabs.Panel value="preview">
+      <div class="rendered-markdown h-64 bg-surface-700 px-3 py-2 overflow-auto">
+        {@html valueHtml}
+      </div>
+    </Tabs.Panel>
+  {/snippet}
+</Tabs>
 
-  <div class="rendered-markdown min-h-64 bg-surface-700 px-3 py-2">
-    {@html valueHtml}
-  </div>
-</div>
+<style>
+  :global(.cm-editor) {
+    height: 100%;
+  }
+</style>

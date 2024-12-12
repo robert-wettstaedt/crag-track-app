@@ -4,12 +4,13 @@
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
+  import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
   import Vega from '$lib/components/Vega'
   import type { UserSettings } from '$lib/db/schema.js'
   import { getGradeColor } from '$lib/grades'
-  import { AppBar, Tabs } from '@skeletonlabs/skeleton-svelte'
+  import { Tabs } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
   let { data, form } = $props()

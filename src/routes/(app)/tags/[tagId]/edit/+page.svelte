@@ -1,8 +1,8 @@
 <script>
   import { enhance } from '$app/forms'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import AppBar from '$lib/components/AppBar'
   import TagFormFields from '$lib/components/TagFormFields'
-  import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
 </script>

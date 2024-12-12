@@ -2,9 +2,9 @@
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import AppBar from '$lib/components/AppBar'
   import FileBrowser from '$lib/components/FileBrowser'
   import RouteName from '$lib/components/RouteName'
-  import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
@@ -51,7 +51,7 @@
 
   <label class="label mt-4">
     <span>Type</span>
-    <select class="select" name="type" value={form?.type ?? 'beta'}>
+    <select class="select max-h-[300px] overflow-auto" name="type" value={form?.type ?? 'beta'}>
       <option value="beta">Beta</option>
       <option value="topo">Topo</option>
       <option value="other">Other</option>

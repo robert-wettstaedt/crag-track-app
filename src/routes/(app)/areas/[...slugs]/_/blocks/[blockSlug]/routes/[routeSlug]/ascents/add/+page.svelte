@@ -4,7 +4,7 @@
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AscentFormFields from '$lib/components/AscentFormFields'
   import RouteName from '$lib/components/RouteName'
-  import { AppBar } from '@skeletonlabs/skeleton-svelte'
+  import AppBar from '$lib/components/AppBar'
   import { DateTime } from 'luxon'
   import type { ActionData, PageData } from './$types'
 

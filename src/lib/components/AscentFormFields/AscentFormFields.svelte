@@ -45,7 +45,7 @@
 
 <label class="label mt-4">
   <span>Grade</span>
-  <select class="select" name="gradeFk" size="8" value={gradeFk}>
+  <select class="select max-h-[300px] overflow-auto" name="gradeFk" size="8" value={gradeFk}>
     {#each grades as grade}
       <option value={grade.id}>{grade[gradingScale ?? 'FB']}</option>
     {/each}
@@ -54,7 +54,7 @@
 
 <label class="label mt-4">
   <span>Type</span>
-  <select class="select" name="type" size="4" value={type}>
+  <select class="select max-h-[300px] overflow-auto" name="type" size="4" value={type}>
     <option value="flash"><AscentTypeLabel type="flash" /></option>
     <option value="send"><AscentTypeLabel type="send" /></option>
     <option value="repeat"><AscentTypeLabel type="repeat" /></option>
