@@ -22,8 +22,8 @@
   import { Fill, Style, Text } from 'ol/style.js'
   import proj4 from 'proj4'
   import { createEventDispatcher } from 'svelte'
-  import type { ChangeEventHandler } from 'svelte/elements'
   import type { GetBlockKey } from '.'
+  import Layers, { type Layer } from './Layers'
 
   const DEFAULT_ZOOM = 19
 
@@ -82,6 +82,13 @@
   let mapElement: HTMLDivElement | null = null
   let map: OlMap | null = null
 
+  let layersIsVisible = $state(false)
+  const layers: Layer[] = [
+    { label: 'OSM', name: 'osm' },
+    { label: 'Bayern Relief', name: 'bayern_relief' },
+    { label: 'Markers', name: 'markers' },
+  ]
+
   const createMap = (element: HTMLDivElement): OlMap => {
     const center = {
       lat: selectedBlock?.geolocation?.lat ?? 0,
@@ -97,23 +104,27 @@
       target: element,
       layers: [
         new TileLayer({
+          properties: { layerOpts: layers.find((layer) => layer.name === 'osm') },
           source: new OSM(),
         }),
-        new TileLayer({
-          properties: { isBayerRelief: true },
-          opacity: showRelief ? 0.8 : 0,
-          source: new XYZ({
-            attributions: [
-              '© <a href="https://geodaten.bayern.de/" target="_blank">Bayerische Vermessungsverwaltung</a>',
-              '© <a href="https://www.eurogeographics.org/" target="_blank">EuroGeographics</a>',
-              ATTRIBUTION,
-            ],
-            urls: ['31', '32', '33', '34', '35', '36', '37', '38', '39', '40'].map(
-              (instance) => `https://intergeo${instance}.bayernwolke.de/betty/c_dgm_relief/{z}/{x}/{y}`,
-            ),
-            projection,
-          }),
-        }),
+        new TileLayer(
+          showRelief
+            ? {
+                properties: { layerOpts: layers.find((layer) => layer.name === 'bayern_relief') },
+                source: new XYZ({
+                  attributions: [
+                    '© <a href="https://geodaten.bayern.de/" target="_blank">Bayerische Vermessungsverwaltung</a>',
+                    '© <a href="https://www.eurogeographics.org/" target="_blank">EuroGeographics</a>',
+                    ATTRIBUTION,
+                  ],
+                  urls: ['31', '32', '33', '34', '35', '36', '37', '38', '39', '40'].map(
+                    (instance) => `https://intergeo${instance}.bayernwolke.de/betty/c_dgm_relief/{z}/{x}/{y}`,
+                  ),
+                  projection,
+                }),
+              }
+            : {},
+        ),
       ],
       view: new View({
         center: fromLonLat([0, 0]),
@@ -150,26 +161,39 @@
 
       const iconStyle = new Style({
         text: new Text({
-          font: `900 ${block.id === selectedBlock?.id ? 2.25 : 1.875}rem 'Font Awesome 6 Free'`,
+          font: `400 ${block.id === selectedBlock?.id ? 2.25 : 1.875}rem 'Font Awesome 6 Free'`,
           text: '\uf111',
           fill: new Fill({ color: block.id === selectedBlock?.id ? '#60a5fa' : '#ef4444' }),
         }),
         zIndex: showBlocks ? 0 : -1,
       })
 
+      const backgroundStyle = new Style(
+        getBlockKey == null
+          ? {}
+          : {
+              text: new Text({
+                font: `900 ${block.id === selectedBlock?.id ? 2.25 : 1.875}rem 'Font Awesome 6 Free'`,
+                text: '\uf111',
+                fill: new Fill({ color: '#ffffff88' }),
+              }),
+              zIndex: showBlocks ? 0 : -1,
+            },
+      )
+
       const keyStyle = new Style(
         getBlockKey == null
           ? {}
           : {
               text: new Text({
-                fill: new Fill({ color: 'white' }),
+                fill: new Fill({ color: '#ef4444' }),
                 font: '1.5rem system-ui',
                 text: String(getBlockKey(block, index)),
               }),
             },
       )
 
-      iconFeature.setStyle([iconStyle, keyStyle])
+      iconFeature.setStyle([backgroundStyle, iconStyle, keyStyle])
 
       return iconFeature
     }
@@ -266,6 +290,7 @@
       )
 
       const vectorLayer = new VectorLayer({
+        properties: { layerOpts: layers.find((layer) => layer.name === 'markers') },
         declutter: declutter ? crag.id : false,
         source: vectorSource,
 
@@ -300,7 +325,10 @@
 
     const parkingIconFeatures = selectedArea == null ? [] : parkingLocations.map(createParkingMarker)
     const vectorSource = new VectorSource<Feature<Geometry>>({ features: parkingIconFeatures })
-    const vectorLayer = new VectorLayer({ source: vectorSource })
+    const vectorLayer = new VectorLayer({
+      properties: { layerOpts: layers.find((layer) => layer.name === 'markers') },
+      source: vectorSource,
+    })
     map.addLayer(vectorLayer)
   }
 
@@ -438,36 +466,67 @@
     // map?.invalidateSize()
   }
 
-  const onChangeRelief: ChangeEventHandler<HTMLInputElement> = (event) => {
-    showRelief = event.currentTarget.checked
-
+  const onChangeRelief = (layers: string[]) => {
     map
       ?.getAllLayers()
-      .find((layer) => layer.get('isBayerRelief'))
-      ?.setOpacity(showRelief ? 0.8 : 0)
+      .filter((layer) => layer.get('layerOpts') != null)
+      .map((layer) => {
+        const opts = layer.get('layerOpts')
+        const isVisible = layers.includes(opts.name)
+        layer.setVisible(isVisible)
+      })
   }
 </script>
 
 <svelte:window onresize={resizeMap} />
 
 <div class="relative">
-  <div class="map w-full -z-0" use:mapAction></div>
+  <div class="map w-full -z-0" use:mapAction>
+    <div class="ol-control ol-layers z-10">
+      <button
+        aria-label="Map layers"
+        onclick={() => (layersIsVisible = !layersIsVisible)}
+        title="Map layers"
+        type="button"
+      >
+        <i class="fa-solid fa-layer-group {layersIsVisible ? 'text-primary-500' : ''}"></i>
+      </button>
 
-  <div class="map-controls absolute top-2 right-8 p-2 bg-surface-500/90 text-white">
-    <label class="flex items-center space-x-2">
-      <input class="checkbox" bind:checked={showRelief} onchange={onChangeRelief} type="checkbox" />
-      <p>Show Bayern relief</p>
-    </label>
+      {#if layersIsVisible}
+        <Layers {layers} onChange={onChangeRelief} />
+      {/if}
+    </div>
   </div>
 </div>
 
 <style>
+  :global(.ol-zoom) {
+    left: initial;
+    right: 0.5em;
+    top: 0.5em;
+  }
+
+  :global(.ol-full-screen) {
+    left: initial;
+    right: 0.5em;
+    top: calc(0.5em + 1.375em + 1.375em + 0.5em);
+  }
+
   :global(.ol-rotate) {
-    top: 3em;
+    left: initial;
+    right: 0.5em;
+    top: calc(0.5em + 1.375em + 1.375em + 0.5em + 1.375em + 0.5em);
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .ol-layers {
+    right: 0.5em;
+    top: calc(0.5em + 1.375em + 1.375em + 0.5em + 1.375em + 0.5em + 1.375em + 0.5em);
   }
 
   @media print {
-    .map-controls,
+    .ol-layers,
     :global(.ol-zoom),
     :global(.ol-full-screen),
     :global(.ol-rotate) {
