@@ -58,17 +58,9 @@ grant all
   on table public.user_roles
   to supabase_auth_admin;
 
-revoke all
-  on table public.user_roles
-  from authenticated, anon, public;
-
 grant all
   on table public.role_permissions
   to supabase_auth_admin;
-
-revoke all
-  on table public.role_permissions
-  from authenticated, anon, public;
 
 create or replace function public.authorize (requested_permission app_permission) returns boolean as $$
   declare

@@ -18,7 +18,7 @@ export const load = (async ({ locals }) => {
 
 export const actions = {
   delete: async ({ locals, request }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 

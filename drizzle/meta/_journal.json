@@ -8,6 +8,13 @@
       "when": 1733943209675,
       "tag": "0001_even_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1734351670361,
+      "tag": "0002_bitter_romulus",
+      "breakpoints": true
     }
   ]
 }

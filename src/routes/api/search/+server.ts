@@ -4,7 +4,7 @@ import { getUser } from '$lib/helper.server'
 import { searchResources } from '$lib/search.server'
 
 export const GET = async ({ locals, url }) => {
-  if (!locals.user?.appPermissions?.includes('data.read')) {
+  if (!locals.userPermissions?.includes('data.read')) {
     return new Response(null, { status: 404 })
   }
 

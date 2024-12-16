@@ -17,7 +17,7 @@
   {/snippet}
 
   {#snippet trail()}
-    {#if data.authUser?.appPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes('data.edit')}
       <a class="btn btn-sm preset-filled-primary-500" href="/tags/add">
         <i class="fa-solid fa-plus"></i> Add tag
       </a>
@@ -40,7 +40,7 @@
         <tr>
           <th class="w-full">Name</th>
 
-          {#if data.authUser?.appPermissions?.includes('data.edit')}
+          {#if data.userPermissions?.includes('data.edit')}
             <th>Actions</th>
           {/if}
         </tr>
@@ -51,7 +51,7 @@
           <tr>
             <td>{tag.id}</td>
 
-            {#if data.authUser?.appPermissions?.includes('data.edit')}
+            {#if data.userPermissions?.includes('data.edit')}
               <td>
                 <div class="flex items-center gap-2">
                   <a href="/tags/{tag.id}/edit" class="btn btn-sm preset-filled-primary-500">Edit</a>

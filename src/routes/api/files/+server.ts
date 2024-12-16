@@ -4,7 +4,7 @@ import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import type { FileStat } from 'webdav'
 
 export async function GET({ locals, url }) {
-  if (!locals.user?.appPermissions?.includes('data.read')) {
+  if (!locals.userPermissions?.includes('data.read')) {
     return new Response(null, { status: 404 })
   }
 

@@ -8,7 +8,7 @@ import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  if (!locals.user?.appPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes('data.edit')) {
     error(404)
   }
 
@@ -60,7 +60,7 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   updateLocation: async ({ locals, params, request }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 
@@ -139,7 +139,7 @@ export const actions = {
   },
 
   removeGeolocation: async ({ locals, params }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 

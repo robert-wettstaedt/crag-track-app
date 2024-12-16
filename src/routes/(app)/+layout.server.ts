@@ -13,5 +13,7 @@ export const load: LayoutServerLoad = async ({ locals, cookies }) => {
     grades,
     session,
     user,
+    userPermissions: locals.userPermissions,
+    userRole: locals.userRole,
   }
 }

@@ -3,7 +3,7 @@ import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { type BufferLike, type Headers, type ResponseDataDetailed } from 'webdav'
 
 export async function GET({ locals, request, params }) {
-  if (!locals.user?.appPermissions?.includes('data.read')) {
+  if (!locals.userPermissions?.includes('data.read')) {
     return new Response(null, { status: 404 })
   }
 

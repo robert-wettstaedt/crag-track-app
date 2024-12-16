@@ -113,7 +113,7 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   syncExternalResources: async ({ locals, params }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 

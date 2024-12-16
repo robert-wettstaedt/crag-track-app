@@ -16,7 +16,7 @@
   {/snippet}
 
   {#snippet trail()}
-    {#if data.authUser?.appPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes('data.edit')}
       <a class="btn btn-sm preset-filled-primary-500" href="/areas/add">
         <i class="fa-solid fa-plus"></i> Add area
       </a>

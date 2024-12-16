@@ -60,7 +60,7 @@
       </div>
     </section>
   </div>
-{:else if data.authUser.appPermissions?.includes('data.read')}
+{:else if data.userPermissions?.includes('data.read')}
   {#await import('$lib/components/BlocksMap') then BlocksMap}
     <BlocksMap.default blocks={data.blocks} />
   {/await}

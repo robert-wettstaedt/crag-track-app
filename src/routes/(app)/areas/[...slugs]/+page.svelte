@@ -111,7 +111,7 @@
       Export GPX
     </button>
 
-    {#if data.authUser?.appPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes('data.edit')}
       {#if data.area.type === 'crag'}
         <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-parking-location`}>
           <i class="fa-solid fa-parking"></i>Add parking location
@@ -170,7 +170,7 @@
               {#if file.stat != null}
                 <FileViewer
                   {file}
-                  readOnly={!data.authUser?.appPermissions?.includes('data.edit') &&
+                  readOnly={!data.userPermissions?.includes('data.edit') &&
                     data.area.author.authUserFk !== data.authUser?.id}
                   stat={file.stat}
                   on:delete={() => {
@@ -191,7 +191,7 @@
       {/if}
     {/key}
 
-    {#if data.authUser?.appPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes('data.edit')}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
       </div>
@@ -222,7 +222,7 @@
         </div>
       {/if}
 
-      {#if data.authUser?.appPermissions?.includes('data.edit') && data.canAddArea}
+      {#if data.userPermissions?.includes('data.edit') && data.canAddArea}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/add`}>Add area</a>
         </div>
@@ -250,7 +250,7 @@
       </div>
     {/if}
 
-    {#if data.authUser?.appPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes('data.edit')}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/_/blocks/add`}>Add block</a>
       </div>

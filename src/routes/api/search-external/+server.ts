@@ -4,7 +4,7 @@ import type { InferResultType } from '$lib/db/types'
 import { handler27crags, handler8a, handlerTheCrag, queryExternalResource } from '$lib/external-resources/index.server'
 
 export const GET = async ({ locals, url }) => {
-  if (!locals.user?.appPermissions?.includes('data.read')) {
+  if (!locals.userPermissions?.includes('data.read')) {
     return new Response(null, { status: 404 })
   }
 

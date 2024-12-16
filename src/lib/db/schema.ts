@@ -80,10 +80,13 @@ export const userRoles = table(
   'user_roles',
   {
     id: baseFields.id,
-    userFk: uuid('user_fk').notNull(),
+    authUserFk: uuid('auth_user_fk').notNull(),
     role: appRole().notNull(),
   },
-  () => [policy('Allow auth admin to read user_roles', READ_AUTH_ADMIN_POLICY_CONFIG)],
+  () => [
+    policy('auth admins can read user_roles', READ_AUTH_ADMIN_POLICY_CONFIG),
+    policy(`users can read own user_roles`, getOwnEntryPolicyConfig('select')),
+  ],
 ).enableRLS()
 
 export const rolePermissions = table(
@@ -93,7 +96,7 @@ export const rolePermissions = table(
     role: appRole().notNull(),
     permission: appPermission().notNull(),
   },
-  () => [policy('Allow auth admin to read role_permissions', READ_AUTH_ADMIN_POLICY_CONFIG)],
+  () => [policy('Authenticated users can read role_permissions', getPolicyConfig('select', sql`true`))],
 )
 
 export const users = table(

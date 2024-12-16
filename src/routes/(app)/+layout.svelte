@@ -118,9 +118,9 @@
     {@render children?.()}
   </div>
 
-  {#if data.authUser?.appPermissions?.includes('data.read')}
+  {#if data.userPermissions?.includes('data.read')}
     <Nav.Bar classes="md:hidden">
-      <NavTiles user={data.authUser} />
+      <NavTiles userPermissions={data.userPermissions} />
     </Nav.Bar>
 
     <Nav.Rail base="hidden md:block fixed top-[68px] h-screen">
@@ -131,7 +131,7 @@
       {/snippet}
 
       {#snippet tiles()}
-        <NavTiles user={data.authUser} />
+        <NavTiles userPermissions={data.userPermissions} />
       {/snippet}
     </Nav.Rail>
   {/if}

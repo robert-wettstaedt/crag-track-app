@@ -45,7 +45,7 @@ export async function DELETE({ locals, params }) {
   // Determine the author ID from the file's related entities
   const authorId = file?.area?.createdBy ?? file?.ascent?.createdBy ?? file?.block?.createdBy ?? file?.route?.createdBy
 
-  if (!locals.user?.appPermissions?.includes('data.edit') && authorId !== user?.id) {
+  if (!locals.userPermissions?.includes('data.edit') && authorId !== user?.id) {
     error(404)
   }
 

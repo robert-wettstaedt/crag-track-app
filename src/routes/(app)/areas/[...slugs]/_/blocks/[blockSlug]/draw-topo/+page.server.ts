@@ -13,7 +13,7 @@ import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  if (!locals.user?.appPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes('data.edit')) {
     error(404)
   }
 
@@ -67,7 +67,7 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   saveRoute: async ({ locals, request }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 
@@ -97,7 +97,7 @@ export const actions = {
   },
 
   addRoute: async ({ locals, request }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 
@@ -120,7 +120,7 @@ export const actions = {
   },
 
   removeRoute: async ({ locals, request }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 
@@ -145,7 +145,7 @@ export const actions = {
   },
 
   removeTopo: async ({ locals, params, request }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 

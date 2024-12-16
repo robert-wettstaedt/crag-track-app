@@ -94,7 +94,7 @@
               {data.route.firstAscent?.year ?? ''}
             </span>
 
-            {#if data.authUser?.appPermissions?.includes('data.edit')}
+            {#if data.userPermissions?.includes('data.edit')}
               <a class="btn btn-sm preset-outlined-primary-500 ms-4" href={`${basePath}/edit-first-ascent`}>
                 <i class="fa-solid fa-pen"></i>Edit FA
               </a>
@@ -171,7 +171,7 @@
       </a>
     {/if}
 
-    {#if data.authUser?.appPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes('data.edit')}
       <form
         method="POST"
         action="?/syncExternalResources"
@@ -241,7 +241,7 @@
           {#if file.stat != null}
             <FileViewer
               {file}
-              readOnly={!data.authUser?.appPermissions?.includes('data.edit')}
+              readOnly={!data.userPermissions?.includes('data.edit')}
               stat={file.stat}
               on:delete={() => {
                 files = files.filter((_file) => file.id !== _file.id)
@@ -272,7 +272,7 @@
       </div>
     {/if}
 
-    {#if data.authUser?.appPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes('data.edit')}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/add-file`}>Add file</a>
       </div>
@@ -295,7 +295,7 @@
               ticked this route on {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
             </span>
 
-            {#if data.session?.user?.id === ascent.author.authUserFk || data.authUser?.appPermissions?.includes('data.edit')}
+            {#if data.session?.user?.id === ascent.author.authUserFk || data.userPermissions?.includes('data.edit')}
               <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/ascents/${ascent.id}/edit`}>
                 <i class="fa-solid fa-pen"></i>Edit ascent
               </a>
@@ -338,7 +338,7 @@
                         {#if file.stat != null}
                           <FileViewer
                             {file}
-                            readOnly={!data.authUser?.appPermissions?.includes('data.edit') &&
+                            readOnly={!data.userPermissions?.includes('data.edit') &&
                               ascent.author.authUserFk !== data.authUser?.id}
                             stat={file.stat}
                             on:delete={() => {

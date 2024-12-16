@@ -1,8 +1,10 @@
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
-import { decodeToken } from '$lib/auth'
+import { db } from '$lib/db/db.server'
+import * as schema from '$lib/db/schema'
 import { createServerClient } from '@supabase/ssr'
 import { type Handle, redirect } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
+import { eq } from 'drizzle-orm'
 
 const supabase: Handle = async ({ event, resolve }) => {
   /**
@@ -36,7 +38,7 @@ const supabase: Handle = async ({ event, resolve }) => {
       data: { session },
     } = await event.locals.supabase.auth.getSession()
     if (!session) {
-      return { session: null, user: null }
+      return { session: null, user: null, userPermissions: undefined, userRole: undefined }
     }
 
     const {
@@ -45,21 +47,22 @@ const supabase: Handle = async ({ event, resolve }) => {
     } = await event.locals.supabase.auth.getUser()
     if (error) {
       // JWT validation has failed
-      return { session: null, user: null }
+      return { session: null, user: null, userPermissions: undefined, userRole: undefined }
     }
 
-    const { user_permissions, user_role } = decodeToken(session.access_token)
+    const userRole =
+      user == null ? undefined : await db.query.userRoles.findFirst({ where: eq(schema.userRoles.authUserFk, user.id) })
+    const userPermissions =
+      userRole == null
+        ? undefined
+        : await db.query.rolePermissions.findMany({ where: eq(schema.rolePermissions.role, userRole.role) })
 
-    const authUserWithClaims =
-      user == null
-        ? null
-        : {
-            ...user,
-            appRole: user_role,
-            appPermissions: user_permissions,
-          }
-
-    return { session, user: authUserWithClaims }
+    return {
+      session,
+      user,
+      userPermissions: userPermissions?.map(({ permission }) => permission),
+      userRole: userRole?.role,
+    }
   }
 
   return resolve(event, {
@@ -74,18 +77,12 @@ const supabase: Handle = async ({ event, resolve }) => {
 }
 
 const authGuard: Handle = async ({ event, resolve }) => {
-  const { session, user } = await event.locals.safeGetSession()
-  const { user_permissions, user_role } = decodeToken(session?.access_token ?? '')
+  const { session, user, userPermissions, userRole } = await event.locals.safeGetSession()
 
   event.locals.session = session
-  event.locals.user =
-    user == null
-      ? null
-      : {
-          ...user,
-          appRole: user_role,
-          appPermissions: user_permissions,
-        }
+  event.locals.user = user
+  event.locals.userPermissions = userPermissions
+  event.locals.userRole = userRole
 
   if (event.locals.session == null && event.url.pathname !== '/' && !event.url.pathname.startsWith('/auth')) {
     redirect(303, '/auth')

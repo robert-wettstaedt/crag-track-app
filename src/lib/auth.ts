@@ -12,9 +12,6 @@ export interface SupabaseToken extends JwtPayload {
   iat?: number
   jti?: string
   role?: string
-
-  user_role?: string
-  user_permissions?: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION>
 }
 
 export function decodeToken(accessToken: string): SupabaseToken {

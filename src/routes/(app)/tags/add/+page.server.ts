@@ -7,14 +7,14 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types.js'
 
 export const load = (({ locals }) => {
-  if (!locals.user?.appPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes('data.edit')) {
     error(404)
   }
 }) satisfies PageServerLoad
 
 export const actions = {
   default: async ({ locals, request }) => {
-    if (!locals.user?.appPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes('data.edit')) {
       error(404)
     }
 

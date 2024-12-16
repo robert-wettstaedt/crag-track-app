@@ -59,7 +59,7 @@
   {/snippet}
 
   {#snippet actions()}
-    {#if data.authUser?.appPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes('data.edit')}
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen"></i>Edit block
       </a>
@@ -108,7 +108,7 @@
                 {#if file.stat != null}
                   <FileViewer
                     {file}
-                    readOnly={!data.authUser?.appPermissions?.includes('data.edit') &&
+                    readOnly={!data.userPermissions?.includes('data.edit') &&
                       data.block.author.authUserFk !== data.authUser?.id}
                     stat={file.stat}
                     on:delete={() => {
@@ -146,7 +146,7 @@
         {/if}
       {/key}
 
-      {#if data.authUser?.appPermissions?.includes('data.edit')}
+      {#if data.userPermissions?.includes('data.edit')}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
         </div>
@@ -164,7 +164,7 @@
         <div class="relative">
           <TopoViewer topos={data.topos} />
 
-          {#if data.authUser?.appPermissions?.includes('data.edit')}
+          {#if data.userPermissions?.includes('data.edit')}
             <a class="btn btn-sm preset-tonal-surface absolute bottom-2 right-2 z-30" href={`${basePath}/draw-topo`}>
               <i class="fa-solid fa-pen"></i>Edit topo
             </a>
@@ -205,7 +205,7 @@
         </nav>
       {/if}
 
-      {#if data.authUser?.appPermissions?.includes('data.edit')}
+      {#if data.userPermissions?.includes('data.edit')}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/routes/add`}>Add route</a>
         </div>

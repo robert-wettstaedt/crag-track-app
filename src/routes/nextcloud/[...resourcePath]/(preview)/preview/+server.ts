@@ -3,7 +3,7 @@ import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { type Headers } from 'webdav'
 
 export async function GET({ locals, request, params, url }) {
-  if (!locals.user?.appPermissions?.includes('data.read')) {
+  if (!locals.userPermissions?.includes('data.read')) {
     return new Response(null, { status: 404 })
   }
 

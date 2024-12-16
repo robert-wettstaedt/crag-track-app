@@ -30,7 +30,7 @@ export const load = (async ({ locals, params }) => {
 
   if (
     ascent == null ||
-    (locals.user?.id !== ascent.author.authUserFk && !locals.user?.appPermissions?.includes('data.edit'))
+    (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes('data.edit'))
   ) {
     error(404)
   }
@@ -68,7 +68,7 @@ export const actions = {
 
     if (
       ascent == null ||
-      (locals.user?.id !== ascent.author.authUserFk && !locals.user?.appPermissions?.includes('data.edit'))
+      (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes('data.edit'))
     ) {
       return fail(404, { ...values, error: `Ascent not found ${params.ascentId}` })
     }
@@ -155,7 +155,7 @@ export const actions = {
 
     if (
       ascent == null ||
-      (locals.user?.id !== ascent.author.authUserFk && !locals.user?.appPermissions?.includes('data.edit'))
+      (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes('data.edit'))
     ) {
       return fail(404, { error: `Ascent not found ${params.ascentId}` })
     }
