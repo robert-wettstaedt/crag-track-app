@@ -7,7 +7,6 @@
   import Overlay from 'ol/Overlay.js'
   import View from 'ol/View.js'
   import { Attribution, FullScreen, defaults as defaultControls } from 'ol/control.js'
-  import type { Coordinate } from 'ol/coordinate'
   import { boundingExtent } from 'ol/extent'
   import { Geometry } from 'ol/geom'
   import Point from 'ol/geom/Point.js'
@@ -89,12 +88,9 @@
     { label: 'Markers', name: 'markers' },
   ]
 
-  const createMap = (element: HTMLDivElement): OlMap => {
-    const center = {
-      lat: selectedBlock?.geolocation?.lat ?? 0,
-      lng: selectedBlock?.geolocation?.long ?? 0,
-    }
+  const isRootMap = showAreas && selectedArea == null && showBlocks && selectedBlock == null
 
+  const createMap = (element: HTMLDivElement): OlMap => {
     const map = new OlMap({
       controls: defaultControls({ attribution: false }).extend([
         new FullScreen(),
@@ -122,6 +118,7 @@
                   ),
                   projection,
                 }),
+                opacity: 0.7,
               }
             : {},
         ),
@@ -129,6 +126,7 @@
       view: new View({
         center: fromLonLat([0, 0]),
         zoom: DEFAULT_ZOOM,
+        constrainResolution: true,
       }),
     })
 
@@ -399,36 +397,37 @@
 
       const blocksToDisplay = selectedBlocks.length === 0 ? blocks : selectedBlocks
       const coordinates = blocksToDisplay
-        .map((block) =>
-          block.geolocation?.lat == null || block.geolocation?.long == null
-            ? undefined
-            : fromLonLat([block.geolocation.long, block.geolocation.lat]),
-        )
-        .filter((d) => d != null) as Coordinate[]
+        .filter((block) => block.geolocation?.lat != null && block.geolocation!.long != null)
+        .map((block) => fromLonLat([block.geolocation!.long, block.geolocation!.lat]))
 
       coordinates.push(
         ...parkingLocations.map((parkingLocation) => fromLonLat([parkingLocation.long, parkingLocation.lat])),
       )
 
-      const extent = boundingExtent(coordinates)
+      if (isRootMap) {
+        const sorted = coordinates.toSorted((a, b) => {
+          return Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2))
+        })
+        const median = sorted[Math.floor(sorted.length / 2)]
 
-      try {
-        map.getView().fit(extent, { maxZoom: zoom ?? DEFAULT_ZOOM, padding: [250, 250, 250, 250] })
-      } catch (error) {
-        console.error(error)
-      }
+        const filtered = coordinates.filter((coordinate) => {
+          const distance = Math.sqrt(Math.pow(coordinate[0] - median[0], 2) + Math.pow(coordinate[1] - median[1], 2))
+          return distance < 200_000
+        })
 
-      if (zoom == null) {
-        setTimeout(() => {
-          try {
-            map.getView().fit(extent, { maxZoom: 22, padding: [250, 250, 250, 250] })
-          } catch (error) {
-            console.error(error)
-          }
-          dispatch('rendercomplete')
-        }, 1000)
+        const extent = boundingExtent(filtered)
+
+        map.getView().fit(extent, {
+          callback: () => dispatch('rendercomplete'),
+          maxZoom: zoom ?? DEFAULT_ZOOM,
+        })
       } else {
-        dispatch('rendercomplete')
+        const extent = boundingExtent(coordinates)
+
+        map.getView().fit(extent, {
+          callback: () => dispatch('rendercomplete'),
+          maxZoom: zoom ?? DEFAULT_ZOOM,
+        })
       }
     })
   }
