@@ -35,7 +35,9 @@ export const validateAreaForm = async (data: FormData): Promise<AreaActionValues
     throw fail(400, { ...values, error: 'name is required' })
   }
 
-  if (typeof type !== 'string' || type.length === 0) {
+  if (type == null) {
+    values.type = 'area'
+  } else if (typeof type !== 'string' || type.length === 0) {
     throw fail(400, { ...values, error: 'type is required' })
   }
 

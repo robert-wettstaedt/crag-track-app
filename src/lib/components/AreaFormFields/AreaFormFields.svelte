@@ -4,13 +4,14 @@
 
   interface Props {
     description: Area['description']
-    name: Area['name']
-    type: Area['type']
     grades: Grade[]
     gradingScale: UserSettings['gradingScale'] | null | undefined
+    hasParent: boolean
+    name: Area['name']
+    type: Area['type']
   }
 
-  let { description = $bindable(), name, type, grades, gradingScale }: Props = $props()
+  let { description = $bindable(), name, type, grades, gradingScale, hasParent }: Props = $props()
 </script>
 
 <label class="label">
@@ -25,11 +26,13 @@
   <MarkdownEditor {grades} {gradingScale} bind:value={description} />
 </label>
 
-<label class="label mt-4">
-  <span>Type</span>
-  <select class="select max-h-[300px] overflow-auto" name="type" size="3" value={type}>
-    <option value="area">Area</option>
-    <option value="crag">Crag</option>
-    <option value="sector">Sector</option>
-  </select>
-</label>
+{#if hasParent}
+  <label class="label mt-4">
+    <span>Type</span>
+    <select class="select max-h-[300px] overflow-auto" name="type" size="3" value={type}>
+      <option value="area">Area</option>
+      <option value="crag">Crag</option>
+      <option value="sector">Sector</option>
+    </select>
+  </label>
+{/if}

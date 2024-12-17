@@ -29,9 +29,10 @@
 
 <form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" action="?/updateArea" method="POST">
   <AreaFormFields
+    description={form?.description ?? data.description}
     grades={data.grades}
     gradingScale={data.user?.userSettings?.gradingScale}
-    description={form?.description ?? data.description}
+    hasParent={data.parentFk != null}
     name={form?.name ?? data.name}
     type={form?.type ?? data.type}
   />
