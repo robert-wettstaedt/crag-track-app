@@ -12,13 +12,13 @@ declare global {
       safeGetSession: () => Promise<{
         session: Session | null
         user: User | null
-        userRole: string
-        userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION>
+        userRole: string | undefined
+        userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION> | undefined
       }>
       session: Session | null
       user: User | null
-      userRole: string
-      userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION>
+      userRole: string | undefined
+      userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION> | undefined
     }
     interface PageData {
       session: Session | null
