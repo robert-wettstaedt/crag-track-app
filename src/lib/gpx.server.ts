@@ -1,3 +1,4 @@
+import { PUBLIC_TOPO_EMAIL } from '$env/static/public'
 import { getToposOfArea } from '$lib/blocks.server'
 import Labels from '$lib/components/TopoViewer/components/Labels'
 import Route from '$lib/components/TopoViewer/components/Route'
@@ -63,8 +64,7 @@ export const getAreaGPX = async (areaId: number, db: PostgresJsDatabase<typeof s
       <metadata>
         <name>${encodeHtml(area.name)}</name>
         <author>
-          <name>${encodeHtml(area.author.username)}</name>
-          <email>${encodeHtml(area.author.username)}</email>
+          <email>${encodeHtml(PUBLIC_TOPO_EMAIL)}</email>
         </author>
         <copyright>
           <year>${encodeHtml(String(new Date().getFullYear()))}</year>

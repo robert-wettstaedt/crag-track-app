@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores'
-  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME, PUBLIC_TOPO_EMAIL } from '$env/static/public'
   import SaveBouldering from '$lib/assets/Save-Bouldering.jpg'
   import AreaBlockListing from '$lib/components/AreaBlockListing'
   import '@fortawesome/fontawesome-free/css/all.css'
@@ -50,10 +49,10 @@
         <div class="mt-auto text-right">
           <p>Version: {new Date().toISOString().split('T')[0]}</p>
 
-          {#if $page.data.session?.user?.email != null}
+          {#if PUBLIC_TOPO_EMAIL}
             <p>
               Kontakt:
-              <a class="anchor" href={`mailto:${$page.data.session.user.email}`}>{$page.data.session.user.email}</a>
+              <a class="anchor" href={`mailto:${PUBLIC_TOPO_EMAIL}`}>{PUBLIC_TOPO_EMAIL}</a>
             </p>
           {/if}
 
