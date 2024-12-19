@@ -2,8 +2,8 @@
  * https://github.com/drizzle-team/drizzle-orm/issues/695#issuecomment-1881454650
  */
 
+import * as schema from '$lib/db/schema'
 import type { BuildQueryResult, DBQueryConfig, ExtractTablesWithRelations } from 'drizzle-orm'
-import * as schema from './schema'
 
 type Schema = typeof schema
 type TSchema = ExtractTablesWithRelations<Schema>

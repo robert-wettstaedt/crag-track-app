@@ -1,4 +1,4 @@
-import type { InferInsertModel, InferSelectModel, SQL } from 'drizzle-orm'
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import { relations, sql } from 'drizzle-orm'
 import {
   bigint,
@@ -14,8 +14,9 @@ import {
   type AnyPgColumn as AnyColumn,
   type PgPolicyConfig,
 } from 'drizzle-orm/pg-core'
-import { authenticatedRole, authUsers, supabaseAuthAdminRole } from 'drizzle-orm/supabase'
+import { authUsers, supabaseAuthAdminRole } from 'drizzle-orm/supabase'
 import { EDIT_PERMISSION, READ_PERMISSION } from '../auth'
+import { createBasicTablePolicies, getAuthorizedPolicyConfig, getOwnEntryPolicyConfig, getPolicyConfig } from './policy'
 
 export const generateSlug = (name: string): string =>
   name
@@ -43,35 +44,6 @@ const READ_AUTH_ADMIN_POLICY_CONFIG: PgPolicyConfig = {
   to: supabaseAuthAdminRole,
   using: sql`true`,
 }
-
-const getPolicyConfig = (policyFor: PgPolicyConfig['for'], check: SQL): PgPolicyConfig => {
-  const config: PgPolicyConfig = { for: policyFor, to: authenticatedRole }
-
-  switch (policyFor) {
-    case 'insert':
-      config.withCheck = check
-      break
-
-    case 'all':
-    case 'update':
-      config.using = check
-      config.withCheck = check
-      break
-
-    default:
-      config.using = check
-  }
-
-  return config
-}
-
-const getAuthorizedPolicyConfig = (
-  policyFor: PgPolicyConfig['for'],
-  permission: typeof EDIT_PERMISSION | typeof READ_PERMISSION,
-) => getPolicyConfig(policyFor, sql.raw(`(SELECT authorize('${permission}'))`))
-
-const getOwnEntryPolicyConfig = (policyFor: PgPolicyConfig['for']) =>
-  getPolicyConfig(policyFor, sql.raw('(SELECT auth.uid()) = auth_user_fk'))
 
 export const appPermission = pgEnum('app_permission', [READ_PERMISSION, EDIT_PERMISSION])
 export const appRole = pgEnum('app_role', ['user', 'maintainer'])
@@ -152,6 +124,7 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, { fields: [userSettings.userFk], references: [users.id] }),
 }))
 
+export const areaTypeEnum: ['area', 'crag', 'sector'] = ['area', 'crag', 'sector']
 export const areas = table(
   'areas',
   {
@@ -159,16 +132,11 @@ export const areas = table(
     ...baseContentFields,
 
     description: text('description'),
-    type: text('type', { enum: ['area', 'crag', 'sector'] })
-      .notNull()
-      .default('area'),
+    type: text('type', { enum: areaTypeEnum }).notNull().default('area'),
 
     parentFk: integer('parent_fk').references((): AnyColumn => areas.id),
   },
-  () => [
-    policy(`${READ_PERMISSION} can read areas`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access areas`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  () => createBasicTablePolicies('areas'),
 ).enableRLS()
 export type Area = InferSelectModel<typeof areas>
 export type InsertArea = InferInsertModel<typeof areas>
@@ -192,10 +160,7 @@ export const blocks = table(
     areaFk: integer('area_fk').notNull(),
     geolocationFk: integer('geolocation_fk'),
   },
-  () => [
-    policy(`${READ_PERMISSION} can read blocks`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access blocks`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  () => createBasicTablePolicies('blocks'),
 ).enableRLS()
 export type Block = InferSelectModel<typeof blocks>
 export type InsertBlock = InferInsertModel<typeof blocks>
@@ -224,10 +189,7 @@ export const routes = table(
     externalResourcesFk: integer('external_resources_fk'),
     gradeFk: integer('grade_fk'),
   },
-  () => [
-    policy(`${READ_PERMISSION} can read routes`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access routes`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  () => createBasicTablePolicies('routes'),
 ).enableRLS()
 export type Route = InferSelectModel<typeof routes>
 export type InsertRoute = InferInsertModel<typeof routes>
@@ -276,16 +238,7 @@ export const routeExternalResources = table(
     externalResource27cragsFk: integer('external_resource_27crags_fk'),
     externalResourceTheCragFk: integer('external_resource_the_crag_fk'),
   },
-  () => [
-    policy(
-      `${READ_PERMISSION} can read route_external_resources`,
-      getAuthorizedPolicyConfig('select', READ_PERMISSION),
-    ),
-    policy(
-      `${EDIT_PERMISSION} can fully access route_external_resources`,
-      getAuthorizedPolicyConfig('all', EDIT_PERMISSION),
-    ),
-  ],
+  () => createBasicTablePolicies('route_external_resources'),
 ).enableRLS()
 export type RouteExternalResource = InferSelectModel<typeof routeExternalResources>
 export type InsertRouteExternalResource = InferInsertModel<typeof routeExternalResources>
@@ -333,16 +286,7 @@ export const routeExternalResource8a = table(
 
     externalResourcesFk: integer('external_resources_fk').notNull(),
   },
-  () => [
-    policy(
-      `${READ_PERMISSION} can read route_external_resource_8a`,
-      getAuthorizedPolicyConfig('select', READ_PERMISSION),
-    ),
-    policy(
-      `${EDIT_PERMISSION} can fully access route_external_resource_8a`,
-      getAuthorizedPolicyConfig('all', EDIT_PERMISSION),
-    ),
-  ],
+  () => createBasicTablePolicies('route_external_resource_8a'),
 ).enableRLS()
 export type RouteExternalResource8a = InferSelectModel<typeof routeExternalResource8a>
 export type InsertRouteExternalResource8a = InferInsertModel<typeof routeExternalResource8a>
@@ -374,16 +318,7 @@ export const routeExternalResource27crags = table(
 
     externalResourcesFk: integer('external_resources_fk').notNull(),
   },
-  () => [
-    policy(
-      `${READ_PERMISSION} can read route_external_resource_27crags`,
-      getAuthorizedPolicyConfig('select', READ_PERMISSION),
-    ),
-    policy(
-      `${EDIT_PERMISSION} can fully access route_external_resource_27crags`,
-      getAuthorizedPolicyConfig('all', EDIT_PERMISSION),
-    ),
-  ],
+  () => createBasicTablePolicies('route_external_resource_27crags'),
 ).enableRLS()
 export type RouteExternalResource27crags = InferSelectModel<typeof routeExternalResource27crags>
 export type InsertRouteExternalResource27crags = InferInsertModel<typeof routeExternalResource27crags>
@@ -411,16 +346,7 @@ export const routeExternalResourceTheCrag = table(
 
     externalResourcesFk: integer('external_resources_fk').notNull(),
   },
-  () => [
-    policy(
-      `${READ_PERMISSION} can read route_external_resource_the_crag`,
-      getAuthorizedPolicyConfig('select', READ_PERMISSION),
-    ),
-    policy(
-      `${EDIT_PERMISSION} can fully access route_external_resource_the_crag`,
-      getAuthorizedPolicyConfig('all', EDIT_PERMISSION),
-    ),
-  ],
+  () => createBasicTablePolicies('route_external_resource_the_crag'),
 ).enableRLS()
 export type RouteExternalResourceTheCrag = InferSelectModel<typeof routeExternalResourceTheCrag>
 export type InsertRouteExternalResourceTheCrag = InferInsertModel<typeof routeExternalResourceTheCrag>
@@ -443,10 +369,7 @@ export const firstAscents = table(
     routeFk: integer('route_fk').notNull(),
     climberFk: integer('climber_fk'),
   },
-  () => [
-    policy(`${READ_PERMISSION} can read first_ascents`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access first_ascents`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  () => createBasicTablePolicies('first_ascents'),
 ).enableRLS()
 
 export type FirstAscent = InferSelectModel<typeof firstAscents>
@@ -457,6 +380,7 @@ export const firstAscentsRelations = relations(firstAscents, ({ one }) => ({
   route: one(routes, { fields: [firstAscents.routeFk], references: [routes.id] }),
 }))
 
+export const ascentTypeEnum: ['flash', 'send', 'repeat', 'attempt'] = ['flash', 'send', 'repeat', 'attempt']
 export const ascents = table(
   'ascents',
   {
@@ -467,7 +391,7 @@ export const ascents = table(
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
     notes: text('notes'),
-    type: text('type', { enum: ['flash', 'send', 'repeat', 'attempt'] }).notNull(),
+    type: text('type', { enum: ascentTypeEnum }).notNull(),
 
     gradeFk: integer('grade_fk'),
     routeFk: integer('route_fk').notNull(),
@@ -596,10 +520,7 @@ export const topos = table(
     blockFk: integer('block_fk'),
     fileFk: integer('file_fk'),
   },
-  () => [
-    policy(`${READ_PERMISSION} can read topos`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access topos`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  () => createBasicTablePolicies('topos'),
 ).enableRLS()
 export type Topo = InferSelectModel<typeof topos>
 export type InsertTopo = InferInsertModel<typeof topos>
@@ -611,21 +532,19 @@ export const toposRelations = relations(topos, ({ one, many }) => ({
   routes: many(topoRoutes),
 }))
 
+export const topoRouteTopTypeEnum: ['top', 'topout'] = ['top', 'topout']
 export const topoRoutes = table(
   'topo_routes',
   {
     id: baseFields.id,
 
-    topType: text('top_type', { enum: ['top', 'topout'] }).notNull(),
+    topType: text('top_type', { enum: topoRouteTopTypeEnum }).notNull(),
     path: text('path'),
 
     routeFk: integer('route_fk'),
     topoFk: integer('topo_fk'),
   },
-  () => [
-    policy(`${READ_PERMISSION} can read topo_routes`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access topo_routes`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  () => createBasicTablePolicies('topo_routes'),
 ).enableRLS()
 export type TopoRoute = InferSelectModel<typeof topoRoutes>
 export type InsertTopoRoute = InferInsertModel<typeof topoRoutes>
@@ -640,10 +559,7 @@ export const tags = table(
   {
     id: text('id').primaryKey(),
   },
-  () => [
-    policy(`${READ_PERMISSION} can read tags`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access tags`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  () => createBasicTablePolicies('tags'),
 ).enableRLS()
 export type Tag = InferSelectModel<typeof tags>
 export type InsertTag = InferInsertModel<typeof tags>
@@ -662,11 +578,7 @@ export const routesToTags = table(
       .notNull()
       .references(() => tags.id),
   },
-  (t) => [
-    primaryKey({ columns: [t.routeFk, t.tagFk] }),
-    policy(`${READ_PERMISSION} can read routes_to_tags`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access routes_to_tags`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  (t) => [primaryKey({ columns: [t.routeFk, t.tagFk] }), ...createBasicTablePolicies('routes_to_tags')],
 ).enableRLS()
 
 export const routesToTagsRelations = relations(routesToTags, ({ one }) => ({
@@ -685,10 +597,7 @@ export const geolocations = table(
     areaFk: integer('area_fk'),
     blockFk: integer('block_fk'),
   },
-  () => [
-    policy(`${READ_PERMISSION} can read geolocations`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
-    policy(`${EDIT_PERMISSION} can fully access geolocations`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
-  ],
+  () => createBasicTablePolicies('geolocations'),
 ).enableRLS()
 export type Geolocation = InferSelectModel<typeof geolocations>
 export type InsertGeolocation = InferInsertModel<typeof geolocations>
