@@ -1,7 +1,6 @@
 import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$env/static/private'
-import { convertException } from '$lib/errors'
 import type { File } from '$lib/db/schema'
-import type { Session } from '@supabase/supabase-js'
+import { convertException } from '$lib/errors'
 import { error } from '@sveltejs/kit'
 import { createClient, type FileStat, type ResponseDataDetailed, type SearchResult, type WebDAVClient } from 'webdav'
 import type { FileDTO } from '.'
@@ -9,12 +8,11 @@ import type { FileDTO } from '.'
 /**
  * Creates a WebDAV client for Nextcloud using the provided session and path.
  *
- * @param {Session | null | undefined} session - The session object containing user information and access token.
  * @param {string} [path='/remote.php/dav/files'] - The path to the WebDAV endpoint.
  * @returns {WebDAVClient} - The WebDAV client configured for Nextcloud.
  * @throws {Error} - Throws an error if the session is invalid or missing required information.
  */
-export const getNextcloud = (session: Session | null | undefined, path = '/remote.php/dav/files'): WebDAVClient => {
+export const getNextcloud = (path = '/remote.php/dav/files'): WebDAVClient => {
   return createClient(NEXTCLOUD_URL + path, {
     username: NEXTCLOUD_USER_NAME,
     password: NEXTCLOUD_USER_PASSWORD,
@@ -24,16 +22,15 @@ export const getNextcloud = (session: Session | null | undefined, path = '/remot
 /**
  * Searches for a file in Nextcloud using the provided session and file information.
  *
- * @param {Session | null | undefined} session - The session object containing user information and access token.
  * @param {File} file - The file object containing the path to search for.
  * @returns {Promise<FileStat>} - A promise that resolves to the file statistics if found.
  * @throws {Error} - Throws an error if the session is invalid, the file is not found, or there is an issue with the search request.
  */
-export const searchNextcloudFile = async (session: Session | null | undefined, file: File): Promise<FileStat> => {
+export const searchNextcloudFile = async (file: File): Promise<FileStat> => {
   const basename = file.path.split('/').at(-1)
 
   try {
-    const searchResult = await getNextcloud(session, '/remote.php/dav').search('/', {
+    const searchResult = await getNextcloud('/remote.php/dav').search('/', {
       details: true,
       data: `<?xml version="1.0" encoding="UTF-8"?>
 <d:searchrequest xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
@@ -91,14 +88,13 @@ export const searchNextcloudFile = async (session: Session | null | undefined, f
  * Loads file information from Nextcloud for a given list of files.
  *
  * @param {File[]} files - The list of files to load information for.
- * @param {Session | null | undefined} session - The session object for authentication, can be null or undefined.
  * @returns {Promise<FileDTO[]>} A promise that resolves to an array of FileDTO objects containing file information.
  */
-export const loadFiles = (files: File[], session: Session | null | undefined): Promise<FileDTO[]> => {
+export const loadFiles = (files: File[]): Promise<FileDTO[]> => {
   return Promise.all(
     files.map(async (file) => {
       try {
-        const stat = await searchNextcloudFile(session, file)
+        const stat = await searchNextcloudFile(file)
         return { ...file, error: undefined, stat }
       } catch (exception) {
         return { ...file, error: convertException(exception), stat: undefined }

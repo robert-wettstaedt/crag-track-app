@@ -1,3 +1,4 @@
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
@@ -8,7 +9,7 @@ import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  if (!locals.userPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
     error(404)
   }
 
@@ -80,7 +81,7 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   updateFirstAscent: async ({ locals, params, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
@@ -185,7 +186,7 @@ export const actions = {
   },
 
   removeFirstAscent: async ({ locals, params }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 

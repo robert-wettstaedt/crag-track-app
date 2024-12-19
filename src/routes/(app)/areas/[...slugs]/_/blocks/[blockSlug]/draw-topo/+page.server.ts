@@ -1,3 +1,4 @@
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
@@ -14,7 +15,7 @@ import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  if (!locals.userPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
     error(404)
   }
 
@@ -51,7 +52,7 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
-  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, locals.session)))
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
 
   const enrichedRoutes = block.routes.map((route) => {
     return {
@@ -68,7 +69,7 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   saveRoute: async ({ locals, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
@@ -98,7 +99,7 @@ export const actions = {
   },
 
   addRoute: async ({ locals, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
@@ -121,7 +122,7 @@ export const actions = {
   },
 
   removeRoute: async ({ locals, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
@@ -146,7 +147,7 @@ export const actions = {
   },
 
   removeTopo: async ({ locals, params, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 

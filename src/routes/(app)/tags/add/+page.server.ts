@@ -1,3 +1,4 @@
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { tags } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
@@ -7,14 +8,14 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types.js'
 
 export const load = (({ locals }) => {
-  if (!locals.userPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
     error(404)
   }
 }) satisfies PageServerLoad
 
 export const actions = {
   default: async ({ locals, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 

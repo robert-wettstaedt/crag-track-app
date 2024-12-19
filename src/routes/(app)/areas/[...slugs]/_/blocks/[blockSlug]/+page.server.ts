@@ -63,8 +63,8 @@ export const load = (async ({ locals, params, parent }) => {
     }),
   )
 
-  const blockFiles = await loadFiles(block.files, locals.session)
-  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, locals.session)))
+  const blockFiles = await loadFiles(block.files)
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
 
   // Return the block, enriched geolocation blocks, and processed files
   return {

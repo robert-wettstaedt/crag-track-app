@@ -1,14 +1,15 @@
-import { convertException } from '$lib/errors'
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, geolocations } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
+import { convertException } from '$lib/errors'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  if (!locals.userPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
     error(404)
   }
 
@@ -60,7 +61,7 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   updateLocation: async ({ locals, params, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
@@ -139,7 +140,7 @@ export const actions = {
   },
 
   removeGeolocation: async ({ locals, params }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 

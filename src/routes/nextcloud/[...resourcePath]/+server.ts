@@ -17,7 +17,7 @@ export async function GET({ locals, request, params }) {
   }, {} as Headers)
 
   // Fetch file contents from Nextcloud with detailed response
-  const result = await getNextcloud(locals.session)?.getFileContents(`${NEXTCLOUD_USER_NAME}/${params.resourcePath}`, {
+  const result = await getNextcloud()?.getFileContents(`${NEXTCLOUD_USER_NAME}/${params.resourcePath}`, {
     details: true,
     headers,
     signal: request.signal,

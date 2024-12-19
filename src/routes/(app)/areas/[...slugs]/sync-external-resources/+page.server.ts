@@ -1,3 +1,4 @@
+import { EDIT_PERMISSION } from '$lib/auth'
 import { getBlocksOfArea } from '$lib/blocks.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { routeExternalResources } from '$lib/db/schema'
@@ -6,7 +7,7 @@ import { inArray } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
-  if (!locals.userPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
     error(404)
   }
 

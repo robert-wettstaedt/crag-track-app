@@ -1,3 +1,4 @@
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import {
   ascents,
@@ -22,7 +23,7 @@ import { and, eq, inArray } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  if (!locals.userPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
     error(404)
   }
 
@@ -71,7 +72,7 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   updateRoute: async ({ locals, params, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
@@ -173,7 +174,7 @@ export const actions = {
   },
 
   removeRoute: async ({ locals, params }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 

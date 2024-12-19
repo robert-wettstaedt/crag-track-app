@@ -1,7 +1,8 @@
 import { NEXTCLOUD_USER_NAME } from '$env/static/private'
-import { convertException } from '$lib/errors'
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, files } from '$lib/db/schema'
+import { convertException } from '$lib/errors'
 import { convertAreaSlug } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -10,7 +11,7 @@ import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
-  if (!locals.userPermissions?.includes('data.edit')) {
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
     error(404)
   }
 
@@ -45,7 +46,7 @@ export const load = (async ({ locals, parent }) => {
 
 export const actions = {
   default: async ({ locals, params, request }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
@@ -67,7 +68,7 @@ export const actions = {
     let stat: FileStat | undefined = undefined
     try {
       // Get the file statistics from Nextcloud
-      stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
+      stat = (await getNextcloud()?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
     } catch (exception) {
       // If an error occurs, return a 400 error with the exception details
       return fail(400, { ...values, error: convertException(exception) })

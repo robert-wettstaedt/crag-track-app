@@ -15,6 +15,10 @@ export const convertMarkdownToHtml = async (
   db?: PostgresJsDatabase<typeof schema>,
   encloseReferences?: EncloseOptions,
 ): Promise<string> => {
+  if (markdown == null) {
+    return ''
+  }
+
   const enrichedMarkdown = await enrichMarkdown(markdown, db)
 
   const result = await unified()

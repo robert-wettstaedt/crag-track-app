@@ -19,7 +19,7 @@ export async function GET({ locals, request, params, url }) {
     { Authorization: `Basic ${btoa(`${NEXTCLOUD_USER_NAME}:${NEXTCLOUD_USER_PASSWORD}`)}` } as Headers,
   )
 
-  const file = await searchNextcloudFile(locals.session, {
+  const file = await searchNextcloudFile({
     areaFk: null,
     ascentFk: null,
     blockFk: null,

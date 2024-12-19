@@ -6,6 +6,8 @@
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
+  import { EDIT_PERMISSION } from '$lib/auth'
+  import AppBar from '$lib/components/AppBar'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
@@ -15,7 +17,6 @@
   import { Accordion, ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
   import { run } from 'svelte/legacy'
-  import AppBar from '$lib/components/AppBar'
 
   let { data } = $props()
   let basePath = $derived(
@@ -94,7 +95,7 @@
               {data.route.firstAscent?.year ?? ''}
             </span>
 
-            {#if data.userPermissions?.includes('data.edit')}
+            {#if data.userPermissions?.includes(EDIT_PERMISSION)}
               <a class="btn btn-sm preset-outlined-primary-500 ms-4" href={`${basePath}/edit-first-ascent`}>
                 <i class="fa-solid fa-pen"></i>Edit FA
               </a>
@@ -171,7 +172,7 @@
       </a>
     {/if}
 
-    {#if data.userPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <form
         method="POST"
         action="?/syncExternalResources"
@@ -241,7 +242,7 @@
           {#if file.stat != null}
             <FileViewer
               {file}
-              readOnly={!data.userPermissions?.includes('data.edit')}
+              readOnly={!data.userPermissions?.includes(EDIT_PERMISSION)}
               stat={file.stat}
               on:delete={() => {
                 files = files.filter((_file) => file.id !== _file.id)
@@ -272,7 +273,7 @@
       </div>
     {/if}
 
-    {#if data.userPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/add-file`}>Add file</a>
       </div>
@@ -295,7 +296,7 @@
               ticked this route on {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
             </span>
 
-            {#if data.session?.user?.id === ascent.author.authUserFk || data.userPermissions?.includes('data.edit')}
+            {#if data.session?.user?.id === ascent.author.authUserFk || data.userPermissions?.includes(EDIT_PERMISSION)}
               <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/ascents/${ascent.id}/edit`}>
                 <i class="fa-solid fa-pen"></i>Edit ascent
               </a>
@@ -338,7 +339,7 @@
                         {#if file.stat != null}
                           <FileViewer
                             {file}
-                            readOnly={!data.userPermissions?.includes('data.edit') &&
+                            readOnly={!data.userPermissions?.includes(EDIT_PERMISSION) &&
                               ascent.author.authUserFk !== data.authUser?.id}
                             stat={file.stat}
                             on:delete={() => {

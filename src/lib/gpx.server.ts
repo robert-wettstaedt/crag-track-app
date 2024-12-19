@@ -1,9 +1,11 @@
-import { PUBLIC_TOPO_EMAIL } from '$env/static/public'
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
+import { PUBLIC_APPLICATION_NAME, PUBLIC_TOPO_EMAIL } from '$env/static/public'
 import { getToposOfArea } from '$lib/blocks.server'
 import Labels from '$lib/components/TopoViewer/components/Labels'
 import Route from '$lib/components/TopoViewer/components/Route'
 import { config } from '$lib/config'
 import * as schema from '$lib/db/schema'
+import type { InferResultType } from '$lib/db/types'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { getNextcloud, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { type TopoRouteDTO } from '$lib/topo'
@@ -31,7 +33,7 @@ export const getAreaGPX = async (areaId: number, db: PostgresJsDatabase<typeof s
     error(404)
   }
 
-  const { area, blocks } = await getToposOfArea(areaId, db, session)
+  const { area, blocks } = await getToposOfArea(areaId, db)
 
   const parkingLocations = [
     ...area.parkingLocations,
@@ -55,7 +57,7 @@ export const getAreaGPX = async (areaId: number, db: PostgresJsDatabase<typeof s
   const xml = `<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
   <gpx
     version="1.1"
-    creator="OsmAnd~ 4.7.10"
+    creator="${PUBLIC_APPLICATION_NAME}"
     xmlns="http://www.topografix.com/GPX/1/1"
     xmlns:osmand="https://osmand.net"
     xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
@@ -131,7 +133,7 @@ const loadBlockFiles = async (
   session: Session,
 ) => {
   async function getTopoFile(stat: FileStat) {
-    const content = await nextcloud?.getFileContents(stat.filename, { details: true })
+    const content = await nextcloud?.getFileContents(`${NEXTCLOUD_USER_NAME}/${stat.filename}`, { details: true })
     const { data } = content as ResponseDataDetailed<BufferLike>
 
     const image = sharp(data)
@@ -154,7 +156,7 @@ const loadBlockFiles = async (
     } satisfies TopoFile
   }
 
-  const nextcloud = getNextcloud(session)
+  const nextcloud = getNextcloud()
 
   const allRoutes = blocks.flatMap((block) => block.routes)
   const routeFiles = await db.query.files.findMany({
@@ -168,7 +170,7 @@ const loadBlockFiles = async (
     blocks.map(async (block) => {
       const topos = await Promise.all(
         block.topos.map(async (topo) => {
-          const stat = await searchNextcloudFile(session, topo.file)
+          const stat = await searchNextcloudFile(topo.file)
           const topoFile = await getTopoFile(stat)
           return { ...topo, file: topoFile }
         }),
@@ -178,7 +180,7 @@ const loadBlockFiles = async (
         block.routes.map(async (route) => {
           const files = routeFiles.filter((file) => file.routeFk === route.id)
 
-          const stats = await Promise.all(files.flatMap((file) => searchNextcloudFile(session, file)))
+          const stats = await Promise.all(files.flatMap((file) => searchNextcloudFile(file)))
           const topoFiles = await Promise.all(
             stats.filter((stat) => stat.mime?.includes('image')).map((stat) => getTopoFile(stat)),
           )

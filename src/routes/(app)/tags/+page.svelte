@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { EDIT_PERMISSION } from '$lib/auth'
   import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
@@ -16,7 +17,7 @@
   {/snippet}
 
   {#snippet trail()}
-    {#if data.userPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <a class="btn btn-sm preset-filled-primary-500" href="/tags/add">
         <i class="fa-solid fa-plus"></i> Add tag
       </a>
@@ -39,7 +40,7 @@
         <tr>
           <th class="w-full">Name</th>
 
-          {#if data.userPermissions?.includes('data.edit')}
+          {#if data.userPermissions?.includes(EDIT_PERMISSION)}
             <th>Actions</th>
           {/if}
         </tr>
@@ -50,7 +51,7 @@
           <tr>
             <td>{tag.id}</td>
 
-            {#if data.userPermissions?.includes('data.edit')}
+            {#if data.userPermissions?.includes(EDIT_PERMISSION)}
               <td>
                 <div class="flex items-center gap-2">
                   <a href="/tags/{tag.id}/edit" class="btn btn-sm preset-filled-primary-500">Edit</a>

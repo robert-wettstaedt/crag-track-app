@@ -30,8 +30,7 @@ const QueryResponse8a = z.object({
     }),
   ),
 })
-
-type QueryResponse8a = z.infer<typeof QueryResponse8a>
+export type QueryResponse8a = z.infer<typeof QueryResponse8a>
 
 export default {
   postUrl: 'https://www.8a.nu/api/ascents',

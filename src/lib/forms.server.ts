@@ -17,6 +17,16 @@ function getSchemaShape<Output = unknown, Def extends z.ZodTypeDef = z.ZodObject
   }
 }
 
+function getItemDef(shape: z.ZodRawShape, itemName: string): z.ZodFirstPartyTypeKind {
+  const def = shape[itemName]._def
+
+  if ((def as z.ZodOptionalDef).typeName === z.ZodFirstPartyTypeKind.ZodOptional) {
+    return (def as z.ZodOptionalDef).innerType._def.typeName
+  }
+
+  return def.typeName
+}
+
 export async function validate<Output = unknown, Def extends z.ZodTypeDef = z.ZodObjectDef, Input = Output>(
   schema: z.ZodType<Output, Def, Input>,
   data: FormData,
@@ -29,7 +39,7 @@ export async function validate<Output = unknown, Def extends z.ZodTypeDef = z.Zo
         return obj
       }
 
-      const { typeName } = shape[item[0]]._def
+      const typeName = getItemDef(shape, item[0])
 
       const value =
         typeName === z.ZodFirstPartyTypeKind.ZodArray ? data.getAll(item[0]).filter(Boolean) : data.get(item[0])
@@ -40,11 +50,10 @@ export async function validate<Output = unknown, Def extends z.ZodTypeDef = z.Zo
 
       if (typeName === z.ZodFirstPartyTypeKind.ZodNumber) {
         const number = Number(value)
-        if (Number.isNaN(number)) {
-          return obj
-        }
 
-        return { ...obj, [item[0]]: number }
+        if (!Number.isNaN(number)) {
+          return { ...obj, [item[0]]: number }
+        }
       }
 
       return { ...obj, [item[0]]: value }
@@ -64,8 +73,8 @@ export type ActionFailure<T> = T & { error: string }
 
 export type AreaActionValues = z.infer<typeof areaActionSchema>
 export const areaActionSchema = z.object({
-  description: z.string().nullable(),
-  name: z.string(),
+  description: z.string().nullable().optional(),
+  name: z.string().trim(),
   type: z.enum(areaTypeEnum).default('area'),
 })
 
@@ -75,24 +84,24 @@ export const blockActionSchema = z.object({
 })
 
 export const routeActionSchema = z.object({
-  description: z.string().nullable(),
+  description: z.string().nullable().optional(),
   gradeFk: z.number(),
-  name: z.string(),
-  rating: z.number().optional(),
+  name: z.string().trim(),
+  rating: z.number().min(1).max(3).optional(),
   tags: z.array(z.string()).optional(),
 })
 export type RouteActionValues = z.infer<typeof routeActionSchema>
 
 export const firstAscentActionSchema = z
   .object({
-    climberName: z.string().optional(),
-    year: z.number().optional(),
+    climberName: z.string().trim().optional(),
+    year: z.number().min(1950).max(new Date().getFullYear()).optional(),
   })
   .refine((x) => x.climberName != null || x.year != null, { message: 'Either climberName or year must be set' })
 export type FirstAscentActionValues = z.infer<typeof firstAscentActionSchema>
 
 export const ascentActionSchema = z.object({
-  dateTime: z.string(),
+  dateTime: z.string().datetime(),
   filePaths: z.array(z.string()).optional(),
   gradeFk: z.number().optional(),
   notes: z.string().optional(),
@@ -121,8 +130,8 @@ export const tagActionSchema = z.object({
 export type TagActionValues = z.infer<typeof tagActionSchema>
 
 export const userExternalResourceActionSchema = z.object({
-  cookie8a: z.string().optional(),
-  cookie27crags: z.string().optional(),
-  cookieTheCrag: z.string().optional(),
+  cookie8a: z.string().trim().optional(),
+  cookie27crags: z.string().trim().optional(),
+  cookieTheCrag: z.string().trim().optional(),
 })
 export type UserExternalResourceActionValues = z.infer<typeof userExternalResourceActionSchema>

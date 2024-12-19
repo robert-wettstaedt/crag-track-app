@@ -1,3 +1,4 @@
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { files, users, type User } from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
@@ -45,7 +46,7 @@ export async function DELETE({ locals, params }) {
   // Determine the author ID from the file's related entities
   const authorId = file?.area?.createdBy ?? file?.ascent?.createdBy ?? file?.block?.createdBy ?? file?.route?.createdBy
 
-  if (!locals.userPermissions?.includes('data.edit') && authorId !== user?.id) {
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION) && authorId !== user?.id) {
     error(404)
   }
 

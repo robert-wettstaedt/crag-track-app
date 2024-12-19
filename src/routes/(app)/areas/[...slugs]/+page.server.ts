@@ -57,7 +57,7 @@ export const load = (async ({ locals, parent }) => {
     area.files.map(async (file) => {
       try {
         // Search for the file in Nextcloud
-        const stat = await searchNextcloudFile(locals.session, file)
+        const stat = await searchNextcloudFile(file)
 
         // Return the file with its stat information
         return { ...file, error: undefined, stat }

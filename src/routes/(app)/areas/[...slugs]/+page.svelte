@@ -1,10 +1,11 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { convertException } from '$lib/errors'
+  import { EDIT_PERMISSION } from '$lib/auth.js'
   import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
+  import { convertException } from '$lib/errors'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
@@ -13,9 +14,11 @@
   let files = $state(data.files)
 
   let loadingDownload = $state(false)
+  let downloadError: string | null = $state(null)
 
   const onDownloadGpx = async () => {
     loadingDownload = true
+    downloadError = null
 
     try {
       const res = await fetch(`${basePath}/gpx`)
@@ -34,7 +37,7 @@
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (exception) {
-      const error = convertException(exception)
+      downloadError = convertException(exception)
     }
 
     loadingDownload = false
@@ -44,6 +47,12 @@
 <svelte:head>
   <title>{data.area.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
+
+{#if downloadError}
+  <aside class="card preset-tonal-warning my-8 p-2 md:p-4 whitespace-pre-line">
+    <p>{downloadError}</p>
+  </aside>
+{/if}
 
 <AppBar>
   {#snippet lead()}
@@ -111,7 +120,7 @@
       Export GPX
     </button>
 
-    {#if data.userPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       {#if data.area.type === 'crag'}
         <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-parking-location`}>
           <i class="fa-solid fa-parking"></i>Add parking location
@@ -170,7 +179,7 @@
               {#if file.stat != null}
                 <FileViewer
                   {file}
-                  readOnly={!data.userPermissions?.includes('data.edit') &&
+                  readOnly={!data.userPermissions?.includes(EDIT_PERMISSION) &&
                     data.area.author.authUserFk !== data.authUser?.id}
                   stat={file.stat}
                   on:delete={() => {
@@ -191,7 +200,7 @@
       {/if}
     {/key}
 
-    {#if data.userPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
       </div>
@@ -222,7 +231,7 @@
         </div>
       {/if}
 
-      {#if data.userPermissions?.includes('data.edit') && data.canAddArea}
+      {#if data.userPermissions?.includes(EDIT_PERMISSION) && data.canAddArea}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/add`}>Add area</a>
         </div>
@@ -250,7 +259,7 @@
       </div>
     {/if}
 
-    {#if data.userPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <div class="flex justify-center mt-4">
         <a class="btn preset-filled-primary-500" href={`${basePath}/_/blocks/add`}>Add block</a>
       </div>

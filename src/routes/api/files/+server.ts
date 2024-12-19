@@ -10,7 +10,7 @@ export async function GET({ locals, url }) {
 
   const dir = url.searchParams.get('dir') ?? '/'
 
-  const nextcloud = getNextcloud(locals.session)
+  const nextcloud = getNextcloud()
 
   try {
     const stats = await nextcloud.getDirectoryContents(NEXTCLOUD_USER_NAME + dir)

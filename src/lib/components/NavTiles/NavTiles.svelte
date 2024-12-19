@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { EDIT_PERMISSION } from '$lib/auth'
   import { Navigation } from '@skeletonlabs/skeleton-svelte'
 
   interface Props {
@@ -25,7 +26,7 @@
   <i class="fa-solid fa-search"></i>
 </Navigation.Tile>
 
-{#if userPermissions?.includes('data.edit')}
+{#if userPermissions?.includes(EDIT_PERMISSION)}
   <Navigation.Tile href="/tags" label="Tags" selected={$page.url.pathname.startsWith('/tags')}>
     <i class="fa-solid fa-tags"></i>
   </Navigation.Tile>

@@ -2,7 +2,6 @@ import type { db } from '$lib/db/db.server'
 import type { InferResultType, NestedArea, NestedBlock, NestedRoute } from '$lib/db/types'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { convertPathToPoints, type TopoDTO, type TopoRouteDTO } from '$lib/topo'
-import type { Session } from '@supabase/supabase-js'
 
 /**
  * The maximum depth for nesting areas.
@@ -103,15 +102,12 @@ export const enrichRoute = (route: NestedRoute): EnrichedRoute => {
   }
 }
 
-export const enrichTopo = async (
-  topo: InferResultType<'topos', { file: true; routes: true }>,
-  session: Session | null | undefined,
-): Promise<TopoDTO> => {
+export const enrichTopo = async (topo: InferResultType<'topos', { file: true; routes: true }>): Promise<TopoDTO> => {
   if (topo.file == null) {
     throw new Error('Topo file is required')
   }
 
-  const [file] = await loadFiles([topo.file], session)
+  const [file] = await loadFiles([topo.file])
 
   const routes = topo.routes.map(({ path, ...route }): TopoRouteDTO => {
     return { ...route, points: convertPathToPoints(path ?? '') }

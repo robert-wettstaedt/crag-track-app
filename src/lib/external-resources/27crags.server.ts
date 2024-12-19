@@ -11,7 +11,7 @@ import http from 'https'
 import { z } from 'zod'
 import type { ExternalResourceHandler } from './index.server'
 
-export const QueryResponse27crags = z.object({
+const QueryResponse27crags = z.object({
   search_keys: z.array(
     z.object({
       country_name: z.union([z.string(), z.null()]),
@@ -27,6 +27,7 @@ export const QueryResponse27crags = z.object({
     }),
   ),
 })
+export type QueryResponse27crags = z.infer<typeof QueryResponse27crags>
 
 export default {
   query: async (query, blockId, cragName, sectorName) => {

@@ -112,9 +112,7 @@ export const actions = {
 
               try {
                 // Check the file status in Nextcloud
-                const stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as
-                  | FileStat
-                  | undefined
+                const stat = (await getNextcloud()?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
 
                 if (stat == null) {
                   throw `Unable to read file: "${filePath}"`

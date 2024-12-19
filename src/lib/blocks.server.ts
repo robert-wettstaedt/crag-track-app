@@ -1,7 +1,6 @@
 import * as schema from '$lib/db/schema'
 import { areas, blocks } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
-import type { Session } from '@auth/sveltekit'
 import { error } from '@sveltejs/kit'
 import { eq, isNotNull } from 'drizzle-orm'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
@@ -80,11 +79,7 @@ export const getBlocksOfArea = async (areaId: number, db: PostgresJsDatabase<typ
   return { area, blocks: enrichedBlocks }
 }
 
-export const getToposOfArea = async (
-  areaId: number,
-  db: PostgresJsDatabase<typeof schema>,
-  session?: Session | null,
-) => {
+export const getToposOfArea = async (areaId: number, db: PostgresJsDatabase<typeof schema>) => {
   const blocksQuery: {
     area: Parameters<typeof db.query.areas.findMany>[0]
     geolocation: true
@@ -176,7 +171,7 @@ export const getToposOfArea = async (
 
   const enrichedBlocks = await Promise.all(
     allBlocks.map(async (block) => {
-      const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo, session)))
+      const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
       const enrichedBlock = enrichBlock(block)
 
       return {

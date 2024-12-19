@@ -1,4 +1,5 @@
 import { NEXTCLOUD_USER_NAME } from '$env/static/private'
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, files, type File } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
@@ -30,7 +31,7 @@ export const load = (async ({ locals, params }) => {
 
   if (
     ascent == null ||
-    (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes('data.edit'))
+    (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes(EDIT_PERMISSION))
   ) {
     error(404)
   }
@@ -68,7 +69,7 @@ export const actions = {
 
     if (
       ascent == null ||
-      (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes('data.edit'))
+      (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes(EDIT_PERMISSION))
     ) {
       return fail(404, { ...values, error: `Ascent not found ${params.ascentId}` })
     }
@@ -83,9 +84,7 @@ export const actions = {
             .filter((filePath) => filePath.trim().length > 0)
             .map(async (filePath) => {
               hasFiles = true
-              const stat = (await getNextcloud(locals.session)?.stat(NEXTCLOUD_USER_NAME + filePath)) as
-                | FileStat
-                | undefined
+              const stat = (await getNextcloud()?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
 
               if (stat == null) {
                 throw `Unable to read file: "${filePath}"`
@@ -155,7 +154,7 @@ export const actions = {
 
     if (
       ascent == null ||
-      (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes('data.edit'))
+      (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes(EDIT_PERMISSION))
     ) {
       return fail(404, { error: `Ascent not found ${params.ascentId}` })
     }

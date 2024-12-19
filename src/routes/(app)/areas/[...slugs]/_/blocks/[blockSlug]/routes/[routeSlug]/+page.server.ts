@@ -1,3 +1,4 @@
+import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
@@ -73,9 +74,9 @@ export const load = (async ({ locals, params, parent }) => {
   }
 
   // Fetch and enrich files associated with the route
-  const routeFiles = await loadFiles(route.files, locals.session)
+  const routeFiles = await loadFiles(route.files)
 
-  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, locals.session)))
+  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
 
   // Enrich ascents with additional data and process notes
   const enrichedAscents = await Promise.all(
@@ -83,10 +84,7 @@ export const load = (async ({ locals, params, parent }) => {
       const notes = await db(async (tx) => (ascent.notes == null ? null : convertMarkdownToHtml(ascent.notes, tx)))
 
       // Fetch and enrich files associated with the ascent
-      const files = await loadFiles(
-        ascent.files.toSorted((a, b) => a.path.localeCompare(b.path)),
-        locals.session,
-      )
+      const files = await loadFiles(ascent.files.toSorted((a, b) => a.path.localeCompare(b.path)))
 
       return {
         ...ascent,
@@ -113,7 +111,7 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   syncExternalResources: async ({ locals, params }) => {
-    if (!locals.userPermissions?.includes('data.edit')) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { EDIT_PERMISSION } from '$lib/auth.js'
   import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
@@ -59,7 +60,7 @@
   {/snippet}
 
   {#snippet actions()}
-    {#if data.userPermissions?.includes('data.edit')}
+    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen"></i>Edit block
       </a>
@@ -108,7 +109,7 @@
                 {#if file.stat != null}
                   <FileViewer
                     {file}
-                    readOnly={!data.userPermissions?.includes('data.edit') &&
+                    readOnly={!data.userPermissions?.includes(EDIT_PERMISSION) &&
                       data.block.author.authUserFk !== data.authUser?.id}
                     stat={file.stat}
                     on:delete={() => {
@@ -146,7 +147,7 @@
         {/if}
       {/key}
 
-      {#if data.userPermissions?.includes('data.edit')}
+      {#if data.userPermissions?.includes(EDIT_PERMISSION)}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
         </div>
@@ -164,7 +165,7 @@
         <div class="relative">
           <TopoViewer topos={data.topos} />
 
-          {#if data.userPermissions?.includes('data.edit')}
+          {#if data.userPermissions?.includes(EDIT_PERMISSION)}
             <a class="btn btn-sm preset-tonal-surface absolute bottom-2 right-2 z-30" href={`${basePath}/draw-topo`}>
               <i class="fa-solid fa-pen"></i>Edit topo
             </a>
@@ -205,7 +206,7 @@
         </nav>
       {/if}
 
-      {#if data.userPermissions?.includes('data.edit')}
+      {#if data.userPermissions?.includes(EDIT_PERMISSION)}
         <div class="flex justify-center mt-4">
           <a class="btn preset-filled-primary-500" href={`${basePath}/routes/add`}>Add route</a>
         </div>

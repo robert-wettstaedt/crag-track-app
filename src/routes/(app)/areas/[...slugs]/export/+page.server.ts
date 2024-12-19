@@ -108,7 +108,7 @@ export const load = (async ({ locals, params }) => {
 
   const enrichedBlocks = await Promise.all(
     allBlocks.map(async (block) => {
-      const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo, locals.session)))
+      const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
       const enrichedBlock = enrichBlock(block)
 
       const enrichedRoutes = await Promise.all(
