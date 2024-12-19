@@ -1,7 +1,7 @@
-import { convertException } from '$lib'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, blocks, generateSlug, users } from '$lib/db/schema'
 import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
+import { convertException } from '$lib/errors'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'

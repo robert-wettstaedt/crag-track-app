@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { convertException } from '$lib'
+  import { convertException } from '$lib/errors'
   import { onMount } from 'svelte'
   import { run } from 'svelte/legacy'
   import type { FileStat } from 'webdav'

@@ -1,7 +1,7 @@
-import { convertException } from '$lib'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
 import { validateFirstAscentForm, type FirstAscentActionFailure, type FirstAscentActionValues } from '$lib/forms.server'
+import { convertException } from '$lib/errors'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'

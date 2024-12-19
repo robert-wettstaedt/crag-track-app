@@ -1,18 +1,27 @@
-import { DATABASE_URL } from '$env/static/private'
 import { decodeToken, type SupabaseToken } from '$lib/auth'
+import { config } from '$lib/config'
+import * as schema from '$lib/db/schema'
+import { dbLogger } from '$lib/logging'
 import KeyvPostgres from '@keyv/postgres'
 import { type SupabaseClient } from '@supabase/supabase-js'
 import { sql } from 'drizzle-orm'
 import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import Keyv from 'keyv'
 import Database from 'postgres'
-import * as schema from './schema'
 
-const postgres = Database(DATABASE_URL, { debug: true, prepare: false })
+const postgres = Database(config.database.url, {
+  debug: config.database.debug,
+  prepare: false,
+  max: config.database.maxPoolSize,
+  timeout: config.database.connectionTimeout,
+  onnotice: (notice) => dbLogger.info('Postgres notice', { notice }),
+  onparameter: (parameterStatus) => dbLogger.debug('Postgres parameter', { parameterStatus }),
+})
+
 export const db = drizzle(postgres, { schema })
 
-const keyvPostgres = new KeyvPostgres({ uri: DATABASE_URL, pool: false })
-export const keyv = new Keyv({ store: keyvPostgres, ttl: 1000 * 60 * 60 })
+const keyvPostgres = new KeyvPostgres({ uri: config.database.url, pool: false })
+export const keyv = new Keyv({ store: keyvPostgres, ttl: config.cache.ttl })
 
 export function createDrizzle<
   Database extends PostgresJsDatabase<typeof schema>,
@@ -24,6 +33,7 @@ export function createDrizzle<
         // Supabase exposes auth.uid() and auth.jwt()
         // https://supabase.com/docs/guides/database/postgres/row-level-security#helper-functions
         try {
+          dbLogger.debug('Starting transaction', { token: token.sub })
           await tx.execute(sql`
           -- auth.jwt()
           select set_config('request.jwt.claims', '${sql.raw(JSON.stringify(token))}', TRUE);
@@ -32,7 +42,12 @@ export function createDrizzle<
           -- set local role
           set local role ${sql.raw(token.role ?? 'anon')};
           `)
-          return await transaction(tx)
+          const result = await transaction(tx)
+          dbLogger.debug('Transaction completed', { token: token.sub })
+          return result
+        } catch (error) {
+          dbLogger.error('Transaction error', { error, token: token.sub })
+          throw error
         } finally {
           await tx.execute(sql`
             -- reset

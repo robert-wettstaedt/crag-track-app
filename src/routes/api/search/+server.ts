@@ -1,4 +1,4 @@
-import { convertException } from '$lib'
+import { convertException } from '$lib/errors'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { getUser } from '$lib/helper.server'
 import { searchResources } from '$lib/search.server'

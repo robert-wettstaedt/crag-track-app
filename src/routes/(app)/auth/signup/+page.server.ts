@@ -1,5 +1,5 @@
 import { RESEND_API_KEY, RESEND_RECIPIENT_EMAIL, RESEND_SENDER_EMAIL } from '$env/static/private'
-import { convertException } from '$lib'
+import { convertException } from '$lib/errors'
 import { db } from '$lib/db/db.server.js'
 import { users, userSettings } from '$lib/db/schema.js'
 import { fail } from '@sveltejs/kit'

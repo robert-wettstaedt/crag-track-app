@@ -1,7 +1,7 @@
-import { convertException } from '$lib'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { tags } from '$lib/db/schema'
 import { validateTagForm, type TagActionFailure, type TagActionValues } from '$lib/forms.server'
+import { convertException } from '$lib/errors'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types.js'

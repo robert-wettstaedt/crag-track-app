@@ -1,4 +1,3 @@
-import { convertException } from '$lib'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import {
   ascents,
@@ -15,6 +14,7 @@ import {
   topoRoutes,
 } from '$lib/db/schema'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
+import { convertException } from '$lib/errors'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'

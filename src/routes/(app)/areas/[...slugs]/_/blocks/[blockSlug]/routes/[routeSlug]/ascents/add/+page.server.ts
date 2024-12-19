@@ -1,7 +1,7 @@
 import { NEXTCLOUD_USER_NAME } from '$env/static/private'
-import { convertException } from '$lib'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, users, type Ascent, type File } from '$lib/db/schema'
+import { convertException } from '$lib/errors'
 import { checkExternalSessions, logExternalAscent } from '$lib/external-resources/index.server'
 import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'

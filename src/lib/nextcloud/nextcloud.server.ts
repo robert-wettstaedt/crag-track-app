@@ -1,5 +1,5 @@
 import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$env/static/private'
-import { convertException } from '$lib'
+import { convertException } from '$lib/errors'
 import type { File } from '$lib/db/schema'
 import type { Session } from '@supabase/supabase-js'
 import { error } from '@sveltejs/kit'

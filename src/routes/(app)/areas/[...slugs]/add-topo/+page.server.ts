@@ -1,5 +1,5 @@
 import { NEXTCLOUD_USER_NAME } from '$env/static/private'
-import { convertException } from '$lib'
+import { convertException } from '$lib/errors'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, files } from '$lib/db/schema'
 import { convertAreaSlug } from '$lib/helper.server'

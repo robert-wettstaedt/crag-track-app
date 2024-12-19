@@ -2,8 +2,8 @@ import { PUBLIC_TOPO_EMAIL } from '$env/static/public'
 import { getToposOfArea } from '$lib/blocks.server'
 import Labels from '$lib/components/TopoViewer/components/Labels'
 import Route from '$lib/components/TopoViewer/components/Route'
+import { config } from '$lib/config'
 import * as schema from '$lib/db/schema'
-import type { InferResultType } from '$lib/db/types'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { getNextcloud, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { type TopoRouteDTO } from '$lib/topo'
@@ -136,7 +136,7 @@ const loadBlockFiles = async (
 
     const image = sharp(data)
     const rawMetadata = await image.metadata()
-    const resized = await image.resize({ width: 350 }).toBuffer()
+    const resized = await image.resize({ width: config.files.resizing.thumbnail.width }).toBuffer()
     const resizedMetadata = await sharp(resized).metadata()
 
     if (resizedMetadata.width === undefined || rawMetadata.width === undefined) {

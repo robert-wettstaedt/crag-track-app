@@ -1,4 +1,4 @@
-import { convertException } from '$lib'
+import { convertException } from '$lib/errors'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, blocks } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'

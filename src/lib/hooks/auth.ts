@@ -3,10 +3,9 @@ import { db } from '$lib/db/db.server'
 import * as schema from '$lib/db/schema'
 import { createServerClient } from '@supabase/ssr'
 import { type Handle, redirect } from '@sveltejs/kit'
-import { sequence } from '@sveltejs/kit/hooks'
 import { eq } from 'drizzle-orm'
 
-const supabase: Handle = async ({ event, resolve }) => {
+export const supabase: Handle = async ({ event, resolve }) => {
   /**
    * Creates a Supabase client specific to this server request.
    *
@@ -76,7 +75,7 @@ const supabase: Handle = async ({ event, resolve }) => {
   })
 }
 
-const authGuard: Handle = async ({ event, resolve }) => {
+export const authGuard: Handle = async ({ event, resolve }) => {
   const { session, user, userPermissions, userRole } = await event.locals.safeGetSession()
 
   event.locals.session = session
@@ -94,5 +93,3 @@ const authGuard: Handle = async ({ event, resolve }) => {
 
   return resolve(event)
 }
-
-export const handle: Handle = sequence(supabase, authGuard)

@@ -1,6 +1,6 @@
-import { convertException } from '$lib'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, generateSlug, routes, routesToTags, users, type Route } from '$lib/db/schema'
+import { convertException } from '$lib/errors'
 import { insertExternalResources } from '$lib/external-resources/index.server'
 import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'

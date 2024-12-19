@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { convertException } from '$lib'
+  import { convertException } from '$lib/errors'
   import AppBar from '$lib/components/AppBar'
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
   import RouteName from '$lib/components/RouteName'

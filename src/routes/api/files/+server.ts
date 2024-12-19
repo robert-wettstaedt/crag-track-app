@@ -1,5 +1,5 @@
 import { NEXTCLOUD_USER_NAME } from '$env/static/private'
-import { convertException } from '$lib'
+import { convertException } from '$lib/errors'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import type { FileStat } from 'webdav'
 
