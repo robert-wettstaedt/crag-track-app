@@ -6,7 +6,7 @@
   import Breadcrumb from '$lib/components/Breadcrumb'
   import NavTiles from '$lib/components/NavTiles'
   import '@fortawesome/fontawesome-free/css/all.css'
-  import { AppBar, Nav, Popover, Switch } from '@skeletonlabs/skeleton-svelte'
+  import { AppBar, Navigation, Popover, Switch } from '@skeletonlabs/skeleton-svelte'
   import { onMount } from 'svelte'
   import '../../app.postcss'
 
@@ -57,6 +57,7 @@
           arrowBackground="!bg-surface-200 dark:!bg-surface-800"
           contentBase="card bg-surface-200-800 p-2 md:p-4 w-74 shadow-xl"
           positioning={{ placement: 'bottom' }}
+          positionerZIndex="!z-100"
         >
           {#snippet trigger()}
             <i class="fa-solid fa-circle-user text-3xl"></i>
@@ -125,20 +126,20 @@
   </div>
 
   {#if data.userPermissions?.includes('data.read')}
-    <Nav.Bar classes="md:hidden">
+    <Navigation.Bar classes="md:hidden">
       <NavTiles userPermissions={data.userPermissions} />
-    </Nav.Bar>
+    </Navigation.Bar>
 
-    <Nav.Rail base="hidden md:block fixed top-[68px] h-screen">
+    <Navigation.Rail base="hidden md:block fixed top-[68px] h-screen">
       {#snippet header()}
-        <Nav.Tile href="/" label="Home">
+        <Navigation.Tile href="/" label="Home">
           <i class="fa-solid fa-house"></i>
-        </Nav.Tile>
+        </Navigation.Tile>
       {/snippet}
 
       {#snippet tiles()}
         <NavTiles userPermissions={data.userPermissions} />
       {/snippet}
-    </Nav.Rail>
+    </Navigation.Rail>
   {/if}
 </div>
