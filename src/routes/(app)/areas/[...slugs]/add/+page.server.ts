@@ -1,7 +1,7 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, generateSlug, users, type Area } from '$lib/db/schema'
-import { validateAreaForm, type AreaActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertException } from '$lib/errors'
+import { areaActionSchema, validate, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -44,11 +44,9 @@ export const actions = {
     let values: AreaActionValues
 
     try {
-      // Validate the form data
-      values = await validateAreaForm(data)
+      values = await validate(areaActionSchema, data)
     } catch (exception) {
-      // If validation fails, return the exception as AreaActionFailure
-      return exception as AreaActionFailure
+      return exception as ActionFailure<AreaActionValues>
     }
 
     let parentArea: Area | undefined

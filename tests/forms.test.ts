@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
-  validateAreaForm,
-  validateAscentForm,
-  validateBlockForm,
-  validateFirstAscentForm,
-  validateRouteForm,
+  areaActionSchema,
+  ascentActionSchema,
+  blockActionSchema,
+  firstAscentActionSchema,
+  routeActionSchema,
+  validate,
 } from '../src/lib/forms.server'
 
 describe('validateAreaForm', () => {
@@ -13,7 +14,7 @@ describe('validateAreaForm', () => {
     formData.set('name', 'Test Area')
     formData.set('type', 'crag')
 
-    const result = await validateAreaForm(formData)
+    const result = await validate(areaActionSchema, formData)
     expect(result).toEqual({ name: 'Test Area', type: 'crag' })
   })
 
@@ -21,14 +22,14 @@ describe('validateAreaForm', () => {
     const formData = new FormData()
     formData.set('type', 'crag')
 
-    await expect(validateAreaForm(formData)).rejects.toThrowError()
+    await expect(validate(areaActionSchema, formData)).rejects.toThrowError()
   })
 
   it('should throw an error if type is missing', async () => {
     const formData = new FormData()
     formData.set('name', 'Test Area')
 
-    await expect(validateAreaForm(formData)).rejects.toThrowError()
+    await expect(validate(areaActionSchema, formData)).rejects.toThrowError()
   })
 })
 
@@ -37,14 +38,14 @@ describe('validateBlockForm', () => {
     const formData = new FormData()
     formData.set('name', 'Test Block')
 
-    const result = await validateBlockForm(formData)
+    const result = await validate(blockActionSchema, formData)
     expect(result).toEqual({ name: 'Test Block' })
   })
 
   it('should throw an error if name is missing', async () => {
     const formData = new FormData()
 
-    await expect(validateBlockForm(formData)).rejects.toThrowError()
+    await expect(validate(blockActionSchema, formData)).rejects.toThrowError()
   })
 })
 
@@ -56,7 +57,7 @@ describe('validateRouteForm', () => {
     formData.set('gradingScale', 'V Scale')
     formData.set('grade', 'V5')
 
-    const result = await validateRouteForm(formData)
+    const result = await validate(routeActionSchema, formData)
     expect(result).toEqual({
       description: 'Test Description',
       name: 'Test Route',
@@ -71,7 +72,7 @@ describe('validateRouteForm', () => {
     formData.set('gradingScale', 'V Scale')
     formData.set('grade', 'V5')
 
-    await expect(validateRouteForm(formData)).rejects.toThrowError()
+    await expect(validate(routeActionSchema, formData)).rejects.toThrowError()
   })
 
   it('should throw an error if gradingScale is missing', async () => {
@@ -80,7 +81,7 @@ describe('validateRouteForm', () => {
     formData.set('name', 'Test Route')
     formData.set('grade', 'V5')
 
-    await expect(validateRouteForm(formData)).rejects.toThrowError()
+    await expect(validate(routeActionSchema, formData)).rejects.toThrowError()
   })
 })
 
@@ -90,7 +91,7 @@ describe('validateFirstAscentForm', () => {
     formData.set('climberName', 'John Doe')
     formData.set('year', '2021')
 
-    const result = await validateFirstAscentForm(formData)
+    const result = await validate(firstAscentActionSchema, formData)
     expect(result).toEqual({ climberName: 'John Doe', year: '2021' })
   })
 
@@ -99,13 +100,13 @@ describe('validateFirstAscentForm', () => {
     formData.set('climberName', 'John Doe')
     formData.set('year', 'invalid')
 
-    await expect(validateFirstAscentForm(formData)).rejects.toThrowError()
+    await expect(validate(firstAscentActionSchema, formData)).rejects.toThrowError()
   })
 
   it('should throw an error if both climberName and year are missing', async () => {
     const formData = new FormData()
 
-    await expect(validateFirstAscentForm(formData)).rejects.toThrowError()
+    await expect(validate(firstAscentActionSchema, formData)).rejects.toThrowError()
   })
 })
 
@@ -119,7 +120,7 @@ describe('validateAscentForm', () => {
     formData.append('file.path', 'path/to/file1')
     formData.append('file.path', 'path/to/file2')
 
-    const result = await validateAscentForm(formData)
+    const result = await validate(ascentActionSchema, formData)
     expect(result).toEqual({
       dateTime: '2023-01-01T00:00:00Z',
       grade: 'V5',
@@ -135,7 +136,7 @@ describe('validateAscentForm', () => {
     formData.set('notes', 'Test notes')
     formData.set('type', 'boulder')
 
-    await expect(validateAscentForm(formData)).rejects.toThrowError()
+    await expect(validate(ascentActionSchema, formData)).rejects.toThrowError()
   })
 
   it('should throw an error if type is missing', async () => {
@@ -144,6 +145,6 @@ describe('validateAscentForm', () => {
     formData.set('grade', 'V5')
     formData.set('notes', 'Test notes')
 
-    await expect(validateAscentForm(formData)).rejects.toThrowError()
+    await expect(validate(ascentActionSchema, formData)).rejects.toThrowError()
   })
 })

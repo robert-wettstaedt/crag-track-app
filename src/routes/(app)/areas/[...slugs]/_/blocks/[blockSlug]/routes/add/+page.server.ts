@@ -2,7 +2,7 @@ import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, generateSlug, routes, routesToTags, users, type Route } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { insertExternalResources } from '$lib/external-resources/index.server'
-import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
+import { routeActionSchema, validate, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
@@ -64,10 +64,10 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validateRouteForm(data)
+      values = await validate(routeActionSchema, data)
     } catch (exception) {
       // If validation fails, return the exception as RouteActionFailure
-      return exception as RouteActionFailure
+      return exception as ActionFailure<RouteActionValues>
     }
 
     // Query the database to find the first block matching the given slug and areaId
@@ -82,7 +82,7 @@ export const actions = {
       return fail(400, { ...values, error: `Parent not found ${params.blockSlug}` })
     }
 
-    values.rating = values.rating == null || String(values.rating).length === 0 ? null : values.rating
+    values.rating = values.rating == null || String(values.rating).length === 0 ? undefined : values.rating
 
     // Generate a slug from the route name
     const slug = generateSlug(values.name)
@@ -128,8 +128,8 @@ export const actions = {
     }
 
     try {
-      if (values.tags.length > 0) {
-        await db((tx) => tx.insert(routesToTags).values(values.tags.map((tag) => ({ routeFk: route.id, tagFk: tag }))))
+      if (values.tags != null && values.tags.length > 0) {
+        await db((tx) => tx.insert(routesToTags).values(values.tags!.map((tag) => ({ routeFk: route.id, tagFk: tag }))))
       }
     } catch (exception) {
       return fail(400, { ...values, error: `Unable to create tags: ${convertException(exception)}` })

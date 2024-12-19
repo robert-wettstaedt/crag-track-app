@@ -85,7 +85,7 @@
         {/if}
 
         <input class="input" disabled placeholder="Path" type="text" value={filePath} />
-        <input name="file.path" type="hidden" value={filePath} />
+        <input name="filePaths" type="hidden" value={filePath} />
 
         {#if filePath.length === 0}
           <Modal

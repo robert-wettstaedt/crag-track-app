@@ -1,7 +1,7 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
-import { validateFirstAscentForm, type FirstAscentActionFailure, type FirstAscentActionValues } from '$lib/forms.server'
 import { convertException } from '$lib/errors'
+import { firstAscentActionSchema, validate, type ActionFailure, type FirstAscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
@@ -95,10 +95,10 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validateFirstAscentForm(data)
+      values = await validate(firstAscentActionSchema, data)
     } catch (exception) {
       // Return the validation failure
-      return exception as FirstAscentActionFailure
+      return exception as ActionFailure<FirstAscentActionValues>
     }
 
     // Initialize the first ascent values
@@ -222,7 +222,8 @@ export const actions = {
 
     if (route.firstAscentFk != null) {
       try {
-        await db((tx) => tx.delete(firstAscents).where(eq(firstAscents.id, route.firstAscentFk)))
+        await db((tx) => tx.delete(firstAscents).where(eq(firstAscents.id, route.firstAscentFk!)))
+        await db((tx) => tx.update(routes).set({ firstAscentFk: null }).where(eq(routes.id, route.id)))
       } catch (error) {
         return fail(400, { error: convertException(error) })
       }

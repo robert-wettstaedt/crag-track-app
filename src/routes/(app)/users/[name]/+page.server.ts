@@ -1,8 +1,13 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, userSettings, users } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichRoute } from '$lib/db/utils'
-import { validateUserExternalResourceForm, type UserExternalResourceActionValues } from '$lib/forms.server'
 import { convertException } from '$lib/errors'
+import {
+  userExternalResourceActionSchema,
+  validate,
+  type ActionFailure,
+  type UserExternalResourceActionValues,
+} from '$lib/forms.server'
 import { error, fail } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -164,10 +169,10 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validateUserExternalResourceForm(data)
+      values = await validate(userExternalResourceActionSchema, data)
     } catch (exception) {
       // If validation fails, return the exception as AreaActionFailure
-      return exception as UserExternalResourceActionValues
+      return exception as ActionFailure<UserExternalResourceActionValues>
     }
 
     try {

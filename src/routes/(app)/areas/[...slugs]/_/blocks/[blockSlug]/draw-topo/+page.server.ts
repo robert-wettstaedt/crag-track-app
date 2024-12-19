@@ -2,9 +2,10 @@ import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import {
-  validateAddTopoForm,
-  validateSaveTopoForm,
-  type AddTopoActionFailure,
+  addTopoActionSchema,
+  saveTopoActionSchema,
+  validate,
+  type ActionFailure,
   type AddTopoActionValues,
   type SaveTopoActionValues,
 } from '$lib/forms.server'
@@ -78,9 +79,9 @@ export const actions = {
     let values: SaveTopoActionValues
 
     try {
-      values = await validateSaveTopoForm(data)
+      values = await validate(saveTopoActionSchema, data)
     } catch (exception) {
-      return exception
+      return exception as ActionFailure<SaveTopoActionValues>
     }
 
     await db((tx) =>
@@ -109,9 +110,9 @@ export const actions = {
 
     // Validate the ascent form data
     try {
-      values = await validateAddTopoForm(data)
+      values = await validate(addTopoActionSchema, data)
     } catch (exception) {
-      return exception as AddTopoActionFailure
+      return exception as ActionFailure<AddTopoActionValues>
     }
 
     await db((tx) =>
@@ -132,9 +133,9 @@ export const actions = {
 
     // Validate the ascent form data
     try {
-      values = await validateAddTopoForm(data)
+      values = await validate(addTopoActionSchema, data)
     } catch (exception) {
-      return exception as AddTopoActionFailure
+      return exception as ActionFailure<AddTopoActionValues>
     }
 
     await db((tx) =>

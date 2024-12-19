@@ -39,7 +39,7 @@
 </AppBar>
 
 {#if form?.error}
-  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4">
+  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 whitespace-pre-line">
     <p>{form.error}</p>
   </aside>
 {/if}
@@ -70,7 +70,7 @@
                   onkeydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
                   role="presentation"
                 >
-                  <div class="px-2 md:px-4 py-3 grow overflow-hidden text-ellipsis w-auto">
+                  <div class="grow overflow-hidden text-ellipsis w-auto">
                     <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
                   </div>
 

@@ -13,8 +13,8 @@ import {
   routesToTags,
   topoRoutes,
 } from '$lib/db/schema'
-import { validateRouteForm, type RouteActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertException } from '$lib/errors'
+import { routeActionSchema, validate, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -86,10 +86,10 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validateRouteForm(data)
+      values = await validate(routeActionSchema, data)
     } catch (exception) {
       // Return the validation failure
-      return exception as RouteActionFailure
+      return exception as ActionFailure<RouteActionValues>
     }
 
     // Query the database to find the block with the given slug and areaId
@@ -143,7 +143,7 @@ export const actions = {
       }
     }
 
-    values.rating = values.rating == null || String(values.rating).length === 0 ? null : values.rating
+    values.rating = values.rating == null || String(values.rating).length === 0 ? undefined : values.rating
 
     try {
       const { tags, ...rest } = values
@@ -159,7 +159,7 @@ export const actions = {
       // Delete existing route-to-tag associations for the route
       await db((tx) => tx.delete(routesToTags).where(eq(routesToTags.routeFk, route.id)))
 
-      if (tags.length > 0) {
+      if (tags != null && tags.length > 0) {
         // Insert new route-to-tag associations for the route
         await db((tx) => tx.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag }))))
       }

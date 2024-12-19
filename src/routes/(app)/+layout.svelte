@@ -10,7 +10,7 @@
   import { onMount } from 'svelte'
   import '../../app.postcss'
 
-  let { data, children } = $props()
+  let { data, form, children } = $props()
   let pageEl: HTMLDivElement
 
   onMount(() => {
@@ -25,6 +25,12 @@
 
   afterNavigate(() => {
     pageEl?.scrollTo(0, 0)
+  })
+
+  $effect(() => {
+    if (form != null) {
+      pageEl?.scrollTo(0, 0)
+    }
   })
 </script>
 

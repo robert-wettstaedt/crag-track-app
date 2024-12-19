@@ -1,8 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import AppBar from '$lib/components/AppBar'
-  import { Popover } from '@skeletonlabs/skeleton-svelte'
+  import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
 </script>
@@ -26,7 +25,7 @@
 </AppBar>
 
 {#if form?.error}
-  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4">
+  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 whitespace-pre-line">
     <p>{form.error}</p>
   </aside>
 {/if}

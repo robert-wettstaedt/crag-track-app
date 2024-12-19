@@ -1,8 +1,8 @@
 import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, files, type File } from '$lib/db/schema'
-import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { convertException } from '$lib/errors'
+import { ascentActionSchema, validate, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -51,9 +51,9 @@ export const actions = {
 
     // Validate the ascent form data
     try {
-      values = await validateAscentForm(data)
+      values = await validate(ascentActionSchema, data)
     } catch (exception) {
-      return exception as AscentActionFailure
+      return exception as ActionFailure<AscentActionValues>
     }
 
     const ascent = await db((tx) =>

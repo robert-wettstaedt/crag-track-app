@@ -1,7 +1,7 @@
 import { db } from '$lib/db/db.server'
 import { areas, ascents, routes } from '$lib/db/schema'
+import type { InferResultType } from '$lib/db/types'
 import { like } from 'drizzle-orm'
-import type { InferResultType } from './db/types'
 
 export interface References {
   areas: InferResultType<'areas'>[]

@@ -1,7 +1,7 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, blocks, generateSlug, users } from '$lib/db/schema'
-import { validateBlockForm, type BlockActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertException } from '$lib/errors'
+import { blockActionSchema, validate, type ActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
@@ -45,10 +45,10 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validateBlockForm(data)
+      values = await validate(blockActionSchema, data)
     } catch (exception) {
       // If validation fails, return the exception as a BlockActionFailure
-      return exception as BlockActionFailure
+      return exception as ActionFailure<BlockActionValues>
     }
 
     // Generate a slug from the block name

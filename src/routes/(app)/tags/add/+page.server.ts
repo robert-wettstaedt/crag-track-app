@@ -1,7 +1,7 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { tags } from '$lib/db/schema'
-import { validateTagForm, type TagActionFailure, type TagActionValues } from '$lib/forms.server'
 import { convertException } from '$lib/errors'
+import { tagActionSchema, validate, type ActionFailure, type TagActionValues } from '$lib/forms.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types.js'
@@ -26,10 +26,10 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validateTagForm(data)
+      values = await validate(tagActionSchema, data)
     } catch (exception) {
       // If validation fails, return the exception as TagActionFailure
-      return exception as TagActionFailure
+      return exception as ActionFailure<TagActionValues>
     }
 
     // Check if an area with the same slug already exists

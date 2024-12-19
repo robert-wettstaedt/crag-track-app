@@ -3,7 +3,7 @@ import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, users, type Ascent, type File } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { checkExternalSessions, logExternalAscent } from '$lib/external-resources/index.server'
-import { validateAscentForm, type AscentActionFailure, type AscentActionValues } from '$lib/forms.server'
+import { ascentActionSchema, validate, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -69,10 +69,10 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validateAscentForm(data)
+      values = await validate(ascentActionSchema, data)
     } catch (exception) {
       // Return the validation failure
-      return exception as AscentActionFailure
+      return exception as ActionFailure<AscentActionValues>
     }
 
     // Query the database to find the block with the given slug and areaId
