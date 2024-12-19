@@ -2,6 +2,7 @@ import type { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import { relations, sql } from 'drizzle-orm'
 import {
   bigint,
+  index,
   integer,
   pgEnum,
   pgPolicy as policy,
@@ -79,7 +80,11 @@ export const users = table(
     authUserFk: uuid('auth_user_fk').notNull(),
     userSettingsFk: integer('user_settings_fk'),
   },
-  () => [policy(`${READ_PERMISSION} can read users`, getAuthorizedPolicyConfig('select', READ_PERMISSION))],
+  (table) => [
+    policy(`${READ_PERMISSION} can read users`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
+    index('users_auth_user_fk_idx').on(table.authUserFk),
+    index('users_username_idx').on(table.username),
+  ],
 ).enableRLS()
 export type User = InferSelectModel<typeof users>
 export type InsertUser = InferInsertModel<typeof users>
@@ -110,10 +115,12 @@ export const userSettings = table(
       .notNull()
       .default('FB'),
   },
-  () => [
+  (table) => [
     policy(`users can create own users_settings`, getOwnEntryPolicyConfig('insert')),
     policy(`users can read own users_settings`, getOwnEntryPolicyConfig('select')),
     policy(`users can update own users_settings`, getOwnEntryPolicyConfig('update')),
+    index('user_settings_auth_user_fk_idx').on(table.authUserFk),
+    index('user_settings_user_fk_idx').on(table.userFk),
   ],
 ).enableRLS()
 export type UserSettings = InferSelectModel<typeof userSettings>
@@ -136,7 +143,7 @@ export const areas = table(
 
     parentFk: integer('parent_fk').references((): AnyColumn => areas.id),
   },
-  () => createBasicTablePolicies('areas'),
+  (table) => [...createBasicTablePolicies('areas'), index('areas_slug_idx').on(table.slug)],
 ).enableRLS()
 export type Area = InferSelectModel<typeof areas>
 export type InsertArea = InferInsertModel<typeof areas>
@@ -160,7 +167,7 @@ export const blocks = table(
     areaFk: integer('area_fk').notNull(),
     geolocationFk: integer('geolocation_fk'),
   },
-  () => createBasicTablePolicies('blocks'),
+  (table) => [...createBasicTablePolicies('blocks'), index('blocks_slug_idx').on(table.slug)],
 ).enableRLS()
 export type Block = InferSelectModel<typeof blocks>
 export type InsertBlock = InferInsertModel<typeof blocks>
@@ -189,7 +196,11 @@ export const routes = table(
     externalResourcesFk: integer('external_resources_fk'),
     gradeFk: integer('grade_fk'),
   },
-  () => createBasicTablePolicies('routes'),
+  (table) => [
+    ...createBasicTablePolicies('routes'),
+    index('routes_slug_idx').on(table.slug),
+    index('routes_block_fk_idx').on(table.blockFk),
+  ],
 ).enableRLS()
 export type Route = InferSelectModel<typeof routes>
 export type InsertRoute = InferInsertModel<typeof routes>
@@ -238,7 +249,11 @@ export const routeExternalResources = table(
     externalResource27cragsFk: integer('external_resource_27crags_fk'),
     externalResourceTheCragFk: integer('external_resource_the_crag_fk'),
   },
-  () => createBasicTablePolicies('route_external_resources'),
+
+  (table) => [
+    ...createBasicTablePolicies('route_external_resources'),
+    index('route_external_resources_route_fk_idx').on(table.routeFk),
+  ],
 ).enableRLS()
 export type RouteExternalResource = InferSelectModel<typeof routeExternalResources>
 export type InsertRouteExternalResource = InferInsertModel<typeof routeExternalResources>
@@ -369,7 +384,7 @@ export const firstAscents = table(
     routeFk: integer('route_fk').notNull(),
     climberFk: integer('climber_fk'),
   },
-  () => createBasicTablePolicies('first_ascents'),
+  (table) => [...createBasicTablePolicies('first_ascents'), index('first_ascents_route_fk_idx').on(table.routeFk)],
 ).enableRLS()
 
 export type FirstAscent = InferSelectModel<typeof firstAscents>
@@ -396,7 +411,7 @@ export const ascents = table(
     gradeFk: integer('grade_fk'),
     routeFk: integer('route_fk').notNull(),
   },
-  () => [
+  (table) => [
     policy(`${READ_PERMISSION} can create ascents`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
     policy(`${READ_PERMISSION} can read ascents`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
     policy(
@@ -434,6 +449,8 @@ export const ascents = table(
       ),
     ),
     policy(`${EDIT_PERMISSION} can fully access ascents`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
+    index('ascents_created_by_idx').on(table.createdBy),
+    index('ascents_route_fk_idx').on(table.routeFk),
   ],
 ).enableRLS()
 export type Ascent = InferSelectModel<typeof ascents>
@@ -460,7 +477,7 @@ export const files = table(
     routeFk: integer('route_fk'),
     blockFk: integer('block_fk'),
   },
-  () => [
+  (table) => [
     policy(`${READ_PERMISSION} can create files`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
     policy(`${READ_PERMISSION} can read files`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
     policy(
@@ -500,6 +517,11 @@ export const files = table(
       ),
     ),
     policy(`${EDIT_PERMISSION} can fully access files`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
+    index('files_area_fk_idx').on(table.areaFk),
+    index('files_ascent_fk_idx').on(table.ascentFk),
+    index('files_block_fk_idx').on(table.blockFk),
+    index('files_route_fk_idx').on(table.routeFk),
+    index('files_type_idx').on(table.type),
   ],
 ).enableRLS()
 export type File = InferSelectModel<typeof files>
@@ -520,7 +542,7 @@ export const topos = table(
     blockFk: integer('block_fk'),
     fileFk: integer('file_fk'),
   },
-  () => createBasicTablePolicies('topos'),
+  (table) => [...createBasicTablePolicies('topos'), index('topos_block_fk_idx').on(table.blockFk)],
 ).enableRLS()
 export type Topo = InferSelectModel<typeof topos>
 export type InsertTopo = InferInsertModel<typeof topos>
@@ -544,7 +566,11 @@ export const topoRoutes = table(
     routeFk: integer('route_fk'),
     topoFk: integer('topo_fk'),
   },
-  () => createBasicTablePolicies('topo_routes'),
+  (table) => [
+    ...createBasicTablePolicies('topo_routes'),
+    index('topo_routes_route_fk_idx').on(table.routeFk),
+    index('topo_routes_topo_fk_idx').on(table.topoFk),
+  ],
 ).enableRLS()
 export type TopoRoute = InferSelectModel<typeof topoRoutes>
 export type InsertTopoRoute = InferInsertModel<typeof topoRoutes>
@@ -578,7 +604,7 @@ export const routesToTags = table(
       .notNull()
       .references(() => tags.id),
   },
-  (t) => [primaryKey({ columns: [t.routeFk, t.tagFk] }), ...createBasicTablePolicies('routes_to_tags')],
+  (table) => [primaryKey({ columns: [table.routeFk, table.tagFk] }), ...createBasicTablePolicies('routes_to_tags')],
 ).enableRLS()
 
 export const routesToTagsRelations = relations(routesToTags, ({ one }) => ({
@@ -597,7 +623,11 @@ export const geolocations = table(
     areaFk: integer('area_fk'),
     blockFk: integer('block_fk'),
   },
-  () => createBasicTablePolicies('geolocations'),
+  (table) => [
+    ...createBasicTablePolicies('geolocations'),
+    index('geolocations_area_fk_idx').on(table.areaFk),
+    index('geolocations_block_fk_idx').on(table.blockFk),
+  ],
 ).enableRLS()
 export type Geolocation = InferSelectModel<typeof geolocations>
 export type InsertGeolocation = InferInsertModel<typeof geolocations>
