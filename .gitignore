@@ -172,4 +172,4 @@ package
 
 # End of https://www.toptal.com/developers/gitignore/api/node,svelte,visualstudiocode,vercel
 
-db/sqlite.*
+.backup
