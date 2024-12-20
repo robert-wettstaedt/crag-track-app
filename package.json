@@ -52,7 +52,7 @@
     "resend": "^4.0.1",
     "sharp": "^0.33.5",
     "string-to-color": "^2.2.2",
-    "svelte-pdf": "^1.0.20",
+    "svelte-pdf": "^1.0.22",
     "tailwindcss": "3.4.1",
     "unified": "^11.0.4",
     "vega": "^5.30.0",
