@@ -174,6 +174,7 @@
 
     {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <form
+        class="leading-none"
         method="POST"
         action="?/syncExternalResources"
         use:enhance={({}) => {
@@ -188,7 +189,7 @@
           }
         }}
       >
-        <button class="btn btn-sm preset-filled-primary-500 me-2" disabled={syncing} type="submit">
+        <button class="btn btn-sm preset-filled-primary-500" disabled={syncing} type="submit">
           {#if syncing}
             <span class="me-2">
               <ProgressRing size="size-sm" value={null} />
