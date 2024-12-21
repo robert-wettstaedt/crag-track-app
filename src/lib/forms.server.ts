@@ -101,7 +101,7 @@ export const firstAscentActionSchema = z
 export type FirstAscentActionValues = z.infer<typeof firstAscentActionSchema>
 
 export const ascentActionSchema = z.object({
-  dateTime: z.string().datetime(),
+  dateTime: z.string().date(),
   filePaths: z.array(z.string()).optional(),
   gradeFk: z.number().optional(),
   notes: z.string().optional(),

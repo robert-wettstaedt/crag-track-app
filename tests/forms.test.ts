@@ -143,7 +143,7 @@ describe('validateFirstAscentForm', () => {
 describe('validateAscentForm', () => {
   it('should validate and return correct values', async () => {
     const formData = new FormData()
-    formData.set('dateTime', '2023-01-01T00:00:00Z')
+    formData.set('dateTime', '2023-01-01')
     formData.set('gradeFk', '1')
     formData.set('notes', 'Test notes')
     formData.set('type', 'flash')
@@ -152,7 +152,7 @@ describe('validateAscentForm', () => {
 
     const result = await validate(ascentActionSchema, formData)
     expect(result).toEqual({
-      dateTime: '2023-01-01T00:00:00Z',
+      dateTime: '2023-01-01',
       gradeFk: 1,
       notes: 'Test notes',
       type: 'flash',
@@ -170,7 +170,7 @@ describe('validateAscentForm', () => {
 
   it('should throw an error if type is missing', async () => {
     const formData = new FormData()
-    formData.set('dateTime', '2023-01-01T00:00:00Z')
+    formData.set('dateTime', '2023-01-01')
     formData.set('notes', 'Test notes')
 
     await expect(validate(ascentActionSchema, formData)).rejects.toThrowError()
@@ -186,12 +186,12 @@ describe('validateAscentForm', () => {
 
   it('should handle optional file paths', async () => {
     const formData = new FormData()
-    formData.set('dateTime', '2023-01-01T00:00:00Z')
+    formData.set('dateTime', '2023-01-01')
     formData.set('type', 'flash')
 
     const result = await validate(ascentActionSchema, formData)
     expect(result).toEqual({
-      dateTime: '2023-01-01T00:00:00Z',
+      dateTime: '2023-01-01',
       type: 'flash',
     })
   })
