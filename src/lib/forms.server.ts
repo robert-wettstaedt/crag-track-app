@@ -85,8 +85,8 @@ export const blockActionSchema = z.object({
 
 export const routeActionSchema = z.object({
   description: z.string().nullable().optional(),
-  gradeFk: z.number(),
-  name: z.string().trim(),
+  gradeFk: z.number().optional(),
+  name: z.string().trim().default(''),
   rating: z.number().min(1).max(3).optional(),
   tags: z.array(z.string()).optional(),
 })

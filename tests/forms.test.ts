@@ -90,21 +90,6 @@ describe('validateRouteForm', () => {
     })
   })
 
-  it('should throw an error if name is missing', async () => {
-    const formData = new FormData()
-    formData.set('description', 'Test Description')
-    formData.set('gradeFk', '1')
-
-    await expect(validate(routeActionSchema, formData)).rejects.toThrowError()
-  })
-
-  it('should throw an error if gradingScale is missing', async () => {
-    const formData = new FormData()
-    formData.set('name', 'Test Route')
-
-    await expect(validate(routeActionSchema, formData)).rejects.toThrowError()
-  })
-
   it('should throw an error if rating is out of range', async () => {
     const formData = new FormData()
     formData.set('name', 'Test Route')
