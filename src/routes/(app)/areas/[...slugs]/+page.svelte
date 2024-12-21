@@ -149,9 +149,9 @@
 {/await}
 
 <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
-  <div class="card-header">Location</div>
+  <div class="card-header" id="location">Location</div>
 
-  <section class="pt-4">
+  <section class="pt-4 min-h-[400px]">
     {#await import('$lib/components/BlocksMap') then BlocksMap}
       {#key data.area.id}
         <BlocksMap.default
@@ -166,7 +166,7 @@
 </div>
 
 <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
-  <div class="card-header">Topos</div>
+  <div class="card-header" id="topos">Topos</div>
 
   <section class="p-2 md:p-4">
     {#key data.area.id}
@@ -210,7 +210,7 @@
 
 {#if data.canAddArea || data.area.areas.length > 0}
   <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
-    <div class="card-header">Areas</div>
+    <div class="card-header" id="areas">Areas</div>
 
     <section class="p-2 md:p-4">
       {#if data.area.areas.length === 0}
@@ -241,7 +241,7 @@
 {/if}
 
 <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
-  <div class="card-header">Blocks</div>
+  <div class="card-header" id="blocks">Blocks</div>
 
   <section class="p-2 md:p-4">
     {#if data.area.blocks.length === 0}

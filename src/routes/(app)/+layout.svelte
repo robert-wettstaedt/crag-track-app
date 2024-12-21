@@ -24,7 +24,9 @@
   })
 
   afterNavigate(() => {
-    pageEl?.scrollTo(0, 0)
+    if ($page.url.hash == null) {
+      pageEl?.scrollTo(0, 0)
+    }
   })
 
   $effect(() => {

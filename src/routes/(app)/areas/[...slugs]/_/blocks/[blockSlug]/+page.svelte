@@ -83,9 +83,9 @@
 {/await}
 
 <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
-  <div class="card-header">Location</div>
+  <div class="card-header" id="location">Location</div>
 
-  <section class="pt-4">
+  <section class="pt-4 min-h-[400px]">
     {#await import('$lib/components/BlocksMap') then BlocksMap}
       {#key data.block.id}
         <BlocksMap.default blocks={data.blocks} height={400} selectedBlock={data.block} />
@@ -96,7 +96,7 @@
 
 {#if files.length > 0 || data.topos.length === 0}
   <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
-    <div class="card-header">Topos</div>
+    <div class="card-header" id="topos">Topos</div>
 
     <section class="p-2 md:p-4">
       {#key data.block.id}
@@ -157,7 +157,7 @@
 {/if}
 
 <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
-  <div class="card-header">Routes</div>
+  <div class="card-header" id="routes">Routes</div>
 
   <div class="flex flex-wrap">
     {#if data.topos.length > 0}
