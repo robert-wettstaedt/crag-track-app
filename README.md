@@ -4,18 +4,18 @@
 
 # Crag Track
 
-A webapp for tracking your rock-climbing sessions.
+Secure boulder topo and session tracker.
 
 [Demo](https://crag-track.vercel.app/)
 
 ## Features
 
 - ➕ Create new bouldering areas, crags, and boulders - with support for [FB and V grades](https://www.mountainproject.com/international-climbing-grades).
-- 🗺️ Display all your boulders on a map.
-- ✅ Log your climbing ascents.
-- ✍️ Take notes about your session.
+- ✅ Log your climbing ascents and take notes about your session.
 - 📸 Link photos, videos, and PDF files from a file-hosting instance (currently only supports [Nextcloud](https://github.com/nextcloud)).
 - 📈 Display your climbing history and statistics about your ascents.
+- 🕮 Create detailed topos of your bouldering areas.
+- 🔐 Keep your data private, only authorized users can view and manage data.
 - 🚀 Easy self-hosting with Docker and docker-compose.
 
 ## Installation

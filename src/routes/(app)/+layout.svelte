@@ -40,10 +40,7 @@
 <svelte:head>
   <title>{PUBLIC_APPLICATION_NAME}</title>
   <meta property="og:title" content={PUBLIC_APPLICATION_NAME} />
-  <meta
-    property="og:description"
-    content="Track your climbing journey, document ascents, and connect with the climbing community."
-  />
+  <meta property="og:description" content="Secure boulder topo and session tracker." />
   <meta property="og:image" content={Logo} />
   <meta property="og:url" content={$page.url.toString()} />
   <meta property="og:type" content="website" />
