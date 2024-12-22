@@ -6,6 +6,7 @@
   import Breadcrumb from '$lib/components/Breadcrumb'
   import NavTiles from '$lib/components/NavTiles'
   import '@fortawesome/fontawesome-free/css/all.css'
+  import { ProgressBar } from '@prgm/sveltekit-progress-bar'
   import { AppBar, Navigation, Popover, Switch } from '@skeletonlabs/skeleton-svelte'
   import { onMount } from 'svelte'
   import '../../app.postcss'
@@ -49,6 +50,8 @@
 </svelte:head>
 
 <div class="grid h-screen grid-rows-[auto_1fr_auto]">
+  <ProgressBar class="text-secondary-500" />
+
   <AppBar>
     {#snippet lead()}
       <a class="flex gap-2" href="/">
