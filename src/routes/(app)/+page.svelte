@@ -71,9 +71,11 @@
     </div>
   </section>
 {:else if data.userPermissions?.includes('data.read')}
-  {#await import('$lib/components/BlocksMap') then BlocksMap}
-    <BlocksMap.default blocks={data.blocks} />
-  {/await}
+  <div class="-m-[0.5rem] md:-m-[1rem]">
+    {#await import('$lib/components/BlocksMap') then BlocksMap}
+      <BlocksMap.default blocks={data.blocks} />
+    {/await}
+  </div>
 {:else}
   <div class="card p-6 max-w-md mx-auto mt-8 preset-filled-surface-100-900">
     <h2 class="h3 mb-4 text-center">Thank you for signing up for {PUBLIC_APPLICATION_NAME}</h2>

@@ -29,7 +29,7 @@
 </script>
 
 <form
-  class="absolute bottom-[calc(1.375em+0.5em)] right-[calc(1.375em+0.5em)] w-[165px] bg-[--ol-subtle-background-color] rounded-[4px] overflow-hidden"
+  class="absolute bottom-[calc(var(--ol-control-height)+var(--ol-control-margin))] right-[calc(var(--ol-control-height)+var(--ol-control-margin))] w-[165px] bg-[--ol-subtle-background-color] rounded-[4px] overflow-hidden"
 >
   <fieldset class="bg-[--ol-background-color] m-[1px] p-2 rounded-[2px] overflow-hidden">
     {#each layers as layer}

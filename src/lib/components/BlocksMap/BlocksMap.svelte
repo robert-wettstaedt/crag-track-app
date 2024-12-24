@@ -454,7 +454,25 @@
   function resizeMap() {
     if (mapElement != null) {
       if (height == null) {
-        mapElement.style.height = `${window.innerHeight - mapElement.getBoundingClientRect().top - 16 - heightSubtrahend}px`
+        const bcr = mapElement.getBoundingClientRect()
+        let el: HTMLElement | null = mapElement
+        let parentBcr: DOMRect | null = null
+
+        while (el != null) {
+          parentBcr = el.getBoundingClientRect()
+
+          if (parentBcr.height > 0) {
+            break
+          }
+
+          el = el.parentElement
+        }
+
+        if (parentBcr == null) {
+          mapElement.style.height = `${window.innerHeight - bcr.top - 16 - heightSubtrahend}px`
+        } else {
+          mapElement.style.height = `${parentBcr.height - (bcr.top - parentBcr.top) * 2}px`
+        }
       } else if (typeof height === 'number') {
         mapElement.style.height = `${height}px`
       } else {
@@ -481,47 +499,66 @@
 
 <div class="relative">
   <div class="map w-full -z-0" use:mapAction>
-    <div class="ol-control ol-layers z-10">
-      <button
-        aria-label="Map layers"
-        onclick={() => (layersIsVisible = !layersIsVisible)}
-        title="Map layers"
-        type="button"
-      >
-        <i class="fa-solid fa-layer-group {layersIsVisible ? 'text-primary-500' : ''}"></i>
-      </button>
+    <div class="relative z-10 {'ontouchstart' in window ? ' ol-touch' : ''}">
+      <div class="ol-control ol-layers">
+        <button
+          aria-label="Map layers"
+          onclick={() => (layersIsVisible = !layersIsVisible)}
+          title="Map layers"
+          type="button"
+        >
+          <i class="fa-solid fa-layer-group text-sm {layersIsVisible ? 'text-primary-500' : ''}"></i>
+        </button>
 
-      {#if layersIsVisible}
-        <Layers {layers} onChange={onChangeRelief} />
-      {/if}
+        {#if layersIsVisible}
+          <Layers {layers} onChange={onChangeRelief} />
+        {/if}
+      </div>
     </div>
   </div>
 </div>
 
 <style>
+  :root {
+    --ol-control-height: 1.375em;
+    --ol-control-margin: 0.5em;
+
+    @media (pointer: coarse) {
+      --ol-control-height: 2em;
+    }
+  }
+
   :global(.ol-zoom) {
     left: initial;
-    right: 0.5em;
-    top: 0.5em;
+    right: var(--ol-control-margin);
+    top: var(--ol-control-margin);
   }
 
   :global(.ol-full-screen) {
     left: initial;
-    right: 0.5em;
-    top: calc(0.5em + 1.375em + 1.375em + 0.5em);
+    right: var(--ol-control-margin);
+    top: calc(
+      var(--ol-control-margin) + var(--ol-control-height) + var(--ol-control-height) + var(--ol-control-margin)
+    );
   }
 
   :global(.ol-rotate) {
     left: initial;
-    right: 0.5em;
-    top: calc(0.5em + 1.375em + 1.375em + 0.5em + 1.375em + 0.5em);
+    right: var(--ol-control-margin);
+    top: calc(
+      var(--ol-control-margin) + var(--ol-control-height) + var(--ol-control-height) + var(--ol-control-margin) +
+        var(--ol-control-height) + var(--ol-control-margin)
+    );
     opacity: 1 !important;
     visibility: visible !important;
   }
 
   .ol-layers {
-    right: 0.5em;
-    top: calc(0.5em + 1.375em + 1.375em + 0.5em + 1.375em + 0.5em + 1.375em + 0.5em);
+    right: var(--ol-control-margin);
+    top: calc(
+      var(--ol-control-margin) + var(--ol-control-height) + var(--ol-control-height) + var(--ol-control-margin) +
+        var(--ol-control-height) + var(--ol-control-margin) + var(--ol-control-height) + var(--ol-control-margin)
+    );
   }
 
   @media print {
