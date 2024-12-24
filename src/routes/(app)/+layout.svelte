@@ -12,7 +12,6 @@
   import '../../app.postcss'
 
   let { data, form, children } = $props()
-  let pageEl: HTMLDivElement
 
   onMount(() => {
     const value = data.supabase.auth.onAuthStateChange((_, newSession) => {
@@ -26,13 +25,13 @@
 
   afterNavigate(() => {
     if ($page.url.hash.length === 0) {
-      pageEl?.scrollTo(0, 0)
+      document.body?.scrollTo(0, 0)
     }
   })
 
   $effect(() => {
     if (form != null) {
-      pageEl?.scrollTo(0, 0)
+      document.body?.scrollTo(0, 0)
     }
   })
 </script>
@@ -46,10 +45,10 @@
   <meta property="og:type" content="website" />
 </svelte:head>
 
-<div class="grid h-screen grid-rows-[auto_1fr_auto]">
+<div>
   <ProgressBar class="text-secondary-500" />
 
-  <AppBar>
+  <AppBar classes="sticky top-0 z-10 shadow-xl">
     {#snippet lead()}
       <a class="flex gap-2" href="/">
         <img src={Logo} alt={PUBLIC_APPLICATION_NAME} width={32} height={32} />
@@ -126,17 +125,18 @@
     {/snippet}
   </AppBar>
 
-  <div
-    bind:this={pageEl}
-    class="relative p-2 md:p-4 overflow-y-auto {$page.data.session?.user == null ? '' : 'md:ms-[96px]'}"
+  <main
+    class="relative p-2 md:p-4 {$page.data.session?.user == null
+      ? 'min-h-[calc(100vh-4.25rem)]'
+      : 'min-h-[calc(100vh-4.25rem-4.515625rem)] md:min-h-[calc(100vh-4.25rem)] md:ms-[6rem]'}"
   >
     <Breadcrumb url={$page.url} />
 
     {@render children?.()}
-  </div>
+  </main>
 
   {#if data.userPermissions?.includes('data.read')}
-    <Navigation.Bar classes="md:hidden">
+    <Navigation.Bar classes="md:hidden sticky bottom-0 z-20">
       <NavTiles userPermissions={data.userPermissions} />
     </Navigation.Bar>
 

@@ -468,6 +468,8 @@
           el = el.parentElement
         }
 
+        console.log(parentBcr, bcr)
+
         if (parentBcr == null) {
           mapElement.style.height = `${window.innerHeight - bcr.top - 16 - heightSubtrahend}px`
         } else {
