@@ -468,7 +468,7 @@
           el = el.parentElement
         }
 
-        if (parentBcr == null) {
+        if (parentBcr == null || heightSubtrahend > 0) {
           mapElement.style.height = `${window.innerHeight - bcr.top - 16 - heightSubtrahend}px`
         } else {
           mapElement.style.height = `${parentBcr.height - (bcr.top - parentBcr.top) * 2}px`
