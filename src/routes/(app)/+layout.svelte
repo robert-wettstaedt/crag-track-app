@@ -46,7 +46,7 @@
 </svelte:head>
 
 <div>
-  <ProgressBar class="text-secondary-500" />
+  <ProgressBar class="text-secondary-500 !z-20" />
 
   <AppBar classes="sticky top-0 z-10 shadow-xl">
     {#snippet lead()}
