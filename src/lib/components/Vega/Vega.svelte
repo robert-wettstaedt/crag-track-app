@@ -1,5 +1,5 @@
 <script lang="ts">
-  import vegaEmbed, { type EmbedOptions, type VisualizationSpec } from 'vega-embed'
+  import { type EmbedOptions, type VisualizationSpec } from 'vega-embed'
 
   interface Props {
     spec: VisualizationSpec
@@ -9,7 +9,7 @@
   let { spec, opts = {} }: Props = $props()
 
   const action = (el: HTMLDivElement) => {
-    vegaEmbed(el, spec, opts)
+    import('vega-embed').then((module) => module.default(el, spec, opts))
   }
 </script>
 
