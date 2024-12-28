@@ -4,6 +4,8 @@
   import { EDIT_PERMISSION } from '$lib/auth.js'
   import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
+  import GenericList from '$lib/components/GenericList'
+  import GradeHistogram from '$lib/components/GradeHistogram'
   import References from '$lib/components/References'
   import { convertException } from '$lib/errors'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
@@ -143,7 +145,7 @@
     <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
-      <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
+      <References {references} grades={data.grades} gradingScale={data.gradingScale} />
     </div>
   {/if}
 {/await}
@@ -212,23 +214,43 @@
   <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
     <div class="card-header" id="areas">Areas</div>
 
-    <section class="p-2 md:p-4">
+    <section class="py-2 md:py-4">
       {#if data.area.areas.length === 0}
         No areas yet
       {:else}
-        <div class="flex flex-wrap gap-2">
-          {#each data.area.areas as area}
-            <a
-              class="card card-hover preset-outlined-primary-500 p-2 md:p-4"
-              href={`${basePath}/${area.slug}-${area.id}`}
-            >
-              <dt>Name</dt>
-              <dd>
-                {area.name}
-              </dd>
-            </a>
-          {/each}
-        </div>
+        <GenericList
+          items={data.area.areas.map((item) => ({ ...item, pathname: `${basePath}/${item.slug}-${item.id}` }))}
+          wrap={false}
+        >
+          {#snippet left(item)}
+            {item.name}
+          {/snippet}
+
+          {#snippet right(item)}
+            <div class="flex items-center">
+              {item.numOfRoutes}
+
+              {#if item.numOfRoutes === 1}
+                route
+              {:else}
+                routes
+              {/if}
+            </div>
+
+            <GradeHistogram
+              axes={false}
+              data={item.grades}
+              grades={data.grades}
+              gradingScale={data.gradingScale}
+              spec={{
+                width: 100,
+              }}
+              opts={{
+                height: 38,
+              }}
+            />
+          {/snippet}
+        </GenericList>
       {/if}
 
       {#if data.userPermissions?.includes(EDIT_PERMISSION) && data.canAddArea}
@@ -243,20 +265,43 @@
 <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
   <div class="card-header" id="blocks">Blocks</div>
 
-  <section class="p-2 md:p-4">
+  <section class="py-2 md:py-4">
     {#if data.area.blocks.length === 0}
       No blocks yet
     {:else}
-      <div class="flex flex-wrap gap-2">
-        {#each data.area.blocks as block}
-          <a class="card card-hover preset-outlined-primary-500 p-2 md:p-4" href={`${basePath}/_/blocks/${block.slug}`}>
-            <dt>Name</dt>
-            <dd>
-              {block.name}
-            </dd>
-          </a>
-        {/each}
-      </div>
+      <GenericList
+        items={data.area.blocks.map((item) => ({ ...item, pathname: `${basePath}/_/blocks/${item.slug}` }))}
+        wrap={false}
+      >
+        {#snippet left(item)}
+          {item.name}
+        {/snippet}
+
+        {#snippet right(item)}
+          <div class="flex items-center">
+            {item.numOfRoutes}
+
+            {#if item.numOfRoutes === 1}
+              route
+            {:else}
+              routes
+            {/if}
+          </div>
+
+          <GradeHistogram
+            axes={false}
+            data={item.grades}
+            grades={data.grades}
+            gradingScale={data.gradingScale}
+            spec={{
+              width: 100,
+            }}
+            opts={{
+              height: 38,
+            }}
+          />
+        {/snippet}
+      </GenericList>
     {/if}
 
     {#if data.userPermissions?.includes(EDIT_PERMISSION)}

@@ -1,7 +1,8 @@
-import { convertException } from '$lib/errors'
+import { getStatsOfAreas, getStatsOfBlocks, nestedAreaQuery } from '$lib/blocks.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, blocks } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
+import { convertException } from '$lib/errors'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
@@ -13,7 +14,7 @@ export const load = (async ({ locals, parent }) => {
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
   // Retrieve the areaId from the parent context
-  const { areaId } = await parent()
+  const { areaId, grades, user } = await parent()
 
   // Query the database for areas with the specified areaId
   const areasResult = await db((tx) =>
@@ -23,8 +24,10 @@ export const load = (async ({ locals, parent }) => {
         author: true, // Include author information
         blocks: {
           orderBy: blocks.name, // Order blocks by name
+          with: { routes: true },
         },
         areas: {
+          ...nestedAreaQuery,
           orderBy: areas.name, // Order nested areas by name
         },
         files: true, // Include files associated with the area
@@ -75,7 +78,12 @@ export const load = (async ({ locals, parent }) => {
 
   // Return the area, enriched blocks, and processed files
   return {
-    area: { ...area, description },
+    area: {
+      ...area,
+      areas: getStatsOfAreas(area.areas, grades, user),
+      blocks: getStatsOfBlocks(area.blocks, grades, user),
+      description,
+    },
     blocks: geolocationBlocksResults.map(enrichBlock),
     files,
     references: getReferences(area.id, 'areas'),

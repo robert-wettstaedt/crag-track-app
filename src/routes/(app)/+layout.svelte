@@ -84,7 +84,7 @@
                 <span class="mx-2">FB</span>
 
                 <Switch
-                  checked={data.user?.userSettings?.gradingScale === 'V'}
+                  checked={data.gradingScale === 'V'}
                   name="gradingScale"
                   onCheckedChange={async (event) => {
                     const response = await fetch(`/api/users/settings?gradingScale=${event.checked ? 'V' : 'FB'}`, {

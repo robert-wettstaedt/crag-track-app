@@ -20,7 +20,7 @@
 </AppBar>
 
 <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
-  <AscentsTable ascents={data.ascents} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
+  <AscentsTable ascents={data.ascents} grades={data.grades} gradingScale={data.gradingScale} />
 </div>
 
 <div class="mt-8 flex justify-end">

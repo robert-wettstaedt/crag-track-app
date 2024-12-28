@@ -1,12 +1,14 @@
-<script lang="ts">
-  import { type EmbedOptions, type VisualizationSpec } from 'vega-embed'
-
-  interface Props {
+<script module lang="ts">
+  export interface VegaProps {
     spec: VisualizationSpec
     opts?: EmbedOptions
   }
+</script>
 
-  let { spec, opts = {} }: Props = $props()
+<script lang="ts">
+  import { type EmbedOptions, type VisualizationSpec } from 'vega-embed'
+
+  let { spec, opts = {} }: VegaProps = $props()
 
   const action = (el: HTMLDivElement) => {
     import('vega-embed').then((module) => module.default(el, spec, opts))

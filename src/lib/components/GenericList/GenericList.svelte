@@ -3,6 +3,7 @@
 
   interface Props {
     items: T[]
+    wrap?: boolean
 
     left: Snippet<[T]>
     leftClasses?: string
@@ -12,7 +13,7 @@
     rightPathname?: (item: T) => string
   }
 
-  const { items, left, leftClasses = 'anchor', right, rightContent, rightPathname }: Props = $props()
+  const { items, wrap = true, left, leftClasses = 'anchor', right, rightContent, rightPathname }: Props = $props()
 </script>
 
 <nav class="list-nav">
@@ -22,10 +23,23 @@
     <ul class="overflow-auto">
       {#each items as item (item.id)}
         <li
-          class="hover:preset-tonal-primary flex flex-wrap justify-between whitespace-nowrap border-b-[1px] last:border-none border-surface-800 rounded"
+          class="hover:preset-tonal-primary flex {wrap
+            ? 'flex-wrap'
+            : ''} justify-between whitespace-nowrap border-b-[1px] last:border-none border-surface-800 rounded"
         >
           <a
-            class="{leftClasses} px-2 md:px-4 py-3 grow overflow-hidden text-ellipsis hover:text-white w-full md:w-auto"
+            class="
+              {leftClasses}
+              {wrap ? 'w-full' : 'w-1/2 sm:w-auto'}
+              grow
+              hover:text-white
+              md:px-4
+              md:w-auto
+              overflow-hidden
+              px-2
+              py-3
+              text-ellipsis
+            "
             href={item.pathname}
           >
             {@render left(item)}
@@ -33,7 +47,17 @@
 
           {#if rightContent != null}
             <a
-              class="anchor px-2 md:px-4 py-3 overflow-hidden text-ellipsis hover:text-white w-full md:w-auto"
+              class="
+                {wrap ? 'w-full' : 'w-1/2 sm:w-auto'}
+                anchor
+                hover:text-white
+                md:px-4
+                md:w-auto
+                overflow-hidden
+                px-2
+                py-3
+                text-ellipsis
+              "
               href={rightPathname?.(item)}
             >
               {rightContent(item)}
@@ -41,7 +65,15 @@
           {/if}
 
           {#if right != null}
-            <div class="flex overflow-hidden text-ellipsis w-full md:w-auto">
+            <div
+              class="
+              {wrap ? 'w-full' : 'shrink'}
+              flex
+              md:w-auto
+              overflow-hidden
+              text-ellipsis
+            "
+            >
               {@render right(item)}
             </div>
           {/if}

@@ -71,7 +71,7 @@
                   role="presentation"
                 >
                   <div class="grow overflow-hidden text-ellipsis w-auto">
-                    <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
+                    <RouteName grades={data.grades} gradingScale={data.gradingScale} {route} />
                   </div>
 
                   {#if dirtyRoutes.includes(route.id)}
@@ -145,7 +145,7 @@
                 </span>
               {:else}
                 <span class="text-primary-500 list-option hover:!bg-inherit flex justify-between">
-                  <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} {route} />
+                  <RouteName grades={data.grades} gradingScale={data.gradingScale} {route} />
 
                   <form method="POST" action="?/addRoute" use:enhance>
                     <input hidden name="routeFk" value={form?.routeFk ?? route.id} />

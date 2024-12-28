@@ -18,7 +18,7 @@
     Edit files of
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
-    {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
+    {grade == null ? '' : ` (${grade[data.gradingScale ?? 'FB']})`}
     - {PUBLIC_APPLICATION_NAME}
   </title>
 </svelte:head>
@@ -27,7 +27,7 @@
   {#snippet lead()}
     <span>Edit files of</span>
     <a class="anchor" href={basePath}>
-      <RouteName grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} route={data.route} />
+      <RouteName grades={data.grades} gradingScale={data.gradingScale} route={data.route} />
     </a>
   {/snippet}
 </AppBar>

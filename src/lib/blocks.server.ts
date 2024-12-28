@@ -1,5 +1,7 @@
+import type { db } from '$lib/db/db.server'
 import * as schema from '$lib/db/schema'
 import { areas, blocks } from '$lib/db/schema'
+import type { InferResultType } from '$lib/db/types'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
 import { error } from '@sveltejs/kit'
 import { eq, isNotNull } from 'drizzle-orm'
@@ -192,4 +194,96 @@ export const getToposOfArea = async (areaId: number, db: PostgresJsDatabase<type
       }
     }),
   }
+}
+
+export const nestedAreaQuery: Parameters<typeof db.query.areas.findMany>[0] = {
+  with: {
+    areas: {
+      with: {
+        areas: {
+          with: {
+            areas: {
+              with: {
+                blocks: {
+                  with: {
+                    routes: true,
+                  },
+                },
+              },
+            },
+            blocks: {
+              with: {
+                routes: true,
+              },
+            },
+          },
+        },
+        blocks: {
+          with: {
+            routes: true,
+          },
+        },
+      },
+    },
+    blocks: {
+      with: {
+        routes: true,
+      },
+    },
+  },
+}
+
+type NestedArea = InferResultType<
+  'areas',
+  { areas: { with: { areas: true; blocks: { with: { routes: true } } } }; blocks: { with: { routes: true } } }
+>
+const recursive = (area: NestedArea): schema.Route[] => {
+  const routes = area.blocks?.flatMap((block) => block.routes ?? []) ?? []
+  routes.push(...(area.areas?.flatMap((area) => recursive(area as NestedArea)) ?? []))
+
+  return routes
+}
+
+export const getStatsOfAreas = (
+  areas: InferResultType<'areas'>[],
+  grades: schema.Grade[],
+  user: InferResultType<'users', { userSettings: { columns: { gradingScale: true } } }> | undefined,
+) => {
+  return areas.map((area) => {
+    const routes = recursive(area as NestedArea)
+
+    const gradesObj = routes
+      .filter((route) => route.gradeFk != null)
+      .map((route) => ({
+        grade: grades.find((grade) => grade.id === route.gradeFk)?.[user?.userSettings?.gradingScale ?? 'FB'],
+      }))
+
+    return {
+      ...area,
+      numOfRoutes: routes.length,
+      grades: gradesObj,
+    }
+  })
+}
+
+export const getStatsOfBlocks = (
+  blocks: InferResultType<'blocks', { routes: true }>[],
+  grades: schema.Grade[],
+  user: InferResultType<'users', { userSettings: { columns: { gradingScale: true } } }> | undefined,
+) => {
+  return blocks.map((block) => {
+    const { routes } = block
+
+    const gradesObj = routes
+      .filter((route) => route.gradeFk != null)
+      .map((route) => ({
+        grade: grades.find((grade) => grade.id === route.gradeFk)?.[user?.userSettings?.gradingScale ?? 'FB'],
+      }))
+
+    return {
+      ...block,
+      numOfRoutes: routes.length,
+      grades: gradesObj,
+    }
+  })
 }

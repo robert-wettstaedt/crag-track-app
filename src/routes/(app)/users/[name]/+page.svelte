@@ -6,6 +6,7 @@
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
   import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
+  import GradeHistogram from '$lib/components/GradeHistogram'
   import RouteName from '$lib/components/RouteName'
   import Vega from '$lib/components/Vega'
   import type { UserSettings } from '$lib/db/schema.js'
@@ -17,16 +18,16 @@
 
   let tabSet: 'sends' | 'open-projects' | 'finished-projects' | 'settings' = $state('sends')
 
-  const gradingScale: UserSettings['gradingScale'] = data.user?.userSettings?.gradingScale ?? 'FB'
+  const gradingScale: UserSettings['gradingScale'] = data.gradingScale ?? 'FB'
 
   const ascents = data.sends.map((ascent) => {
     const grade = data.grades.find((grade) => grade.id === (ascent.gradeFk ?? ascent.route.gradeFk))
 
     if (grade == null) {
-      return ascent
+      return { ...ascent, grade: undefined }
     }
 
-    return { ...ascent, grade: grade[gradingScale], color: getGradeColor(grade) }
+    return { ...ascent, grade: grade[gradingScale] }
   })
 </script>
 
@@ -55,54 +56,12 @@
 
     {#snippet content()}
       <Tabs.Panel value="sends">
-        <Vega
+        <GradeHistogram
+          data={ascents}
+          grades={data.grades}
+          gradingScale={data.gradingScale}
           spec={{
-            background: 'transparent',
             width: 'container',
-            data: {
-              values: ascents,
-            },
-            mark: 'bar',
-            encoding: {
-              color: {
-                legend: null,
-                field: 'grade',
-                scale: {
-                  domain: data.grades.map((grade) => grade[gradingScale]),
-                  range: data.grades.map((grade) => getGradeColor(grade)),
-                },
-              },
-              x: {
-                field: 'grade',
-                scale: {
-                  domain: data.grades.map((grade) => grade[gradingScale]),
-                },
-                type: 'nominal',
-                title: 'Grade',
-              },
-              y: {
-                aggregate: 'count',
-                field: 'grade',
-                title: 'Count',
-              },
-              tooltip: [
-                {
-                  field: 'grade',
-                  type: 'nominal',
-                  title: 'Grade',
-                },
-                {
-                  aggregate: 'count',
-                  field: 'grade',
-                  title: 'Count',
-                },
-              ],
-            },
-          }}
-          opts={{
-            actions: false,
-            renderer: 'svg',
-            theme: 'dark',
           }}
         />
       </Tabs.Panel>

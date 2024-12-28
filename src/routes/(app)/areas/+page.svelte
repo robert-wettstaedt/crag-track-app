@@ -2,6 +2,7 @@
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { EDIT_PERMISSION } from '$lib/auth.js'
   import GenericList from '$lib/components/GenericList'
+  import GradeHistogram from '$lib/components/GradeHistogram'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
 
   let { data } = $props()
@@ -29,9 +30,37 @@
   {#if data.areas.length === 0}
     No areas yet
   {:else}
-    <GenericList items={data.areas.map((item) => ({ ...item, pathname: `/areas/${item.slug}-${item.id}` }))}>
+    <GenericList
+      items={data.areas.map((item) => ({ ...item, pathname: `/areas/${item.slug}-${item.id}` }))}
+      wrap={false}
+    >
       {#snippet left(item)}
         {item.name}
+      {/snippet}
+
+      {#snippet right(item)}
+        <div class="flex items-center">
+          {item.numOfRoutes}
+
+          {#if item.numOfRoutes === 1}
+            route
+          {:else}
+            routes
+          {/if}
+        </div>
+
+        <GradeHistogram
+          axes={false}
+          data={item.grades}
+          grades={data.grades}
+          gradingScale={data.gradingScale}
+          spec={{
+            width: 100,
+          }}
+          opts={{
+            height: 38,
+          }}
+        />
       {/snippet}
     </GenericList>
   {/if}

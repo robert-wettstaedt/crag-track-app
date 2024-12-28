@@ -40,19 +40,14 @@
   <title>
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
-    {grade == null ? '' : ` (${grade[data.user?.userSettings?.gradingScale ?? 'FB']})`}
+    {grade == null ? '' : ` (${grade[data.gradingScale ?? 'FB']})`}
     - {PUBLIC_APPLICATION_NAME}
   </title>
 </svelte:head>
 
 <AppBar>
   {#snippet lead()}
-    <RouteName
-      classes="flex-wrap"
-      grades={data.grades}
-      gradingScale={data.user?.userSettings?.gradingScale}
-      route={data.route}
-    />
+    <RouteName classes="flex-wrap" grades={data.grades} gradingScale={data.gradingScale} route={data.route} />
   {/snippet}
 
   {#snippet headline()}
@@ -212,7 +207,7 @@
     <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
-      <References {references} grades={data.grades} gradingScale={data.user?.userSettings?.gradingScale} />
+      <References {references} grades={data.grades} gradingScale={data.gradingScale} />
     </div>
   {/if}
 {/await}
@@ -309,11 +304,7 @@
 
             {#if ascent.gradeFk != null}
               <span class="ms-2">
-                <RouteGrade
-                  grades={data.grades}
-                  gradingScale={data.user?.userSettings?.gradingScale}
-                  route={data.route}
-                />
+                <RouteGrade grades={data.grades} gradingScale={data.gradingScale} route={data.route} />
               </span>
             {/if}
           </div>

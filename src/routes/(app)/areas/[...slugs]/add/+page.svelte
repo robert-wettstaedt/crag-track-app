@@ -37,7 +37,7 @@
   <AreaFormFields
     description={form?.description ?? ''}
     grades={data.grades}
-    gradingScale={data.user?.userSettings?.gradingScale}
+    gradingScale={data.gradingScale}
     hasParent={data.parent != null}
     name={form?.name ?? ''}
     type={form?.type ?? 'area'}
