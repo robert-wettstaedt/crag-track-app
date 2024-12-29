@@ -10,7 +10,9 @@
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
 
-  let coordinate: Coordinate | null = $state(null)
+  let coordinate: Coordinate | null = $state(
+    data.block.geolocation == null ? null : [data.block.geolocation.long, data.block.geolocation.lat],
+  )
   let tabSet = $state('map')
 
   const onChange = ({ detail }: CustomEvent<Coordinate>) => (coordinate = detail)
