@@ -26,7 +26,7 @@
   {/snippet}
 </AppBar>
 
-<div class="block card p-2 md:p-4 mt-8 preset-filled-surface-100-900">
+<div class="block card p-2 md:p-4 my-8 preset-filled-surface-100-900">
   {#if data.areas.length === 0}
     No areas yet
   {:else}

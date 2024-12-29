@@ -23,12 +23,14 @@
   <AscentsTable ascents={data.ascents} grades={data.grades} gradingScale={data.gradingScale} />
 </div>
 
-<div class="mt-8 flex justify-end">
+<div class="my-8 flex justify-end">
   <Pagination
-    data={[]}
+    buttonClasses="btn-sm md:btn-md"
     count={data.pagination.total}
-    pageSize={data.pagination.pageSize}
+    data={[]}
     page={data.pagination.page}
+    pageSize={data.pagination.pageSize}
+    siblingCount={0}
     onPageChange={(detail) => {
       const url = new URL($page.url)
       url.searchParams.set('page', String(detail.page))
