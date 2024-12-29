@@ -83,7 +83,9 @@
 
 <label class="label mt-4">
   <span>Grade</span>
-  <select class="select max-h-[300px] overflow-auto" name="gradeFk" size="8" value={gradeFk}>
+  <select class="select" name="gradeFk" value={gradeFk ?? ''}>
+    <option disabled value="">-- Select grade --</option>
+
     {#each grades as grade}
       <option value={grade.id}>{grade[gradingScale ?? 'FB']}</option>
     {/each}
@@ -113,7 +115,7 @@
 
 <label class="label mt-4">
   <span>Tags</span>
-  <select class="select max-h-[300px] overflow-auto" multiple name="tags" size="8" value={routeTags}>
+  <select class="select max-h-[300px] overflow-auto" multiple name="tags" value={routeTags}>
     {#each tags as tag}
       <option value={tag.id}>{tag.id}</option>
     {/each}
