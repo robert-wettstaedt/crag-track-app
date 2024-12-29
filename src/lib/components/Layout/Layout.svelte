@@ -36,13 +36,13 @@
 
   afterNavigate(() => {
     if ($page.url.hash.length === 0) {
-      document.body?.scrollTo(0, 0)
+      document.scrollingElement?.scrollTo(0, 0)
     }
   })
 
   $effect(() => {
     if (form != null) {
-      document.body?.scrollTo(0, 0)
+      document.scrollingElement?.scrollTo(0, 0)
     }
   })
 </script>
