@@ -46,9 +46,9 @@
 </svelte:head>
 
 <div>
-  <ProgressBar class="text-secondary-500 !z-20" />
+  <ProgressBar class="text-secondary-500 !z-[100]" />
 
-  <AppBar classes="sticky top-0 z-10 shadow-xl">
+  <AppBar classes="sticky top-0 z-50 shadow-xl">
     {#snippet lead()}
       <a class="flex gap-2" href="/">
         <img src={Logo} alt={PUBLIC_APPLICATION_NAME} width={32} height={32} />
@@ -66,7 +66,7 @@
           arrowBackground="!bg-surface-200 dark:!bg-surface-800"
           contentBase="card bg-surface-200-800 p-2 md:p-4 w-74 shadow-xl"
           positioning={{ placement: 'bottom' }}
-          positionerZIndex="!z-[100]"
+          positionerZIndex="!z-50"
         >
           {#snippet trigger()}
             <i class="fa-solid fa-circle-user text-3xl"></i>
@@ -136,7 +136,7 @@
   </main>
 
   {#if data.userPermissions?.includes('data.read')}
-    <Navigation.Bar classes="md:hidden sticky bottom-0 z-20">
+    <Navigation.Bar classes="md:hidden sticky bottom-0 z-50">
       <NavTiles userPermissions={data.userPermissions} />
     </Navigation.Bar>
 
