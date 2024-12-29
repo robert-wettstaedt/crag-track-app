@@ -12,15 +12,13 @@
     label: string
   }
 
-  let crumbs: Crumb[] = $state([])
-
-  run(() => {
+  let crumbs: Crumb[] = $derived.by(() => {
     // Remove zero-length tokens.
     const tokens = url.pathname.split('/').filter((token) => token !== '')
 
     // Create { label, href } pairs for each token.
     let tokenPath = ''
-    crumbs = tokens
+    const crumbs = tokens
       .map((token): Crumb => {
         tokenPath += '/' + token
         return {
@@ -32,6 +30,8 @@
 
     // Add a way to get home too.
     crumbs.unshift({ label: 'home', href: '/' })
+
+    return crumbs
   })
 </script>
 
