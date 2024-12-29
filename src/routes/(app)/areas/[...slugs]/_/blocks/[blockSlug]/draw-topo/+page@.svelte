@@ -62,7 +62,7 @@
   <Popover
     arrow
     arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-    contentBase="card bg-surface-200-800 p-2 md:p-4 space-y-4 max-w-[320px] shadow-lg"
+    contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px] shadow-lg"
     positionerZIndex="!z-50"
     positioning={{ placement: 'bottom-end' }}
     triggerBase="btn preset-outlined-surface-500"
@@ -88,7 +88,7 @@
             <Popover
               arrow
               arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-              contentBase="card bg-surface-200-800 p-2 md:p-4 space-y-4 max-w-[320px]"
+              contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
               positioning={{ placement: 'top' }}
               positionerZIndex="!z-50"
               triggerBase="px-2 md:px-4 py-3"
@@ -98,16 +98,16 @@
               {/snippet}
 
               {#snippet content()}
-                <article class="p-2 md:p-4">
+                <article>
                   <p>Are you sure you want to delete this image?</p>
-
-                  <footer class="flex justify-end">
-                    <form method="POST" action="?/removeTopo" use:enhance>
-                      <input hidden name="id" value={topos[selectedTopoIndex].id} />
-                      <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
-                    </form>
-                  </footer>
                 </article>
+
+                <footer class="flex justify-end">
+                  <form method="POST" action="?/removeTopo" use:enhance>
+                    <input hidden name="id" value={topos[selectedTopoIndex].id} />
+                    <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+                  </form>
+                </footer>
               {/snippet}
             </Popover>
           </li>
@@ -137,7 +137,7 @@
         placeholder="Select route"
         value={$selectedRouteStore ?? ''}
       >
-        <option disabled value="">Select route</option>
+        <option disabled value="">-- Select route --</option>
 
         {#each data.block.routes as route}
           <option value={route.id}>
@@ -207,7 +207,7 @@
               <Popover
                 arrow
                 arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-                contentBase="card bg-surface-200-800 p-2 md:p-4 space-y-4 max-w-[320px]"
+                contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
                 positioning={{ placement: 'top' }}
                 positionerZIndex="!z-50"
                 triggerBase="btn"
@@ -221,28 +221,28 @@
                 {/snippet}
 
                 {#snippet content()}
-                  <article class="p-2 md:p-4">
+                  <article>
                     <p>Are you sure you want to delete this route's topo?</p>
-
-                    <footer class="flex justify-end">
-                      <form
-                        method="POST"
-                        action="?/removeRoute"
-                        use:enhance={() => {
-                          isDeleting = true
-
-                          return ({ update }) => {
-                            isDeleting = false
-                            return update()
-                          }
-                        }}
-                      >
-                        <input hidden name="routeFk" value={$selectedRouteStore} />
-                        <input hidden name="topoFk" value={topos[selectedTopoIndex].id} />
-                        <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
-                      </form>
-                    </footer>
                   </article>
+
+                  <footer class="flex justify-end">
+                    <form
+                      method="POST"
+                      action="?/removeRoute"
+                      use:enhance={() => {
+                        isDeleting = true
+
+                        return ({ update }) => {
+                          isDeleting = false
+                          return update()
+                        }
+                      }}
+                    >
+                      <input hidden name="routeFk" value={$selectedRouteStore} />
+                      <input hidden name="topoFk" value={topos[selectedTopoIndex].id} />
+                      <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+                    </form>
+                  </footer>
                 {/snippet}
               </Popover>
             {/if}

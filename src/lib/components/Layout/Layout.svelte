@@ -75,7 +75,7 @@
         <Popover
           arrow
           arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-          contentBase="card bg-surface-200-800 p-2 md:p-4 w-74 shadow-xl"
+          contentBase="card bg-surface-200-800 p-4 w-74 shadow-xl"
           positioning={{ placement: 'bottom' }}
           positionerZIndex="!z-50"
         >

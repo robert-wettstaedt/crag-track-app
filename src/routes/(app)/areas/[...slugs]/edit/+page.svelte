@@ -44,7 +44,7 @@
       <Popover
         arrow
         arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-        contentBase="card bg-surface-200-800 p-2 md:p-4 space-y-4 max-w-[320px]"
+        contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
         positioning={{ placement: 'top' }}
         triggerBase="btn preset-filled-error-500 !text-white"
       >
