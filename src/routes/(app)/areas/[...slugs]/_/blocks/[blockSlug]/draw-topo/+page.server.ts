@@ -10,27 +10,33 @@ import {
   type AddTopoActionValues,
   type SaveTopoActionValues,
 } from '$lib/forms.server'
+import { convertAreaSlug } from '$lib/helper.server'
+import { load as loadServerLayout } from '$lib/layout/layout.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params, parent }) => {
+export const load = (async (event) => {
+  const layoutData = await loadServerLayout(event)
+
+  const { locals, params } = event
+
   if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
     error(404)
   }
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const localDb = await createDrizzleSupabaseClient(locals.supabase)
 
-  const { areaId, areaSlug, user } = await parent()
+  const { areaId, areaSlug } = convertAreaSlug(params)
 
-  const blocksResult = await db((tx) =>
+  const blocksResult = await localDb((tx) =>
     tx.query.blocks.findMany({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
         routes: {
           orderBy: routes.gradeFk,
           with: {
-            ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+            ascents: layoutData.user == null ? { limit: 0 } : { where: eq(ascents.createdBy, layoutData.user.id) },
           },
         },
         topos: {
@@ -62,6 +68,7 @@ export const load = (async ({ locals, params, parent }) => {
   })
 
   return {
+    ...layoutData,
     block: { ...block, routes: enrichedRoutes },
     topos,
   }
@@ -96,6 +103,8 @@ export const actions = {
         })
         .where(eq(topoRoutes.id, Number(values.id))),
     )
+
+    return values.routeFk
   },
 
   addRoute: async ({ locals, request }) => {

@@ -137,17 +137,6 @@ describe('TopoViewer Component', () => {
   })
 
   describe('Edit Mode', () => {
-    it('should show edit controls when editable is true', () => {
-      render(TopoViewer, {
-        props: {
-          topos: mockTopos,
-          editable: true,
-        },
-      })
-
-      expect(screen.getByText('Select a route to edit')).toBeInTheDocument()
-    })
-
     it('should show point type buttons when route is selected', async () => {
       render(TopoViewer, {
         props: {

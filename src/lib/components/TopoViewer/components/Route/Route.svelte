@@ -64,9 +64,13 @@
       const drag = d3
         .drag()
         .on('start', (event) => {
-          event.sourceEvent.preventDefault()
+          const sourceEvent = event.sourceEvent as Event
 
-          const targetId = (event.sourceEvent.target as Element).attributes.getNamedItem('data-id')?.value
+          if (sourceEvent.type.startsWith('mouse')) {
+            sourceEvent.preventDefault()
+          }
+
+          const targetId = (sourceEvent.target as Element).attributes.getNamedItem('data-id')?.value
           selectedPoint = route.points.find((point) => point.id === targetId)
 
           if (!selected && $selectedPointTypeStore == null) {
@@ -106,8 +110,8 @@
           )
 
           points.forEach((point) => {
-            point.x = Math.round(point.x + event.dx + (correction?.x ?? 0))
-            point.y = Math.round(point.y + event.dy + (correction?.y ?? 0))
+            point.x = Math.round(point.x + event.dx / scale + (correction?.x ?? 0))
+            point.y = Math.round(point.y + event.dy / scale + (correction?.y ?? 0))
           })
 
           onChange?.(route)

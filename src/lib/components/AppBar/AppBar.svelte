@@ -12,11 +12,11 @@
     {#if actions != null}
       <div class="md:hidden">
         <Popover
-          positioning={{ placement: 'bottom-end' }}
-          triggerBase="btn preset-outlined-primary-500"
-          contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px] shadow-lg"
           arrow
           arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+          contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px] shadow-lg"
+          positioning={{ placement: 'bottom-end' }}
+          triggerBase="btn preset-outlined-primary-500"
         >
           {#snippet trigger()}
             <i class="fa-solid fa-ellipsis-vertical"></i>

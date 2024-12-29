@@ -9,6 +9,7 @@
   interface Props {
     editable?: boolean
     getRouteKey?: ((route: TopoRouteDTO, index: number) => number) | null
+    height?: number
     onChange?: (value: TopoDTO[], changedRoute: TopoRouteDTO) => void
     onLoad?: () => void
     selectedTopoIndex?: number
@@ -19,6 +20,7 @@
     topos = $bindable(),
     editable = false,
     getRouteKey = null,
+    height: elementHeight,
     onChange,
     onLoad,
     selectedTopoIndex = $bindable(0),
@@ -67,6 +69,7 @@
   })
 
   const onClickSvg: MouseEventHandler<SVGElement> = (event) => {
+    let updated = false
     if (!editable && !clicked) {
       clicked = true
       initZoom()
@@ -78,7 +81,7 @@
       }
 
       const point: PointDTO = {
-        id: crypto.randomUUID(),
+        id: crypto.randomUUID?.() ?? String(Math.random()),
         type: $selectedPointTypeStore,
         x: Math.ceil((event.layerX - (zoomTransform?.x ?? 0)) / scale / (zoomTransform?.k ?? 1)),
         y: Math.ceil((event.layerY - (zoomTransform?.y ?? 0)) / scale / (zoomTransform?.k ?? 1)),
@@ -86,7 +89,7 @@
 
       const closePoint = topos
         .flatMap((topo) => topo.routes.flatMap((route) => route.points))
-        .find((p) => Math.abs(p.x - point.x) < 10 && Math.abs(p.y - point.y) < 10)
+        .find((p) => Math.abs(p.x - point.x) < 30 && Math.abs(p.y - point.y) < 30)
 
       if (closePoint != null) {
         point.x = closePoint.x
@@ -96,9 +99,15 @@
       selectedTopoRoute.points = [...selectedTopoRoute.points, point]
       $selectedPointTypeStore = null
       onChange?.(topos, selectedTopoRoute)
+      updated = true
     }
 
-    if ($selectedRouteStore != null && $selectedPointTypeStore == null && (event.target as Element).tagName === 'svg') {
+    if (
+      $selectedRouteStore != null &&
+      $selectedPointTypeStore == null &&
+      (event.target as Element).tagName === 'svg' &&
+      !updated
+    ) {
       selectedRouteStore.set(null)
     }
   }
@@ -190,8 +199,8 @@
 
 {#if editable}
   <div class="flex justify-between p-2 preset-filled-surface-100-900">
-    {#if $selectedRouteStore == null}
-      <p>Select a route to edit</p>
+    {#if $selectedRouteStore == null || selectedTopoRoute == null}
+      <p>&nbsp;</p>
     {:else}
       <label class="flex items-center space-x-2">
         <input
@@ -232,7 +241,11 @@
   </div>
 {/if}
 
-<div bind:this={imgWrapper} class="relative overflow-hidden h-full w-full flex items-center justify-center">
+<div
+  bind:this={imgWrapper}
+  class="relative overflow-hidden h-full w-full flex items-center justify-center"
+  style={elementHeight == null ? undefined : `height: ${elementHeight}px`}
+>
   {#each topos as topo, index}
     {#if index === selectedTopoIndex}
       {#if topo.file.error == null}

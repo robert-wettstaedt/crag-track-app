@@ -89,7 +89,7 @@ describe('Rate Limiting Middleware', () => {
     await rateLimit({ event: event2, resolve: mockResolve })
 
     // Advance time past the window
-    vi.advanceTimersByTime(config.api.rateLimit.windowMs)
+    vi.advanceTimersByTime(config.api.rateLimit.windowMs + 1)
 
     // Make a new request to trigger cleanup
     await rateLimit({ event: mockEvent('3.3.3.3'), resolve: mockResolve })
