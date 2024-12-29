@@ -154,22 +154,28 @@
   })
 </script>
 
-<Tabs bind:value={tab}>
-  {#snippet list()}
-    <Tabs.Control value="write">Write</Tabs.Control>
-    <Tabs.Control value="preview">Preview</Tabs.Control>
-  {/snippet}
-  {#snippet content()}
-    <Tabs.Panel value="write">
-      <div bind:this={element} class="bg-surface-700 h-64"></div>
-    </Tabs.Panel>
-    <Tabs.Panel value="preview">
-      <div class="rendered-markdown h-64 bg-surface-700 px-3 py-2 overflow-auto">
-        {@html valueHtml}
-      </div>
-    </Tabs.Panel>
-  {/snippet}
-</Tabs>
+<div class="relative">
+  <a class="anchor absolute top-2 right-0" href="https://markdownguide.offshoot.io/cheat-sheet/" target="_blank"
+    >Markdown supported</a
+  >
+
+  <Tabs bind:value={tab}>
+    {#snippet list()}
+      <Tabs.Control value="write">Write</Tabs.Control>
+      <Tabs.Control value="preview">Preview</Tabs.Control>
+    {/snippet}
+    {#snippet content()}
+      <Tabs.Panel value="write">
+        <div bind:this={element} class="bg-surface-700 h-64"></div>
+      </Tabs.Panel>
+      <Tabs.Panel value="preview">
+        <div class="rendered-markdown h-64 bg-surface-700 px-3 py-2 overflow-auto">
+          {@html valueHtml}
+        </div>
+      </Tabs.Panel>
+    {/snippet}
+  </Tabs>
+</div>
 
 <style>
   :global(.cm-editor) {
