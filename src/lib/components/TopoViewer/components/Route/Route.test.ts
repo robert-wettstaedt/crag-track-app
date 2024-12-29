@@ -191,6 +191,7 @@ describe('RouteView Component', () => {
         sourceEvent: {
           preventDefault: vi.fn(),
           target: { attributes: { getNamedItem: () => ({ value: '1' }) } },
+          type: '',
         },
       })
 
