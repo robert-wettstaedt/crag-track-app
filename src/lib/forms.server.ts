@@ -15,6 +15,13 @@ function getSchemaShape<Output = unknown, Def extends z.ZodTypeDef = z.ZodObject
   if ((def as z.ZodEffectsDef<z.ZodObject<z.ZodRawShape>>).typeName === z.ZodFirstPartyTypeKind.ZodEffects) {
     return (def as z.ZodEffectsDef<z.ZodObject<z.ZodRawShape>>).schema._def.shape()
   }
+
+  if ((def as z.ZodIntersectionDef).typeName === z.ZodFirstPartyTypeKind.ZodIntersection) {
+    const left = getSchemaShape((def as z.ZodIntersectionDef).left)
+    const right = getSchemaShape((def as z.ZodIntersectionDef).right)
+
+    return { ...left, ...right }
+  }
 }
 
 function getItemDef(shape: z.ZodRawShape, itemName: string): z.ZodFirstPartyTypeKind {
