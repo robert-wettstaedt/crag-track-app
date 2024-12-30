@@ -16,7 +16,7 @@
 
   let { classes, route, grades, gradingScale }: Props = $props()
 
-  const lastAscent = route?.ascents?.toSorted((a, b) => a.dateTime.localeCompare(b.dateTime)).at(-1)
+  const lastAscent = $derived(route?.ascents?.toSorted((a, b) => a.dateTime.localeCompare(b.dateTime)).at(-1))
 </script>
 
 {#if route != null}

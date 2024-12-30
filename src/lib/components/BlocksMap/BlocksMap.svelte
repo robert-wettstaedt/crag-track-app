@@ -96,7 +96,14 @@
         new FullScreen(),
         new Attribution({ collapsible: collapsibleAttribution }),
       ]),
-      interactions: defaultInteractions().extend([new DragRotateAndZoom()]),
+      interactions: defaultInteractions({ doubleClickZoom: true }).extend([
+        new DragRotateAndZoom({
+          condition: (a) => {
+            console.log(a)
+            return false
+          },
+        }),
+      ]),
       target: element,
       layers: [
         new TileLayer({
@@ -498,7 +505,9 @@
 <svelte:window onresize={resizeMap} />
 
 <div class="relative">
-  <div class="map w-full -z-0" use:mapAction>
+  <!-- svelte-ignore a11y_positive_tabindex -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <div class="map w-full -z-0" tabindex="1" use:mapAction>
     <div class="relative z-10 {'ontouchstart' in window ? ' ol-touch' : ''}">
       <div class="ol-control ol-layers">
         <button

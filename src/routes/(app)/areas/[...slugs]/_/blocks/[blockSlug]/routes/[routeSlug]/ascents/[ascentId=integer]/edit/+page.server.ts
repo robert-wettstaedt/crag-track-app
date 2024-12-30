@@ -3,7 +3,7 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, files, type File } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
-import { ascentActionSchema, validate, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
+import { ascentActionSchema, validateFormData, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -52,7 +52,7 @@ export const actions = {
 
     // Validate the ascent form data
     try {
-      values = await validate(ascentActionSchema, data)
+      values = await validateFormData(ascentActionSchema, data)
     } catch (exception) {
       return exception as ActionFailure<AscentActionValues>
     }

@@ -3,7 +3,7 @@ import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, users, type Ascent, type File } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { checkExternalSessions, logExternalAscent } from '$lib/external-resources/index.server'
-import { ascentActionSchema, validate, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
+import { ascentActionSchema, validateFormData, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -69,7 +69,7 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validate(ascentActionSchema, data)
+      values = await validateFormData(ascentActionSchema, data)
     } catch (exception) {
       // Return the validation failure
       return exception as ActionFailure<AscentActionValues>

@@ -2,7 +2,7 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { routesToTags, tags } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
-import { tagActionSchema, validate, type ActionFailure, type TagActionValues } from '$lib/forms.server'
+import { tagActionSchema, validateFormData, type ActionFailure, type TagActionValues } from '$lib/forms.server'
 import { error, fail } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -31,7 +31,7 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validate(tagActionSchema, data)
+      values = await validateFormData(tagActionSchema, data)
     } catch (exception) {
       // If validation fails, return the exception as TagActionFailure
       return exception as ActionFailure<TagActionValues>

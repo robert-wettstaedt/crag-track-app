@@ -1,56 +1,76 @@
 <script lang="ts">
+  import AscentTypeLabel from '$lib/components/AscentTypeLabel'
+  import RouteName from '$lib/components/RouteName'
   import type { Grade, UserSettings } from '$lib/db/schema'
-  import type { InferResultType } from '$lib/db/types'
+  import type { EnrichedAscent } from '$lib/db/utils'
+  import type { Pagination as PaginationType } from '$lib/pagination.server'
+  import { Pagination } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
-  import AscentTypeLabel from '../AscentTypeLabel'
-  import RouteName from '../RouteName'
+
+  type PaginationProps = Parameters<typeof Pagination>[1]
 
   interface Props {
-    ascents: InferResultType<'ascents', { author: true; route: true }>[]
+    ascents: EnrichedAscent[]
     grades: Grade[]
     gradingScale?: UserSettings['gradingScale']
+    pagination: PaginationType
+    paginationProps?: Partial<PaginationProps>
   }
 
-  let { ascents, grades, gradingScale = 'FB' }: Props = $props()
+  let { ascents, grades, gradingScale = 'FB', pagination, paginationProps }: Props = $props()
 </script>
 
-<div class="table-wrap">
-  {#if ascents.length === 0}
-    No ascents yet
-  {:else}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Climber</th>
-          <th>Date time</th>
-          <th>Type</th>
-          <th>Route</th>
-        </tr>
-      </thead>
-
-      <tbody class="hover:[&>tr]:preset-tonal-primary">
-        {#each ascents as ascent}
-          <tr class="whitespace-nowrap">
-            <td>
-              <a class="anchor hover:text-white" href="/users/{ascent.author.username}">{ascent.author.username}</a>
-            </td>
-
-            <td>
-              {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
-            </td>
-
-            <td>
-              <AscentTypeLabel includeText type={ascent.type} />
-            </td>
-
-            <td>
-              <a class="anchor hover:text-white" href={ascent.route.pathname}>
-                <RouteName {grades} route={ascent.route} {gradingScale} />
-              </a>
-            </td>
+<div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
+  <div class="table-wrap">
+    {#if ascents.length === 0}
+      No ascents yet
+    {:else}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Climber</th>
+            <th>Date time</th>
+            <th>Type</th>
+            <th>Route</th>
           </tr>
-        {/each}
-      </tbody>
-    </table>
-  {/if}
+        </thead>
+
+        <tbody class="hover:[&>tr]:preset-tonal-primary">
+          {#each ascents as ascent}
+            <tr class="whitespace-nowrap">
+              <td>
+                <a class="anchor hover:text-white" href="/users/{ascent.author.username}">{ascent.author.username}</a>
+              </td>
+
+              <td>
+                {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
+              </td>
+
+              <td>
+                <AscentTypeLabel includeText type={ascent.type} />
+              </td>
+
+              <td>
+                <a class="anchor hover:text-white" href={ascent.route.pathname}>
+                  <RouteName {grades} route={ascent.route} {gradingScale} />
+                </a>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {/if}
+  </div>
+</div>
+
+<div class="my-8 flex justify-end">
+  <Pagination
+    buttonClasses="btn-sm md:btn-md"
+    count={pagination.total}
+    data={[]}
+    page={pagination.page}
+    pageSize={pagination.pageSize}
+    siblingCount={0}
+    {...paginationProps}
+  />
 </div>

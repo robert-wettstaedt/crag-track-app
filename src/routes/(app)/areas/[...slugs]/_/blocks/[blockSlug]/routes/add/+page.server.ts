@@ -3,7 +3,7 @@ import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, generateSlug, routes, routesToTags, users, type Route } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { insertExternalResources } from '$lib/external-resources/index.server'
-import { routeActionSchema, validate, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
+import { routeActionSchema, validateFormData, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
@@ -65,7 +65,7 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validate(routeActionSchema, data)
+      values = await validateFormData(routeActionSchema, data)
     } catch (exception) {
       // If validation fails, return the exception as RouteActionFailure
       return exception as ActionFailure<RouteActionValues>

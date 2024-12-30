@@ -2,7 +2,12 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
-import { firstAscentActionSchema, validate, type ActionFailure, type FirstAscentActionValues } from '$lib/forms.server'
+import {
+  firstAscentActionSchema,
+  validateFormData,
+  type ActionFailure,
+  type FirstAscentActionValues,
+} from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
@@ -96,7 +101,7 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validate(firstAscentActionSchema, data)
+      values = await validateFormData(firstAscentActionSchema, data)
     } catch (exception) {
       // Return the validation failure
       return exception as ActionFailure<FirstAscentActionValues>

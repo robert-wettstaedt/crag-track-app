@@ -5,7 +5,7 @@ import { enrichTopo } from '$lib/db/utils'
 import {
   addTopoActionSchema,
   saveTopoActionSchema,
-  validate,
+  validateFormData,
   type ActionFailure,
   type AddTopoActionValues,
   type SaveTopoActionValues,
@@ -87,7 +87,7 @@ export const actions = {
     let values: SaveTopoActionValues
 
     try {
-      values = await validate(saveTopoActionSchema, data)
+      values = await validateFormData(saveTopoActionSchema, data)
     } catch (exception) {
       return exception as ActionFailure<SaveTopoActionValues>
     }
@@ -120,7 +120,7 @@ export const actions = {
 
     // Validate the ascent form data
     try {
-      values = await validate(addTopoActionSchema, data)
+      values = await validateFormData(addTopoActionSchema, data)
     } catch (exception) {
       return exception as ActionFailure<AddTopoActionValues>
     }
@@ -143,7 +143,7 @@ export const actions = {
 
     // Validate the ascent form data
     try {
-      values = await validate(addTopoActionSchema, data)
+      values = await validateFormData(addTopoActionSchema, data)
     } catch (exception) {
       return exception as ActionFailure<AddTopoActionValues>
     }

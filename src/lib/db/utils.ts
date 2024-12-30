@@ -1,5 +1,5 @@
 import type { db } from '$lib/db/db.server'
-import type { InferResultType, NestedArea, NestedBlock, NestedRoute } from '$lib/db/types'
+import type { InferResultType, NestedArea, NestedAscent, NestedBlock, NestedRoute } from '$lib/db/types'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { convertPathToPoints, type TopoDTO, type TopoRouteDTO } from '$lib/topo'
 
@@ -98,6 +98,21 @@ export const enrichRoute = (route: NestedRoute): EnrichedRoute => {
     return { ...route, block, pathname }
   } catch (error) {
     console.log('Unable to enrich route: ', route)
+    throw error
+  }
+}
+
+export interface EnrichedAscent extends Omit<NestedAscent, 'route'> {
+  route: EnrichedRoute
+}
+
+export const enrichAscent = (ascent: NestedAscent): EnrichedAscent => {
+  try {
+    const route = enrichRoute(ascent.route as NestedRoute)
+
+    return { ...ascent, route }
+  } catch (error) {
+    console.log('Unable to enrich ascent: ', ascent)
     throw error
   }
 }

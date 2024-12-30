@@ -2,7 +2,7 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, generateSlug, users, type Area } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
-import { areaActionSchema, validate, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
+import { areaActionSchema, validateFormData, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -45,7 +45,7 @@ export const actions = {
     let values: AreaActionValues
 
     try {
-      values = await validate(areaActionSchema, data)
+      values = await validateFormData(areaActionSchema, data)
     } catch (exception) {
       return exception as ActionFailure<AreaActionValues>
     }

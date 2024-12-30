@@ -14,14 +14,20 @@
 </script>
 
 <Vega
+  {...rest}
   spec={{
     ...(rest.spec as any),
     background: 'transparent',
     data: {
       values: data,
     },
-    mark: 'bar',
+    mark: {
+      type: 'bar',
+      stroke: 'white',
+      cursor: 'pointer',
+    },
     encoding: {
+      ...(rest.spec as any)?.encoding,
       color: {
         legend: null,
         field: 'grade',

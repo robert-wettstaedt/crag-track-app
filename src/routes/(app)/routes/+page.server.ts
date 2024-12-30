@@ -1,6 +1,8 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, routes, users } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichRoute } from '$lib/db/utils'
+import { validateObject } from '$lib/forms.server'
+import { getPaginationQuery, paginationParamsSchema } from '$lib/pagination.server'
 import { asc, count, desc, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
@@ -15,15 +17,12 @@ export const load = (async ({ locals, url }) => {
         }),
   )
 
-  // Get the 'page' parameter from the URL, defaulting to 0 if not provided
-  const page = Number(url.searchParams.get('page') ?? '1')
-  // Set the number of results per page
-  const pageSize = 20
+  const searchParamsObj = Object.fromEntries(url.searchParams.entries())
+  const searchParams = await validateObject(paginationParamsSchema, searchParamsObj)
 
   const routesResult = await db((tx) =>
     tx.query.routes.findMany({
-      limit: pageSize,
-      offset: (page - 1) * pageSize,
+      ...getPaginationQuery(searchParams),
       orderBy: [desc(routes.rating), asc(routes.gradeFk)],
       where: isNotNull(routes.rating),
       with: {
@@ -43,8 +42,8 @@ export const load = (async ({ locals, url }) => {
   return {
     routes: enrichedRoutes,
     pagination: {
-      page,
-      pageSize,
+      page: searchParams.page,
+      pageSize: searchParams.pageSize,
       total: countResults[0].count,
     },
   }

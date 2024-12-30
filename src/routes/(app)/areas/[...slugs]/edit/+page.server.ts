@@ -2,7 +2,7 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, files, generateSlug, geolocations } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
-import { areaActionSchema, validate, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
+import { areaActionSchema, validateFormData, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -45,7 +45,7 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validate(areaActionSchema, data)
+      values = await validateFormData(areaActionSchema, data)
     } catch (exception) {
       // If validation fails, return the exception as an AreaActionFailure
       return exception as ActionFailure<AreaActionValues>

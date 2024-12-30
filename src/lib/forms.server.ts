@@ -24,25 +24,38 @@ function getItemDef(shape: z.ZodRawShape, itemName: string): z.ZodFirstPartyType
     return (def as z.ZodOptionalDef).innerType._def.typeName
   }
 
+  if ((def as z.ZodDefaultDef).typeName === z.ZodFirstPartyTypeKind.ZodDefault) {
+    return (def as z.ZodDefaultDef).innerType._def.typeName
+  }
+
   return def.typeName
 }
 
-export async function validate<Output = unknown, Def extends z.ZodTypeDef = z.ZodObjectDef, Input = Output>(
+export async function validateObject<Output = unknown, Def extends z.ZodTypeDef = z.ZodObjectDef, Input = Output>(
   schema: z.ZodType<Output, Def, Input>,
-  data: FormData,
+  data: Record<string, unknown>,
 ): Promise<Output> {
   const shape = getSchemaShape(schema)
 
-  const obj = Array.from(data).reduce(
-    (obj, item) => {
+  const obj = Object.entries(data).reduce(
+    (obj, [key, rawValue]) => {
       if (shape == null) {
         return obj
       }
 
-      const typeName = getItemDef(shape, item[0])
+      const typeName = getItemDef(shape, key)
 
-      const value =
-        typeName === z.ZodFirstPartyTypeKind.ZodArray ? data.getAll(item[0]).filter(Boolean) : data.get(item[0])
+      const value = (() => {
+        if (typeName === z.ZodFirstPartyTypeKind.ZodArray && Array.isArray(rawValue)) {
+          return rawValue.filter(Boolean)
+        }
+
+        if (Array.isArray(rawValue)) {
+          return rawValue[0]
+        }
+
+        return rawValue
+      })()
 
       if (typeof value === 'string' && value.trim().length === 0) {
         return obj
@@ -52,11 +65,11 @@ export async function validate<Output = unknown, Def extends z.ZodTypeDef = z.Zo
         const number = Number(value)
 
         if (!Number.isNaN(number)) {
-          return { ...obj, [item[0]]: number }
+          return { ...obj, [key]: number }
         }
       }
 
-      return { ...obj, [item[0]]: value }
+      return { ...obj, [key]: value }
     },
     {} as Record<string, unknown>,
   )
@@ -67,6 +80,20 @@ export async function validate<Output = unknown, Def extends z.ZodTypeDef = z.Zo
     const error = convertException(exception)
     throw fail(400, { ...obj, error })
   }
+}
+
+export async function validateFormData<Output = unknown, Def extends z.ZodTypeDef = z.ZodObjectDef, Input = Output>(
+  schema: z.ZodType<Output, Def, Input>,
+  data: FormData,
+): Promise<Output> {
+  const obj = Array.from(data).reduce(
+    (obj, [key]) => {
+      return { ...obj, [key]: data.getAll(key) }
+    },
+    {} as Record<string, unknown>,
+  )
+
+  return validateObject(schema, obj)
 }
 
 export type ActionFailure<T> = T & { error: string }

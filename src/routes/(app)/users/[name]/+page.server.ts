@@ -4,7 +4,7 @@ import { buildNestedAreaQuery, enrichRoute } from '$lib/db/utils'
 import { convertException } from '$lib/errors'
 import {
   userExternalResourceActionSchema,
-  validate,
+  validateFormData,
   type ActionFailure,
   type UserExternalResourceActionValues,
 } from '$lib/forms.server'
@@ -65,6 +65,8 @@ export const load = (async ({ locals, params }) => {
   // Get unique route IDs from the ascents result
   const routeIds = Array.from(new Set(ascentsResult.map((ascent) => ascent.routeFk)))
 
+  const enrichedAscents = ascentsResult.map((ascent) => ({ ...ascent, route: enrichRoute(ascent.route) }))
+
   // Find open projects by filtering and sorting ascents
   const openProjects = routeIds
     .flatMap((routeId) => {
@@ -121,7 +123,7 @@ export const load = (async ({ locals, params }) => {
 
   // Return the user, sends, open projects, and finished projects
   return {
-    sends: ascentsResult.filter((ascent) => ascent.type !== 'attempt' && ascent.type !== 'repeat'),
+    ascents: enrichedAscents,
     openProjects,
     finishedProjects,
     externalResources,
@@ -169,7 +171,7 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validate(userExternalResourceActionSchema, data)
+      values = await validateFormData(userExternalResourceActionSchema, data)
     } catch (exception) {
       // If validation fails, return the exception as AreaActionFailure
       return exception as ActionFailure<UserExternalResourceActionValues>

@@ -5,29 +5,53 @@
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
   import AppBar from '$lib/components/AppBar'
+  import AscentsTable from '$lib/components/AscentsTable'
+  import type { PaginatedAscents } from '$lib/components/AscentsTable/load.server'
   import GenericList from '$lib/components/GenericList'
   import GradeHistogram from '$lib/components/GradeHistogram'
   import RouteName from '$lib/components/RouteName'
-  import Vega from '$lib/components/Vega'
-  import type { UserSettings } from '$lib/db/schema.js'
-  import { getGradeColor } from '$lib/grades'
-  import { Tabs } from '@skeletonlabs/skeleton-svelte'
+  import { type UserSettings } from '$lib/db/schema.js'
+  import { ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
+  import { onMount } from 'svelte'
 
   let { data, form } = $props()
+
+  let loadedData: PaginatedAscents | null = $state(null)
+  let loadError: string | null = $state(null)
+  let loadOpts: Record<string, string> = $state({})
 
   let tabSet: 'sends' | 'open-projects' | 'finished-projects' | 'settings' = $state('sends')
 
   const gradingScale: UserSettings['gradingScale'] = data.gradingScale ?? 'FB'
 
-  const ascents = data.sends.map((ascent) => {
-    const grade = data.grades.find((grade) => grade.id === (ascent.gradeFk ?? ascent.route.gradeFk))
+  const sends = data.ascents
+    .filter((ascent) => ascent.type !== 'attempt' && ascent.type !== 'repeat')
+    .map((ascent) => {
+      const grade = data.grades.find((grade) => grade.id === (ascent.gradeFk ?? ascent.route.gradeFk))
 
-    if (grade == null) {
-      return { ...ascent, grade: undefined }
+      if (grade == null) {
+        return { ...ascent, grade: undefined }
+      }
+
+      return { ...ascent, grade: grade[gradingScale] }
+    })
+
+  const loadData = async () => {
+    const searchParams = new URLSearchParams(loadOpts)
+    const res = await fetch(`/api/users/${$page.params.name}/ascents?${searchParams.toString()}`)
+
+    if (res.status != 200) {
+      loadError = 'Unable to load ascents'
+      return
     }
 
-    return { ...ascent, grade: grade[gradingScale] }
+    const data = await res.json()
+    loadedData = data
+  }
+
+  onMount(() => {
+    loadData()
   })
 </script>
 
@@ -44,7 +68,7 @@
 <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
   <Tabs bind:value={tabSet} listClasses="overflow-x-auto overflow-y-hidden">
     {#snippet list()}
-      <Tabs.Control value="sends">Sends</Tabs.Control>
+      <Tabs.Control value="sends">Ascents</Tabs.Control>
 
       <Tabs.Control value="open-projects">Open projects</Tabs.Control>
       <Tabs.Control value="finished-projects">Finished projects</Tabs.Control>
@@ -57,13 +81,83 @@
     {#snippet content()}
       <Tabs.Panel value="sends">
         <GradeHistogram
-          data={ascents}
+          data={sends}
           grades={data.grades}
           gradingScale={data.gradingScale}
           spec={{
-            width: 'container',
+            width: 'container' as any,
+            params: [
+              {
+                name: 'highlight',
+                select: { type: 'point', on: 'pointerover' },
+              },
+              { name: 'select', select: 'point' },
+            ],
+            encoding: {
+              fillOpacity: {
+                condition: { param: 'select', value: 1 },
+                value: 0.3,
+              },
+              strokeWidth: {
+                condition: [
+                  {
+                    param: 'select',
+                    empty: false,
+                    value: 2,
+                  },
+                  {
+                    param: 'highlight',
+                    empty: false,
+                    value: 1,
+                  },
+                ],
+                value: 0,
+              },
+            },
+          }}
+          onEmbed={(result) => {
+            result.view.addSignalListener('chartClick', (_, datum) => {
+              const grade = data.grades.find((grade) => grade.FB === datum?.grade || grade.V === datum?.grade)
+
+              loadOpts = grade == null ? {} : { grade: String(grade.id) }
+              loadData()
+            })
+          }}
+          opts={{
+            patch: (spec) => {
+              spec.signals?.push({
+                name: 'chartClick',
+                value: 0,
+                on: [{ events: '*:mousedown', update: 'datum' }],
+              })
+
+              return spec
+            },
           }}
         />
+
+        {#if loadError != null}
+          <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 whitespace-pre-line">
+            <p>{loadError}</p>
+          </aside>
+        {:else if loadedData == null}
+          <div class="flex justify-center mt-16">
+            <ProgressRing value={null} />
+          </div>
+        {:else}
+          <AscentsTable
+            ascents={loadedData.ascents}
+            grades={data.grades}
+            gradingScale={data.gradingScale}
+            pagination={loadedData.pagination}
+            paginationProps={{
+              onPageChange: (detail) => {
+                loadOpts = { ...loadOpts, page: String(detail.page) }
+                loadData()
+              },
+            }}
+          />
+        {/if}
       </Tabs.Panel>
 
       <Tabs.Panel value="open-projects">

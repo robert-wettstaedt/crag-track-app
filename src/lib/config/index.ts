@@ -27,8 +27,8 @@ export const config = {
     fileTTL: 1000 * 60 * 60 * 24, // 24 hours for file data
   },
   logging: {
-    level: process.env.NODE_ENV === 'development' ? 'error' : 'info',
-    format: process.env.NODE_ENV === 'development' ? 'pretty' : 'json',
+    level: process.env.NODE_ENV === 'production' ? 'info' : 'error',
+    format: process.env.NODE_ENV === 'production' ? 'json' : 'pretty',
   },
 } as const
 

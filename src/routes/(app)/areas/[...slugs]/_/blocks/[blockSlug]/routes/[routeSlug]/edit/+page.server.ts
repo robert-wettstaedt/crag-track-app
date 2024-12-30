@@ -15,7 +15,7 @@ import {
   topoRoutes,
 } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
-import { routeActionSchema, validate, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
+import { routeActionSchema, validateFormData, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -87,7 +87,7 @@ export const actions = {
 
     try {
       // Validate the form data
-      values = await validate(routeActionSchema, data)
+      values = await validateFormData(routeActionSchema, data)
     } catch (exception) {
       // Return the validation failure
       return exception as ActionFailure<RouteActionValues>

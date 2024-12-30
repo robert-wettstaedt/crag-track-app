@@ -13,13 +13,13 @@
 
   let { route, grades, gradingScale = 'FB' }: Props = $props()
 
-  const send = route?.ascents?.find((ascent) => ascent.type === 'send')
+  const send = $derived(route?.ascents?.find((ascent) => ascent.type === 'send'))
 
-  const routeGradeConfig = grades.find((grade) => (route == null ? false : grade.id === route?.gradeFk))
-  const ascentGradeConfig = grades.find((grade) =>
-    route == null || route.ascents == null ? false : grade.id === send?.gradeFk,
+  const routeGradeConfig = $derived(grades.find((grade) => (route == null ? false : grade.id === route?.gradeFk)))
+  const ascentGradeConfig = $derived(
+    grades.find((grade) => (route == null || route.ascents == null ? false : grade.id === send?.gradeFk)),
   )
-  const gradeConfig = ascentGradeConfig ?? routeGradeConfig
+  const gradeConfig = $derived(ascentGradeConfig ?? routeGradeConfig)
 </script>
 
 {#if route?.gradeFk != null}
