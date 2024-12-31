@@ -54,7 +54,8 @@
   }
 
   const completion: CompletionSource = async (context) => {
-    let before = context.matchBefore(/!\w+/)
+    // https://stackoverflow.com/a/70273329
+    let before = context.matchBefore(/!\p{Letter}+/u)
 
     if (before == null) {
       return null
