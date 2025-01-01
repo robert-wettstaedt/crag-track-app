@@ -3,8 +3,9 @@
   import RouteName from '$lib/components/RouteName'
   import type { Grade, UserSettings } from '$lib/db/schema'
   import type { EnrichedAscent } from '$lib/db/utils'
+  import { convertMarkdownToHtml } from '$lib/markdown'
   import type { Pagination as PaginationType } from '$lib/pagination.server'
-  import { Pagination } from '@skeletonlabs/skeleton-svelte'
+  import { Pagination, ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
   type PaginationProps = Parameters<typeof Pagination>[1]
@@ -35,7 +36,7 @@
           </tr>
         </thead>
 
-        <tbody class="hover:[&>tr]:preset-tonal-primary">
+        <tbody class="hover:[&>tr:not(.notes)]:preset-tonal-primary">
           {#each ascents as ascent}
             <tr class="whitespace-nowrap">
               <td>
@@ -56,6 +57,18 @@
                 </a>
               </td>
             </tr>
+
+            {#if ascent.notes != null && ascent.notes.length > 0}
+              <tr class="notes">
+                <td colspan="4">
+                  {#await convertMarkdownToHtml(ascent.notes)}
+                    <ProgressRing classes="m-auto" size="size-8" value={null} />
+                  {:then value}
+                    {@html value}
+                  {/await}
+                </td>
+              </tr>
+            {/if}
           {/each}
         </tbody>
       </table>
