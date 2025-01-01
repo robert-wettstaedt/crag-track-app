@@ -3,21 +3,28 @@
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
+  import { onMount } from 'svelte'
 
   const { data } = $props()
 
   let mapWrapper: HTMLDivElement | null = $state(null)
   let height: number | null = $state(null)
 
-  $effect(() => {
+  const getHeight = () => {
     const bcr = mapWrapper?.getBoundingClientRect()
     const navBarBcr = document.querySelector('[data-testid="nav-bar"]')?.getBoundingClientRect()
 
     if (bcr != null && navBarBcr != null) {
       height = window.innerHeight - bcr.top - navBarBcr.height
     }
+  }
+
+  onMount(() => {
+    getHeight()
   })
 </script>
+
+<svelte:window onresize={getHeight} />
 
 <svelte:head>
   <title>{PUBLIC_APPLICATION_NAME}</title>
