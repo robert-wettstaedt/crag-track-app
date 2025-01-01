@@ -96,14 +96,7 @@
         new FullScreen(),
         new Attribution({ collapsible: collapsibleAttribution }),
       ]),
-      interactions: defaultInteractions({ doubleClickZoom: true }).extend([
-        new DragRotateAndZoom({
-          condition: (a) => {
-            console.log(a)
-            return false
-          },
-        }),
-      ]),
+      interactions: defaultInteractions({ doubleClickZoom: true }).extend([new DragRotateAndZoom()]),
       target: element,
       layers: [
         new TileLayer({
@@ -462,24 +455,7 @@
     if (mapElement != null) {
       if (height == null) {
         const bcr = mapElement.getBoundingClientRect()
-        let el: HTMLElement | null = mapElement
-        let parentBcr: DOMRect | null = null
-
-        while (el != null) {
-          parentBcr = el.getBoundingClientRect()
-
-          if (parentBcr.height > 0) {
-            break
-          }
-
-          el = el.parentElement
-        }
-
-        if (parentBcr == null || heightSubtrahend > 0) {
-          mapElement.style.height = `${window.innerHeight - bcr.top - 16 - heightSubtrahend}px`
-        } else {
-          mapElement.style.height = `${parentBcr.height - (bcr.top - parentBcr.top) * 2}px`
-        }
+        mapElement.style.height = `${window.innerHeight - bcr.top - 16 - heightSubtrahend}px`
       } else if (typeof height === 'number') {
         mapElement.style.height = `${height}px`
       } else {

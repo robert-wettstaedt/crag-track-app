@@ -5,6 +5,18 @@
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
 
   const { data } = $props()
+
+  let mapWrapper: HTMLDivElement | null = $state(null)
+  let height: number | null = $state(null)
+
+  $effect(() => {
+    const bcr = mapWrapper?.getBoundingClientRect()
+    const navBarBcr = document.querySelector('[data-testid="nav-bar"]')?.getBoundingClientRect()
+
+    if (bcr != null && navBarBcr != null) {
+      height = window.innerHeight - bcr.top - navBarBcr.height
+    }
+  })
 </script>
 
 <svelte:head>
@@ -71,9 +83,9 @@
     </div>
   </section>
 {:else if data.userPermissions?.includes('data.read')}
-  <div class="-m-[0.5rem] md:-m-[1rem]">
+  <div bind:this={mapWrapper} class="-m-[0.5rem] md:-m-[1rem]">
     {#await import('$lib/components/BlocksMap') then BlocksMap}
-      <BlocksMap.default blocks={data.blocks} />
+      <BlocksMap.default blocks={data.blocks} {height} />
     {/await}
   </div>
 {:else}
