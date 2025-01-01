@@ -36,7 +36,7 @@
     <div class="absolute inset-[-0.5rem] md:inset-[-1rem] overflow-hidden -z-10 brightness-50 blur-sm">
       <video class="min-w-full min-h-full object-cover" autoplay loop muted>
         <source
-          src="https://videos.openai.com/vg-assets/assets%2Ftask_01jfq6vybye8t8xfpsjk8gb66h%2Ftask_01jfq6vybye8t8xfpsjk8gb66h_genid_11190092-3128-416e-9dad-e41ece3a3e18_24_12_22_12_54_633598%2Fvideos%2F00000_397450%2Fsource.mp4?st=2024-12-22T11%3A40%3A48Z&se=2024-12-28T12%3A40%3A48Z&sks=b&skt=2024-12-22T11%3A40%3A48Z&ske=2024-12-28T12%3A40%3A48Z&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skoid=aa5ddad1-c91a-4f0a-9aca-e20682cc8969&skv=2019-02-02&sv=2018-11-09&sr=b&sp=r&spr=https%2Chttp&sig=C%2FuwNvp8%2BRRjkBKp0Q4PJExQO8i9vMaprERMCToQf3E%3D&az=oaivgprodscus"
+          src="https://niniugtqbfituyzfoapv.supabase.co/storage/v1/object/public/crag-track/20241222_1354_Mossy%20Forest%20Boulder_storyboard_01jfq6xey9esm8kpfzwfpc09xn.mp4?t=2025-01-01T12%3A18%3A56.818Z"
           type="video/mp4"
         />
         Your browser does not support the video tag.
