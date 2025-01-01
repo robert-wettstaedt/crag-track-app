@@ -86,6 +86,11 @@
           gradingScale={data.gradingScale}
           spec={{
             width: 'container' as any,
+            mark: {
+              type: 'bar',
+              stroke: 'white',
+              cursor: 'pointer',
+            },
             params: [
               {
                 name: 'highlight',

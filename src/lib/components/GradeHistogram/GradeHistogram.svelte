@@ -16,16 +16,14 @@
 <Vega
   {...rest}
   spec={{
-    ...(rest.spec as any),
     background: 'transparent',
     data: {
       values: data,
     },
-    mark: {
-      type: 'bar',
-      stroke: 'white',
-      cursor: 'pointer',
-    },
+    mark: 'bar',
+
+    ...(rest.spec as any),
+
     encoding: {
       ...(rest.spec as any)?.encoding,
       color: {
