@@ -22,9 +22,13 @@ import { createBasicTablePolicies, getAuthorizedPolicyConfig, getOwnEntryPolicyC
 export const generateSlug = (name: string): string =>
   name
     .toLowerCase()
-    .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
-    .replace(/[^\w ]+/g, '')
-    .replace(/ +/g, '-')
+    .normalize('NFD') // Normalize the string
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    .replace(/[^a-z0-9\s-]/g, '') // Remove non-alphanumeric characters except spaces and hyphens
+    .trim() // Trim whitespace from both ends
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/--+/g, '-') // Replace multiple hyphens with a single hyphen
+    .replace(/^-|-$/g, '') // Remove leading and trailing hyphens
 
 const baseFields = {
   createdAt: text('created_at')
