@@ -44,6 +44,16 @@ export const load = (async ({ locals, parent }) => {
     error(404)
   }
 
+  // If all blocks have a number in their name, sort blocks by the number
+  const sortedBlocks = area.blocks.some((block) => block.name.match(/\d+/) == null)
+    ? area.blocks
+    : area.blocks.toSorted((a, b) => {
+        const aNum = Number(a.name.match(/\d+/)?.at(0) ?? 0)
+        const bNum = Number(b.name.match(/\d+/)?.at(0) ?? 0)
+
+        return aNum - bNum
+      })
+
   // Query the database for blocks with geolocation data
   const geolocationBlocksResults = await db((tx) =>
     tx.query.blocks.findMany({
@@ -81,7 +91,7 @@ export const load = (async ({ locals, parent }) => {
     area: {
       ...area,
       areas: getStatsOfAreas(area.areas, grades, user),
-      blocks: getStatsOfBlocks(area.blocks, grades, user),
+      blocks: getStatsOfBlocks(sortedBlocks, grades, user),
       description,
     },
     blocks: geolocationBlocksResults.map(enrichBlock),
