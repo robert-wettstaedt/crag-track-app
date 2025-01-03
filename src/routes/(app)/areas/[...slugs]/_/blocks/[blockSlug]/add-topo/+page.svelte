@@ -3,9 +3,12 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AppBar from '$lib/components/AppBar'
+  import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
+
+  let loading = $state(false)
 </script>
 
 <svelte:head>
@@ -29,7 +32,15 @@
   class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900"
   enctype="multipart/form-data"
   method="POST"
-  use:enhance
+  use:enhance={() => {
+    loading = true
+
+    return ({ update }) => {
+      loading = false
+
+      return update()
+    }
+  }}
 >
   <label class="label">
     <span class="label-text">File Input</span>
@@ -38,6 +49,15 @@
 
   <div class="flex justify-between mt-8">
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
-    <button class="btn preset-filled-primary-500" type="submit">Add file</button>
+    <button class="btn preset-filled-primary-500" type="submit" disabled={loading}>
+      {#if loading}
+        <span class="me-2">
+          <ProgressRing size="size-4" value={null} />
+        </span>
+        <i class="fa-solid fa-floppy-disk"></i>
+      {/if}
+
+      Add file
+    </button>
   </div>
 </form>
