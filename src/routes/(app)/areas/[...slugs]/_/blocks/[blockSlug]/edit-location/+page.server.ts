@@ -4,6 +4,7 @@ import { blocks, geolocations } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
 import { convertException } from '$lib/errors'
 import { convertAreaSlug } from '$lib/helper.server'
+import { createOrUpdateGeolocation } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -119,17 +120,7 @@ export const actions = {
     }
 
     try {
-      // If the block does not have a geolocation, insert a new geolocation record
-      if (block.geolocationFk == null) {
-        const [geolocation] = await db((tx) =>
-          tx.insert(geolocations).values({ lat, long, blockFk: block.id }).returning(),
-        )
-        // Update the block with the new geolocation foreign key
-        await db((tx) => tx.update(blocks).set({ geolocationFk: geolocation.id }).where(eq(blocks.id, block.id)))
-      } else {
-        // If the block already has a geolocation, update the existing geolocation record
-        await db((tx) => tx.update(geolocations).set({ lat, long }).where(eq(geolocations.id, block.geolocationFk!)))
-      }
+      await db((tx) => createOrUpdateGeolocation(tx, block, { lat, long }))
     } catch (exception) {
       // Handle any exceptions that occur during the update
       return fail(404, { ...values, error: convertException(exception) })

@@ -1,5 +1,5 @@
 import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$env/static/private'
-import type { File } from '$lib/db/schema'
+import * as schema from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { error } from '@sveltejs/kit'
 import { createClient, type FileStat, type ResponseDataDetailed, type SearchResult, type WebDAVClient } from 'webdav'
@@ -22,11 +22,11 @@ export const getNextcloud = (path = '/remote.php/dav/files'): WebDAVClient => {
 /**
  * Searches for a file in Nextcloud using the provided session and file information.
  *
- * @param {File} file - The file object containing the path to search for.
+ * @param {schema.File} file - The file object containing the path to search for.
  * @returns {Promise<FileStat>} - A promise that resolves to the file statistics if found.
  * @throws {Error} - Throws an error if the session is invalid, the file is not found, or there is an issue with the search request.
  */
-export const searchNextcloudFile = async (file: File): Promise<FileStat> => {
+export const searchNextcloudFile = async (file: schema.File): Promise<FileStat> => {
   const basename = file.path.split('/').at(-1)
 
   try {
@@ -87,10 +87,10 @@ export const searchNextcloudFile = async (file: File): Promise<FileStat> => {
 /**
  * Loads file information from Nextcloud for a given list of files.
  *
- * @param {File[]} files - The list of files to load information for.
+ * @param {schema.File[]} files - The list of files to load information for.
  * @returns {Promise<FileDTO[]>} A promise that resolves to an array of FileDTO objects containing file information.
  */
-export const loadFiles = (files: File[]): Promise<FileDTO[]> => {
+export const loadFiles = (files: schema.File[]): Promise<FileDTO[]> => {
   return Promise.all(
     files.map(async (file) => {
       try {

@@ -5,6 +5,7 @@ import { convertException } from '$lib/errors'
 import { areaActionSchema, validateFormData, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { getReferences } from '$lib/references.server'
+import { renameArea } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -52,7 +53,7 @@ export const actions = {
     }
 
     // Convert the area slug to get the areaId
-    const { areaId } = convertAreaSlug(params)
+    const { areaId, areaSlug } = convertAreaSlug(params)
 
     // Generate a slug from the area name
     const slug = generateSlug(values.name)
@@ -77,6 +78,8 @@ export const actions = {
           .set({ ...values, slug })
           .where(eq(areas.id, areaId)),
       )
+
+      await db((tx) => renameArea(tx, `${areaSlug}-${areaId}`, `${slug}-${areaId}`))
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })

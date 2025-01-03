@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
+  import { invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import RouteName from '$lib/components/RouteName'
@@ -103,7 +104,18 @@
                 </article>
 
                 <footer class="flex justify-end">
-                  <form method="POST" action="?/removeTopo" use:enhance>
+                  <form
+                    method="POST"
+                    action="?/removeTopo"
+                    use:enhance={() => {
+                      return ({ update }) => {
+                        selectedTopoIndex = 0
+                        $selectedRouteStore = null
+                        invalidate($page.url)
+                        return update()
+                      }
+                    }}
+                  >
                     <input hidden name="id" value={topos[selectedTopoIndex].id} />
                     <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
                   </form>

@@ -3,10 +3,12 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import BlockFormFields from '$lib/components/BlockFormFields'
-  import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
+  import { AppBar, Popover, ProgressRing } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
+
+  let loading = $state(false)
 </script>
 
 <svelte:head>
@@ -26,7 +28,20 @@
   </aside>
 {/if}
 
-<form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" action="?/updateBlock" method="POST" use:enhance>
+<form
+  class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900"
+  action="?/updateBlock"
+  method="POST"
+  use:enhance={() => {
+    loading = true
+
+    return ({ update }) => {
+      loading = false
+
+      return update()
+    }
+  }}
+>
   <BlockFormFields name={form?.name ?? data.name} />
 
   <div class="flex justify-between mt-8">
@@ -57,7 +72,15 @@
         {/snippet}
       </Popover>
 
-      <button class="btn preset-filled-primary-500" type="submit">Update block</button>
+      <button class="btn preset-filled-primary-500" type="submit" disabled={loading}>
+        {#if loading}
+          <span class="me-2">
+            <ProgressRing size="size-4" value={null} />
+          </span>
+        {/if}
+
+        Update block
+      </button>
     </div>
   </div>
 </form>

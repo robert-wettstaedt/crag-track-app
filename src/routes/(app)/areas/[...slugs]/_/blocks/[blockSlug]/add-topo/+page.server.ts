@@ -1,13 +1,11 @@
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { blocks, files, topos } from '$lib/db/schema'
+import { blocks, files } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { convertAreaSlug } from '$lib/helper.server'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
+import { createGeolocationFromFiles, insertTopos } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
-import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -59,7 +57,7 @@ export const actions = {
     const db = await createDrizzleSupabaseClient(locals.supabase)
 
     // Convert the area slug to get the areaId
-    const { areaId } = convertAreaSlug(params)
+    const { areaId, path } = convertAreaSlug(params)
 
     // Query the database to find the first block matching the given slug and areaId
     const block = await db((tx) =>
@@ -81,41 +79,28 @@ export const actions = {
 
     // Retrieve form data from the request
     const data = await request.formData()
-    const path = data.get('path')
-    const values = { path }
+    const imageFiles = data.getAll('imageFiles') as File[]
+    const values = { file: imageFiles }
 
     // Validate the path
-    if (typeof path !== 'string' || path.length === 0) {
-      return fail(400, { ...values, error: 'path is required' })
+    if (imageFiles.some((file) => !(file instanceof File) || file.size === 0)) {
+      return fail(400, { ...values, error: 'file is required' })
     }
 
-    let stat: FileStat | undefined = undefined
-    try {
-      // Get file statistics from Nextcloud
-      stat = (await getNextcloud()?.stat(NEXTCLOUD_USER_NAME + path)) as FileStat | undefined
-    } catch (exception) {
-      // If an exception occurs, return a failure response with the error message
-      return fail(400, { ...values, error: convertException(exception) })
-    }
-
-    // If the file statistics are not found, return a failure response
-    if (stat == null) {
-      return fail(400, { ...values, error: 'Unable to read file' })
-    }
-
-    // If the path is a directory, return a failure response
-    if (stat.type === 'directory') {
-      return fail(400, { ...values, error: 'path must be a file not a directory' })
-    }
+    const fileBuffers = await Promise.all(imageFiles.filter((file) => file.size > 0).map((file) => file.arrayBuffer()))
 
     try {
-      const [fileResult] = await db((tx) =>
-        tx.insert(files).values({ blockFk: block.id, path, type: 'topo' }).returning(),
+      await db(async (tx) => (block == null ? null : createGeolocationFromFiles(tx, block, fileBuffers, 'create')))
+
+      await db(async (tx) =>
+        block == null
+          ? undefined
+          : insertTopos(tx, block, fileBuffers, {
+              areaSlug: path.at(-2)!,
+              blockSlug: block.slug,
+              sectorSlug: path.at(-1)!,
+            }),
       )
-
-      if (stat.mime?.includes('image')) {
-        await db((tx) => tx.insert(topos).values({ blockFk: block.id, fileFk: fileResult.id }))
-      }
     } catch (exception) {
       // If an exception occurs during insertion, return a failure response with the error message
       return fail(404, { ...values, error: convertException(exception) })

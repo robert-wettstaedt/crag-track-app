@@ -6,7 +6,7 @@ describe('convertAreaSlug', () => {
     const params = { slugs: 'area1/area2/area3-123' }
     const result = convertAreaSlug(params)
     expect(result).toEqual({
-      areaSlug: ['area3'],
+      areaSlug: 'area3',
       areaId: 123,
       canAddArea: true,
       path: ['area1', 'area2', 'area3-123'],

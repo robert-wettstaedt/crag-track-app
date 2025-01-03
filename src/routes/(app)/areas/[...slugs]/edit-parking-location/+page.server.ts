@@ -140,7 +140,7 @@ export const actions = {
     }
 
     try {
-      await db.delete(geolocations).where(eq(geolocations.areaFk, area.id))
+      await db((tx) => tx.delete(geolocations).where(eq(geolocations.areaFk, area.id)))
     } catch (error) {
       return fail(404, { error: convertException(error) })
     }

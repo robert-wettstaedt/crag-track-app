@@ -6,7 +6,7 @@ import { convertException } from '$lib/errors'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
-import { error } from '@sveltejs/kit'
+import { error, redirect } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
@@ -14,7 +14,7 @@ export const load = (async ({ locals, parent }) => {
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
   // Retrieve the areaId from the parent context
-  const { areaId, grades, user } = await parent()
+  const { areaSlug, areaId, grades, path, user } = await parent()
 
   // Query the database for areas with the specified areaId
   const areasResult = await db((tx) =>
@@ -42,6 +42,11 @@ export const load = (async ({ locals, parent }) => {
   // If no area is found, throw a 404 error
   if (area == null) {
     error(404)
+  }
+
+  if (area.slug !== areaSlug) {
+    const newPath = path.map((segment) => segment.replace(`${areaSlug}-${areaId}`, `${area.slug}-${area.id}`))
+    redirect(302, `/areas/${newPath.join('/')}`)
   }
 
   // If all blocks have a number in their name, sort blocks by the number

@@ -1,3 +1,4 @@
+import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
@@ -12,6 +13,7 @@ import {
 } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { load as loadServerLayout } from '$lib/layout/layout.server'
+import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -165,7 +167,7 @@ export const actions = {
     const data = await request.formData()
     const id = Number(data.get('id'))
 
-    const topo = await db((tx) => tx.query.topos.findFirst({ where: eq(topos.id, id) }))
+    const topo = await db((tx) => tx.query.topos.findFirst({ where: eq(topos.id, id), with: { file: true } }))
 
     if (topo == null) {
       return fail(404, { error: `Topo with id ${id} not found` })
@@ -178,6 +180,8 @@ export const actions = {
         tx.delete(topos).where(eq(topos.id, id)),
       ]),
     )
+
+    topo.file == null ? null : await getNextcloud().deleteFile(NEXTCLOUD_USER_NAME + topo.file.path)
 
     if (topo.blockFk != null) {
       const remainingTopos = await db((tx) => tx.query.topos.findMany({ where: eq(topos.blockFk, topo.blockFk!) }))

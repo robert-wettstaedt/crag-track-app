@@ -3,12 +3,9 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AppBar from '$lib/components/AppBar'
-  import FileBrowser from '$lib/components/FileBrowser'
 
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
-
-  let filePath = $state(form?.path == null ? null : form.path.toString())
 </script>
 
 <svelte:head>
@@ -28,11 +25,15 @@
   </aside>
 {/if}
 
-<form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" method="POST" use:enhance>
+<form
+  class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900"
+  enctype="multipart/form-data"
+  method="POST"
+  use:enhance
+>
   <label class="label">
-    <span>New file</span>
-    <input name="path" type="hidden" value={filePath} />
-    <FileBrowser bind:value={filePath} />
+    <span class="label-text">File Input</span>
+    <input class="input" name="imageFiles" type="file" accept="image/*" multiple required />
   </label>
 
   <div class="flex justify-between mt-8">

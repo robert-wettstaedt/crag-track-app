@@ -13,8 +13,9 @@ const allAreas = await db.query.areas.findMany()
 
 await Promise.all(
   allAreas
-    .map((area) => ({ ...area, old: area.slug, new: schema.generateSlug(area.name) }))
-    .map((area) => db.update(schema.areas).set({ slug: area.new }).where(eq(schema.areas.id, area.id))),
+    .map((item) => ({ ...item, old: item.slug, new: schema.generateSlug(item.name) }))
+    .filter((item) => item.new !== item.old)
+    .map((item) => db.update(schema.areas).set({ slug: item.new }).where(eq(schema.areas.id, item.id))),
 )
 
 console.log('blocks...')
@@ -23,8 +24,9 @@ const allBlocks = await db.query.blocks.findMany()
 
 await Promise.all(
   allBlocks
-    .map((block) => ({ ...block, old: block.slug, new: schema.generateSlug(block.name) }))
-    .map((block) => db.update(schema.blocks).set({ slug: block.new }).where(eq(schema.blocks.id, block.id))),
+    .map((item) => ({ ...item, old: item.slug, new: schema.generateSlug(item.name) }))
+    .filter((item) => item.new !== item.old)
+    .map((item) => db.update(schema.blocks).set({ slug: item.new }).where(eq(schema.blocks.id, item.id))),
 )
 
 console.log('routes...')
@@ -33,8 +35,9 @@ const allRoutes = await db.query.routes.findMany()
 
 await Promise.all(
   allRoutes
-    .map((route) => ({ ...route, old: route.slug, new: schema.generateSlug(route.name) }))
-    .map((route) => db.update(schema.routes).set({ slug: route.new }).where(eq(schema.routes.id, route.id))),
+    .map((item) => ({ ...item, old: item.slug, new: schema.generateSlug(item.name) }))
+    .filter((item) => item.new !== item.old)
+    .map((item) => db.update(schema.routes).set({ slug: item.new }).where(eq(schema.routes.id, item.id))),
 )
 
 await postgres.end()

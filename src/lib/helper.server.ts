@@ -23,7 +23,7 @@ export const convertAreaSlug = (params: Record<string, string>) => {
   }
 
   const slugItems = lastPathItem.split('-')
-  const areaSlug = slugItems.slice(0, -1)
+  const areaSlug = slugItems.slice(0, -1).join('-')
   const areaId = Number(slugItems.at(-1))
   const canAddArea = path.length < MAX_AREA_NESTING_DEPTH
 
