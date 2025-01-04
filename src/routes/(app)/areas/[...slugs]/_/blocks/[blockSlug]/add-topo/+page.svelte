@@ -54,7 +54,6 @@
         <span class="me-2">
           <ProgressRing size="size-4" value={null} />
         </span>
-        <i class="fa-solid fa-floppy-disk"></i>
       {/if}
 
       Add file
