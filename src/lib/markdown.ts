@@ -70,7 +70,8 @@ const enrichMarkdown = async (markdown: string, db?: PostgresJsDatabase<typeof s
         reference += ' '
       }
 
-      reference += `!${type}:${id}:${btoa(result.name)}!`
+      const name = result.name.length === 0 ? '<no name>' : result.name
+      reference += `!${type}:${id}:${btoa(name)}!`
 
       return { match, reference }
     }),
