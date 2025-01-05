@@ -27,7 +27,7 @@ export const load = (async ({ locals, parent }) => {
   const area = areasResult.at(0)
 
   // If the area is not found, throw a 404 error
-  if (area == null) {
+  if (area == null || area.type === 'area') {
     error(404)
   }
 
@@ -98,11 +98,7 @@ export const actions = {
     const area = areasResult.at(0)
 
     // If the area is not found, throw a 404 error
-    if (area == null) {
-      error(404)
-    }
-
-    if (area.type !== 'crag') {
+    if (area == null || area.type === 'area') {
       error(400, 'Area is not a crag')
     }
 

@@ -123,7 +123,7 @@
     </button>
 
     {#if data.userPermissions?.includes(EDIT_PERMISSION)}
-      {#if data.area.type === 'crag'}
+      {#if data.area.type !== 'area'}
         <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-parking-location`}>
           <i class="fa-solid fa-parking"></i>Add parking location
         </a>
