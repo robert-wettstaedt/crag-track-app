@@ -23,7 +23,7 @@
     editable = false,
     getRouteKey = null,
     height: elementHeight,
-    limitImgHeight,
+    limitImgHeight = true,
     onChange,
     onLoad,
     selectedTopoIndex = $bindable(0),
