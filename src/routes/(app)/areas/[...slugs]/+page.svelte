@@ -104,23 +104,23 @@
   {/snippet}
 
   {#snippet actions()}
-    {#if data.area.type === 'crag'}
+    {#if data.area.type === 'sector'}
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
         <i class="fa-solid fa-file-export"></i>Export PDF
       </a>
+
+      <button class="btn btn-sm preset-outlined-primary-500" disabled={loadingDownload} onclick={onDownloadGpx}>
+        {#if loadingDownload}
+          <span>
+            <ProgressRing size="size-4" value={null} />
+          </span>
+        {:else}
+          <i class="fa-solid fa-map-location-dot"></i>
+        {/if}
+
+        Export GPX
+      </button>
     {/if}
-
-    <button class="btn btn-sm preset-outlined-primary-500" disabled={loadingDownload} onclick={onDownloadGpx}>
-      {#if loadingDownload}
-        <span>
-          <ProgressRing size="size-4" value={null} />
-        </span>
-      {:else}
-        <i class="fa-solid fa-map-location-dot"></i>
-      {/if}
-
-      Export GPX
-    </button>
 
     {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       {#if data.area.type !== 'area'}

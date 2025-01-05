@@ -3,13 +3,14 @@
   import BlockEntry, { type Block } from './components/BlockEntry'
 
   interface Props {
-    name: string
     blocks: Block[]
     getBlockKey?: GetBlockKey
+    itemClass?: string
+    name: string
     onLoadTopo?: () => void
   }
 
-  let { name, blocks, getBlockKey = null, onLoadTopo }: Props = $props()
+  let { name, blocks, itemClass, getBlockKey = null, onLoadTopo }: Props = $props()
 </script>
 
 <section>
@@ -30,7 +31,7 @@
 </section>
 
 {#each blocks as block, index}
-  <BlockEntry {block} {index} {getBlockKey} {onLoadTopo} />
+  <BlockEntry {block} {index} {getBlockKey} {onLoadTopo} {itemClass} topoViewerProps={{ limitImgHeight: false }} />
 {/each}
 
 <style>
