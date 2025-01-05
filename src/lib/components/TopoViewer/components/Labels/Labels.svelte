@@ -61,7 +61,17 @@
     const startsEntries = Object.entries(starts)
     const startsArr = startsEntries.map(entryToLabel)
 
-    if (startsEntries.some(([, routes]) => routes != null && routes.length > 1)) {
+    const hasOverlappingPoints = routes.some((route) => {
+      const otherRoutes = routes.filter((r) => r.id !== route.id)
+
+      return route.points.some((point) =>
+        otherRoutes.some((otherRoute) =>
+          otherRoute.points.some((otherPoint) => otherPoint.x === point.x && otherPoint.y === point.y),
+        ),
+      )
+    })
+
+    if (hasOverlappingPoints) {
       const tops = groupRoutes('top')
       const topsEntries = Object.entries(tops)
       const topsArr = topsEntries.map(entryToLabel)
