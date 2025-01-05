@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { page } from '$app/stores'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import FileBrowser from '$lib/components/FileBrowser'
   import MarkdownEditor from '$lib/components/MarkdownEditor'
-  import type { Ascent, File, Grade, UserSettings } from '$lib/db/schema'
+  import type { Ascent, File } from '$lib/db/schema'
   import { Modal } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
   import type { MouseEventHandler } from 'svelte/elements'
@@ -12,13 +13,11 @@
     dateTime: Ascent['dateTime']
     filePaths?: File['path'][]
     gradeFk: Ascent['gradeFk']
-    grades: Grade[]
-    gradingScale: UserSettings['gradingScale'] | null | undefined
     notes: Ascent['notes']
     type: Ascent['type'] | null
   }
 
-  let { dateTime, filePaths = $bindable(['']), gradeFk, grades, gradingScale, notes, type }: Props = $props()
+  let { dateTime, filePaths = $bindable(['']), gradeFk, notes, type }: Props = $props()
   let modalOpen = $state(false)
 
   run(() => {
@@ -48,8 +47,8 @@
   <select class="select" name="gradeFk" value={gradeFk ?? ''}>
     <option disabled value="">-- Select grade --</option>
 
-    {#each grades as grade}
-      <option value={grade.id}>{grade[gradingScale ?? 'FB']}</option>
+    {#each $page.data.grades as grade}
+      <option value={grade.id}>{grade[$page.data.gradingScale]}</option>
     {/each}
   </select>
 </label>
@@ -134,5 +133,5 @@
   <span>Notes</span>
   <textarea hidden name="notes" value={notes}></textarea>
 
-  <MarkdownEditor {grades} {gradingScale} bind:value={notes} />
+  <MarkdownEditor bind:value={notes} />
 </label>

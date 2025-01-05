@@ -82,7 +82,7 @@
     <ul>
       {#each block.routes as route}
         <li class="flex items-center justify-between p-1 hover:bg-surface-400 whitespace-nowrap">
-          <RouteName grades={data.grades} gradingScale={data.gradingScale} {route} />
+          <RouteName {route} />
 
           {#if loading && values?.find((value) => value.routeFk === route.id) == null}
             <ProgressRing size="size-4" value={null} />

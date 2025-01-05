@@ -1,5 +1,6 @@
 import type { EDIT_PERMISSION, READ_PERMISSION } from '$lib/auth'
-import type { Session, SupabaseClient, User } from '@supabase/supabase-js'
+import type { Grade, User } from '$lib/db/schema'
+import type { User as AuthUser, Session, SupabaseClient } from '@supabase/supabase-js'
 
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
@@ -11,17 +12,23 @@ declare global {
       supabase: SupabaseClient
       safeGetSession: () => Promise<{
         session: Session | null
-        user: User | null
-        userRole: string | undefined
+        user: AuthUser | null
         userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION> | undefined
+        userRole: string | undefined
       }>
       session: Session | null
-      user: User | null
-      userRole: string | undefined
+      user: AuthUser | null
       userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION> | undefined
+      userRole: string | undefined
     }
     interface PageData {
+      authUser: AuthUser | null
+      grades: Grade[]
+      gradingScale: 'FB' | 'V'
       session: Session | null
+      user: User
+      userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION> | undefined
+      userRole: string | undefined
     }
     // interface PageState {}
     // interface Platform {}

@@ -153,7 +153,7 @@
 
         {#each data.block.routes as route}
           <option value={route.id}>
-            <RouteName grades={data.grades} gradingScale={data.gradingScale} {route} />
+            <RouteName {route} />
           </option>
         {/each}
       </select>

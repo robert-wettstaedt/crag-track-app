@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { page } from '$app/stores'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import RouteGrade from '$lib/components/RouteGrade'
-  import type { Grade, UserSettings } from '$lib/db/schema'
+  import type { Ascent } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import { Rating } from '@skeletonlabs/skeleton-svelte'
 
@@ -10,13 +11,26 @@
   interface Props {
     classes?: string
     route: (Omit<RouteWithAscents, 'ascents'> & Partial<Pick<RouteWithAscents, 'ascents'>>) | undefined
-    grades: Grade[]
-    gradingScale: UserSettings['gradingScale'] | undefined
   }
 
-  let { classes, route, grades, gradingScale }: Props = $props()
+  let { classes, route }: Props = $props()
 
-  const lastAscent = $derived(route?.ascents?.toSorted((a, b) => a.dateTime.localeCompare(b.dateTime)).at(-1))
+  const lastAscent = $derived.by(() => {
+    if (route?.ascents == null || $page.data.user == null) {
+      return null
+    }
+
+    const ascents = route.ascents.filter((ascent) => String(ascent.createdBy) === String($page.data.user!.id))
+
+    const priorityAscents: Ascent['type'][] = ['repeat', 'flash', 'send', 'attempt']
+
+    for (const type of priorityAscents) {
+      const ascent = ascents.find((ascent) => ascent.type === type)
+      if (ascent != null) {
+        return ascent
+      }
+    }
+  })
 </script>
 
 {#if route != null}
@@ -26,7 +40,7 @@
     {/if}
 
     {#if route.gradeFk != null}
-      <RouteGrade {route} {grades} {gradingScale} />
+      <RouteGrade {route} />
     {/if}
 
     {#if route.rating != null}

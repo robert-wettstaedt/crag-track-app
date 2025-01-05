@@ -145,7 +145,7 @@
     <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
-      <References {references} grades={data.grades} gradingScale={data.gradingScale} />
+      <References {references} />
     </div>
   {/if}
 {/await}
@@ -240,8 +240,6 @@
             <GradeHistogram
               axes={false}
               data={item.grades}
-              grades={data.grades}
-              gradingScale={data.gradingScale}
               spec={{
                 width: 100,
               }}
@@ -291,8 +289,6 @@
           <GradeHistogram
             axes={false}
             data={item.grades}
-            grades={data.grades}
-            gradingScale={data.gradingScale}
             spec={{
               width: 100,
             }}

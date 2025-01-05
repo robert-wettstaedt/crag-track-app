@@ -20,8 +20,6 @@
 
 <AscentsTable
   ascents={data.ascents}
-  grades={data.grades}
-  gradingScale={data.gradingScale}
   pagination={data.pagination}
   paginationProps={{
     onPageChange: (detail) => {

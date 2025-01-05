@@ -1,15 +1,12 @@
 <script lang="ts">
   import RouteName from '$lib/components/RouteName'
-  import type { Grade, UserSettings } from '$lib/db/schema'
   import type { References } from '$lib/references.server'
 
   interface Props {
     references: References
-    grades: Grade[]
-    gradingScale: UserSettings['gradingScale'] | undefined
   }
 
-  let { references, grades, gradingScale }: Props = $props()
+  let { references }: Props = $props()
 </script>
 
 <nav class="list-nav">
@@ -17,7 +14,7 @@
     {#each references.routes as route}
       <li>
         <a class="anchor px-4 py-3 flex hover:preset-tonal-primary" href={`/routes/${route.id}`}>
-          <RouteName {route} {grades} {gradingScale} />
+          <RouteName {route} />
         </a>
       </li>
     {/each}
@@ -36,7 +33,7 @@
           class="anchor px-4 py-3 flex hover:preset-tonal-primary hover:text-white"
           href={`/routes/${ascent.route.id}`}
         >
-          {ascent.author.username}'s tick of&nbsp;<RouteName route={ascent.route} {grades} {gradingScale} />
+          {ascent.author.username}'s tick of&nbsp;<RouteName route={ascent.route} />
         </a>
       </li>
     {/each}

@@ -1,16 +1,14 @@
 <script lang="ts">
+  import { page } from '$app/stores'
   import Vega, { type VegaProps } from '$lib/components/Vega'
-  import type { Grade, UserSettings } from '$lib/db/schema'
   import { getGradeColor } from '$lib/grades'
 
   interface Props extends Partial<VegaProps> {
     axes?: boolean
     data: Array<{ grade: string | undefined | null }>
-    grades: Grade[]
-    gradingScale: UserSettings['gradingScale']
   }
 
-  const { axes = true, data, grades, gradingScale, ...rest }: Props = $props()
+  const { axes = true, data, ...rest }: Props = $props()
 </script>
 
 <Vega
@@ -30,15 +28,15 @@
         legend: null,
         field: 'grade',
         scale: {
-          domain: grades.map((grade) => grade[gradingScale]),
-          range: grades.map((grade) => getGradeColor(grade)),
+          domain: $page.data.grades.map((grade) => grade[$page.data.gradingScale]),
+          range: $page.data.grades.map((grade) => getGradeColor(grade)),
         },
       },
       x: {
         axis: axes ? true : null,
         field: 'grade',
         scale: {
-          domain: grades.map((grade) => grade[gradingScale]),
+          domain: $page.data.grades.map((grade) => grade[$page.data.gradingScale]),
         },
         type: 'nominal',
         title: 'Grade',

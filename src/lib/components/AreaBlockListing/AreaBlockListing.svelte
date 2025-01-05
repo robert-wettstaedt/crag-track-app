@@ -28,12 +28,10 @@
     name: string
     blocks: Block[]
     getBlockKey?: GetBlockKey
-    grades: Grade[]
-    gradingScale?: UserSettings['gradingScale']
     onLoadTopo?: () => void
   }
 
-  let { name, blocks, getBlockKey = null, grades, gradingScale = 'FB', onLoadTopo }: Props = $props()
+  let { name, blocks, getBlockKey = null, onLoadTopo }: Props = $props()
 </script>
 
 <section>

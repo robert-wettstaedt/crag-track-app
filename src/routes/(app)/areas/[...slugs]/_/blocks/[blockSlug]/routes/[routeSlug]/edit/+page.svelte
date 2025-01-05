@@ -20,7 +20,7 @@
     Edit
     {data.route.rating == null ? '' : `${Array(data.route.rating).fill('★').join('')} `}
     {data.route.name}
-    {grade == null ? '' : ` (${grade[data.gradingScale ?? 'FB']})`}
+    {grade == null ? '' : ` (${grade[data.gradingScale]})`}
     - {PUBLIC_APPLICATION_NAME}
   </title>
 </svelte:head>
@@ -29,7 +29,7 @@
   {#snippet lead()}
     <span>Edit route</span>
     <a class="anchor" href={basePath}>
-      <RouteName grades={data.grades} gradingScale={data.gradingScale} route={data.route} />
+      <RouteName route={data.route} />
     </a>
   {/snippet}
 </AppBar>
@@ -45,8 +45,6 @@
     blockId={data.route.blockFk}
     description={form?.description ?? data.route.description}
     gradeFk={form?.gradeFk ?? data.route.gradeFk}
-    grades={data.grades}
-    gradingScale={data.gradingScale}
     name={form?.name ?? data.route.name}
     rating={form?.rating ?? data.route.rating ?? undefined}
     routeTags={form?.tags ?? data.route.tags.map((tag) => tag.tagFk)}

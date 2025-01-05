@@ -10,7 +10,6 @@
   import GenericList from '$lib/components/GenericList'
   import GradeHistogram from '$lib/components/GradeHistogram'
   import RouteName from '$lib/components/RouteName'
-  import { type UserSettings } from '$lib/db/schema.js'
   import { ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
   import { onMount } from 'svelte'
@@ -23,8 +22,6 @@
 
   let tabSet: 'sends' | 'open-projects' | 'finished-projects' | 'settings' = $state('sends')
 
-  const gradingScale: UserSettings['gradingScale'] = data.gradingScale ?? 'FB'
-
   const sends = data.ascents
     .filter((ascent) => ascent.type !== 'attempt' && ascent.type !== 'repeat')
     .map((ascent) => {
@@ -34,7 +31,7 @@
         return { ...ascent, grade: undefined }
       }
 
-      return { ...ascent, grade: grade[gradingScale] }
+      return { ...ascent, grade: grade[data.gradingScale] }
     })
 
   const loadData = async () => {
@@ -82,8 +79,6 @@
       <Tabs.Panel value="sends">
         <GradeHistogram
           data={sends}
-          grades={data.grades}
-          gradingScale={data.gradingScale}
           spec={{
             width: 'container' as any,
             mark: {
@@ -152,8 +147,6 @@
         {:else}
           <AscentsTable
             ascents={loadedData.ascents}
-            grades={data.grades}
-            gradingScale={data.gradingScale}
             pagination={loadedData.pagination}
             paginationProps={{
               onPageChange: (detail) => {
@@ -177,7 +170,7 @@
         >
           {#snippet left(item)}
             <dt>
-              <RouteName grades={data.grades} {gradingScale} route={item.route} />
+              <RouteName route={item.route} />
             </dt>
 
             <dd class="text-sm opacity-50">Sessions: {item.ascents.length}</dd>
@@ -218,7 +211,7 @@
         >
           {#snippet left(item)}
             <dt>
-              <RouteName grades={data.grades} {gradingScale} route={item.route} />
+              <RouteName route={item.route} />
             </dt>
 
             <dd class="text-sm opacity-50">Sessions: {item.ascents.length}</dd>

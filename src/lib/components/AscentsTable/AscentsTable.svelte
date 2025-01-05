@@ -1,7 +1,6 @@
 <script lang="ts">
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import RouteName from '$lib/components/RouteName'
-  import type { Grade, UserSettings } from '$lib/db/schema'
   import type { EnrichedAscent } from '$lib/db/utils'
   import { convertMarkdownToHtml } from '$lib/markdown'
   import type { Pagination as PaginationType } from '$lib/pagination.server'
@@ -12,13 +11,11 @@
 
   interface Props {
     ascents: EnrichedAscent[]
-    grades: Grade[]
-    gradingScale?: UserSettings['gradingScale']
     pagination: PaginationType
     paginationProps?: Partial<PaginationProps>
   }
 
-  let { ascents, grades, gradingScale = 'FB', pagination, paginationProps }: Props = $props()
+  let { ascents, pagination, paginationProps }: Props = $props()
 </script>
 
 <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
@@ -53,7 +50,7 @@
 
               <td>
                 <a class="anchor hover:text-white" href={ascent.route.pathname}>
-                  <RouteName {grades} route={ascent.route} {gradingScale} />
+                  <RouteName route={ascent.route} />
                 </a>
               </td>
             </tr>

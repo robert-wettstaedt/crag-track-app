@@ -1,17 +1,15 @@
 <script lang="ts">
   import MarkdownEditor from '$lib/components/MarkdownEditor'
-  import type { Area, Grade, UserSettings } from '$lib/db/schema'
+  import type { Area } from '$lib/db/schema'
 
   interface Props {
     description: Area['description']
-    grades: Grade[]
-    gradingScale: UserSettings['gradingScale'] | null | undefined
     hasParent: boolean
     name: Area['name']
     type: Area['type']
   }
 
-  let { description = $bindable(), name, type, grades, gradingScale, hasParent }: Props = $props()
+  let { description = $bindable(), name, type, hasParent }: Props = $props()
 </script>
 
 <label class="label">
@@ -23,7 +21,7 @@
   <span>Description</span>
   <textarea hidden name="description" value={description}></textarea>
 
-  <MarkdownEditor {grades} {gradingScale} bind:value={description} />
+  <MarkdownEditor bind:value={description} />
 </label>
 
 {#if hasParent}

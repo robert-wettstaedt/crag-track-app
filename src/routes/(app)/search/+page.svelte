@@ -91,7 +91,7 @@
             rightPathname={(item) => item.block.pathname}
           >
             {#snippet left(item)}
-              <RouteName grades={data.grades} gradingScale={data.gradingScale} route={item} />
+              <RouteName route={item} />
             {/snippet}
           </GenericList>
         </Tabs.Panel>

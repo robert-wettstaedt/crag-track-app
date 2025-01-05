@@ -26,7 +26,7 @@
     Edit ascent of
     {data.ascent.route.rating == null ? '' : `${Array(data.ascent.route.rating).fill('★').join('')} `}
     {data.ascent.route.name}
-    {grade == null ? '' : ` (${grade[data.gradingScale ?? 'FB']})`}
+    {grade == null ? '' : ` (${grade[data.gradingScale]})`}
     - {PUBLIC_APPLICATION_NAME}
   </title>
 </svelte:head>
@@ -35,7 +35,7 @@
   {#snippet lead()}
     <span>Edit ascent of</span>
     <a class="anchor" href={basePath}>
-      <RouteName grades={data.grades} gradingScale={data.gradingScale} route={data.ascent.route} />
+      <RouteName route={data.ascent.route} />
     </a>
   {/snippet}
 </AppBar>
@@ -52,8 +52,6 @@
     filePaths={form?.filePaths ??
       (data.ascent.files.length === 0 ? undefined : data.ascent.files.map((file) => file.path))}
     gradeFk={form?.gradeFk ?? data.ascent.gradeFk}
-    grades={data.grades}
-    gradingScale={data.gradingScale}
     notes={form?.notes ?? data.ascent.notes}
     type={form?.type ?? data.ascent.type}
   />

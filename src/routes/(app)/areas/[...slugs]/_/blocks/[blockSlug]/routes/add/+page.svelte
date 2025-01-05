@@ -54,8 +54,6 @@
     blockId={data.block.id}
     description={form?.description ?? ''}
     gradeFk={form?.gradeFk ?? null}
-    grades={data.grades}
-    gradingScale={data.gradingScale}
     name={form?.name ?? ''}
     rating={form?.rating ?? undefined}
     routeTags={form?.tags ?? []}

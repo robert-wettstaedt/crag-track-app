@@ -36,8 +36,6 @@
 <form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" method="POST" use:enhance>
   <AreaFormFields
     description={form?.description ?? ''}
-    grades={data.grades}
-    gradingScale={data.gradingScale}
     hasParent={data.parent != null}
     name={form?.name ?? ''}
     type={form?.type ?? 'area'}

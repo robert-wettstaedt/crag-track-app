@@ -52,8 +52,6 @@
         <GradeHistogram
           axes={false}
           data={item.grades}
-          grades={data.grades}
-          gradingScale={data.gradingScale}
           spec={{
             width: 100,
           }}

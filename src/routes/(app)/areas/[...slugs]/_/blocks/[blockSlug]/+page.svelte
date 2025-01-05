@@ -77,7 +77,7 @@
     <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
       <div class="card-header">Mentioned in</div>
 
-      <References {references} grades={data.grades} gradingScale={data.gradingScale} />
+      <References {references} />
     </div>
   {/if}
 {/await}
@@ -118,11 +118,7 @@
                   >
                     <div class="flex justify-between">
                       <div>
-                        <RouteName
-                          grades={data.grades}
-                          gradingScale={data.gradingScale}
-                          route={data.block.routes.find((route) => file.routeFk === route.id)}
-                        />
+                        <RouteName route={data.block.routes.find((route) => file.routeFk === route.id)} />
                       </div>
 
                       {#if file.stat.mime?.includes('image')}
@@ -198,7 +194,7 @@
                   onclick={() => selectedRouteStore.set(route.id)}
                   onkeydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
                 >
-                  <RouteName grades={data.grades} gradingScale={data.gradingScale} {route} />
+                  <RouteName {route} />
                 </a>
               </li>
             {/each}

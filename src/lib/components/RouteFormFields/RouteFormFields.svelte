@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { page } from '$app/stores'
   import MarkdownEditor from '$lib/components/MarkdownEditor'
   import RouteExternalResourceLinks from '$lib/components/RouteExternalResourceLinks'
-  import type { Grade, InsertRoute, Route, Tag, UserSettings } from '$lib/db/schema'
+  import type { InsertRoute, Route, Tag } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import { Rating } from '@skeletonlabs/skeleton-svelte'
   import type { ChangeEventHandler } from 'svelte/elements'
@@ -10,8 +11,6 @@
     blockId: number
     description: Route['description']
     gradeFk: Route['gradeFk']
-    grades: Grade[]
-    gradingScale: UserSettings['gradingScale'] | null | undefined
     name: Route['name']
     rating: NonNullable<Route['rating']> | undefined
     routeTags: string[]
@@ -22,8 +21,6 @@
     blockId,
     description = $bindable(),
     gradeFk = $bindable(),
-    grades,
-    gradingScale,
     name = $bindable(),
     rating = $bindable(),
     routeTags,
@@ -86,8 +83,8 @@
   <select class="select" name="gradeFk" value={gradeFk ?? ''}>
     <option disabled value="">-- Select grade --</option>
 
-    {#each grades as grade}
-      <option value={grade.id}>{grade[gradingScale ?? 'FB']}</option>
+    {#each $page.data.grades as grade}
+      <option value={grade.id}>{grade[$page.data.gradingScale]}</option>
     {/each}
   </select>
 </label>
@@ -96,7 +93,7 @@
   <span>Description</span>
   <textarea hidden name="description" value={description}></textarea>
 
-  <MarkdownEditor {grades} {gradingScale} bind:value={description} />
+  <MarkdownEditor bind:value={description} />
 </label>
 
 <label class="label mt-4">
