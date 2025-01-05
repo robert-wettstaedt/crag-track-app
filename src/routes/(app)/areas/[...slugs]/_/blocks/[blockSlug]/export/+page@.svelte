@@ -7,6 +7,7 @@
   import nc from '$lib/assets/nc.svg'
   import sa from '$lib/assets/sa.svg'
   import BlockEntry from '$lib/components/AreaBlockListing/components/BlockEntry/index.js'
+  import { convertException } from '$lib/errors'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import * as domtoimage from 'modern-screenshot'
@@ -20,24 +21,55 @@
   const DEBUG = false
 
   let loadedTopos = $state(0)
-  let done = $state(false)
+  let shareData: ShareData | null = $state(null)
+  let error: string | null = $state(null)
 
   const onLoadTopo = async () => {
     if (++loadedTopos === data.block.topos.length) {
-      const dataUrl = await domtoimage.domToPng(dom)
+      const dataUrl = await domtoimage.domToBlob(dom)
 
-      if (DEBUG) {
-        var img = new Image()
-        img.src = dataUrl
-        document.body.appendChild(img)
+      const file = new File([dataUrl], `${data.block.slug}_${date}.png`)
+
+      shareData = {
+        title: `${data.block.slug}_${date}`,
+        text: `${data.block.slug}_${date}`,
+        files: [file],
+      }
+    }
+  }
+
+  const onShare = async () => {
+    if (shareData?.files == null) {
+      return
+    }
+
+    try {
+      if (navigator.canShare?.(shareData) && navigator.share != null) {
+        await navigator.share(shareData)
       } else {
-        const link = document.createElement('a')
-        link.download = `${data.block.slug}_${date}.png`
-        link.href = dataUrl
-        link.click()
+        throw new Error('Unable to share item')
+      }
+    } catch (exception) {
+      if (exception instanceof Error && exception.name === 'AbortError') {
+        return
       }
 
-      done = true
+      error = convertException(exception)
+    }
+  }
+
+  const onDownload = async () => {
+    if (shareData?.files == null) {
+      return
+    }
+
+    try {
+      const link = document.createElement('a')
+      link.download = `${data.block.slug}_${date}.png`
+      link.href = URL.createObjectURL(shareData.files[0])
+      link.click()
+    } catch (exception) {
+      error = convertException(exception)
     }
   }
 </script>
@@ -51,9 +83,18 @@
     <div
       class="absolute top-0 left-0 w-full h-full flex flex-col gap-4 justify-center items-center bg-surface-50-950 z-[100]"
     >
-      {#if done}
+      {#if error != null}
+        <aside class="card preset-tonal-error mt-8 p-2 md:p-4 whitespace-pre-line">
+          <p>Error: {error}</p>
+        </aside>
+      {:else if shareData != null}
         Done
-        <a class="btn preset-filled-primary-500" href={basePath}>Go back</a>
+
+        {#if navigator.canShare?.(shareData) && navigator.share != null}
+          <button class="btn preset-filled-primary-500" onclick={onShare}> Share </button>
+        {/if}
+
+        <button class="btn preset-filled-primary-500" onclick={onDownload}> Download </button>
       {:else}
         <div>
           <ProgressRing value={null} />
@@ -61,6 +102,8 @@
 
         Preparing export
       {/if}
+
+      <a class="btn preset-outlined-primary-500" href={basePath}>Go back</a>
     </div>
   {/if}
 
