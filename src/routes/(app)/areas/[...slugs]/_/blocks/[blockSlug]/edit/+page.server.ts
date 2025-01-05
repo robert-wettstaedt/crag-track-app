@@ -54,7 +54,17 @@ export const actions = {
     const db = await createDrizzleSupabaseClient(locals.supabase)
 
     // Convert the area slug to get the areaId
-    const { areaId } = convertAreaSlug(params)
+    const { areaId, areaSlug } = convertAreaSlug(params)
+
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      }),
+    )
+
+    if (block == null) {
+      error(404)
+    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -77,11 +87,11 @@ export const actions = {
       }),
     )
 
-    if (existingBlocksResult != null) {
+    if (existingBlocksResult != null && existingBlocksResult.id !== block.id) {
       // If a block with the same slug exists, return a 400 error with a message
       return fail(400, {
         ...values,
-        error: `Block with name "${existingBlocksResult.name}" already exists in area "${parent.name}"`,
+        error: `Block with name "${existingBlocksResult.name}" already exists in area "${areaSlug}"`,
       })
     }
 
