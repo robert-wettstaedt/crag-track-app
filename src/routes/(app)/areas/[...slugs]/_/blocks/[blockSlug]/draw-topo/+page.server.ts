@@ -128,7 +128,9 @@ export const actions = {
     }
 
     await db((tx) =>
-      tx.insert(topoRoutes).values({ topType: 'top', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) }),
+      tx
+        .insert(topoRoutes)
+        .values({ topType: 'topout', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) }),
     )
   },
 
