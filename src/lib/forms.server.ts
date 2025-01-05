@@ -107,7 +107,7 @@ export type ActionFailure<T> = T & { error: string }
 
 export type AreaActionValues = z.infer<typeof areaActionSchema>
 export const areaActionSchema = z.object({
-  description: z.string().nullable().optional(),
+  description: z.string().nullable().default(''),
   name: z.string().trim(),
   type: z.enum(areaTypeEnum).default('area'),
 })
@@ -118,7 +118,7 @@ export const blockActionSchema = z.object({
 })
 
 export const routeActionSchema = z.object({
-  description: z.string().nullable().optional(),
+  description: z.string().nullable().default(''),
   gradeFk: z.number().optional(),
   name: z.string().trim().default(''),
   rating: z.number().min(1).max(3).optional(),
