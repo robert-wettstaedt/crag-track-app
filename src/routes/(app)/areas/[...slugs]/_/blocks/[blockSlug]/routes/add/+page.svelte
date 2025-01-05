@@ -35,10 +35,12 @@
   use:enhance={() => {
     loading = true
 
-    return ({ action, result }) => {
+    return async ({ action, result }) => {
       loading = false
 
-      if (
+      if ((result.type === 'success' || result.type === 'redirect') && action.searchParams.get('create-more')) {
+        window.location.href = action.pathname
+      } else if (
         location.origin + location.pathname === action.origin + action.pathname ||
         result.type === 'redirect' ||
         result.type === 'error'
@@ -62,13 +64,25 @@
 
   <div class="flex justify-between mt-8">
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
-    <button class="btn preset-filled-primary-500" type="submit" disabled={loading}>
-      {#if loading}
-        <span class="me-2">
-          <ProgressRing size="size-4" value={null} />
-        </span>
-      {/if}
-      Save route
-    </button>
+
+    <div>
+      <button class="btn preset-outlined-primary-500" formaction="?create-more=true" type="submit" disabled={loading}>
+        {#if loading}
+          <span class="me-2">
+            <ProgressRing size="size-4" value={null} />
+          </span>
+        {/if}
+        Save and create another
+      </button>
+
+      <button class="btn preset-filled-primary-500" type="submit" disabled={loading}>
+        {#if loading}
+          <span class="me-2">
+            <ProgressRing size="size-4" value={null} />
+          </span>
+        {/if}
+        Save route
+      </button>
+    </div>
   </div>
 </form>
