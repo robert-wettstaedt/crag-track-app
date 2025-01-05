@@ -1,7 +1,6 @@
-import { calcMiddlePoint } from '$lib/components/TopoViewer/components/Route/lib'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, routes } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
+import { buildNestedAreaQuery, enrichBlock, enrichTopo, sortRoutesByTopo } from '$lib/db/utils'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error } from '@sveltejs/kit'
@@ -66,25 +65,7 @@ export const load = (async ({ locals, params, parent }) => {
 
   const blockFiles = await loadFiles(block.files)
   const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
-
-  const sortedRoutes = block.routes.toSorted((a, b) => {
-    const topoIndexA = topos.findIndex((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === a.id))
-    const topoIndexB = topos.findIndex((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === b.id))
-
-    // Sort routes by order of the topo they are in
-    if (topoIndexA !== topoIndexB) {
-      return topoIndexA - topoIndexB
-    }
-
-    const topoRouteA = topos[topoIndexA]?.routes.find((topoRoute) => topoRoute.routeFk === a.id)
-    const topoRouteB = topos[topoIndexA]?.routes.find((topoRoute) => topoRoute.routeFk === b.id)
-
-    const meanA = calcMiddlePoint(topoRouteA?.points ?? [])?.x ?? 0
-    const meanB = calcMiddlePoint(topoRouteB?.points ?? [])?.x ?? 0
-
-    // Sort routes by the mean x value of the topo
-    return meanA - meanB
-  })
+  const sortedRoutes = sortRoutesByTopo(block.routes, topos)
 
   // Return the block, enriched geolocation blocks, and processed files
   return {

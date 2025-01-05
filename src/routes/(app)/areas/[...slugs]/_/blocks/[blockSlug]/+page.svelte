@@ -60,6 +60,10 @@
   {/snippet}
 
   {#snippet actions()}
+    <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
+      <i class="fa-solid fa-file-export"></i>Export block preview
+    </a>
+
     {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen"></i>Edit block

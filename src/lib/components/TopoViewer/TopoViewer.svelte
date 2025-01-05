@@ -1,30 +1,34 @@
-<script lang="ts">
-  import type { PointDTO, TopoDTO, TopoRouteDTO } from '$lib/topo'
-  import * as d3 from 'd3'
-  import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
-  import RouteView from './components/Route'
-  import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from './stores'
-  import Labels from './components/Labels'
-
-  interface Props {
+<script lang="ts" module>
+  export interface TopoViewerProps {
     editable?: boolean
     getRouteKey?: ((route: TopoRouteDTO, index: number) => number) | null
     height?: number
+    limitImgHeight?: boolean
     onChange?: (value: TopoDTO[], changedRoute: TopoRouteDTO) => void
     onLoad?: () => void
     selectedTopoIndex?: number
     topos: TopoDTO[]
   }
+</script>
+
+<script lang="ts">
+  import type { PointDTO, TopoDTO, TopoRouteDTO } from '$lib/topo'
+  import * as d3 from 'd3'
+  import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
+  import Labels from './components/Labels'
+  import RouteView from './components/Route'
+  import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from './stores'
 
   let {
-    topos = $bindable(),
     editable = false,
     getRouteKey = null,
     height: elementHeight,
+    limitImgHeight,
     onChange,
     onLoad,
     selectedTopoIndex = $bindable(0),
-  }: Props = $props()
+    topos = $bindable(),
+  }: TopoViewerProps = $props()
 
   let img: HTMLImageElement | undefined = $state()
   let imgWrapper: HTMLDivElement | undefined = $state()
@@ -261,7 +265,7 @@
           alt={topo.file.stat?.filename}
           bind:this={img}
           class="m-auto relative z-10 pointer-events-none touch-none origin-top-left"
-          id="img"
+          id={limitImgHeight ? 'img' : undefined}
           onload={onLoadImage}
           src={`/nextcloud${topo.file.stat?.filename}`}
           style={zoomTransform == null
