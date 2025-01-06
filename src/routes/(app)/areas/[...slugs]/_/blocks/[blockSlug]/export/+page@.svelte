@@ -90,11 +90,19 @@
       {:else if shareData != null}
         Done
 
-        {#if navigator.canShare?.(shareData) && navigator.share != null}
-          <button class="btn preset-filled-primary-500" onclick={onShare}> Share </button>
-        {/if}
+        <div class="flex gap-2">
+          <button class="btn preset-filled-primary-500" onclick={onDownload}>
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save to device
+          </button>
 
-        <button class="btn preset-filled-primary-500" onclick={onDownload}> Download </button>
+          {#if navigator.canShare?.(shareData) && navigator.share != null}
+            <button class="btn preset-filled-primary-500" onclick={onShare}>
+              <i class="fa-solid fa-share"></i>
+              Share
+            </button>
+          {/if}
+        </div>
       {:else}
         <div>
           <ProgressRing value={null} />
@@ -103,7 +111,10 @@
         Preparing export
       {/if}
 
-      <a class="btn preset-outlined-primary-500" href={basePath}>Go back</a>
+      <a class="btn preset-outlined-primary-500" href={basePath}>
+        <i class="fa-solid fa-angle-left"></i>
+        Go back
+      </a>
     </div>
   {/if}
 
