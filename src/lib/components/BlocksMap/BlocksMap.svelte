@@ -61,6 +61,7 @@
   interface FeatureData {
     label: string
     pathname: string
+    priority: number
   }
 
   proj4.defs(
@@ -153,6 +154,7 @@
         data: {
           label: parents.map((parent) => parent.name).join(' / ') + (parents.length === 0 ? '' : ' / ') + block.name,
           pathname: block.pathname,
+          priority: 1,
         } satisfies FeatureData,
         geometry: new Point(fromLonLat([block.geolocation.long, block.geolocation.lat])),
       })
@@ -166,18 +168,14 @@
         zIndex: showBlocks ? 0 : -1,
       })
 
-      const backgroundStyle = new Style(
-        getBlockKey == null
-          ? {}
-          : {
-              text: new Text({
-                font: `900 ${block.id === selectedBlock?.id ? 2.25 : 1.875}rem 'Font Awesome 6 Free'`,
-                text: '\uf111',
-                fill: new Fill({ color: '#ffffff88' }),
-              }),
-              zIndex: showBlocks ? 0 : -1,
-            },
-      )
+      const backgroundStyle = new Style({
+        text: new Text({
+          font: `900 ${block.id === selectedBlock?.id ? 2.25 : 1.875}rem 'Font Awesome 6 Free'`,
+          text: '\uf111',
+          fill: new Fill({ color: getBlockKey == null ? '#ffffff00' : '#ffffff88' }),
+        }),
+        zIndex: showBlocks ? 0 : -1,
+      })
 
       const keyStyle = new Style(
         getBlockKey == null
@@ -191,7 +189,7 @@
             },
       )
 
-      iconFeature.setStyle([backgroundStyle, iconStyle, keyStyle])
+      iconFeature.setStyle([iconStyle, backgroundStyle, keyStyle])
 
       return iconFeature
     }
@@ -253,6 +251,7 @@
               data: {
                 label: parents.map((parent) => parent.name).join(' / '),
                 pathname: sector.pathname,
+                priority: 2,
               } satisfies FeatureData,
               geometry,
               text: sector.name,
@@ -272,16 +271,10 @@
     vectorSource.addFeatures(iconFeatures)
 
     if (iconFeatures.length > 0) {
-      const parents = findArea(crag)
-
       const geometry = fromExtent(vectorSource.getExtent())
       geometry.scale(geometry.getArea() > 1000 ? 1.5 : 3)
       vectorSource.addFeature(
         new Feature({
-          data: {
-            label: parents.map((parent) => parent.name).join(' / '),
-            pathname: crag.pathname,
-          } satisfies FeatureData,
           geometry,
           text: crag.name,
         }),
@@ -353,7 +346,11 @@
         return
       }
 
-      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature)
+      const features = map
+        .getFeaturesAtPixel(event.pixel)
+        .filter((feature) => feature.get('data')?.priority != null)
+        .toSorted((a, b) => Number(a.get('data')?.priority) - Number(b.get('data')?.priority))
+      const feature = features.at(0)
       const data = feature?.get('data') as FeatureData | undefined
 
       if (data == null) {
@@ -372,7 +369,8 @@
       }
 
       const pixel = map.getEventPixel(event.originalEvent)
-      const hit = map.hasFeatureAtPixel(pixel)
+      const features = map.getFeaturesAtPixel(pixel)
+      const hit = features.some((feature) => feature.get('data')?.priority != null)
 
       target.style.cursor = hit ? 'pointer' : ''
     })
