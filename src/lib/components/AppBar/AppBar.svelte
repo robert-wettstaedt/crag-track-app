@@ -53,7 +53,8 @@
   :global(.action-list > *) {
     border-bottom: 1px solid;
     display: flex;
-    padding: 0.5rem;
+    padding: 1rem;
+    font-size: 1rem;
 
     &:hover {
       background: rgb(var(--color-primary-500) / var(--tw-bg-opacity, 1));
