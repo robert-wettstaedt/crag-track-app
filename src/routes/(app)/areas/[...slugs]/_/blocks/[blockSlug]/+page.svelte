@@ -163,13 +163,15 @@
     {#if data.topos.length > 0}
       <section class="md:p-4 w-full md:w-2/4">
         <div class="relative">
-          <TopoViewer topos={data.topos} />
-
-          {#if data.userPermissions?.includes(EDIT_PERMISSION)}
-            <a class="btn btn-sm preset-tonal-surface absolute bottom-2 right-2 z-30" href={`${basePath}/draw-topo`}>
-              <i class="fa-solid fa-pen"></i>Edit topo
-            </a>
-          {/if}
+          <TopoViewer topos={data.topos}>
+            {#snippet actions()}
+              {#if data.userPermissions?.includes(EDIT_PERMISSION)}
+                <a aria-label="Edit topo" class="btn-icon preset-filled" href={`${basePath}/draw-topo`}>
+                  <i class="fa-solid fa-pen"></i>
+                </a>
+              {/if}
+            {/snippet}
+          </TopoViewer>
         </div>
       </section>
     {/if}

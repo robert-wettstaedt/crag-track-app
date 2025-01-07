@@ -1,5 +1,6 @@
 <script lang="ts" module>
   export interface TopoViewerProps {
+    actions?: Snippet
     editable?: boolean
     getRouteKey?: ((route: TopoRouteDTO, index: number) => number) | null
     height?: number
@@ -14,15 +15,17 @@
 <script lang="ts">
   import type { PointDTO, TopoDTO, TopoRouteDTO } from '$lib/topo'
   import * as d3 from 'd3'
+  import type { Snippet } from 'svelte'
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import Labels from './components/Labels'
   import RouteView from './components/Route'
   import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from './stores'
 
   let {
+    actions,
     editable = false,
     getRouteKey = null,
-    height: elementHeight,
+    height: elementHeight = 400,
     limitImgHeight = true,
     onChange,
     onLoad,
@@ -42,6 +45,7 @@
   let svg: SVGSVGElement | undefined = $state()
   let clicked = false
 
+  let zoom: d3.ZoomBehavior<Element, unknown> | null = $state(null)
   let zoomTransform: d3.ZoomTransform | undefined = $state()
 
   let selectedTopo = $derived.by(() => {
@@ -171,7 +175,7 @@
       return
     }
 
-    const zoom = d3
+    zoom = d3
       .zoom()
       .extent([
         [0, 0],
@@ -189,6 +193,11 @@
     d3.select(svg).call(zoom)
   }
 
+  const onResetZoom = () => {
+    zoom?.transform(d3.select(svg as Element), d3.zoomIdentity)
+    zoomTransform = undefined
+  }
+
   const onLoadImage = () => {
     getDimensions()
     onLoad?.()
@@ -199,7 +208,7 @@
   }
 </script>
 
-<svelte:window onresize={getDimensions} />
+<!-- <svelte:window onresize={getDimensions} /> -->
 
 {#if editable}
   <div class="flex justify-between p-2 preset-filled-surface-100-900">
@@ -248,7 +257,7 @@
 <div
   bind:this={imgWrapper}
   class="relative overflow-hidden h-full w-full flex items-center justify-center"
-  style={elementHeight == null ? undefined : `height: ${elementHeight}px`}
+  style={`min-height: ${elementHeight}px`}
 >
   {#each topos as topo, index}
     {#if index === selectedTopoIndex}
@@ -309,27 +318,42 @@
     {/if}
   </div>
 
-  {#if topos.length > 1}
-    <div class="flex gap-1 absolute top-2 right-2 z-30">
-      <button
-        aria-label="Previous Topo"
-        class="btn btn-sm preset-filled-tertiary-500"
-        disabled={selectedTopoIndex <= 0}
-        onclick={onPrevTopo}
-      >
-        <i class="fa-solid fa-caret-left"></i>
-      </button>
+  <div class="flex flex-col items-end gap-4 absolute top-2 right-2 z-30">
+    {#if topos.length > 1}
+      <div class="flex gap-1">
+        <button
+          aria-label="Previous Topo"
+          class="btn-icon preset-filled"
+          disabled={selectedTopoIndex <= 0}
+          onclick={onPrevTopo}
+        >
+          <i class="fa-solid fa-caret-left"></i>
+        </button>
 
-      <button
-        aria-label="Next Topo"
-        class="btn btn-sm preset-filled-tertiary-500"
-        disabled={selectedTopoIndex >= topos.length - 1}
-        onclick={onNextTopo}
-      >
-        <i class="fa-solid fa-caret-right"></i>
-      </button>
-    </div>
-  {/if}
+        <button
+          aria-label="Next Topo"
+          class="btn-icon preset-filled"
+          disabled={selectedTopoIndex >= topos.length - 1}
+          onclick={onNextTopo}
+        >
+          <i class="fa-solid fa-caret-right"></i>
+        </button>
+      </div>
+    {/if}
+
+    <button
+      aria-label="Reset zoom"
+      class="btn-icon preset-filled"
+      disabled={zoomTransform == null}
+      onclick={onResetZoom}
+    >
+      <i class="fa-solid fa-rotate-right"></i>
+    </button>
+
+    {#if actions != null}
+      {@render actions()}
+    {/if}
+  </div>
 </div>
 
 <style>

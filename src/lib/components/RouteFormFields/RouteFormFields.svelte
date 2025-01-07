@@ -66,7 +66,7 @@
   <input class="input" name="name" type="text" placeholder="Enter name..." value={name} onchange={onChangeName} />
 
   {#if loading}
-    <div class="btn">
+    <div class="btn-icon">
       <i class="fa-solid fa-spinner fa-spin"></i>
     </div>
   {/if}
