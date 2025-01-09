@@ -33,14 +33,16 @@
     const onLoad = () => (mediaIsLoading = false)
     const onLoadStart = () => (mediaIsLoading = true)
 
-    el.addEventListener('error', onError)
+    const errorEl = el.tagName === 'VIDEO' ? el.querySelector('source') : el
+
+    errorEl?.addEventListener('error', onError)
     el.addEventListener('load', onLoad)
     el.addEventListener('loadeddata', onLoad)
     el.addEventListener('loadstart', onLoadStart)
 
     return {
       destroy: () => {
-        el.removeEventListener('error', onError)
+        errorEl?.removeEventListener('error', onError)
         el.removeEventListener('load', onLoad)
         el.removeEventListener('loadeddata', onLoad)
         el.removeEventListener('loadstart', onLoadStart)
@@ -69,10 +71,7 @@
       {#if stat.mime?.includes('image')}
         <img alt={stat.filename} class="h-80" src={resourcePath} height={300} use:mediaAction />
       {:else if stat.mime?.includes('video')}
-        <video class="h-80" disablepictureinpicture disableremoteplayback muted use:mediaAction>
-          <source src={resourcePath} type={stat.mime} />
-          <track kind="captions" />
-        </video>
+        <i class="fa-solid fa-circle-play h-80 w-80 text-[100px] flex justify-center items-center"></i>
       {:else if stat.mime?.includes('pdf')}
         {#await import('svelte-pdf') then PdfViewer}
           <div class="pdf-wrapper thumbnail">
@@ -106,9 +105,19 @@
         </div>
       {/if}
       {#if stat.mime?.includes('image')}
-        <img alt={stat.filename} class="h-full w-full object-contain" src={resourcePath} />
+        <img alt={stat.filename} class="h-full w-full object-contain" src={resourcePath} use:mediaAction />
       {:else if stat.mime?.includes('video')}
-        <video autoplay class="h-full w-full" controls disablepictureinpicture loop>
+        <video
+          autoplay
+          controls
+          class="h-full w-full"
+          disablepictureinpicture
+          disableremoteplayback
+          loop
+          playsinline
+          preload="metadata"
+          use:mediaAction
+        >
           <source src={resourcePath} type={stat.mime} />
           <track kind="captions" />
         </video>

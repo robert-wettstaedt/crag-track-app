@@ -8,7 +8,7 @@ export async function GET({ locals, request, params, url }) {
   }
 
   // Extract relevant headers from the request
-  const headers = Array.from(request.headers.entries()).reduce(
+  const reqHeaders = Array.from(request.headers.entries()).reduce(
     (headers, [key, value]) => {
       // Include only 'accept' and 'range' headers
       if (['accept', 'range'].includes(key.toLowerCase())) {
@@ -33,16 +33,18 @@ export async function GET({ locals, request, params, url }) {
   searchParams.set('fileId', String(file.props?.fileid ?? ''))
 
   const result = await fetch(`${NEXTCLOUD_URL}/core/preview?${searchParams}`, {
-    headers,
+    headers: reqHeaders,
     signal: request.signal,
   })
 
-  const object = Object.fromEntries(result.headers.entries())
-  delete object['Set-Cookie']
-  const newHeaders = new Headers(object)
+  const resHeaders = new Headers(result.headers)
+  // eslint-disable-next-line drizzle/enforce-delete-with-where
+  resHeaders.delete('Set-Cookie')
+  // eslint-disable-next-line drizzle/enforce-delete-with-where
+  resHeaders.delete('Content-Encoding')
 
   return new Response(result.body, {
-    headers: newHeaders,
+    headers: resHeaders,
     status: result.status,
     statusText: result.statusText,
   })

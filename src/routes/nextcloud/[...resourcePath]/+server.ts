@@ -8,7 +8,7 @@ export async function GET({ locals, request, params }) {
   }
 
   // Extract relevant headers from the request
-  const headers = Array.from(request.headers.entries()).reduce((headers, [key, value]) => {
+  const reqHeaders = Array.from(request.headers.entries()).reduce((headers, [key, value]) => {
     // Include only 'accept' and 'range' headers
     if (['accept', 'range'].includes(key.toLowerCase())) {
       return { ...headers, [key]: value }
@@ -19,13 +19,20 @@ export async function GET({ locals, request, params }) {
   // Fetch file contents from Nextcloud with detailed response
   const result = await getNextcloud()?.getFileContents(`${NEXTCLOUD_USER_NAME}/${params.resourcePath}`, {
     details: true,
-    headers,
+    headers: reqHeaders,
     signal: request.signal,
   })
 
   // Destructure the result to get data and other response details
   const { data, ...rest } = result as ResponseDataDetailed<BufferLike>
 
-  // Return the response with the file data and additional details
-  return new Response(data, rest)
+  const resHeaders = new Headers(rest.headers)
+  // eslint-disable-next-line drizzle/enforce-delete-with-where
+  resHeaders.delete('Set-Cookie')
+
+  return new Response(data, {
+    headers: resHeaders,
+    status: rest.status,
+    statusText: rest.statusText,
+  })
 }
