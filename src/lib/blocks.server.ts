@@ -23,7 +23,7 @@ export const getBlocksOfArea = async (areaId: number, db: PostgresJsDatabase<typ
     with: {
       author: true,
       blocks: {
-        orderBy: blocks.name,
+        orderBy: [blocks.order, blocks.name],
         where: isNotNull(blocks.geolocationFk),
         with: blocksQuery,
       },
@@ -32,7 +32,7 @@ export const getBlocksOfArea = async (areaId: number, db: PostgresJsDatabase<typ
         with: {
           author: true,
           blocks: {
-            orderBy: blocks.name,
+            orderBy: [blocks.order, blocks.name],
             where: isNotNull(blocks.geolocationFk),
             with: blocksQuery,
           },
@@ -40,7 +40,7 @@ export const getBlocksOfArea = async (areaId: number, db: PostgresJsDatabase<typ
             orderBy: areas.name,
             with: {
               blocks: {
-                orderBy: blocks.name,
+                orderBy: [blocks.order, blocks.name],
                 where: isNotNull(blocks.geolocationFk),
                 with: blocksQuery,
               },
@@ -127,7 +127,7 @@ export const getToposOfArea = async (areaId: number, db: PostgresJsDatabase<type
     with: {
       author: true,
       blocks: {
-        orderBy: blocks.name,
+        orderBy: [blocks.order, blocks.name],
         where: isNotNull(blocks.geolocationFk),
         with: blocksQuery,
       },
@@ -135,7 +135,7 @@ export const getToposOfArea = async (areaId: number, db: PostgresJsDatabase<type
         orderBy: areas.name,
         with: {
           blocks: {
-            orderBy: blocks.name,
+            orderBy: [blocks.order, blocks.name],
             where: isNotNull(blocks.geolocationFk),
             with: blocksQuery,
           },
@@ -143,7 +143,7 @@ export const getToposOfArea = async (areaId: number, db: PostgresJsDatabase<type
             orderBy: areas.name,
             with: {
               blocks: {
-                orderBy: blocks.name,
+                orderBy: [blocks.order, blocks.name],
                 where: isNotNull(blocks.geolocationFk),
                 with: blocksQuery,
               },

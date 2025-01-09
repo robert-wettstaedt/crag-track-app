@@ -43,7 +43,7 @@
     }
   }}
 >
-  <BlockFormFields name={form?.name ?? ''} withFiles />
+  <BlockFormFields name={form?.name ?? `Block ${data.blocksCount + 1}`} withFiles />
 
   <div class="flex justify-between mt-8">
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>

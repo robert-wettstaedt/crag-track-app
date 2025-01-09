@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { EDIT_PERMISSION } from '$lib/auth.js'
+  import { EDIT_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'

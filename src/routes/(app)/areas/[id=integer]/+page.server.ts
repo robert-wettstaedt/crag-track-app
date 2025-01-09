@@ -1,6 +1,6 @@
-import { createDrizzleSupabaseClient } from '$lib/db/db.server.js'
+import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import * as schema from '$lib/db/schema'
-import { buildNestedAreaQuery } from '$lib/db/utils.js'
+import { buildNestedAreaQuery } from '$lib/db/utils'
 import { error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 

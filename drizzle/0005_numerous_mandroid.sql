@@ -1,0 +1,1 @@
+ALTER TABLE "blocks" ALTER COLUMN "order" SET NOT NULL;

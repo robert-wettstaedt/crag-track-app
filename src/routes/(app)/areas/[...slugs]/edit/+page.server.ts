@@ -5,7 +5,7 @@ import { convertException } from '$lib/errors'
 import { areaActionSchema, validateFormData, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { getReferences } from '$lib/references.server'
-import { renameArea } from '$lib/topo-files.server'
+import { renameAreaTopos } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -79,7 +79,7 @@ export const actions = {
           .where(eq(areas.id, areaId)),
       )
 
-      await db((tx) => renameArea(tx, `${areaSlug}-${areaId}`, `${slug}-${areaId}`))
+      await db((tx) => renameAreaTopos(tx, `${areaSlug}-${areaId}`, `${slug}-${areaId}`))
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })

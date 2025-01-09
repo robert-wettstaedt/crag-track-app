@@ -1,5 +1,5 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { convertException } from '$lib/errors.js'
+import { convertException } from '$lib/errors'
 import { getAreaGPX } from '$lib/gpx.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'

@@ -6,7 +6,7 @@
   import logo from '$lib/assets/logo.png'
   import nc from '$lib/assets/nc.svg'
   import sa from '$lib/assets/sa.svg'
-  import BlockEntry from '$lib/components/AreaBlockListing/components/BlockEntry/index.js'
+  import BlockEntry from '$lib/components/AreaBlockListing/components/BlockEntry'
   import { convertException } from '$lib/errors'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'

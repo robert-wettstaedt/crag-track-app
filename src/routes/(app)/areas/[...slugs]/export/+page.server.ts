@@ -79,14 +79,14 @@ export const load = (async ({ locals, params }) => {
       with: {
         author: true,
         blocks: {
-          orderBy: blocks.name,
+          orderBy: [blocks.order, blocks.name],
           with: blocksQuery,
         },
         areas: {
           orderBy: areas.name,
           with: {
             blocks: {
-              orderBy: blocks.name,
+              orderBy: [blocks.order, blocks.name],
               with: blocksQuery,
             },
           },

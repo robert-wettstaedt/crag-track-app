@@ -170,6 +170,8 @@ export const blocks = table(
 
     areaFk: integer('area_fk').notNull(),
     geolocationFk: integer('geolocation_fk'),
+
+    order: integer('order').notNull(),
   },
   (table) => [...createBasicTablePolicies('blocks'), index('blocks_slug_idx').on(table.slug)],
 ).enableRLS()

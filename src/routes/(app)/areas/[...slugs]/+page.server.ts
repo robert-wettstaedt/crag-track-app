@@ -23,7 +23,7 @@ export const load = (async ({ locals, parent }) => {
       with: {
         author: true, // Include author information
         blocks: {
-          orderBy: blocks.name, // Order blocks by name
+          orderBy: [blocks.order, blocks.name], // Order blocks by name and order
           with: { routes: true },
         },
         areas: {
@@ -48,16 +48,6 @@ export const load = (async ({ locals, parent }) => {
     const newPath = path.map((segment) => segment.replace(`${areaSlug}-${areaId}`, `${area.slug}-${area.id}`))
     redirect(302, `/areas/${newPath.join('/')}`)
   }
-
-  // If all blocks have a number in their name, sort blocks by the number
-  const sortedBlocks = area.blocks.some((block) => block.name.match(/\d+/) == null)
-    ? area.blocks
-    : area.blocks.toSorted((a, b) => {
-        const aNum = Number(a.name.match(/\d+/)?.at(0) ?? 0)
-        const bNum = Number(b.name.match(/\d+/)?.at(0) ?? 0)
-
-        return aNum - bNum
-      })
 
   // Query the database for blocks with geolocation data
   const geolocationBlocksResults = await db((tx) =>
@@ -96,7 +86,7 @@ export const load = (async ({ locals, parent }) => {
     area: {
       ...area,
       areas: getStatsOfAreas(area.areas, grades, user),
-      blocks: getStatsOfBlocks(sortedBlocks, grades, user),
+      blocks: getStatsOfBlocks(area.blocks, grades, user),
       description,
     },
     blocks: geolocationBlocksResults.map(enrichBlock),

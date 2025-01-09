@@ -1,5 +1,7 @@
 <script lang="ts" generics="T extends { id: string | number, name: string, pathname: string }">
+  import { draggable } from '$lib/actions/draggable.svelte'
   import type { Snippet } from 'svelte'
+  import { flip } from 'svelte/animate'
 
   interface Props {
     items: T[]
@@ -11,22 +13,46 @@
     right?: Snippet<[T]>
     rightContent?: (item: T) => string
     rightPathname?: (item: T) => string
+
+    onConsiderSort?: (items: T[]) => void
+    onFinishSort?: (items: T[]) => void
   }
 
-  const { items, wrap = true, left, leftClasses = 'anchor', right, rightContent, rightPathname }: Props = $props()
+  const {
+    items,
+    wrap = true,
+    left,
+    leftClasses = 'anchor',
+    right,
+    rightContent,
+    rightPathname,
+
+    onConsiderSort,
+    onFinishSort,
+  }: Props = $props()
 </script>
 
 <nav class="list-nav">
   {#if items.length === 0}
     No items yet
   {:else}
-    <ul class="overflow-auto">
+    <ul
+      class="overflow-auto"
+      use:draggable={onFinishSort == null ? null : items}
+      onconsider={(event) => onConsiderSort?.(event.detail)}
+      onfinish={(event) => onFinishSort?.(event.detail)}
+    >
       {#each items as item (item.id)}
         <li
           class="hover:preset-tonal-primary flex {wrap
             ? 'flex-wrap'
-            : ''} justify-between whitespace-nowrap border-b-[1px] last:border-none border-surface-800 rounded"
+            : ''} items-center justify-between whitespace-nowrap border-b-[1px] last:border-none border-surface-800 rounded"
+          animate:flip={{ duration: 200 }}
         >
+          {#if onFinishSort != null}
+            <i class="fa-solid fa-grip-vertical cursor-grab ml-2"></i>
+          {/if}
+
           <a
             class="
               {leftClasses}

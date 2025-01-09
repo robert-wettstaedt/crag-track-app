@@ -1,6 +1,6 @@
 <script lang="ts">
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { EDIT_PERMISSION } from '$lib/auth.js'
+  import { EDIT_PERMISSION } from '$lib/auth'
   import GenericList from '$lib/components/GenericList'
   import GradeHistogram from '$lib/components/GradeHistogram'
   import { AppBar } from '@skeletonlabs/skeleton-svelte'

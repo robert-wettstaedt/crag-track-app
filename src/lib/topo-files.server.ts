@@ -1,7 +1,7 @@
 import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import * as schema from '$lib/db/schema'
 import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
-import { eq, like } from 'drizzle-orm'
+import { and, eq, like } from 'drizzle-orm'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import exif from 'exifr'
 import sharp from 'sharp'
@@ -121,7 +121,7 @@ export const insertTopos = async (
   )
 }
 
-export const renameArea = async (db: PostgresJsDatabase<typeof schema>, oldSlug: string, newSlug: string) => {
+export const renameAreaTopos = async (db: PostgresJsDatabase<typeof schema>, oldSlug: string, newSlug: string) => {
   if (oldSlug === newSlug) {
     return
   }
@@ -162,5 +162,27 @@ export const renameArea = async (db: PostgresJsDatabase<typeof schema>, oldSlug:
         .set({ path: file.path.replace(oldSlug, newSlug) })
         .where(eq(schema.files.id, file.id)),
     ),
+  )
+}
+
+export const renameBlockTopos = async (db: PostgresJsDatabase<typeof schema>, blockId: number, slug: string) => {
+  const nextcloud = getNextcloud()
+
+  const topoFiles = await db.query.files.findMany({
+    where: and(eq(schema.files.blockFk, blockId), eq(schema.files.type, 'topo')),
+  })
+
+  await Promise.all(
+    topoFiles.map(async (file) => {
+      const [basename, ...pathSegments] = file.path.split('/').reverse()
+      const [, , ext] = basename.split('.')
+      const newBasename = [slug, file.id, ext].join('.')
+      const newPath = [...pathSegments.reverse(), newBasename].join('/')
+
+      if (file.path !== newPath) {
+        await nextcloud.moveFile(NEXTCLOUD_USER_NAME + file.path, NEXTCLOUD_USER_NAME + newPath)
+        await db.update(schema.files).set({ path: newPath }).where(eq(schema.files.id, file.id))
+      }
+    }),
   )
 }

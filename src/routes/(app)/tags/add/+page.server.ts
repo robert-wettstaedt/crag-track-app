@@ -5,7 +5,7 @@ import { convertException } from '$lib/errors'
 import { tagActionSchema, validateFormData, type ActionFailure, type TagActionValues } from '$lib/forms.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
-import type { PageServerLoad } from './$types.js'
+import type { PageServerLoad } from './$types'
 
 export const load = (({ locals }) => {
   if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {

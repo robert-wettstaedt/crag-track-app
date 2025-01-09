@@ -6,7 +6,7 @@ import { blockActionSchema, validateFormData, type ActionFailure, type BlockActi
 import { convertAreaSlug } from '$lib/helper.server'
 import { createGeolocationFromFiles, insertTopos } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { and, eq } from 'drizzle-orm'
+import { and, count, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
@@ -27,9 +27,12 @@ export const load = (async ({ locals, parent }) => {
     error(404)
   }
 
+  const [blocksCount] = await db((tx) => tx.select({ count: count() }).from(blocks).where(eq(blocks.areaFk, areaId)))
+
   // Return the area result
   return {
     area: areaResult,
+    blocksCount: Number(blocksCount.count),
   }
 }) satisfies PageServerLoad
 
@@ -84,6 +87,8 @@ export const actions = {
       })
     }
 
+    const [blocksCount] = await db((tx) => tx.select({ count: count() }).from(blocks).where(eq(blocks.areaFk, areaId)))
+
     let block: Block | undefined
 
     const fileBuffers = await Promise.all(imageFiles.filter((file) => file.size > 0).map((file) => file.arrayBuffer()))
@@ -100,7 +105,7 @@ export const actions = {
       const blockResult = await db((tx) =>
         tx
           .insert(blocks)
-          .values({ ...values, createdBy: user.id, areaFk: areaId, slug })
+          .values({ ...values, createdBy: user.id, areaFk: areaId, order: blocksCount.count, slug })
           .returning(),
       )
       block = blockResult.at(0)

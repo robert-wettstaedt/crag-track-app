@@ -4,13 +4,14 @@ import {
   createGeolocationFromFiles,
   prepare,
   insertTopos,
-  renameArea,
+  renameAreaTopos,
+  renameBlockTopos,
 } from '$lib/topo-files.server'
 import type { Block, InsertGeolocation } from '$lib/db/schema'
 import { blocks, files, geolocations, topos } from '$lib/db/schema'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import * as schema from '$lib/db/schema'
-import { eq, like } from 'drizzle-orm'
+import { eq, like, and } from 'drizzle-orm'
 import sharp from 'sharp'
 import exif from 'exifr'
 
@@ -363,7 +364,7 @@ describe('Topo Files', () => {
     })
 
     it('should skip processing if old and new slugs are the same', async () => {
-      await renameArea(mockDb, 'same-slug', 'same-slug')
+      await renameAreaTopos(mockDb, 'same-slug', 'same-slug')
 
       expect(mockMoveFile).not.toHaveBeenCalled()
       expect(mockDb.update).not.toHaveBeenCalled()
@@ -373,7 +374,7 @@ describe('Topo Files', () => {
       const oldSlug = 'old-area'
       const newSlug = 'new-area'
 
-      await renameArea(mockDb, oldSlug, newSlug)
+      await renameAreaTopos(mockDb, oldSlug, newSlug)
 
       // Verify file query
       expect(mockDb.query.files.findMany).toHaveBeenCalledWith({
@@ -396,7 +397,7 @@ describe('Topo Files', () => {
 
     it('should handle non-existent directories', async () => {
       mockExists.mockResolvedValue(false)
-      await renameArea(mockDb, 'old-area', 'new-area')
+      await renameAreaTopos(mockDb, 'old-area', 'new-area')
 
       expect(mockMoveFile).not.toHaveBeenCalled()
 
@@ -434,7 +435,7 @@ describe('Topo Files', () => {
       ]
       vi.mocked(mockDb.query.files.findMany).mockResolvedValue(filesWithSubdirs)
 
-      await renameArea(mockDb, 'old-area', 'new-area')
+      await renameAreaTopos(mockDb, 'old-area', 'new-area')
 
       // Should only move the root directory once
       expect(mockMoveFile).toHaveBeenCalledTimes(1)
@@ -448,6 +449,118 @@ describe('Topo Files', () => {
         }).where
         expect(updateWhere).toHaveBeenCalledWith(eq(files.id, file.id))
       })
+    })
+  })
+
+  describe('renameBlockTopos', () => {
+    const mockTopoFiles = [
+      {
+        id: 1,
+        path: '/topos/area/sector/old-block.1.jpg',
+        type: 'topo' as const,
+        blockFk: 1,
+        routeFk: null,
+        ascentFk: null,
+        areaFk: null,
+      },
+      {
+        id: 2,
+        path: '/topos/area/sector/old-block.2.jpg',
+        type: 'topo' as const,
+        blockFk: 1,
+        routeFk: null,
+        ascentFk: null,
+        areaFk: null,
+      },
+    ]
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+      mockExists.mockResolvedValue(true)
+      vi.mocked(mockDb.query.files.findMany).mockResolvedValue(mockTopoFiles)
+    })
+
+    it('should rename topo files for a block', async () => {
+      const blockId = 1
+      const newSlug = 'new-block'
+
+      await renameBlockTopos(mockDb, blockId, newSlug)
+
+      // Verify file query
+      expect(mockDb.query.files.findMany).toHaveBeenCalledWith({
+        where: and(eq(schema.files.blockFk, blockId), eq(schema.files.type, 'topo')),
+      })
+
+      // Verify Nextcloud file moves
+      mockTopoFiles.forEach((file) => {
+        const oldPath = file.path
+        const newPath = `/topos/area/sector/new-block.${file.id}.jpg`
+        expect(mockMoveFile).toHaveBeenCalledWith('test-user' + oldPath, 'test-user' + newPath)
+      })
+
+      // Verify database updates
+      mockTopoFiles.forEach((file) => {
+        const newPath = `/topos/area/sector/new-block.${file.id}.jpg`
+        // eslint-disable-next-line drizzle/enforce-update-with-where
+        const updateSet = mockDb.update(files).set
+        const updateWhere = updateSet({ path: newPath }).where
+        expect(updateWhere).toHaveBeenCalledWith(eq(files.id, file.id))
+      })
+    })
+
+    it('should handle case when no files exist', async () => {
+      vi.mocked(mockDb.query.files.findMany).mockResolvedValue([])
+
+      await renameBlockTopos(mockDb, 1, 'new-block')
+
+      expect(mockMoveFile).not.toHaveBeenCalled()
+      expect(mockDb.update).not.toHaveBeenCalled()
+    })
+
+    it('should skip files that already have the correct name', async () => {
+      const mockFiles = [
+        {
+          id: 1,
+          path: '/topos/area/sector/new-block.1.jpg',
+          type: 'topo' as const,
+          blockFk: 1,
+          routeFk: null,
+          ascentFk: null,
+          areaFk: null,
+        },
+      ]
+      vi.mocked(mockDb.query.files.findMany).mockResolvedValue(mockFiles)
+
+      await renameBlockTopos(mockDb, 1, 'new-block')
+
+      expect(mockMoveFile).not.toHaveBeenCalled()
+      expect(mockDb.update).not.toHaveBeenCalled()
+    })
+
+    it('should preserve file extensions', async () => {
+      const mockFiles = [
+        {
+          id: 1,
+          path: '/topos/area/sector/old-block.custom.1.jpg',
+          type: 'topo' as const,
+          blockFk: 1,
+          routeFk: null,
+          ascentFk: null,
+          areaFk: null,
+        },
+      ]
+      vi.mocked(mockDb.query.files.findMany).mockResolvedValue(mockFiles)
+
+      await renameBlockTopos(mockDb, 1, 'new-block')
+
+      const [basename] = mockFiles[0].path.split('/').reverse()
+      const [, , ext] = basename.split('.')
+      const expectedNewPath = `/topos/area/sector/new-block.${mockFiles[0].id}.${ext}`
+      expect(mockMoveFile).toHaveBeenCalledWith('test-user' + mockFiles[0].path, 'test-user' + expectedNewPath)
+      // eslint-disable-next-line drizzle/enforce-update-with-where
+      const updateSet = mockDb.update(files).set
+      const updateWhere = updateSet({ path: expectedNewPath }).where
+      expect(updateWhere).toHaveBeenCalledWith(eq(files.id, mockFiles[0].id))
     })
   })
 })

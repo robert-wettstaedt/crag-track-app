@@ -7,42 +7,59 @@ import { eq } from 'drizzle-orm'
 export const migrate = async () => {
   const nextcloud = getNextcloud()
 
-  const area = await db.query.areas.findFirst({
-    where: eq(schema.areas.id, 587),
+  const allAreas = await db.query.areas.findMany({
     with: {
-      areas: {
-        with: { blocks: { with: { files: true } } },
+      parent: true,
+      blocks: {
+        with: {
+          files: true,
+        },
       },
     },
   })
 
-  if (area == null) {
-    return
-  }
+  const areas = allAreas.filter((area) => area.parent != null && area.blocks.length > 0)
 
-  const areaPath = `/topos/${area.slug}-${area.id}`
-  await nextcloud.createDirectory(NEXTCLOUD_USER_NAME + areaPath)
+  const parentsMap = new Map(areas.map((area) => [area.parent!.id, area.parent!]))
+  const parents = Array.from(parentsMap.values())
 
-  await new Promise((r) => setTimeout(r, 1000))
+  await Promise.all(
+    parents.map(async (parent) => {
+      const areaPath = `/topos/${parent.slug}-${parent.id}`
 
-  for await (const sector of area.areas) {
-    console.log(sector.name)
+      if (!(await nextcloud.exists(NEXTCLOUD_USER_NAME + areaPath))) {
+        await nextcloud.createDirectory(NEXTCLOUD_USER_NAME + areaPath)
+      }
+    }),
+  )
 
-    const sectorPath = `${areaPath}/${sector.slug}-${sector.id}`
-    await nextcloud.createDirectory(NEXTCLOUD_USER_NAME + sectorPath)
+  await Promise.all(
+    areas.map(async (area) => {
+      const parentPath = `/topos/${area.parent!.slug}-${area.parent!.id}`
 
-    await new Promise((r) => setTimeout(r, 1000))
+      const areaPath = `${parentPath}/${area.slug}-${area.id}`
 
-    const files = sector.blocks.flatMap((block) => block.files.map((file) => ({ block, file })))
+      if (!(await nextcloud.exists(NEXTCLOUD_USER_NAME + areaPath))) {
+        await nextcloud.createDirectory(NEXTCLOUD_USER_NAME + areaPath)
+      }
 
-    await Promise.all(
-      files.map(async ({ block, file }) => {
-        const ext = file.path.split('.').at(-1) ?? ''
-        const newPath = `${sectorPath}/${block.slug}.${file.id}.${ext.toLowerCase()}`
+      await new Promise((r) => setTimeout(r, 1000))
 
-        await nextcloud.copyFile(NEXTCLOUD_USER_NAME + file.path, NEXTCLOUD_USER_NAME + newPath)
-        await db.update(schema.files).set({ path: newPath }).where(eq(schema.files.id, file.id))
-      }),
-    )
-  }
+      const files = area.blocks.flatMap((block) => block.files.map((file) => ({ block, file })))
+
+      await Promise.all(
+        files.map(async ({ block, file }) => {
+          const ext = file.path.split('.').at(-1) ?? ''
+          const newPath = `${areaPath}/${block.slug}.${file.id}.${ext.toLowerCase()}`
+
+          if (file.path !== newPath) {
+            await nextcloud.copyFile(NEXTCLOUD_USER_NAME + file.path, NEXTCLOUD_USER_NAME + newPath)
+            await db.update(schema.files).set({ path: newPath }).where(eq(schema.files.id, file.id))
+          }
+        }),
+      )
+
+      console.log('done with', area.name)
+    }),
+  )
 }

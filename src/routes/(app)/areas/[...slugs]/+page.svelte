@@ -1,22 +1,49 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { EDIT_PERMISSION } from '$lib/auth.js'
+  import { EDIT_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
   import GenericList from '$lib/components/GenericList'
   import GradeHistogram from '$lib/components/GradeHistogram'
   import References from '$lib/components/References'
+  import type { Block } from '$lib/db/schema'
   import { convertException } from '$lib/errors'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
 
   let { data } = $props()
+
+  // https://github.com/sveltejs/kit/issues/12999
+  let blocks = $state(data.area.blocks)
+  $effect(() => {
+    blocks = data.area.blocks
+  })
+
   let basePath = $derived(`/areas/${$page.params.slugs}`)
   let files = $state(data.files)
 
   let loadingDownload = $state(false)
   let downloadError: string | null = $state(null)
+  let orderMode = $state(false)
+  let sortOrder: 'custom' | 'alphabetical' = $state('custom')
+
+  let sortedBlocks = $derived.by(() => {
+    if (sortOrder === 'custom') {
+      return blocks
+    } else {
+      return blocks.toSorted((a, b) => {
+        const aNum = Number(a.name.match(/\d+/)?.at(0))
+        const bNum = Number(b.name.match(/\d+/)?.at(0))
+
+        if (Number.isNaN(aNum) || Number.isNaN(bNum)) {
+          return a.name.localeCompare(b.name)
+        }
+
+        return aNum - bNum
+      })
+    }
+  })
 
   const onDownloadGpx = async () => {
     loadingDownload = true
@@ -43,6 +70,32 @@
     }
 
     loadingDownload = false
+  }
+
+  const updateBlocksFromServer = async (res: Response) => {
+    if (res.ok) {
+      const { blocks: updatedBlocks } = (await res.json()) as { blocks: Block[] }
+      blocks = updatedBlocks
+        .map((block) => {
+          const originalBlock = blocks.find((b) => b.id === block.id)
+
+          if (originalBlock == null) {
+            return null
+          }
+
+          return { ...originalBlock, ...block }
+        })
+        .filter(Boolean) as typeof blocks
+    }
+  }
+
+  const onChangeCustomSortOrder = async (items: typeof data.area.blocks) => {
+    blocks = items
+
+    const searchParams = new URLSearchParams()
+    items.forEach((item) => searchParams.append('id', String(item.id)))
+    const res = await fetch(`/api/areas/${data.area.id}/blocks/order?${searchParams.toString()}`, { method: 'PUT' })
+    await updateBlocksFromServer(res)
   }
 </script>
 
@@ -261,14 +314,41 @@
 {/if}
 
 <div class="card mt-4 p-2 md:p-4 preset-filled-surface-100-900">
-  <div class="card-header" id="blocks">Blocks</div>
+  <div class="card-header flex justify-between" id="blocks">
+    Blocks
+
+    {#if data.userPermissions?.includes(EDIT_PERMISSION) && blocks.some((block) => block.order != null)}
+      <button
+        class="btn btn-sm {orderMode ? 'preset-filled-primary-500' : 'preset-outlined-primary-500'}"
+        disabled={sortOrder !== 'custom'}
+        onclick={() => (orderMode = !orderMode)}
+      >
+        <i class="fa-solid fa-sort"></i>
+
+        Reorder blocks
+      </button>
+    {/if}
+  </div>
 
   <section class="py-2 md:py-4">
-    {#if data.area.blocks.length === 0}
+    {#if blocks.length === 0}
       No blocks yet
     {:else}
+      <label class="label my-4">
+        <span class="label-text">
+          <i class="fa-solid fa-arrow-down-a-z"></i>
+          Sort order
+        </span>
+        <select bind:value={sortOrder} class="select" disabled={orderMode} onchange={() => (orderMode = false)}>
+          <option value="custom">Custom order</option>
+          <option value="alphabetical">Alphabetical order</option>
+        </select>
+      </label>
+
       <GenericList
-        items={data.area.blocks.map((item) => ({ ...item, pathname: `${basePath}/_/blocks/${item.slug}` }))}
+        items={sortedBlocks.map((item) => ({ ...item, pathname: `${basePath}/_/blocks/${item.slug}` }))}
+        onConsiderSort={orderMode ? (items) => (blocks = items) : undefined}
+        onFinishSort={orderMode ? onChangeCustomSortOrder : undefined}
         wrap={false}
       >
         {#snippet left(item)}
