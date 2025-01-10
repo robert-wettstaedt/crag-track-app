@@ -353,14 +353,21 @@
       >
         {#snippet left(item)}
           <div class="flex items-center gap-2">
-            {#if item.preview?.stat?.filename == null}
+            {#if item.topos[0]?.file?.path == null}
               <i class="fa-solid fa-image w-12 h-12 flex items-center justify-center text-white text-[3rem]"></i>
             {:else}
-              <img
-                alt=""
-                class="w-12 h-12"
-                src={`/nextcloud${item.preview?.stat?.filename}/preview?x=32&y=32&mimeFallback=true&a=0`}
-              />
+              <div class="relative">
+                <i
+                  class="absolute top-0 right-0 fa-solid fa-image w-12 h-12 flex items-center justify-center text-white text-[3rem]"
+                >
+                </i>
+
+                <img
+                  alt=""
+                  class="w-12 h-12 z-10 relative"
+                  src={`/nextcloud${item.topos[0].file.path}/preview?x=32&y=32&mimeFallback=true&a=0`}
+                />
+              </div>
             {/if}
 
             {item.name}

@@ -76,18 +76,6 @@ export const load = (async ({ locals, parent }) => {
     }),
   )
 
-  const areaBlocksWithPreview = await db((tx) =>
-    Promise.all(
-      area.blocks.map(async (block) => {
-        const { topos, ...rest } = block
-        const file = topos.at(0)?.file
-        const previews = file == null ? undefined : await loadFiles([file])
-
-        return { ...rest, preview: previews?.at(0) }
-      }),
-    ),
-  )
-
   // Process area description from markdown to HTML if description is present
   const description = await db(async (tx) =>
     area.description == null ? null : convertMarkdownToHtml(area.description, tx),
@@ -98,7 +86,7 @@ export const load = (async ({ locals, parent }) => {
     area: {
       ...area,
       areas: getStatsOfAreas(area.areas, grades, user),
-      blocks: getStatsOfBlocks(areaBlocksWithPreview, grades, user),
+      blocks: getStatsOfBlocks(area.blocks, grades, user),
       description,
     },
     blocks: geolocationBlocksResults.map(enrichBlock),
