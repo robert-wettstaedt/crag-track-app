@@ -266,8 +266,8 @@ export const getStatsOfAreas = (
   })
 }
 
-export const getStatsOfBlocks = (
-  blocks: InferResultType<'blocks', { routes: true }>[],
+export const getStatsOfBlocks = <T extends InferResultType<'blocks', { routes: true }>>(
+  blocks: T[],
   grades: schema.Grade[],
   user: InferResultType<'users', { userSettings: { columns: { gradingScale: true } } }> | undefined,
 ) => {

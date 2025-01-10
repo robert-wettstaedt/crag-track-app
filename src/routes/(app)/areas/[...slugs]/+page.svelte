@@ -352,30 +352,44 @@
         wrap={false}
       >
         {#snippet left(item)}
-          {item.name}
+          <div class="flex items-center gap-2">
+            {#if item.preview?.stat?.filename == null}
+              <i class="fa-solid fa-image w-12 h-12 flex items-center justify-center text-white text-[3rem]"></i>
+            {:else}
+              <img
+                alt=""
+                class="w-12 h-12"
+                src={`/nextcloud${item.preview?.stat?.filename}/preview?x=32&y=32&mimeFallback=true&a=0`}
+              />
+            {/if}
+
+            {item.name}
+          </div>
         {/snippet}
 
         {#snippet right(item)}
-          <div class="flex items-center">
-            {item.numOfRoutes}
+          <div class="flex flex-col py-2">
+            <GradeHistogram
+              axes={false}
+              data={item.grades}
+              spec={{
+                width: 100,
+              }}
+              opts={{
+                height: 38,
+              }}
+            />
 
-            {#if item.numOfRoutes === 1}
-              route
-            {:else}
-              routes
-            {/if}
+            <div class="flex justify-end text-sm">
+              {item.numOfRoutes}
+
+              {#if item.numOfRoutes === 1}
+                route
+              {:else}
+                routes
+              {/if}
+            </div>
           </div>
-
-          <GradeHistogram
-            axes={false}
-            data={item.grades}
-            spec={{
-              width: 100,
-            }}
-            opts={{
-              height: 38,
-            }}
-          />
         {/snippet}
       </GenericList>
     {/if}

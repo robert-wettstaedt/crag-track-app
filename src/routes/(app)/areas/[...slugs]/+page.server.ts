@@ -1,10 +1,10 @@
 import { getStatsOfAreas, getStatsOfBlocks, nestedAreaQuery } from '$lib/blocks.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { areas, blocks } from '$lib/db/schema'
+import { areas, blocks, files } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
 import { convertException } from '$lib/errors'
 import { convertMarkdownToHtml } from '$lib/markdown'
-import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
+import { loadFiles, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, redirect } from '@sveltejs/kit'
 import { and, eq, isNotNull } from 'drizzle-orm'
@@ -24,7 +24,7 @@ export const load = (async ({ locals, parent }) => {
         author: true, // Include author information
         blocks: {
           orderBy: [blocks.order, blocks.name], // Order blocks by name and order
-          with: { routes: true },
+          with: { routes: true, topos: { with: { file: true } } },
         },
         areas: {
           ...nestedAreaQuery,
@@ -61,7 +61,7 @@ export const load = (async ({ locals, parent }) => {
   )
 
   // Process each file associated with the area
-  const files = await Promise.all(
+  const areaFiles = await Promise.all(
     area.files.map(async (file) => {
       try {
         // Search for the file in Nextcloud
@@ -76,6 +76,18 @@ export const load = (async ({ locals, parent }) => {
     }),
   )
 
+  const areaBlocksWithPreview = await db((tx) =>
+    Promise.all(
+      area.blocks.map(async (block) => {
+        const { topos, ...rest } = block
+        const file = topos.at(0)?.file
+        const previews = file == null ? undefined : await loadFiles([file])
+
+        return { ...rest, preview: previews?.at(0) }
+      }),
+    ),
+  )
+
   // Process area description from markdown to HTML if description is present
   const description = await db(async (tx) =>
     area.description == null ? null : convertMarkdownToHtml(area.description, tx),
@@ -86,11 +98,11 @@ export const load = (async ({ locals, parent }) => {
     area: {
       ...area,
       areas: getStatsOfAreas(area.areas, grades, user),
-      blocks: getStatsOfBlocks(area.blocks, grades, user),
+      blocks: getStatsOfBlocks(areaBlocksWithPreview, grades, user),
       description,
     },
     blocks: geolocationBlocksResults.map(enrichBlock),
-    files,
+    files: areaFiles,
     references: getReferences(area.id, 'areas'),
   }
 }) satisfies PageServerLoad
