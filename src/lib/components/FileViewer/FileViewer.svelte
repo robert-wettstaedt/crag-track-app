@@ -72,12 +72,6 @@
         <img alt={stat.filename} class="h-80" src={resourcePath} height={300} use:mediaAction />
       {:else if stat.mime?.includes('video')}
         <i class="fa-solid fa-circle-play h-80 w-80 text-[100px] flex justify-center items-center"></i>
-      {:else if stat.mime?.includes('pdf')}
-        {#await import('svelte-pdf') then PdfViewer}
-          <div class="pdf-wrapper thumbnail">
-            <PdfViewer.default data={undefined} url={resourcePath} showBorder={false} showButtons={[]} />
-          </div>
-        {/await}
       {/if}
     {/if}
   </div>
@@ -121,12 +115,6 @@
           <source src={resourcePath} type={stat.mime} />
           <track kind="captions" />
         </video>
-      {:else if stat.mime?.includes('pdf')}
-        {#await import('svelte-pdf') then PdfViewer}
-          <div class="pdf-wrapper">
-            <PdfViewer.default data={undefined} url={resourcePath} showButtons={['navigation', 'zoom', 'pageInfo']} />
-          </div>
-        {/await}
       {/if}
     {/if}
 

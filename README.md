@@ -12,7 +12,7 @@ Secure boulder topo and session tracker.
 
 - ➕ Create new bouldering areas, crags, and boulders - with support for [FB and V grades](https://www.mountainproject.com/international-climbing-grades).
 - ✅ Log your climbing ascents and take notes about your session.
-- 📸 Link photos, videos, and PDF files from a file-hosting instance (currently only supports [Nextcloud](https://github.com/nextcloud)).
+- 📸 Link photo and video files from a file-hosting instance (currently only supports [Nextcloud](https://github.com/nextcloud)).
 - 📈 Display your climbing history and statistics about your ascents.
 - 🕮 Create detailed topos of your bouldering areas.
 - 🔐 Keep your data private, only authorized users can view and manage data.
