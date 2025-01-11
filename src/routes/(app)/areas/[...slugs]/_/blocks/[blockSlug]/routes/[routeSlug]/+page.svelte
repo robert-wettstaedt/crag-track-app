@@ -219,7 +219,7 @@
     {#if data.topos.length === 0}
       <section class="p-2 md:p-4">No topos yet</section>
     {:else}
-      <section class="p-2 md:p-4 w-2/4 m-auto">
+      <section class="p-2 md:p-4 w-full md:w-2/4 m-auto">
         <TopoViewer topos={data.topos} />
       </section>
     {/if}
