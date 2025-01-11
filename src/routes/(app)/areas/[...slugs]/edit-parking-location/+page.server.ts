@@ -1,11 +1,10 @@
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { areas, blocks, geolocations } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
+import { areas, geolocations } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { convertAreaSlug } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
@@ -31,21 +30,7 @@ export const load = (async ({ locals, parent }) => {
     error(404)
   }
 
-  // Query the database for blocks with geolocation data
-  const geolocationBlocksResults = await db((tx) =>
-    tx.query.blocks.findMany({
-      where: and(isNotNull(blocks.geolocationFk)),
-      with: {
-        area: buildNestedAreaQuery(), // Include nested area information
-        geolocation: true,
-      },
-    }),
-  )
-
-  return {
-    ...area,
-    blocks: geolocationBlocksResults.map(enrichBlock),
-  }
+  return area
 }) satisfies PageServerLoad
 
 export const actions = {

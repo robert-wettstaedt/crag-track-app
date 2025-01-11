@@ -6,7 +6,7 @@ import { convertException } from '$lib/errors'
 import { convertAreaSlug } from '$lib/helper.server'
 import { createOrUpdateGeolocation } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -42,21 +42,9 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
-  // Query the database for blocks with geolocation data
-  const result = await db((tx) =>
-    tx.query.blocks.findMany({
-      where: and(isNotNull(blocks.geolocationFk)),
-      with: {
-        area: buildNestedAreaQuery(),
-        geolocation: true,
-      },
-    }),
-  )
-
   // Return the block and the enriched geolocation blocks
   return {
     block: enrichBlock(block),
-    blocks: result.map(enrichBlock),
   }
 }) satisfies PageServerLoad
 

@@ -1,13 +1,12 @@
 import { getStatsOfAreas, getStatsOfBlocks, nestedAreaQuery } from '$lib/blocks.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { areas, blocks, files } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
+import { areas, blocks } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { convertMarkdownToHtml } from '$lib/markdown'
-import { loadFiles, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
+import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, redirect } from '@sveltejs/kit'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
@@ -49,17 +48,6 @@ export const load = (async ({ locals, parent }) => {
     redirect(302, `/areas/${newPath.join('/')}`)
   }
 
-  // Query the database for blocks with geolocation data
-  const geolocationBlocksResults = await db((tx) =>
-    tx.query.blocks.findMany({
-      where: and(isNotNull(blocks.geolocationFk)),
-      with: {
-        area: buildNestedAreaQuery(), // Include nested area information
-        geolocation: true,
-      },
-    }),
-  )
-
   // Process each file associated with the area
   const areaFiles = await Promise.all(
     area.files.map(async (file) => {
@@ -89,7 +77,6 @@ export const load = (async ({ locals, parent }) => {
       blocks: getStatsOfBlocks(area.blocks, grades, user),
       description,
     },
-    blocks: geolocationBlocksResults.map(enrichBlock),
     files: areaFiles,
     references: getReferences(area.id, 'areas'),
   }

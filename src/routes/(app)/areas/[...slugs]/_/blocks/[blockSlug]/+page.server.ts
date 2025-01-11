@@ -1,10 +1,10 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, routes } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichBlock, enrichTopo, sortRoutesByTopo } from '$lib/db/utils'
+import { enrichTopo, sortRoutesByTopo } from '$lib/db/utils'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error } from '@sveltejs/kit'
-import { and, eq, isNotNull, not } from 'drizzle-orm'
+import { and, eq, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -52,17 +52,6 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
-  // Query the database for blocks with geolocation data
-  const geolocationBlocksResults = await db((tx) =>
-    tx.query.blocks.findMany({
-      where: and(isNotNull(blocks.geolocationFk)),
-      with: {
-        area: buildNestedAreaQuery(),
-        geolocation: true,
-      },
-    }),
-  )
-
   const blockFiles = await loadFiles(block.files)
   const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
   const sortedRoutes = sortRoutesByTopo(block.routes, topos)
@@ -70,7 +59,6 @@ export const load = (async ({ locals, params, parent }) => {
   // Return the block, enriched geolocation blocks, and processed files
   return {
     block: { ...block, routes: sortedRoutes },
-    blocks: geolocationBlocksResults.map(enrichBlock),
     files: blockFiles,
     references: getReferences(block.id, 'blocks'),
     topos,

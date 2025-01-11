@@ -42,6 +42,7 @@ export const load = async ({ data, depends, fetch }: LoadEvent<Record<string, st
 
   return {
     authUser: user ?? data.authUser,
+    blocks: data.blocks,
     grades: data.grades,
     gradingScale: data.gradingScale,
     session,
