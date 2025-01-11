@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { afterNavigate, invalidate, invalidateAll } from '$app/navigation'
+  import { afterNavigate, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import Logo from '$lib/assets/logo.png'
@@ -95,7 +95,7 @@
                 <span class="mx-2">FB</span>
 
                 <Switch
-                  checked={data.gradingScale === 'V'}
+                  checked={data.user?.userSettings?.gradingScale === 'V'}
                   name="gradingScale"
                   onCheckedChange={async (event) => {
                     const response = await fetch(`/api/users/settings?gradingScale=${event.checked ? 'V' : 'FB'}`, {

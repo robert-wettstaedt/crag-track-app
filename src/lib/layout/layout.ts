@@ -41,7 +41,7 @@ export const load = async ({ data, depends, fetch }: LoadEvent<Record<string, st
   } = await supabase.auth.getUser()
 
   return {
-    authUser: user,
+    authUser: user ?? data.authUser,
     grades: data.grades,
     gradingScale: data.gradingScale,
     session,
