@@ -14,12 +14,11 @@
   import { DragRotateAndZoom, defaults as defaultInteractions } from 'ol/interaction.js'
   import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer.js'
   import 'ol/ol.css'
-  import { Projection, addProjection, fromLonLat } from 'ol/proj.js'
-  import { register } from 'ol/proj/proj4.js'
-  import { Vector as VectorSource, XYZ } from 'ol/source.js'
+  import { fromLonLat } from 'ol/proj.js'
+  import { Vector as VectorSource } from 'ol/source.js'
   import OSM, { ATTRIBUTION } from 'ol/source/OSM'
+  import TileWMS from 'ol/source/TileWMS.js'
   import { Fill, Style, Text } from 'ol/style.js'
-  import proj4 from 'proj4'
   import { createEventDispatcher } from 'svelte'
   import type { GetBlockKey } from '.'
   import Layers, { type Layer } from './Layers'
@@ -64,19 +63,6 @@
     priority: number
   }
 
-  proj4.defs(
-    'EPSG:31468',
-    '+proj=tmerc +lat_0=0 +lon_0=12 +k=1 +x_0=4500000 +y_0=0 +ellps=bessel +towgs84=601.0,76.0,424.0,0.93293,0.22792,-1.68951,5.7 +units=m +no_defs +axis=neu',
-  )
-  register(proj4)
-
-  const projection = new Projection({
-    code: 'EPSG:31468',
-    extent: [3925712, 4875712, 4974288, 5924288],
-    units: 'm',
-  })
-  addProjection(projection)
-
   const dispatch = createEventDispatcher<{ action: OlMap; rendercomplete: void }>()
 
   let mapElement: HTMLDivElement | null = null
@@ -108,17 +94,19 @@
           showRelief
             ? {
                 properties: { layerOpts: layers.find((layer) => layer.name === 'bayern_relief') },
-                source: new XYZ({
+                source: new TileWMS({
                   attributions: [
                     '© <a href="https://geodaten.bayern.de/" target="_blank">Bayerische Vermessungsverwaltung</a>',
-                    '© <a href="https://www.eurogeographics.org/" target="_blank">EuroGeographics</a>',
+                    '© <a href="http://www.bkg.bund.de/" target="_blank">Bundesamt für Kartographie und Geodäsie (2022)</a>',
+                    '<a href="https://sg.geodatenzentrum.de/web_public/Datenquellen_TopPlus_Open.pdf" target="_blank">Datenquellen</a>',
                     ATTRIBUTION,
                   ],
-                  urls: ['31', '32', '33', '34', '35', '36', '37', '38', '39', '40'].map(
-                    (instance) => `https://intergeo${instance}.bayernwolke.de/betty/c_dgm_relief/{z}/{x}/{y}`,
-                  ),
-                  projection,
+                  url: 'https://geoservices.bayern.de/od/wms/dgm/v1/relief',
+                  params: {
+                    LAYERS: 'by_relief_schraeglicht',
+                  },
                 }),
+                minZoom: 14,
                 opacity: 0.7,
               }
             : {},
