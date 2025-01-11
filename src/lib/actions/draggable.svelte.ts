@@ -1,3 +1,4 @@
+import type { Drake } from 'dragula'
 import 'dragula/dist/dragula.css'
 import type { Action } from 'svelte/action'
 
@@ -10,6 +11,8 @@ type DraggableAction<T extends { id: string | number }> = Action<
   }
 >
 
+export const TRIGGER_ELEMENT_CLASS = 'drag-trigger'
+
 export const draggable = <T extends { id: string | number }>(
   ...args: Parameters<DraggableAction<T>>
 ): ReturnType<DraggableAction<T>> => {
@@ -17,6 +20,7 @@ export const draggable = <T extends { id: string | number }>(
   let [, items] = args
 
   let scrollable = true
+  let drake: Drake | undefined = undefined
 
   const listener: EventListener = (event) => {
     if (!scrollable) {
@@ -31,8 +35,11 @@ export const draggable = <T extends { id: string | number }>(
   globalThis.global = globalThis
 
   import('dragula').then(({ default: dragula }) => {
-    dragula([node], {
+    drake = dragula([node], {
       copy: true,
+      invalid: (el, handle) => {
+        return !handle?.classList.contains(TRIGGER_ELEMENT_CLASS) || items == null
+      },
       accepts: (el, container, handle, sibling) => {
         if (items == null) {
           return false
@@ -41,8 +48,8 @@ export const draggable = <T extends { id: string | number }>(
         const id = el?.attributes.getNamedItem('data-id')?.value
         const siblingId = sibling?.attributes.getNamedItem('data-id')?.value
 
-        const item = items?.find((item) => String(item.id) === id)
-        const siblingItem = items?.find((item) => String(item.id) === siblingId)
+        const item = items.find((item) => String(item.id) === id)
+        const siblingItem = items.find((item) => String(item.id) === siblingId)
 
         if (item != null && item.id !== siblingItem?.id) {
           const sortedItems = items.slice()
@@ -66,25 +73,28 @@ export const draggable = <T extends { id: string | number }>(
         scrollable = false
       })
       .on('drop', function () {
+        scrollable = true
+
         if (items == null) {
           return
         }
 
         const children = Array.from(node.children).map((child) => child.attributes.getNamedItem('data-id')?.value)
-        const sortedItems = items?.toSorted((a, b) => {
+        const sortedItems = items.toSorted((a, b) => {
           const aIndex = children.indexOf(String(a.id))
           const bIndex = children.indexOf(String(b.id))
           return aIndex - bIndex
         })
 
         node.dispatchEvent(new CustomEvent('finish', { detail: sortedItems }))
-
-        scrollable = true
       })
   })
 
   return {
-    update(newItems) {
+    destroy: () => {
+      drake?.destroy()
+    },
+    update: (newItems) => {
       const every = newItems?.every((newItem, index) => items?.[index]?.id === newItem.id)
 
       if (!every) {

@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends { id: string | number, name: string, pathname: string }">
-  import { draggable } from '$lib/actions/draggable.svelte'
+  import { draggable, TRIGGER_ELEMENT_CLASS } from '$lib/actions/draggable.svelte'
   import type { Snippet } from 'svelte'
   import { flip } from 'svelte/animate'
 
@@ -50,7 +50,7 @@
           animate:flip={{ duration: 200 }}
         >
           {#if onFinishSort != null}
-            <i class="fa-solid fa-grip-vertical cursor-grab ml-2"></i>
+            <i class="fa-solid fa-grip-vertical cursor-grab ml-2 {TRIGGER_ELEMENT_CLASS}"></i>
           {/if}
 
           <a
