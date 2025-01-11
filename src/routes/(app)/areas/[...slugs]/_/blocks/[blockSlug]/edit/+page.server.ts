@@ -172,6 +172,7 @@ export const actions = {
     }
 
     try {
+      const blockFiles = await db((tx) => tx.query.files.findMany({ where: eq(files.blockFk, block.id) }))
       await db((tx) => tx.delete(files).where(eq(files.blockFk, block.id)))
       await db((tx) => tx.delete(geolocations).where(eq(geolocations.blockFk, block.id)))
 
@@ -187,6 +188,12 @@ export const actions = {
           ),
         )
       }
+
+      await Promise.all(
+        blockFiles.map(async (file) => {
+          await getNextcloud().deleteFile(NEXTCLOUD_USER_NAME + file.path)
+        }),
+      )
 
       await db((tx) => tx.delete(blocks).where(eq(blocks.id, block.id)))
     } catch (error) {
