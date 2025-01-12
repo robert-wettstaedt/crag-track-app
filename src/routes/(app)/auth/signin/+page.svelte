@@ -11,12 +11,6 @@
 
 <div class="flex justify-center items-center min-h-[80vh]">
   <div class="card p-8 max-w-lg w-full preset-filled-surface-100-900">
-    {#if form?.error}
-      <aside class="card preset-tonal-warning mb-8 p-2 md:p-4">
-        <p>{form.error}</p>
-      </aside>
-    {/if}
-
     <header class="text-center mb-8">
       <h1 class="h1 mb-2">Welcome Back</h1>
       <p class="opacity-75">Sign in to continue to {PUBLIC_APPLICATION_NAME}</p>

@@ -143,6 +143,12 @@
   >
     <Breadcrumb url={$page.url} />
 
+    {#if form?.error}
+      <aside class="card preset-tonal-warning my-8 p-2 md:p-4 whitespace-pre-line">
+        <p>{form.error}</p>
+      </aside>
+    {/if}
+
     {@render children?.()}
   </main>
 

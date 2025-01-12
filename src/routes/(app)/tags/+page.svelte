@@ -25,12 +25,6 @@
   {/snippet}
 </AppBar>
 
-{#if form?.error}
-  <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 whitespace-pre-line">
-    <p>{form.error}</p>
-  </aside>
-{/if}
-
 <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900 table-wrap">
   {#if data.tags.length === 0}
     No tags yet

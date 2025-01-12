@@ -243,14 +243,6 @@
       {#if $page.data.session?.user?.id === data.requestedUser.authUserFk}
         <Tabs.Panel value="settings">
           <form method="POST">
-            {#if form?.error}
-              <aside class="alert variant-filled-error mt-8">
-                <div class="alert-message">
-                  <p>{form.error}</p>
-                </div>
-              </aside>
-            {/if}
-
             <label class="label mt-4">
               <span class="flex items-center gap-x-2">
                 <img class="h-4 w-4" src={Logo8a} alt="8a" width={16} height={16} />
