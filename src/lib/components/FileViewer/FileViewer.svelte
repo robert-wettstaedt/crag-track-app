@@ -69,7 +69,7 @@
         </div>
       {/if}
       {#if stat.mime?.includes('image')}
-        <img alt={stat.filename} class="h-80" src={resourcePath} height={300} use:mediaAction />
+        <img alt={stat.filename} class="h-80 object-cover" src={resourcePath} height={300} use:mediaAction />
       {:else if stat.mime?.includes('video')}
         <i class="fa-solid fa-circle-play h-80 w-80 text-[100px] flex justify-center items-center"></i>
       {/if}

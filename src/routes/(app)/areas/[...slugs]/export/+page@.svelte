@@ -67,7 +67,7 @@
         <a class="btn preset-filled-primary-500" href={basePath}>Go back</a>
       {:else}
         <div>
-          <ProgressRing value={(loadedTopos + loadedMaps) / (noTopos + noMaps)} />
+          <ProgressRing max={noTopos + noMaps} value={loadedTopos + loadedMaps} />
         </div>
 
         Preparing export

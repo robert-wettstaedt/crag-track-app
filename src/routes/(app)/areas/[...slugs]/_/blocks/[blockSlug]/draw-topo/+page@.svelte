@@ -3,12 +3,12 @@
   import { invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { fitHeightAction } from '$lib/actions/fit-height.svelte'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { selectedRouteStore } from '$lib/components/TopoViewer'
   import { convertPointsToPath, type TopoDTO, type TopoRouteDTO } from '$lib/topo'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { Popover, ProgressRing } from '@skeletonlabs/skeleton-svelte'
-  import { onMount } from 'svelte'
   import type { ChangeEventHandler } from 'svelte/elements'
   import '../../../../../../../../app.postcss'
 
@@ -24,8 +24,6 @@
 
   let dirtyRoutes: number[] = $state([])
   let selectedTopoIndex = $state(0)
-  let topoEl: HTMLElement
-  let height = $state(0)
 
   let isAdding = $state(false)
   let isDeleting = $state(false)
@@ -40,17 +38,6 @@
   const onChangeSelect: ChangeEventHandler<HTMLSelectElement> = (event) => {
     selectedRouteStore.set(Number(event.currentTarget.value))
   }
-
-  onMount(() => {
-    const img = topoEl.querySelector('img')
-    const imgBcr = img?.getBoundingClientRect()
-
-    if (imgBcr == null) {
-      return
-    }
-
-    height = window.innerHeight - imgBcr.top
-  })
 </script>
 
 <svelte:head>
@@ -288,7 +275,7 @@
     </div>
   </div>
 
-  <section bind:this={topoEl} class="w-full">
-    <TopoViewer editable={true} bind:selectedTopoIndex bind:topos onChange={onChangeTopo} {height} />
+  <section class="w-full" use:fitHeightAction>
+    <TopoViewer editable={true} bind:selectedTopoIndex bind:topos onChange={onChangeTopo} />
   </section>
 </div>

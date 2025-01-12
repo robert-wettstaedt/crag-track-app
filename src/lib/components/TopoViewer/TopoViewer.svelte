@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { PointDTO, TopoDTO, TopoRouteDTO } from '$lib/topo'
   import * as d3 from 'd3'
-  import type { Snippet } from 'svelte'
+  import { onMount, type Snippet } from 'svelte'
   import type { ChangeEventHandler, MouseEventHandler } from 'svelte/elements'
   import Labels from './components/Labels'
   import RouteView from './components/Route'
@@ -25,7 +25,7 @@
     actions,
     editable = false,
     getRouteKey = null,
-    height: elementHeight = 400,
+    height: elementHeight,
     limitImgHeight = true,
     onChange,
     onLoad,
@@ -206,9 +206,23 @@
       initZoom()
     }
   }
-</script>
 
-<!-- <svelte:window onresize={getDimensions} /> -->
+  onMount(() => {
+    if (imgWrapper == null) {
+      return
+    }
+
+    new ResizeObserver(() => {
+      if (zoomTransform != null) {
+        zoomTransform = undefined
+      }
+
+      requestAnimationFrame(() => {
+        getDimensions()
+      })
+    }).observe(imgWrapper)
+  })
+</script>
 
 {#if editable}
   <div class="flex justify-between p-2 preset-filled-surface-100-900">
@@ -257,7 +271,7 @@
 <div
   bind:this={imgWrapper}
   class="relative overflow-hidden h-full w-full flex items-center justify-center"
-  style={`min-height: ${elementHeight}px`}
+  style={elementHeight == null ? undefined : `min-height: ${elementHeight}px`}
 >
   {#each topos as topo, index}
     {#if index === selectedTopoIndex}
@@ -273,7 +287,7 @@
         <img
           alt={topo.file.stat?.filename}
           bind:this={img}
-          class="m-auto relative z-10 pointer-events-none touch-none origin-top-left"
+          class="m-auto relative max-h-full z-10 pointer-events-none touch-none origin-top-left"
           id={limitImgHeight ? 'img' : undefined}
           onload={onLoadImage}
           src={`/nextcloud${topo.file.stat?.filename}`}
@@ -318,7 +332,7 @@
     {/if}
   </div>
 
-  <div class="flex flex-col items-end gap-4 absolute top-2 right-2 z-30">
+  <div class="flex flex-col items-end gap-4 absolute top-2 right-2 z-30" id="topo-controls">
     {#if topos.length > 1}
       <div class="flex gap-1">
         <button
@@ -357,13 +371,13 @@
 </div>
 
 <style>
-  #img {
-    max-height: 70vh;
-  }
-
   @media print {
     #img {
       max-height: none;
+    }
+
+    #topo-controls {
+      display: none;
     }
 
     img {

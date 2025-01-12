@@ -7,6 +7,15 @@ import type { FileStat } from 'webdav'
 import TopoViewer from './TopoViewer.svelte'
 import { highlightedRouteStore, selectedPointTypeStore, selectedRouteStore } from './stores'
 
+// Mock ResizeObserver
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+global.ResizeObserver = ResizeObserverMock
+
 // Mock d3 zoom functionality
 vi.mock('d3', async (importOriginal) => {
   const actual = await importOriginal()

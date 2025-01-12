@@ -1,30 +1,14 @@
 <script lang="ts">
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { fitHeightAction } from '$lib/actions/fit-height.svelte.js'
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
-  import { onMount } from 'svelte'
 
   const { data } = $props()
-
-  let mapWrapper: HTMLDivElement | null = $state(null)
-  let height: number | null = $state(null)
-
-  const getHeight = () => {
-    const bcr = mapWrapper?.getBoundingClientRect()
-    const navBarBcr = document.querySelector('[data-testid="nav-bar"]')?.getBoundingClientRect()
-
-    if (bcr != null && navBarBcr != null) {
-      height = window.innerHeight - bcr.top - navBarBcr.height
-    }
-  }
-
-  onMount(() => {
-    getHeight()
-  })
 </script>
 
-<svelte:window onresize={getHeight} />
+<svelte:window />
 
 <svelte:head>
   <title>{PUBLIC_APPLICATION_NAME}</title>
@@ -90,9 +74,9 @@
     </div>
   </section>
 {:else if data.userPermissions?.includes('data.read')}
-  <div bind:this={mapWrapper} class="-m-[0.5rem] md:-m-[1rem]">
+  <div class="-m-[0.5rem] md:-m-[1rem]" use:fitHeightAction={{ paddingBottom: 0 }}>
     {#await import('$lib/components/BlocksMap') then BlocksMap}
-      <BlocksMap.default blocks={data.blocks} {height} />
+      <BlocksMap.default blocks={data.blocks} paddingBottom={0} />
     {/await}
   </div>
 {:else}

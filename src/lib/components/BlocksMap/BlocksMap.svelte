@@ -38,6 +38,7 @@
     showAreas?: boolean
     declutter?: boolean
     getBlockKey?: GetBlockKey
+    paddingBottom?: number
     parkingLocations?: Geolocation[]
   }
 
@@ -55,6 +56,7 @@
     declutter = true,
     getBlockKey = null,
     parkingLocations = [],
+    paddingBottom = 32,
   }: Props = $props()
 
   interface FeatureData {
@@ -368,6 +370,8 @@
 
   const centerMap = (map: OlMap) => {
     map.once('rendercomplete', () => {
+      resizeMap()
+
       const selectedBlocks = blocks.filter((block) => {
         if (selectedBlock?.id === block.id) {
           return true
@@ -426,6 +430,9 @@
     centerMap(map)
     resizeMap()
 
+    const observer = new ResizeObserver(() => requestAnimationFrame(resizeMap))
+    observer.observe(el)
+
     dispatch('action', map)
 
     return {
@@ -433,6 +440,7 @@
         // map?.remove()
         mapElement = null
         map = null
+        observer.disconnect()
       },
     }
   }
@@ -440,16 +448,17 @@
   function resizeMap() {
     if (mapElement != null) {
       if (height == null) {
-        const bcr = mapElement.getBoundingClientRect()
-        mapElement.style.height = `${window.innerHeight - bcr.top - 16 - heightSubtrahend}px`
+        const bcr = mapElement.parentElement?.getBoundingClientRect()
+
+        if (bcr != null) {
+          mapElement.style.height = `${bcr.height}px`
+        }
       } else if (typeof height === 'number') {
         mapElement.style.height = `${height}px`
       } else {
         mapElement.style.height = height
       }
     }
-
-    // map?.invalidateSize()
   }
 
   const onChangeRelief = (layers: string[]) => {
@@ -464,9 +473,7 @@
   }
 </script>
 
-<svelte:window onresize={resizeMap} />
-
-<div class="relative">
+<div class="relative flex h-full">
   <!-- svelte-ignore a11y_positive_tabindex -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div class="map w-full -z-0" tabindex="1" use:mapAction>

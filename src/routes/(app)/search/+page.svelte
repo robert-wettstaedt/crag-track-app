@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { afterNavigate } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
+  import type { SearchResults } from '$lib/search.server'
   import { Tabs } from '@skeletonlabs/skeleton-svelte'
   import { onMount } from 'svelte'
   import type { Snapshot } from './$types'
@@ -18,8 +20,17 @@
   }
 
   let searchQuery = $state($page.url.searchParams.get('q') ?? '')
-  let tabSet: 'routes' | 'blocks' | 'areas' | 'users' = $state('routes')
   let element: HTMLInputElement | null = $state(null)
+
+  let tabValue: string | undefined = $state(undefined)
+  afterNavigate(() => {
+    const item = ['routes', 'blocks', 'areas', 'users'].find((item) => {
+      const results = data.searchResults?.[item as keyof SearchResults]
+      return results != null && results.length > 0
+    })
+
+    tabValue = item == null ? undefined : `#${item}`
+  })
 
   onMount(() => {
     element?.focus()
@@ -52,80 +63,100 @@
 
 {#if data.searchResults != null}
   <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
-    <Tabs bind:value={tabSet} listClasses="overflow-x-auto overflow-y-hidden">
-      {#snippet list()}
-        <Tabs.Control value="routes">
-          {#snippet lead()}
-            <i class="fa-solid fa-route"></i>
-          {/snippet}
-          Routes ({data.searchResults.routes.length})
-        </Tabs.Control>
+    {#if tabValue == null}
+      <div class="text-center text-sm text-surface-500-900">No results found</div>
+    {:else}
+      <Tabs fluid listClasses="overflow-x-auto overflow-y-hidden" listGap="0" value={tabValue}>
+        {#snippet list()}
+          {#if data.searchResults.routes.length > 0}
+            <Tabs.Control value="#routes">
+              Routes
+              <div
+                class="text-xs text-surface-500-900 absolute top-0 right-0 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center"
+              >
+                {data.searchResults.routes.length}
+              </div>
+            </Tabs.Control>
+          {/if}
 
-        <Tabs.Control value="blocks">
-          {#snippet lead()}
-            <i class="fa-solid fa-mountain"></i>
-          {/snippet}
-          Blocks ({data.searchResults.blocks.length})
-        </Tabs.Control>
+          {#if data.searchResults.blocks.length > 0}
+            <Tabs.Control value="#blocks">
+              Blocks
+              <div
+                class="text-xs text-surface-500-900 absolute top-0 right-0 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center"
+              >
+                {data.searchResults.blocks.length}
+              </div>
+            </Tabs.Control>
+          {/if}
 
-        <Tabs.Control value="areas">
-          {#snippet lead()}
-            <i class="fa-solid fa-layer-group"></i>
-          {/snippet}
-          Areas ({data.searchResults.areas.length})
-        </Tabs.Control>
+          {#if data.searchResults.areas.length > 0}
+            <Tabs.Control value="#areas">
+              Areas
+              <div
+                class="text-xs text-surface-500-900 absolute top-0 right-0 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center"
+              >
+                {data.searchResults.areas.length}
+              </div>
+            </Tabs.Control>
+          {/if}
 
-        <Tabs.Control value="users">
-          {#snippet lead()}
-            <i class="fa-solid fa-user"></i>
-          {/snippet}
-          Users ({data.searchResults.users.length})
-        </Tabs.Control>
-      {/snippet}
+          {#if data.searchResults.users.length > 0}
+            <Tabs.Control value="#users">
+              Users
+              <div
+                class="text-xs text-surface-500-900 absolute top-0 right-0 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center"
+              >
+                {data.searchResults.users.length}
+              </div>
+            </Tabs.Control>
+          {/if}
+        {/snippet}
 
-      {#snippet content()}
-        <Tabs.Panel value="routes">
-          <GenericList
-            items={data.searchResults.routes}
-            rightContent={(item) => item.block.name}
-            rightPathname={(item) => item.block.pathname}
-          >
-            {#snippet left(item)}
-              <RouteName route={item} />
-            {/snippet}
-          </GenericList>
-        </Tabs.Panel>
+        {#snippet content()}
+          <Tabs.Panel value="#routes">
+            <GenericList
+              items={data.searchResults.routes}
+              rightContent={(item) => item.block.name}
+              rightPathname={(item) => item.block.pathname}
+            >
+              {#snippet left(item)}
+                <RouteName route={item} />
+              {/snippet}
+            </GenericList>
+          </Tabs.Panel>
 
-        <Tabs.Panel value="blocks">
-          <GenericList items={data.searchResults.blocks}>
-            {#snippet left(item)}
-              {item.name}
-            {/snippet}
-          </GenericList>
-        </Tabs.Panel>
+          <Tabs.Panel value="#blocks">
+            <GenericList items={data.searchResults.blocks}>
+              {#snippet left(item)}
+                {item.name}
+              {/snippet}
+            </GenericList>
+          </Tabs.Panel>
 
-        <Tabs.Panel value="areas">
-          <GenericList items={data.searchResults.areas}>
-            {#snippet left(item)}
-              {item.name}
-            {/snippet}
-          </GenericList>
-        </Tabs.Panel>
+          <Tabs.Panel value="#areas">
+            <GenericList items={data.searchResults.areas}>
+              {#snippet left(item)}
+                {item.name}
+              {/snippet}
+            </GenericList>
+          </Tabs.Panel>
 
-        <Tabs.Panel value="users">
-          <GenericList
-            items={data.searchResults.users.map((user) => ({
-              ...user,
-              name: user.username,
-              pathname: `/users/${user.username}`,
-            }))}
-          >
-            {#snippet left(item)}
-              {item.name}
-            {/snippet}
-          </GenericList>
-        </Tabs.Panel>
-      {/snippet}
-    </Tabs>
+          <Tabs.Panel value="#users">
+            <GenericList
+              items={data.searchResults.users.map((user) => ({
+                ...user,
+                name: user.username,
+                pathname: `/users/${user.username}`,
+              }))}
+            >
+              {#snippet left(item)}
+                {item.name}
+              {/snippet}
+            </GenericList>
+          </Tabs.Panel>
+        {/snippet}
+      </Tabs>
+    {/if}
   </div>
 {/if}
