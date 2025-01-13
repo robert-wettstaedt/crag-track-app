@@ -1,13 +1,18 @@
-import { DATABASE_URL } from '$env/static/private'
-
 export const config = {
   database: {
-    url: DATABASE_URL,
     maxPoolSize: 10,
     connectionTimeout: 30000,
     debug: process.env.NODE_ENV === 'development',
   },
   files: {
+    maxSize: {
+      number: 50 * 1024 * 1024,
+      human: '50MB',
+    },
+    folders: {
+      topos: '/topos',
+      userContent: '/user-content',
+    },
     resizing: {
       thumbnail: {
         width: 350,

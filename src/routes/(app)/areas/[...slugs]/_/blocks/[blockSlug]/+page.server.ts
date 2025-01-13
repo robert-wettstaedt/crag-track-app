@@ -1,9 +1,9 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { ascents, blocks, files, routes } from '$lib/db/schema'
+import { ascents, blocks, routes } from '$lib/db/schema'
 import { enrichTopo, sortRoutesByTopo } from '$lib/db/utils'
 import { getReferences } from '$lib/references.server'
 import { error } from '@sveltejs/kit'
-import { and, eq, not } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -24,9 +24,6 @@ export const load = (async ({ locals, params, parent }) => {
           with: {
             ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
           },
-        },
-        files: {
-          where: not(eq(files.type, 'topo')),
         },
         topos: {
           with: {

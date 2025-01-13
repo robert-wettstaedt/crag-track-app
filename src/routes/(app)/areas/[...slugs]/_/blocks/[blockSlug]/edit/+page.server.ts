@@ -1,11 +1,10 @@
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { blocks, files, generateSlug, geolocations, topoRoutes, topos } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { blockActionSchema, validateFormData, type ActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
+import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, inArray } from 'drizzle-orm'
@@ -97,30 +96,12 @@ export const actions = {
 
     try {
       // Update the block in the database with the validated values
-      const [block] = await db((tx) =>
+      await db((tx) =>
         tx
           .update(blocks)
           .set({ ...values, slug })
           .where(and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)))
           .returning(),
-      )
-
-      const topoFiles = await db((tx) =>
-        tx.query.files.findMany({ where: and(eq(files.blockFk, block.id), eq(files.type, 'topo')) }),
-      )
-
-      await Promise.all(
-        topoFiles.map(async (file) => {
-          const [basename, ...pathSegments] = file.path.split('/').reverse()
-          const [, , ext] = basename.split('.')
-          const newBasename = [slug, file.id, ext].join('.')
-          const newPath = [...pathSegments.reverse(), newBasename].join('/')
-
-          if (file.path !== newPath) {
-            await getNextcloud().moveFile(NEXTCLOUD_USER_NAME + file.path, NEXTCLOUD_USER_NAME + newPath)
-            await db((tx) => tx.update(files).set({ path: newPath }).where(eq(files.id, file.id)))
-          }
-        }),
       )
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
@@ -172,9 +153,8 @@ export const actions = {
     }
 
     try {
-      const blockFiles = await db((tx) => tx.query.files.findMany({ where: eq(files.blockFk, block.id) }))
-      await db((tx) => tx.delete(files).where(eq(files.blockFk, block.id)))
-      await db((tx) => tx.delete(geolocations).where(eq(geolocations.blockFk, block.id)))
+      const filesToDelete = await db((tx) => tx.delete(files).where(eq(files.blockFk, block.id)).returning())
+      await Promise.all(filesToDelete.map((file) => deleteFile(file)))
 
       const deletedTopos = await db((tx) => tx.delete(topos).where(eq(topos.blockFk, block.id)).returning())
 
@@ -189,12 +169,7 @@ export const actions = {
         )
       }
 
-      await Promise.all(
-        blockFiles.map(async (file) => {
-          await getNextcloud().deleteFile(NEXTCLOUD_USER_NAME + file.path)
-        }),
-      )
-
+      await db((tx) => tx.delete(geolocations).where(eq(geolocations.blockFk, block.id)))
       await db((tx) => tx.delete(blocks).where(eq(blocks.id, block.id)))
     } catch (error) {
       return fail(400, { error: convertException(error) })

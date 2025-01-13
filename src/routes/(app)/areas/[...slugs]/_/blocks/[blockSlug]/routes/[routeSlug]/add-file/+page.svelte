@@ -1,16 +1,18 @@
-<script>
-  import { enhance } from '$app/forms'
+<script lang="ts">
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AppBar from '$lib/components/AppBar'
-  import FileBrowser from '$lib/components/FileBrowser'
+  import FileUpload, { enhanceWithFile } from '$lib/components/FileUpload'
   import RouteName from '$lib/components/RouteName'
+  import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
 
-  let filePath = $state(form?.path == null ? null : form.path.toString())
   let grade = $derived(data.grades.find((grade) => grade.id === data.route.gradeFk))
+  let loading = $state(false)
+  let uploadProgress = $state<number | null>(null)
+  let uploadError = $state<string | null>(null)
 </script>
 
 <svelte:head>
@@ -23,6 +25,12 @@
   </title>
 </svelte:head>
 
+{#if form?.error}
+  <aside class="card preset-tonal-warning my-8 p-2 md:p-4 whitespace-pre-line">
+    <p>{form.error}</p>
+  </aside>
+{/if}
+
 <AppBar>
   {#snippet lead()}
     <span>Edit files of</span>
@@ -32,28 +40,42 @@
   {/snippet}
 </AppBar>
 
-<form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" method="POST" use:enhance>
-  <label class="label grow">
-    <span>New file</span>
-    <input name="path" type="hidden" value={filePath} />
+<form
+  class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900"
+  enctype="multipart/form-data"
+  method="POST"
+  use:enhanceWithFile={{
+    session: data.session,
+    supabase: data.supabase,
+    user: data.authUser,
+    onSubmit: async () => {
+      loading = true
 
-    <input name="path" type="hidden" value={filePath} />
-    <div class="ring ring-surface-800 rounded">
-      <FileBrowser bind:value={filePath} />
-    </div>
-  </label>
-
-  <label class="label mt-4">
-    <span>Type</span>
-    <select class="select max-h-[300px] overflow-auto" name="type" value={form?.type ?? 'beta'}>
-      <option value="beta">Beta</option>
-      <option value="topo">Topo</option>
-      <option value="other">Other</option>
-    </select>
-  </label>
+      return async ({ update }) => {
+        const returnValue = await update()
+        loading = false
+        return returnValue
+      }
+    },
+    onError: (error) => {
+      uploadError = error
+      loading = false
+    },
+    onProgress: (percentage) => (uploadProgress = percentage),
+  }}
+>
+  <FileUpload error={uploadError} progress={uploadProgress} folderName={form?.folderName} {loading} />
 
   <div class="flex justify-between mt-8">
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
-    <button class="btn preset-filled-primary-500" disabled={filePath == null} type="submit">Select</button>
+    <button class="btn preset-filled-primary-500" type="submit" disabled={loading}>
+      {#if loading}
+        <span class="me-2">
+          <ProgressRing size="size-4" value={null} />
+        </span>
+      {/if}
+
+      Upload
+    </button>
   </div>
 </form>

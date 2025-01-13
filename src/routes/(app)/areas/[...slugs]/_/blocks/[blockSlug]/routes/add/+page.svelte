@@ -30,7 +30,7 @@
     loading = true
 
     return async ({ action, result }) => {
-      loading = false
+      let returnValue
 
       if ((result.type === 'success' || result.type === 'redirect') && action.searchParams.get('create-more')) {
         window.location.href = action.pathname
@@ -39,8 +39,12 @@
         result.type === 'redirect' ||
         result.type === 'error'
       ) {
-        applyAction(result)
+        returnValue = await applyAction(result)
       }
+
+      loading = false
+
+      return returnValue
     }
   }}
 >

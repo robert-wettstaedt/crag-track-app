@@ -2,7 +2,7 @@
   import { afterNavigate, goto } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { fitHeightAction } from '$lib/actions/fit-height.svelte.js'
+  import { fitHeightAction } from '$lib/actions/fit-height.svelte'
   import { EDIT_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
   import References from '$lib/components/References'

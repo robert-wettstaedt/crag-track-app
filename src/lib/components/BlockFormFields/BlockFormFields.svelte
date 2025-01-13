@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { Block } from '$lib/db/schema'
+  import FileUpload, { type FileUploadProps } from '$lib/components/FileUpload'
 
   interface Props {
     name: Block['name']
-    withFiles?: boolean
+    fileUploadProps?: FileUploadProps
   }
 
-  let { name, withFiles = false }: Props = $props()
+  let { name, fileUploadProps }: Props = $props()
 </script>
 
 <label class="label">
@@ -14,9 +15,6 @@
   <input class="input" name="name" type="text" placeholder="Enter name..." value={name} />
 </label>
 
-{#if withFiles}
-  <label class="label mt-4">
-    <span>Topo images</span>
-    <input class="input" name="imageFiles" type="file" accept="image/*" multiple />
-  </label>
+{#if fileUploadProps != null}
+  <FileUpload accept="image/*" label="Topo image" {...fileUploadProps} />
 {/if}

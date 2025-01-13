@@ -1,45 +1,21 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
-  import FileBrowser from '$lib/components/FileBrowser'
+  import type { FileUploadProps } from '$lib/components/FileUpload'
+  import FileUpload from '$lib/components/FileUpload'
   import MarkdownEditor from '$lib/components/MarkdownEditor'
-  import type { Ascent, File } from '$lib/db/schema'
-  import { Modal } from '@skeletonlabs/skeleton-svelte'
+  import type { Ascent } from '$lib/db/schema'
   import { DateTime } from 'luxon'
-  import type { MouseEventHandler } from 'svelte/elements'
-  import { run } from 'svelte/legacy'
 
   interface Props {
     dateTime: Ascent['dateTime']
-    filePaths?: File['path'][]
+    fileUploadProps: FileUploadProps
     gradeFk: Ascent['gradeFk']
     notes: Ascent['notes']
     type: Ascent['type'] | null
   }
 
-  let { dateTime, filePaths = $bindable(['']), gradeFk, notes, type }: Props = $props()
-  let modalOpen = $state(false)
-
-  run(() => {
-    ;(() => {
-      const lastFile = filePaths.at(-1)
-
-      if (lastFile != null && lastFile.length > 0) {
-        filePaths = [...filePaths, '']
-      }
-    })()
-  })
-
-  const onRemoveFile =
-    (index: number): MouseEventHandler<HTMLButtonElement> =>
-    (event) => {
-      event.preventDefault()
-      filePaths = filePaths.filter((_, i) => i !== index)
-
-      if (filePaths.length === 0) {
-        filePaths = ['']
-      }
-    }
+  let { dateTime, gradeFk, notes, type, fileUploadProps }: Props = $props()
 </script>
 
 <label class="label mt-4">
@@ -75,59 +51,7 @@
   />
 </label>
 
-{#each filePaths as filePath, index}
-  <div class="mt-4">
-    <label class="label">
-      <span>File {filePaths.length > 1 ? index + 1 : ''}</span>
-
-      <div class="flex items-center gap-2">
-        {#if filePath.length > 0}
-          <img alt="" height="42" src={`/nextcloud${filePath}/preview?x=42&y=42&mimeFallback=true&a=0`} width="42" />
-        {/if}
-
-        <input class="input" disabled placeholder="Path" type="text" value={filePath} />
-        <input name="filePaths" type="hidden" value={filePath} />
-
-        {#if filePath.length === 0}
-          <Modal
-            bind:open={modalOpen}
-            triggerBase="btn preset-filled-primary-500"
-            contentBase="card bg-surface-100-900 p-2 md:p-4 space-y-4 shadow-xl max-w-screen-sm"
-            backdropClasses="backdrop-blur-sm"
-          >
-            {#snippet trigger()}
-              Choose
-            {/snippet}
-
-            {#snippet content()}
-              <header class="flex justify-between">
-                <h2 class="h2">File Browser</h2>
-              </header>
-
-              <article>
-                <FileBrowser
-                  onChange={(value: string | null) => {
-                    if (value != null) {
-                      filePaths[index] = value
-                      modalOpen = false
-                    }
-                  }}
-                />
-              </article>
-
-              <footer class="flex justify-end gap-4">
-                <button type="button" class="btn preset-tonal" onclick={() => (modalOpen = false)}>Cancel</button>
-                <button type="button" class="btn preset-filled" onclick={() => (modalOpen = false)}>Confirm</button>
-              </footer>
-            {/snippet}
-          </Modal>
-        {:else}
-          <button class="btn preset-filled-error-500 !text-white" onclick={onRemoveFile(index)}>Remove</button>
-        {/if}
-      </div>
-    </label>
-  </div>
-{/each}
+<FileUpload {...fileUploadProps} />
 
 <label class="label mt-4">
   <span>Notes</span>

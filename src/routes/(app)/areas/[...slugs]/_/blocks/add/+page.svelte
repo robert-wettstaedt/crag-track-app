@@ -1,15 +1,18 @@
-<script>
+<script lang="ts">
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AppBar from '$lib/components/AppBar'
   import BlockFormFields from '$lib/components/BlockFormFields'
+  import { enhanceWithFile } from '$lib/components/FileUpload/action'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
 
   let { data, form } = $props()
   let basePath = $derived(`/areas/${$page.params.slugs}`)
 
   let loading = $state(false)
+  let uploadProgress = $state<number | null>(null)
+  let uploadError = $state<string | null>(null)
 </script>
 
 <svelte:head>
@@ -27,17 +30,35 @@
   class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900"
   enctype="multipart/form-data"
   method="POST"
-  use:enhance={() => {
-    loading = true
+  use:enhanceWithFile={{
+    session: data.session,
+    supabase: data.supabase,
+    user: data.authUser,
+    onSubmit: async () => {
+      loading = true
 
-    return ({ update }) => {
+      return async ({ update }) => {
+        const returnValue = await update()
+        loading = false
+        return returnValue
+      }
+    },
+    onError: (error) => {
+      uploadError = error
       loading = false
-
-      return update()
-    }
+    },
+    onProgress: (percentage) => (uploadProgress = percentage),
   }}
 >
-  <BlockFormFields name={form?.name ?? `Block ${data.blocksCount + 1}`} withFiles />
+  <BlockFormFields
+    fileUploadProps={{
+      error: uploadError,
+      folderName: form?.folderName,
+      loading,
+      progress: uploadProgress,
+    }}
+    name={form?.name ?? `Block ${data.blocksCount + 1}`}
+  />
 
   <div class="flex justify-between mt-8">
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>

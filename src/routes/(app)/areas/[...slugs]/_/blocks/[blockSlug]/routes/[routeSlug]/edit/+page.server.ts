@@ -17,6 +17,7 @@ import {
 import { convertException } from '$lib/errors'
 import { routeActionSchema, validateFormData, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
+import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, inArray } from 'drizzle-orm'
@@ -229,22 +230,28 @@ export const actions = {
     }
 
     try {
+      const filesToDelete = await db((tx) => tx.delete(files).where(eq(files.routeFk, route.id)).returning())
+      await Promise.all(filesToDelete.map((file) => deleteFile(file)))
+
+      if (route.ascents.length > 0) {
+        const filesToDelete = await db((tx) =>
+          tx
+            .delete(files)
+            .where(
+              inArray(
+                files.ascentFk,
+                route.ascents.map((ascent) => ascent.id),
+              ),
+            )
+            .returning(),
+        )
+        await Promise.all(filesToDelete.map((file) => deleteFile(file)))
+      }
+
       await db((tx) => tx.delete(ascents).where(eq(ascents.routeFk, route.id)))
       await db((tx) => tx.delete(firstAscents).where(eq(firstAscents.routeFk, route.id)))
       await db((tx) => tx.delete(routesToTags).where(eq(routesToTags.routeFk, route.id)))
-      await db((tx) => tx.delete(files).where(eq(files.routeFk, route.id)))
       await db((tx) => tx.delete(topoRoutes).where(eq(topoRoutes.routeFk, route.id)))
-
-      if (route.ascents.length > 0) {
-        await db((tx) =>
-          tx.delete(files).where(
-            inArray(
-              files.ascentFk,
-              route.ascents.map((ascent) => ascent.id),
-            ),
-          ),
-        )
-      }
 
       const externalResources = await db((tx) =>
         tx.delete(routeExternalResources).where(eq(routeExternalResources.routeFk, route.id)).returning(),

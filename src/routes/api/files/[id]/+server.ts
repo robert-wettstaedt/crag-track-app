@@ -2,6 +2,7 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { files, users, type User } from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
+import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 
@@ -52,6 +53,9 @@ export async function DELETE({ locals, params }) {
 
   // Delete the file from the database
   await db((tx) => tx.delete(files).where(eq(files.id, fileId)))
+  if (file != null) {
+    await deleteFile(file)
+  }
 
   // Return a successful response
   return new Response(null, { status: 200 })
