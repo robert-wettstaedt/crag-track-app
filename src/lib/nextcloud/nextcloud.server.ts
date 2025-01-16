@@ -2,7 +2,7 @@ import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$en
 import * as schema from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { error } from '@sveltejs/kit'
-import { createClient, type FileStat, type WebDAVClient } from 'webdav'
+import { createClient, type FileStat, type ResponseDataDetailed, type WebDAVClient } from 'webdav'
 import type { FileDTO } from '.'
 
 /**
@@ -28,9 +28,32 @@ export const getNextcloud = (path = '/remote.php/dav/files'): WebDAVClient => {
  */
 export const searchNextcloudFile = async (file: schema.File): Promise<FileStat> => {
   try {
-    const stat = (await getNextcloud().stat(NEXTCLOUD_USER_NAME + file.path)) as FileStat
+    const path = file.path.startsWith('/') ? file.path : `/${file.path}`
+    const stat = (await getNextcloud().stat(NEXTCLOUD_USER_NAME + path, {
+      details: true,
+      data: `<?xml version="1.0" encoding="UTF-8"?>
+<d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
+  <d:prop>
+    <d:getlastmodified />
+    <d:getetag />
+    <d:getcontenttype />
+    <d:resourcetype />
+    <oc:fileid />
+    <oc:permissions />
+    <oc:size />
+    <d:getcontentlength />
+    <nc:has-preview />
+    <oc:favorite />
+    <oc:comments-unread />
+    <oc:owner-display-name />
+    <oc:share-types />
+    <nc:contained-folder-count />
+    <nc:contained-file-count />
+  </d:prop>
+</d:propfind>`,
+    })) as ResponseDataDetailed<FileStat>
 
-    return { ...stat, filename: stat.filename.replace(`/${NEXTCLOUD_USER_NAME}`, '') }
+    return { ...stat.data, filename: stat.data.filename.replace(`/${NEXTCLOUD_USER_NAME}`, '') }
   } catch (exception) {
     const { response, status } = exception as { response: Response | undefined; status: number | undefined }
 

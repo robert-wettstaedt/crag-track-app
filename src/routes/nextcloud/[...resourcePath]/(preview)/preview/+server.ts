@@ -24,7 +24,7 @@ export async function GET({ locals, request, params, url }) {
     ascentFk: null,
     blockFk: null,
     id: 0,
-    path: params.resourcePath,
+    path: '/' + params.resourcePath,
     routeFk: null,
   })
 
