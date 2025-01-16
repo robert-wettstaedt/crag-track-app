@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="./static/android-chrome-512x512.png" width="128" alt="Crag Track Logo" />
+  <img src="./static/android-chrome-512x512.png" width="128" alt="grnyte Logo" />
 </p>
 
-# Crag Track
+# grnyte
 
 Secure boulder topo and session tracker.
 
-[Demo](https://crag-track.vercel.app/)
+[Demo](https://demo.grnyte.rocks)
 
 ## Features
 
