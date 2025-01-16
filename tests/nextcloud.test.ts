@@ -1,4 +1,3 @@
-import type { FileDTO } from '$lib/nextcloud'
 import { getNextcloud, loadFiles, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { FileStat } from 'webdav'
@@ -11,16 +10,6 @@ const mockFileStat: FileStat = {
   size: 1024,
   type: 'file',
   etag: 'test-etag',
-}
-
-const mockFileDto: FileDTO = {
-  id: 1,
-  path: mockFileStat.filename,
-  stat: mockFileStat,
-  areaFk: null,
-  ascentFk: null,
-  blockFk: null,
-  routeFk: null,
 }
 
 const mockFileContent = Buffer.from('test file content')
@@ -37,7 +26,7 @@ describe('NextCloud Integration', () => {
           if (path.includes('non-existent')) {
             throw new Error('File not found')
           }
-          return mockFileStat
+          return { data: mockFileStat }
         }),
         exists: vi.fn().mockResolvedValue(true),
         search: vi.fn(() => ({ data: { results: [mockFileStat] } })),
@@ -74,11 +63,11 @@ describe('NextCloud Integration', () => {
         blockFk: null,
         routeFk: null,
       })
-      expect(result).toEqual(mockFileStat)
+      expect(result).toEqual({ ...mockFileStat, filename: mockFileStat.filename })
     })
 
     it('should throw for non-existent file', async () => {
-      expect(
+      await expect(
         searchNextcloudFile({
           id: 1,
           path: '/non-existent.jpg',
@@ -99,7 +88,11 @@ describe('NextCloud Integration', () => {
       ]
       const results = await loadFiles(paths)
       expect(results).toHaveLength(2)
-      expect(results[0]).toEqual(mockFileDto)
+      expect(results[0]).toEqual({
+        ...paths[0],
+        error: undefined,
+        stat: { ...mockFileStat, filename: mockFileStat.filename },
+      })
     })
 
     it('should handle missing files', async () => {
@@ -139,7 +132,7 @@ describe('NextCloud Integration', () => {
     it('should handle file stats', async () => {
       const client = getNextcloud()
       const stat = await client.stat('/test/image.jpg')
-      expect(stat).toEqual(mockFileStat)
+      expect(stat).toEqual({ data: mockFileStat })
     })
   })
 })
