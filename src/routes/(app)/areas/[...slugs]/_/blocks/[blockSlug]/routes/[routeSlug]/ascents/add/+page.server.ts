@@ -1,14 +1,13 @@
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
+import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
+import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { ascents, blocks, files, users, type Ascent, type File } from '$lib/db/schema'
+import { ascents, blocks, users, type Ascent } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { checkExternalSessions, logExternalAscent } from '$lib/external-resources/index.server'
 import { ascentActionSchema, validateFormData, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
-import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
@@ -100,38 +99,6 @@ export const actions = {
       return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
     }
 
-    let hasFiles = false
-    if (values.filePaths != null) {
-      try {
-        // Validate each file path
-        await Promise.all(
-          values.filePaths
-            .filter((filePath) => filePath.trim().length > 0)
-            .map(async (filePath) => {
-              hasFiles = true
-
-              try {
-                // Check the file status in Nextcloud
-                const stat = (await getNextcloud()?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
-
-                if (stat == null) {
-                  throw `Unable to read file: "${filePath}"`
-                }
-
-                if (stat.type === 'directory') {
-                  throw `path must be a file not a directory: "${filePath}"`
-                }
-              } catch (error) {
-                throw `Unable to read file: "${filePath}"`
-              }
-            }),
-        )
-      } catch (exception) {
-        // Return a 400 failure if file validation fails
-        return fail(400, { ...values, error: convertException(exception) })
-      }
-    }
-
     let externalSessions: Awaited<ReturnType<typeof checkExternalSessions>>
     try {
       externalSessions = await checkExternalSessions(route, locals)
@@ -160,23 +127,10 @@ export const actions = {
       return fail(400, { ...values, error: convertException(exception) })
     }
 
-    if (hasFiles) {
+    if (values.folderName != null) {
       try {
-        // Determine the file type based on ascent type
-        const fileType: File['type'] = values.type === 'flash' ? 'send' : values.type
-
-        // Insert the files into the database
-        await db((tx) =>
-          tx.insert(files).values(
-            values
-              .filePaths!.filter((filePath) => filePath.trim().length > 0)
-              .map((filePath) => ({
-                ascentFk: ascent.id,
-                path: filePath,
-                type: fileType,
-              })),
-          ),
-        )
+        const dstFolder = `${config.files.folders.userContent}/${locals.user.id}`
+        await db((tx) => handleFileUpload(tx, locals.supabase, values.folderName!, dstFolder, { ascentFk: ascent.id }))
       } catch (exception) {
         // Return a 400 failure if file insertion fails
         return fail(400, { ...values, error: convertException(exception) })
@@ -194,6 +148,6 @@ export const actions = {
 
     // Redirect to the merged path
     const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
-    redirect(303, '/' + mergedPath)
+    redirect(303, '/' + mergedPath + '#ascents')
   },
 }

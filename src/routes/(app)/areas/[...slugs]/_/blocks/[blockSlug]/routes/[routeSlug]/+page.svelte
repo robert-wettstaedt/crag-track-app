@@ -3,7 +3,7 @@
   import { afterNavigate, goto, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { fitHeightAction } from '$lib/actions/fit-height.svelte.js'
+  import { fitHeightAction } from '$lib/actions/fit-height.svelte'
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
@@ -277,20 +277,7 @@
                         on:delete={() => {
                           files = files.filter((_file) => file.id !== _file.id)
                         }}
-                      >
-                        {#if file.type === 'send'}
-                          <i class="fa-solid fa-circle text-red-500"></i>
-                        {:else if file.type === 'attempt'}
-                          <i class="fa-solid fa-person-falling text-blue-300"></i>
-                        {:else if file.type === 'beta'}
-                          Beta
-                        {:else if file.type === 'topo'}
-                          Topo
-                        {:else if file.type === 'other'}
-                          Other
-                        {/if}
-                        &nbsp;
-                      </FileViewer>
+                      />
                     {:else if file.error != null}
                       <aside class="alert variant-filled-error">
                         <div class="alert-message">

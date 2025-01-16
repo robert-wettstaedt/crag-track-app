@@ -2,7 +2,7 @@ import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$en
 import * as schema from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { error } from '@sveltejs/kit'
-import { createClient, type FileStat, type ResponseDataDetailed, type SearchResult, type WebDAVClient } from 'webdav'
+import { createClient, type FileStat, type WebDAVClient } from 'webdav'
 import type { FileDTO } from '.'
 
 /**
@@ -27,51 +27,10 @@ export const getNextcloud = (path = '/remote.php/dav/files'): WebDAVClient => {
  * @throws {Error} - Throws an error if the session is invalid, the file is not found, or there is an issue with the search request.
  */
 export const searchNextcloudFile = async (file: schema.File): Promise<FileStat> => {
-  const basename = file.path.split('/').at(-1)
-
   try {
-    const searchResult = await getNextcloud('/remote.php/dav').search('/', {
-      details: true,
-      data: `<?xml version="1.0" encoding="UTF-8"?>
-<d:searchrequest xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
-    <d:basicsearch>
-        <d:select>
-            <d:prop>
-              <oc:fileid/>
-              <d:displayname/>
-              <d:getcontenttype/>
-              <d:getetag/>
-              <oc:size/>
-            </d:prop>
-        </d:select>
-        <d:from>
-            <d:scope>
-                <d:href>/files/${NEXTCLOUD_USER_NAME}</d:href>
-                <d:depth>infinity</d:depth>
-            </d:scope>
-        </d:from>
-        <d:where>
-            <d:like>
-                <d:prop>
-                    <d:displayname/>
-                </d:prop>
-                <d:literal>${basename}</d:literal>
-            </d:like>
-        </d:where>
-        <d:orderby/>
-    </d:basicsearch>
-</d:searchrequest>`,
-    })
+    const stat = (await getNextcloud().stat(NEXTCLOUD_USER_NAME + file.path)) as FileStat
 
-    const stat = (searchResult as ResponseDataDetailed<SearchResult>).data.results.find((result) =>
-      result.filename.includes(file.path),
-    )
-
-    if (stat == null) {
-      error(404)
-    }
-
-    return { ...stat, filename: stat.filename.replace(`/remote.php/dav/files/${NEXTCLOUD_USER_NAME}`, '') }
+    return { ...stat, filename: stat.filename.replace(`/${NEXTCLOUD_USER_NAME}`, '') }
   } catch (exception) {
     const { response, status } = exception as { response: Response | undefined; status: number | undefined }
 
@@ -101,4 +60,35 @@ export const loadFiles = (files: schema.File[]): Promise<FileDTO[]> => {
       }
     }),
   )
+}
+
+export const mkDir = async (path: string): Promise<string> => {
+  const nextcloud = getNextcloud()
+
+  const segments = path.split('/')
+
+  for (let i = 1; i <= segments.length; i++) {
+    const segment = segments.slice(0, i).join('/')
+
+    if (!(await nextcloud.exists(NEXTCLOUD_USER_NAME + segment))) {
+      await nextcloud.createDirectory(NEXTCLOUD_USER_NAME + segment)
+      await new Promise((r) => setTimeout(r, 100))
+    }
+  }
+
+  return path
+}
+
+export const deleteFile = async (file: schema.File) => {
+  const nextcloud = getNextcloud()
+
+  const [filename, ...pathSegments] = file.path.split('/').reverse()
+  const path = pathSegments.reverse().join('/')
+  const basename = filename.split('.').slice(0, -1).join('.')
+
+  const contents = await nextcloud.getDirectoryContents(NEXTCLOUD_USER_NAME + path, { glob: `${basename}.*` })
+
+  if (Array.isArray(contents)) {
+    await Promise.all(contents.map((content) => nextcloud.deleteFile(content.filename)))
+  }
 }

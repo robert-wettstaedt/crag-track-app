@@ -26,7 +26,6 @@ export async function GET({ locals, request, params, url }) {
     id: 0,
     path: params.resourcePath,
     routeFk: null,
-    type: 'other',
   })
 
   const searchParams = new URLSearchParams(url.searchParams)

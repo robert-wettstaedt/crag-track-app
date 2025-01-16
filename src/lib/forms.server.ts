@@ -105,6 +105,16 @@ export async function validateFormData<Output = unknown, Def extends z.ZodTypeDe
 
 export type ActionFailure<T> = T & { error: string }
 
+export const addFileActionSchema = z.object({
+  folderName: z.string(),
+})
+export type AddFileActionValues = z.infer<typeof addFileActionSchema>
+
+export const addOptionalFileActionSchema = z.object({
+  folderName: z.string().optional(),
+})
+export type AddOptionalFileActionValues = z.infer<typeof addOptionalFileActionSchema>
+
 export type AreaActionValues = z.infer<typeof areaActionSchema>
 export const areaActionSchema = z.object({
   description: z.string().nullable().default(''),
@@ -113,9 +123,12 @@ export const areaActionSchema = z.object({
 })
 
 export type BlockActionValues = z.infer<typeof blockActionSchema>
-export const blockActionSchema = z.object({
-  name: z.string(),
-})
+export const blockActionSchema = z.intersection(
+  z.object({
+    name: z.string(),
+  }),
+  addOptionalFileActionSchema,
+)
 
 export const routeActionSchema = z.object({
   description: z.string().nullable().default(''),
@@ -134,13 +147,16 @@ export const firstAscentActionSchema = z
   .refine((x) => x.climberName != null || x.year != null, { message: 'Either climberName or year must be set' })
 export type FirstAscentActionValues = z.infer<typeof firstAscentActionSchema>
 
-export const ascentActionSchema = z.object({
-  dateTime: z.string().date(),
-  filePaths: z.array(z.string()).optional(),
-  gradeFk: z.number().optional(),
-  notes: z.string().optional(),
-  type: z.enum(ascentTypeEnum),
-})
+export const ascentActionSchema = z.intersection(
+  z.object({
+    dateTime: z.string().date(),
+    filePaths: z.array(z.string()).optional(),
+    gradeFk: z.number().optional(),
+    notes: z.string().optional(),
+    type: z.enum(ascentTypeEnum),
+  }),
+  addOptionalFileActionSchema,
+)
 export type AscentActionValues = z.infer<typeof ascentActionSchema>
 
 export const saveTopoActionSchema = z.object({

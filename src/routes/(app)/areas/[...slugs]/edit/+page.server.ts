@@ -4,8 +4,8 @@ import { areas, files, generateSlug, geolocations } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { areaActionSchema, validateFormData, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
+import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
-import { renameAreaTopos } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq, not } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -78,8 +78,6 @@ export const actions = {
           .set({ ...values, slug })
           .where(eq(areas.id, areaId)),
       )
-
-      await db((tx) => renameAreaTopos(tx, `${areaSlug}-${areaId}`, `${slug}-${areaId}`))
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })
@@ -128,7 +126,9 @@ export const actions = {
     }
 
     try {
-      await db((tx) => tx.delete(files).where(eq(files.areaFk, areaId)))
+      const filesToDelete = await db((tx) => tx.delete(files).where(eq(files.areaFk, areaId)).returning())
+      await Promise.all(filesToDelete.map((file) => deleteFile(file)))
+
       await db((tx) => tx.delete(geolocations).where(eq(geolocations.areaFk, areaId)))
       await db((tx) => tx.update(areas).set({ parentFk: null }).where(eq(areas.parentFk, areaId)))
       await db((tx) => tx.delete(areas).where(eq(areas.id, areaId)))

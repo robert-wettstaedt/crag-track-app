@@ -1,8 +1,8 @@
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
+import { convertException } from '$lib/errors'
 import {
   addTopoActionSchema,
   saveTopoActionSchema,
@@ -13,7 +13,7 @@ import {
 } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
 import { load as loadServerLayout } from '$lib/layout/layout.server'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
+import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -175,15 +175,21 @@ export const actions = {
       return fail(404, { error: `Topo with id ${id} not found` })
     }
 
-    await db((tx) =>
-      Promise.all([
-        topo.fileFk == null ? null : tx.delete(files).where(eq(files.id, topo.fileFk)),
-        tx.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)),
-        tx.delete(topos).where(eq(topos.id, id)),
-      ]),
-    )
+    try {
+      const filesToDelete = await db(async (tx) =>
+        topo.fileFk == null ? null : tx.delete(files).where(eq(files.id, topo.fileFk)).returning(),
+      )
 
-    topo.file == null ? null : await getNextcloud().deleteFile(NEXTCLOUD_USER_NAME + topo.file.path)
+      await db((tx) =>
+        Promise.all([
+          ...(filesToDelete ?? []).map((file) => deleteFile(file)),
+          tx.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)),
+          tx.delete(topos).where(eq(topos.id, id)),
+        ]),
+      )
+    } catch (exception) {
+      return fail(400, { error: convertException(exception) })
+    }
 
     if (topo.blockFk != null) {
       const remainingTopos = await db((tx) => tx.query.topos.findMany({ where: eq(topos.blockFk, topo.blockFk!) }))

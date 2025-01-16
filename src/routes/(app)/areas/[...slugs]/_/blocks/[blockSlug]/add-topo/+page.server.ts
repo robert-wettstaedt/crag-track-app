@@ -1,9 +1,12 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
+import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { blocks, files } from '$lib/db/schema'
+import { blocks, topos } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
+import { addFileActionSchema, validateFormData, type ActionFailure, type AddFileActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
-import { createGeolocationFromFiles, insertTopos } from '$lib/topo-files.server'
+import { createGeolocationFromFiles } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -22,11 +25,6 @@ export const load = (async ({ locals, params, parent }) => {
   const blocksResult = await db((tx) =>
     tx.query.blocks.findMany({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      with: {
-        files: {
-          where: eq(files.type, 'topo'),
-        },
-      },
     }),
   )
   // Get the first block from the result
@@ -57,18 +55,12 @@ export const actions = {
     const db = await createDrizzleSupabaseClient(locals.supabase)
 
     // Convert the area slug to get the areaId
-    const { areaId, path } = convertAreaSlug(params)
+    const { areaId } = convertAreaSlug(params)
 
     // Query the database to find the first block matching the given slug and areaId
     const block = await db((tx) =>
       tx.query.blocks.findFirst({
         where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-        with: {
-          files: {
-            where: eq(files.type, 'topo'),
-          },
-          topos: true,
-        },
       }),
     )
 
@@ -79,27 +71,26 @@ export const actions = {
 
     // Retrieve form data from the request
     const data = await request.formData()
-    const imageFiles = data.getAll('imageFiles') as File[]
-    const values = { file: imageFiles }
-
-    // Validate the path
-    if (imageFiles.some((file) => !(file instanceof File) || file.size === 0)) {
-      return fail(400, { ...values, error: 'file is required' })
-    }
-
-    const fileBuffers = await Promise.all(imageFiles.filter((file) => file.size > 0).map((file) => file.arrayBuffer()))
+    let values: AddFileActionValues
 
     try {
-      await db(async (tx) => (block == null ? null : createGeolocationFromFiles(tx, block, fileBuffers, 'create')))
+      // Validate the form data
+      values = await validateFormData(addFileActionSchema, data)
+    } catch (exception) {
+      // If validation fails, return the exception as BlockActionFailure
+      return exception as ActionFailure<AddFileActionValues>
+    }
 
-      await db(async (tx) =>
-        block == null
-          ? undefined
-          : insertTopos(tx, block, fileBuffers, {
-              areaSlug: path.at(-2)!,
-              blockSlug: block.slug,
-              sectorSlug: path.at(-1)!,
-            }),
+    try {
+      const results = await db((tx) =>
+        handleFileUpload(tx, locals.supabase, values.folderName, config.files.folders.topos, { blockFk: block.id }),
+      )
+
+      const fileBuffers = results.map((result) => result.fileBuffer)
+
+      await db(async (tx) => (block == null ? null : createGeolocationFromFiles(tx, block, fileBuffers, 'create')))
+      await db((tx) =>
+        Promise.all(results.map((result) => tx.insert(topos).values({ blockFk: block.id, fileFk: result.file.id }))),
       )
     } catch (exception) {
       // If an exception occurs during insertion, return a failure response with the error message
@@ -107,6 +98,6 @@ export const actions = {
     }
 
     // Redirect to the block page after successful insertion
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}#topo`)
   },
 }

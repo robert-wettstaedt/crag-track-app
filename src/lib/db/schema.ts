@@ -476,7 +476,6 @@ export const files = table(
     id: baseFields.id,
 
     path: text('path').notNull(),
-    type: text('type', { enum: ['topo', 'beta', 'attempt', 'send', 'other'] }).notNull(),
 
     areaFk: integer('area_fk'),
     ascentFk: integer('ascent_fk'),
@@ -527,7 +526,6 @@ export const files = table(
     index('files_ascent_fk_idx').on(table.ascentFk),
     index('files_block_fk_idx').on(table.blockFk),
     index('files_route_fk_idx').on(table.routeFk),
-    index('files_type_idx').on(table.type),
   ],
 ).enableRLS()
 export type File = InferSelectModel<typeof files>

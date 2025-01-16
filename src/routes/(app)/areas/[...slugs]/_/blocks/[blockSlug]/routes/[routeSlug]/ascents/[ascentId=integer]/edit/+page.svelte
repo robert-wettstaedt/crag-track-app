@@ -4,21 +4,19 @@
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AppBar from '$lib/components/AppBar'
   import AscentFormFields from '$lib/components/AscentFormFields'
+  import { enhanceWithFile } from '$lib/components/FileUpload'
   import RouteName from '$lib/components/RouteName'
   import { Popover } from '@skeletonlabs/skeleton-svelte'
-  import type { ActionData, PageData } from './$types'
 
-  interface Props {
-    data: PageData
-    form: ActionData
-  }
-
-  let { data, form }: Props = $props()
+  let { data, form } = $props()
   let basePath = $derived(
     `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`,
   )
 
   let grade = $derived(data.grades.find((grade) => grade.id === data.ascent.route.gradeFk))
+  let loading = $state(false)
+  let uploadProgress = $state<number | null>(null)
+  let uploadError = $state<string | null>(null)
 </script>
 
 <svelte:head>
@@ -40,11 +38,39 @@
   {/snippet}
 </AppBar>
 
-<form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" action="?/updateAscent" method="POST" use:enhance>
+<form
+  action="?/updateAscent"
+  class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900"
+  enctype="multipart/form-data"
+  method="POST"
+  use:enhanceWithFile={{
+    session: data.session,
+    supabase: data.supabase,
+    user: data.authUser,
+    onSubmit: async () => {
+      loading = true
+
+      return async ({ update }) => {
+        const returnValue = await update()
+        loading = false
+        return returnValue
+      }
+    },
+    onError: (error) => {
+      uploadError = error
+      loading = false
+    },
+    onProgress: (percentage) => (uploadProgress = percentage),
+  }}
+>
   <AscentFormFields
+    fileUploadProps={{
+      error: uploadError,
+      folderName: form?.folderName,
+      loading,
+      progress: uploadProgress,
+    }}
     dateTime={form?.dateTime ?? data.ascent.dateTime}
-    filePaths={form?.filePaths ??
-      (data.ascent.files.length === 0 ? undefined : data.ascent.files.map((file) => file.path))}
     gradeFk={form?.gradeFk ?? data.ascent.gradeFk}
     notes={form?.notes ?? data.ascent.notes}
     type={form?.type ?? data.ascent.type}

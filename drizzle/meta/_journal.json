@@ -36,6 +36,13 @@
       "when": 1736533218494,
       "tag": "0005_numerous_mandroid",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1736973053484,
+      "tag": "0006_perfect_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }

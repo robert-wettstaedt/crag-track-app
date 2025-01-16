@@ -1,13 +1,13 @@
-import { NEXTCLOUD_USER_NAME } from '$env/static/private'
 import { EDIT_PERMISSION } from '$lib/auth'
+import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
+import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { ascents, files, type File } from '$lib/db/schema'
+import { ascents, files } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { ascentActionSchema, validateFormData, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
-import { getNextcloud } from '$lib/nextcloud/nextcloud.server'
+import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
-import type { FileStat } from 'webdav'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params }) => {
@@ -19,7 +19,6 @@ export const load = (async ({ locals, params }) => {
       where: eq(ascents.id, Number(params.ascentId)),
       with: {
         author: true,
-        files: true,
         route: {
           with: {
             ascents: true,
@@ -74,32 +73,6 @@ export const actions = {
       return fail(404, { ...values, error: `Ascent not found ${params.ascentId}` })
     }
 
-    // Check if there are any file paths provided
-    let hasFiles = false
-    if (values.filePaths != null) {
-      try {
-        // Validate each file path
-        await Promise.all(
-          values.filePaths
-            .filter((filePath) => filePath.trim().length > 0)
-            .map(async (filePath) => {
-              hasFiles = true
-              const stat = (await getNextcloud()?.stat(NEXTCLOUD_USER_NAME + filePath)) as FileStat | undefined
-
-              if (stat == null) {
-                throw `Unable to read file: "${filePath}"`
-              }
-
-              if (stat.type === 'directory') {
-                throw `path must be a file not a directory: "${filePath}"`
-              }
-            }),
-        )
-      } catch (exception) {
-        return fail(400, { ...values, error: convertException(exception) })
-      }
-    }
-
     try {
       // Update the ascent in the database
       await db((tx) =>
@@ -112,32 +85,19 @@ export const actions = {
       return fail(400, { ...values, error: convertException(exception) })
     }
 
-    // If there are files, insert them into the database
-    if (hasFiles) {
+    if (values.folderName != null) {
       try {
-        const fileType: File['type'] = values.type === 'flash' ? 'send' : values.type
-
-        await db((tx) => tx.delete(files).where(eq(files.ascentFk, ascent.id)))
-
-        await db((tx) =>
-          tx.insert(files).values(
-            values
-              .filePaths!.filter((filePath) => filePath.trim().length > 0)
-              .map((filePath) => ({
-                ascentFk: ascent.id,
-                path: filePath,
-                type: fileType,
-              })),
-          ),
-        )
+        const dstFolder = `${config.files.folders.userContent}/${locals.user?.id}`
+        await db((tx) => handleFileUpload(tx, locals.supabase, values.folderName!, dstFolder, { ascentFk: ascent.id }))
       } catch (exception) {
+        // Return a 400 failure if file insertion fails
         return fail(400, { ...values, error: convertException(exception) })
       }
     }
 
     // Redirect to the merged path
     const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
-    redirect(303, '/' + mergedPath)
+    redirect(303, '/' + mergedPath + '#ascents')
   },
 
   removeAscent: async ({ locals, params }) => {
@@ -161,13 +121,14 @@ export const actions = {
 
     try {
       await db((tx) => tx.delete(ascents).where(eq(ascents.id, ascent.id)))
-      await db((tx) => tx.delete(files).where(eq(files.ascentFk, ascent.id)))
+      const filesToDelete = await db((tx) => tx.delete(files).where(eq(files.ascentFk, ascent.id)).returning())
+      await Promise.all(filesToDelete.map((file) => deleteFile(file)))
     } catch (error) {
       return fail(400, { error: convertException(error) })
     }
 
     // Redirect to the merged path
     const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
-    redirect(303, '/' + mergedPath)
+    redirect(303, '/' + mergedPath + '#ascents')
   },
 }

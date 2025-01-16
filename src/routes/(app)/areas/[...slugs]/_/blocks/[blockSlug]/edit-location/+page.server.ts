@@ -155,6 +155,6 @@ export const actions = {
     }
 
     // Redirect to the block's page after a successful update
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}#location`)
   },
 }

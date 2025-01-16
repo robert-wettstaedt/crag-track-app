@@ -17,6 +17,10 @@ const mockFileDto: FileDTO = {
   id: 1,
   path: mockFileStat.filename,
   stat: mockFileStat,
+  areaFk: null,
+  ascentFk: null,
+  blockFk: null,
+  routeFk: null,
 }
 
 const mockFileContent = Buffer.from('test file content')
@@ -29,7 +33,12 @@ describe('NextCloud Integration', () => {
         putFileContents: vi.fn().mockResolvedValue(undefined),
         deleteFile: vi.fn().mockResolvedValue(undefined),
         getDirectoryContents: vi.fn(() => [mockFileStat]),
-        stat: vi.fn(() => mockFileStat),
+        stat: vi.fn((path) => {
+          if (path.includes('non-existent')) {
+            throw new Error('File not found')
+          }
+          return mockFileStat
+        }),
         exists: vi.fn().mockResolvedValue(true),
         search: vi.fn(() => ({ data: { results: [mockFileStat] } })),
       }),
@@ -57,20 +66,36 @@ describe('NextCloud Integration', () => {
 
   describe('searchNextcloudFile', () => {
     it('should find a file by path', async () => {
-      const result = await searchNextcloudFile({ id: 1, path: '/test/image.jpg' })
+      const result = await searchNextcloudFile({
+        id: 1,
+        path: '/test/image.jpg',
+        areaFk: null,
+        ascentFk: null,
+        blockFk: null,
+        routeFk: null,
+      })
       expect(result).toEqual(mockFileStat)
     })
 
     it('should throw for non-existent file', async () => {
-      expect(searchNextcloudFile({ id: 1, path: '/non-existent.jpg' })).rejects.toThrowError()
+      expect(
+        searchNextcloudFile({
+          id: 1,
+          path: '/non-existent.jpg',
+          areaFk: null,
+          ascentFk: null,
+          blockFk: null,
+          routeFk: null,
+        }),
+      ).rejects.toThrowError()
     })
   })
 
   describe('loadFiles', () => {
     it('should load multiple files', async () => {
       const paths = [
-        { id: 1, path: '/test/image.jpg' },
-        { id: 2, path: '/test/image2.jpg' },
+        { id: 1, path: '/test/image.jpg', areaFk: null, ascentFk: null, blockFk: null, routeFk: null },
+        { id: 2, path: '/test/image2.jpg', areaFk: null, ascentFk: null, blockFk: null, routeFk: null },
       ]
       const results = await loadFiles(paths)
       expect(results).toHaveLength(2)
@@ -80,8 +105,8 @@ describe('NextCloud Integration', () => {
     it('should handle missing files', async () => {
       vi.mocked(getNextcloud()).exists.mockResolvedValueOnce(false)
       const paths = [
-        { id: 1, path: '/test/image.jpg' },
-        { id: 1, path: '/non-existent.jpg' },
+        { id: 1, path: '/test/image.jpg', areaFk: null, ascentFk: null, blockFk: null, routeFk: null },
+        { id: 1, path: '/non-existent.jpg', areaFk: null, ascentFk: null, blockFk: null, routeFk: null },
       ]
       const results = await loadFiles(paths)
       expect(results).toHaveLength(2)

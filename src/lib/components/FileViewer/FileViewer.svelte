@@ -17,12 +17,12 @@
 
   let { children, file, readOnly = true, stat }: Props = $props()
 
-  const search = new URLSearchParams({ file: stat.basename }).toString()
-  const resourcePath = `/nextcloud${stat.filename}`
+  const search = $derived(new URLSearchParams({ file: stat.basename }).toString())
+  const resourcePath = $derived(`/nextcloud${stat.filename}`)
 
   const onDelete = async () => {
     await fetch(`/api/files/${file.id}`, { method: 'DELETE' })
-    goto($page.url.pathname)
+    goto($page.url.pathname + $page.url.hash)
     dispatcher('delete')
   }
 
@@ -53,7 +53,10 @@
 
 <svelte:window onkeyup={(event) => event.key === 'Escape' && goto($page.url.pathname)} />
 
-<a class="card card-hover preset-filled-surface-200-800 overflow-hidden" href={`${$page.url.pathname}/?${search}`}>
+<a
+  class="card card-hover preset-filled-surface-200-800 overflow-hidden"
+  href={`${$page.url.pathname}/?${search}${$page.url.hash}`}
+>
   <div class="relative">
     {#if mediaHasError}
       <aside class="alert variant-filled-error">
@@ -132,7 +135,7 @@
     <a
       aria-label="Close"
       class="btn btn-icon preset-filled-primary-500 fixed top-8 right-8"
-      href={$page.url.pathname}
+      href={$page.url.pathname + $page.url.hash}
       title="Close"
     >
       <i class="fa-solid fa-x"></i>

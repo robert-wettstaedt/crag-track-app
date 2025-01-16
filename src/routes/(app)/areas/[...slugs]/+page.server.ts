@@ -1,9 +1,7 @@
 import { getStatsOfAreas, getStatsOfBlocks, nestedAreaQuery } from '$lib/blocks.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas, blocks } from '$lib/db/schema'
-import { convertException } from '$lib/errors'
 import { convertMarkdownToHtml } from '$lib/markdown'
-import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -48,22 +46,6 @@ export const load = (async ({ locals, parent }) => {
     redirect(302, `/areas/${newPath.join('/')}`)
   }
 
-  // Process each file associated with the area
-  const areaFiles = await Promise.all(
-    area.files.map(async (file) => {
-      try {
-        // Search for the file in Nextcloud
-        const stat = await searchNextcloudFile(file)
-
-        // Return the file with its stat information
-        return { ...file, error: undefined, stat }
-      } catch (exception) {
-        // If an error occurs, convert the exception and return it with the file
-        return { ...file, error: convertException(exception), stat: undefined }
-      }
-    }),
-  )
-
   // Process area description from markdown to HTML if description is present
   const description = await db(async (tx) =>
     area.description == null ? null : convertMarkdownToHtml(area.description, tx),
@@ -77,7 +59,6 @@ export const load = (async ({ locals, parent }) => {
       blocks: getStatsOfBlocks(area.blocks, grades, user),
       description,
     },
-    files: areaFiles,
     references: getReferences(area.id, 'areas'),
   }
 }) satisfies PageServerLoad

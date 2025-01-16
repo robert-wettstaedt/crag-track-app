@@ -1,3 +1,4 @@
+import { DATABASE_URL } from '$env/static/private'
 import { decodeToken, type SupabaseToken } from '$lib/auth'
 import { config } from '$lib/config'
 import * as schema from '$lib/db/schema'
@@ -9,7 +10,7 @@ import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import Keyv from 'keyv'
 import Database from 'postgres'
 
-const postgres = Database(config.database.url, {
+const postgres = Database(DATABASE_URL, {
   debug: config.database.debug,
   prepare: false,
   max: config.database.maxPoolSize,
@@ -20,7 +21,7 @@ const postgres = Database(config.database.url, {
 
 export const db = drizzle(postgres, { schema })
 
-const keyvPostgres = new KeyvPostgres({ uri: config.database.url, pool: false })
+const keyvPostgres = new KeyvPostgres({ uri: DATABASE_URL, pool: false })
 export const keyv = new Keyv({ store: keyvPostgres, ttl: config.cache.ttl })
 
 export function createDrizzle<

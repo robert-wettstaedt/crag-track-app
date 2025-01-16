@@ -1,6 +1,6 @@
 <script lang="ts">
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
-  import { fitHeightAction } from '$lib/actions/fit-height.svelte.js'
+  import { fitHeightAction } from '$lib/actions/fit-height.svelte'
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
