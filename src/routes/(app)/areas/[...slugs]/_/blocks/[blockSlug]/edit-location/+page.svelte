@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { fitHeightAction } from '$lib/actions/fit-height.svelte'
   import AppBar from '$lib/components/AppBar'
   import { Popover, Tabs } from '@skeletonlabs/skeleton-svelte'
   import type { Coordinate } from 'ol/coordinate'
@@ -50,14 +51,16 @@
 
     {#snippet content()}
       <Tabs.Panel value="map">
-        {#await import('$lib/components/BlocksMapWithAddableMarker') then BlocksMap}
-          <BlocksMap.default
-            blocks={data.blocks}
-            selectedArea={data.block.area}
-            selectedBlock={data.block}
-            on:change={onChange}
-          />
-        {/await}
+        <div use:fitHeightAction>
+          {#await import('$lib/components/BlocksMapWithAddableMarker') then BlocksMap}
+            <BlocksMap.default
+              blocks={data.blocks}
+              selectedArea={data.block.area}
+              selectedBlock={data.block}
+              on:change={onChange}
+            />
+          {/await}
+        </div>
 
         <input hidden name="lat" value={form?.lat ?? coordinate?.at(1)} />
         <input hidden name="long" value={form?.long ?? coordinate?.at(0)} />
