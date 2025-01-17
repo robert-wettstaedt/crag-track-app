@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { EDIT_PERMISSION, READ_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
   import { Pagination } from '@skeletonlabs/skeleton-svelte'
@@ -29,6 +31,19 @@
       >
         {#snippet left(item)}
           {item.username}
+        {/snippet}
+
+        {#snippet right(item)}
+          {#if data.userPermissions?.includes(EDIT_PERMISSION)}
+            {#if item.role}
+              {item.role}
+            {:else}
+              <form method="POST" action="?/addRole" use:enhance>
+                <input type="hidden" name="authUserFk" value={item.authUserFk} />
+                <button class="btn preset-outlined" type="submit">Assign user role</button>
+              </form>
+            {/if}
+          {/if}
         {/snippet}
       </GenericList>
     {/if}

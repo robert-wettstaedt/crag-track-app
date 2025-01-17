@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+  import { PUBLIC_APPLICATION_NAME, PUBLIC_TOPO_EMAIL } from '$env/static/public'
   import { fitHeightAction } from '$lib/actions/fit-height.svelte'
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
@@ -82,10 +82,28 @@
 {:else}
   <div class="card p-6 max-w-md mx-auto mt-8 preset-filled-surface-100-900">
     <h2 class="h3 mb-4 text-center">Thank you for signing up for {PUBLIC_APPLICATION_NAME}</h2>
+
     <p class="text-center opacity-75 mb-4">
-      We have received your request to access {PUBLIC_APPLICATION_NAME}. Please sit tight while we process your request.
+      Your account is currently pending approval from our administrators. This helps us maintain the quality and
+      security of our climbing community.
     </p>
 
-    <p class="text-center opacity-75 mb-4">You will receive an email with further instructions shortly.</p>
+    <div class="space-y-4 opacity-75">
+      <p class="text-center text-xl">What happens next:</p>
+      <ol class="list-decimal list-inside text-left space-y-2">
+        <li>Our team will review your request (usually within 24 hours)</li>
+        <li>You'll receive an email when your account is approved</li>
+        <li>Once approved, you can log in and start tracking your climbs</li>
+      </ol>
+    </div>
+
+    <p class="text-center opacity-75 mt-6">
+      {#if PUBLIC_TOPO_EMAIL}
+        If you don't receive an email within 24 hours, please check your spam folder or reach out to us at
+        <a class="anchor" href="mailto:{PUBLIC_TOPO_EMAIL}">{PUBLIC_TOPO_EMAIL}</a>.
+      {:else}
+        If you don't receive an email within 24 hours, please check your spam folder.
+      {/if}
+    </p>
   </div>
 {/if}

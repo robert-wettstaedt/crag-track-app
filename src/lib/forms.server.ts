@@ -185,3 +185,8 @@ export const userExternalResourceActionSchema = z.object({
   cookieTheCrag: z.string().trim().optional(),
 })
 export type UserExternalResourceActionValues = z.infer<typeof userExternalResourceActionSchema>
+
+export const addRoleActionSchema = z.object({
+  authUserFk: z.string(),
+})
+export type AddRoleActionValues = z.infer<typeof addRoleActionSchema>
