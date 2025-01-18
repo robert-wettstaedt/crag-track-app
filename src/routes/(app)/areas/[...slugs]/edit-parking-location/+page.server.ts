@@ -1,8 +1,8 @@
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { areas, geolocations } from '$lib/db/schema'
+import { activities, areas, geolocations } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
-import { convertAreaSlug } from '$lib/helper.server'
+import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -40,6 +40,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
@@ -89,6 +90,19 @@ export const actions = {
 
     try {
       await db((tx) => tx.insert(geolocations).values({ lat, long, areaFk: area.id }))
+      await db(async (tx) =>
+        user == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'updated',
+              userFk: user.id,
+              entityId: area.id,
+              entityType: 'area',
+              columnName: 'parking location',
+              parentEntityId: area.parentFk,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (exception) {
       // Handle any exceptions that occur during the update
       return fail(404, { ...values, error: convertException(exception) })
@@ -103,6 +117,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
@@ -122,6 +137,19 @@ export const actions = {
 
     try {
       await db((tx) => tx.delete(geolocations).where(eq(geolocations.areaFk, area.id)))
+      await db(async (tx) =>
+        user == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'deleted',
+              userFk: user.id,
+              entityId: area.id,
+              entityType: 'area',
+              columnName: 'parking location',
+              parentEntityId: area.parentFk,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (error) {
       return fail(404, { error: convertException(error) })
     }

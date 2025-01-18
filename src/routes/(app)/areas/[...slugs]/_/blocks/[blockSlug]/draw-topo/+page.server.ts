@@ -1,6 +1,6 @@
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
+import { activities, ascents, blocks, files, routes, topoRoutes, topos } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import { convertException } from '$lib/errors'
 import {
@@ -11,7 +11,7 @@ import {
   type AddTopoActionValues,
   type SaveTopoActionValues,
 } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/helper.server'
+import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { load as loadServerLayout } from '$lib/layout/layout.server'
 import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -77,12 +77,21 @@ export const load = (async (event) => {
 }) satisfies PageServerLoad
 
 export const actions = {
-  saveRoute: async ({ locals, request }) => {
+  saveRoute: async ({ locals, request, params }) => {
     if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
+
+    const { areaId } = convertAreaSlug(params)
+
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      }),
+    )
 
     const data = await request.formData()
 
@@ -104,6 +113,20 @@ export const actions = {
           topType: values.topType,
         })
         .where(eq(topoRoutes.id, Number(values.id))),
+    )
+
+    await db(async (tx) =>
+      user == null
+        ? null
+        : tx.insert(activities).values({
+            type: 'updated',
+            userFk: user.id,
+            entityId: values.routeFk,
+            entityType: 'route',
+            columnName: 'topo',
+            parentEntityId: block?.id,
+            parentEntityType: 'block',
+          }),
     )
 
     return values.routeFk
@@ -134,12 +157,21 @@ export const actions = {
     )
   },
 
-  removeRoute: async ({ locals, request }) => {
+  removeRoute: async ({ locals, request, params }) => {
     if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
       error(404)
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
+
+    const { areaId } = convertAreaSlug(params)
+
+    const block = await db((tx) =>
+      tx.query.blocks.findFirst({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      }),
+    )
 
     // Get form data from the request
     const data = await request.formData()
@@ -157,6 +189,20 @@ export const actions = {
         .delete(topoRoutes)
         .where(and(eq(topoRoutes.routeFk, Number(values.routeFk)), eq(topoRoutes.topoFk, Number(values.topoFk)))),
     )
+
+    await db(async (tx) =>
+      user == null
+        ? null
+        : tx.insert(activities).values({
+            type: 'deleted',
+            userFk: user.id,
+            entityId: values.routeFk,
+            entityType: 'route',
+            columnName: 'topo',
+            parentEntityId: block?.id,
+            parentEntityType: 'block',
+          }),
+    )
   },
 
   removeTopo: async ({ locals, params, request }) => {
@@ -165,6 +211,9 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
+
+    const { areaId } = convertAreaSlug(params)
 
     const data = await request.formData()
     const id = Number(data.get('id'))
@@ -186,6 +235,20 @@ export const actions = {
           tx.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)),
           tx.delete(topos).where(eq(topos.id, id)),
         ]),
+      )
+
+      await db(async (tx) =>
+        user == null || topo.blockFk == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'deleted',
+              userFk: user.id,
+              entityId: topo.blockFk,
+              entityType: 'block',
+              columnName: 'topo image',
+              parentEntityId: areaId,
+              parentEntityType: 'area',
+            }),
       )
     } catch (exception) {
       return fail(400, { error: convertException(exception) })

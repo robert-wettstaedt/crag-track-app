@@ -1,6 +1,7 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { loadFeed } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { ascents, blocks } from '$lib/db/schema'
+import { activities, ascents, blocks } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
 import { insertExternalResources } from '$lib/external-resources/index.server'
 import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
@@ -8,10 +9,10 @@ import { convertMarkdownToHtml } from '$lib/markdown'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error } from '@sveltejs/kit'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, or } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
-export const load = (async ({ locals, params, parent }) => {
+export const load = (async ({ locals, params, parent, url }) => {
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
   // Retrieve the areaId from the parent function
@@ -31,7 +32,6 @@ export const load = (async ({ locals, params, parent }) => {
               with: {
                 author: true,
                 route: true,
-                files: true,
               },
             },
             files: true,
@@ -78,34 +78,25 @@ export const load = (async ({ locals, params, parent }) => {
 
   const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
 
-  // Enrich ascents with additional data and process notes
-  const enrichedAscents = await Promise.all(
-    route.ascents.map(async (ascent) => {
-      const notes = await db(async (tx) => (ascent.notes == null ? null : convertMarkdownToHtml(ascent.notes, tx)))
-
-      // Fetch and enrich files associated with the ascent
-      const files = await loadFiles(ascent.files.toSorted((a, b) => a.path.localeCompare(b.path)))
-
-      return {
-        ...ascent,
-        notes,
-        files,
-      }
-    }),
-  )
-
   // Process route description from markdown to HTML if description is present
   const description = await db(async (tx) =>
     route.description == null ? null : convertMarkdownToHtml(route.description, tx),
   )
 
+  const feed = await loadFeed({ locals, url }, [
+    or(
+      and(eq(activities.entityId, route.id), eq(activities.entityType, 'route')),
+      and(eq(activities.parentEntityId, route.id), eq(activities.parentEntityType, 'route')),
+    )!,
+  ])
+
   // Return the enriched data
   return {
-    ascents: enrichedAscents,
     route: { ...route, description },
     files: routeFiles,
     references: getReferences(route.id, 'routes'),
     topos,
+    feed,
   }
 }) satisfies PageServerLoad
 

@@ -1,9 +1,10 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { createUpdateActivity } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { blocks, files, generateSlug, geolocations, topoRoutes, topos } from '$lib/db/schema'
+import { activities, blocks, files, generateSlug, geolocations, topoRoutes, topos } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { blockActionSchema, validateFormData, type ActionFailure, type BlockActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/helper.server'
+import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -51,6 +52,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert the area slug to get the areaId
     const { areaId, areaSlug } = convertAreaSlug(params)
@@ -103,6 +105,21 @@ export const actions = {
           .where(and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)))
           .returning(),
       )
+
+      await db(async (tx) =>
+        user == null
+          ? null
+          : createUpdateActivity({
+              db: tx,
+              entityId: block.id,
+              entityType: 'block',
+              newEntity: values,
+              oldEntity: block,
+              userFk: user?.id,
+              parentEntityId: areaId,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })
@@ -118,6 +135,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert the area slug to get the areaId
     const { areaId, areaSlug } = convertAreaSlug(params)
@@ -171,6 +189,20 @@ export const actions = {
 
       await db((tx) => tx.delete(geolocations).where(eq(geolocations.blockFk, block.id)))
       await db((tx) => tx.delete(blocks).where(eq(blocks.id, block.id)))
+
+      await db(async (tx) =>
+        user == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'deleted',
+              userFk: user.id,
+              entityId: block.id,
+              entityType: 'block',
+              oldValue: block.name,
+              parentEntityId: areaId,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (error) {
       return fail(400, { error: convertException(error) })
     }

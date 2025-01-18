@@ -2,10 +2,10 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
 import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { areas, blocks, generateSlug, topos, users, type Block } from '$lib/db/schema'
+import { activities, areas, blocks, generateSlug, topos, users, type Block } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { blockActionSchema, validateFormData, type ActionFailure, type BlockActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/helper.server'
+import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { createGeolocationFromFiles } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, count, eq } from 'drizzle-orm'
@@ -45,6 +45,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -99,6 +100,19 @@ export const actions = {
           .returning(),
       )
       block = blockResult.at(0)
+
+      await db(async (tx) =>
+        user == null || block == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'created',
+              userFk: user.id,
+              entityId: block.id,
+              entityType: 'block',
+              parentEntityId: areaId,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (exception) {
       // If insertion fails, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })

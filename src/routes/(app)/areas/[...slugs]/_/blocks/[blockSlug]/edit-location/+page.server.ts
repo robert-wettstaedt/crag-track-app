@@ -1,9 +1,9 @@
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { blocks, geolocations } from '$lib/db/schema'
+import { activities, blocks, geolocations } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
 import { convertException } from '$lib/errors'
-import { convertAreaSlug } from '$lib/helper.server'
+import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { createOrUpdateGeolocation } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
@@ -55,6 +55,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
@@ -109,6 +110,20 @@ export const actions = {
 
     try {
       await db((tx) => createOrUpdateGeolocation(tx, block, { lat, long }))
+
+      await db(async (tx) =>
+        user == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'updated',
+              userFk: user.id,
+              entityId: block.id,
+              entityType: 'block',
+              columnName: 'location',
+              parentEntityId: block.areaFk,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (exception) {
       // Handle any exceptions that occur during the update
       return fail(404, { ...values, error: convertException(exception) })
@@ -124,6 +139,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
@@ -150,6 +166,20 @@ export const actions = {
 
       // Update the block to remove the geolocation foreign key
       await db((tx) => tx.update(blocks).set({ geolocationFk: null }).where(eq(blocks.id, block.id)))
+
+      await db(async (tx) =>
+        user == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'deleted',
+              userFk: user.id,
+              entityId: block.id,
+              entityType: 'block',
+              columnName: 'location',
+              parentEntityId: block.areaFk,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (error) {
       return fail(400, { error: convertException(error) })
     }

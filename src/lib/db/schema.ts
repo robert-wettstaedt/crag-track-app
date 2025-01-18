@@ -640,3 +640,39 @@ export const geolocationsRelations = relations(geolocations, ({ one }) => ({
   area: one(areas, { fields: [geolocations.areaFk], references: [areas.id] }),
   block: one(blocks, { fields: [geolocations.blockFk], references: [blocks.id] }),
 }))
+
+export const activityTypeEnum = pgEnum('activity_type', ['created', 'updated', 'deleted', 'uploaded'])
+
+export const activities = table(
+  'activities',
+  {
+    ...baseFields,
+    type: activityTypeEnum('type').notNull(),
+    userFk: integer('user_fk').notNull(),
+    entityId: integer('entity_id').notNull(),
+    entityType: text('entity_type', { enum: ['block', 'route', 'area', 'ascent', 'file', 'user'] }).notNull(),
+    parentEntityId: integer('parent_entity_id'),
+    parentEntityType: text('parent_entity_type', { enum: ['block', 'route', 'area', 'ascent'] }),
+    columnName: text('column_name'), // Only populated for 'updated' activities
+    metadata: text('metadata'), // JSON string containing relevant changes
+    oldValue: text('old_value'), // Only populated for 'updated' activities
+    newValue: text('new_value'), // Only populated for 'updated' activities
+  },
+  (table) => [
+    policy('Authenticated users can read activities', getPolicyConfig('select', sql`true`)),
+    policy('Users can create activities', getPolicyConfig('insert', sql`true`)),
+    index('activities_created_at_idx').on(table.createdAt),
+    index('activities_type_idx').on(table.type),
+    index('activities_user_fk_idx').on(table.userFk),
+    index('activities_entity_id_idx').on(table.entityId),
+    index('activities_entity_type_idx').on(table.entityType),
+    index('activities_parent_entity_id_idx').on(table.parentEntityId),
+  ],
+).enableRLS()
+
+export type Activity = InferSelectModel<typeof activities>
+export type InsertActivity = InferInsertModel<typeof activities>
+
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  user: one(users, { fields: [activities.userFk], references: [users.id] }),
+}))

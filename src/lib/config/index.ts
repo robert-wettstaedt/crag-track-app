@@ -19,6 +19,9 @@ export const config = {
       },
     },
   },
+  routes: {
+    defaultName: '<no name>',
+  },
   api: {
     rateLimit: {
       windowMs: 15 * 60 * 1000, // 15 minutes

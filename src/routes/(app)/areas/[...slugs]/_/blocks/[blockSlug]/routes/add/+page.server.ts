@@ -1,10 +1,11 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { blocks, generateSlug, routes, routesToTags, users, type Route } from '$lib/db/schema'
+import { activities, blocks, generateSlug, routes, routesToTags, type Route } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { insertExternalResources } from '$lib/external-resources/index.server'
 import { routeActionSchema, validateFormData, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/helper.server'
+import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -54,6 +55,11 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
+
+    if (user == null) {
+      return fail(404)
+    }
 
     // Convert area slug to get areaId
     const { areaId } = convertAreaSlug(params)
@@ -109,13 +115,6 @@ export const actions = {
     let route: Route
 
     try {
-      // Find the user in the database using their email
-      const user = await db((tx) => tx.query.users.findFirst({ where: eq(users.authUserFk, locals.user!.id) }))
-      if (user == null) {
-        // If the user is not found, throw an error
-        throw new Error('User not found')
-      }
-
       // Insert the new route into the database
       const result = await db((tx) =>
         tx
@@ -124,6 +123,20 @@ export const actions = {
           .returning(),
       )
       route = result[0]
+
+      await db(async (tx) =>
+        user == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'created',
+              userFk: user.id,
+              entityId: route.id,
+              entityType: 'route',
+              newValue: route.name.length > 0 ? route.name : config.routes.defaultName,
+              parentEntityId: block.id,
+              parentEntityType: 'block',
+            }),
+      )
     } catch (exception) {
       return fail(400, { ...values, error: `Unable to create route: ${convertException(exception)}` })
     }

@@ -1,11 +1,11 @@
 import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
 import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { ascents, blocks, users, type Ascent } from '$lib/db/schema'
+import { activities, ascents, blocks, type Ascent } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { checkExternalSessions, logExternalAscent } from '$lib/external-resources/index.server'
 import { ascentActionSchema, validateFormData, type ActionFailure, type AscentActionValues } from '$lib/forms.server'
-import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
+import { convertAreaSlug, getRouteDbFilter, getUser } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -53,14 +53,14 @@ export const load = (async ({ locals, params, parent }) => {
 export const actions = {
   default: async ({ locals, params, request }) => {
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
+
+    if (user == null) {
+      return fail(404)
+    }
 
     // Convert area slug to get areaId
     const { areaId } = convertAreaSlug(params)
-
-    if (locals.user?.email == null) {
-      // If the user is not authenticated, throw a 401 error
-      error(401)
-    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -108,12 +108,6 @@ export const actions = {
 
     let ascent: Ascent
     try {
-      // Query the database to find the user by email
-      const user = await db((tx) => tx.query.users.findFirst({ where: eq(users.authUserFk, locals.user!.id) }))
-      if (user == null) {
-        throw new Error('User not found')
-      }
-
       // Insert the ascent into the database
       const results = await db((tx) =>
         tx
@@ -122,6 +116,17 @@ export const actions = {
           .returning(),
       )
       ascent = results[0]
+
+      await db(async (tx) =>
+        tx.insert(activities).values({
+          type: 'created',
+          userFk: user.id,
+          entityId: ascent.id,
+          entityType: 'ascent',
+          parentEntityId: route.id,
+          parentEntityType: 'route',
+        }),
+      )
     } catch (exception) {
       // Return a 400 failure if ascent insertion fails
       return fail(400, { ...values, error: convertException(exception) })
@@ -129,7 +134,7 @@ export const actions = {
 
     if (values.folderName != null) {
       try {
-        const dstFolder = `${config.files.folders.userContent}/${locals.user.id}`
+        const dstFolder = `${config.files.folders.userContent}/${user.authUserFk}`
         await db((tx) => handleFileUpload(tx, locals.supabase, values.folderName!, dstFolder, { ascentFk: ascent.id }))
       } catch (exception) {
         // Return a 400 failure if file insertion fails
@@ -148,6 +153,6 @@ export const actions = {
 
     // Redirect to the merged path
     const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
-    redirect(303, '/' + mergedPath + '#ascents')
+    redirect(303, '/' + mergedPath + '#activity')
   },
 }

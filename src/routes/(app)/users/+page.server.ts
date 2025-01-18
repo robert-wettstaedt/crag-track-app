@@ -2,7 +2,7 @@ import { RESEND_API_KEY, RESEND_RECIPIENT_EMAIL, RESEND_SENDER_EMAIL } from '$en
 import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient, db } from '$lib/db/db.server'
-import { userRoles, users, type User } from '$lib/db/schema'
+import { activities, userRoles, users, type User } from '$lib/db/schema'
 import {
   addRoleActionSchema,
   validateFormData,
@@ -10,6 +10,7 @@ import {
   type ActionFailure,
   type AddRoleActionValues,
 } from '$lib/forms.server'
+import { getUser } from '$lib/helper.server'
 import { getPaginationQuery, paginationParamsSchema } from '$lib/pagination.server'
 import { error, fail } from '@sveltejs/kit'
 import { asc, count, eq, inArray } from 'drizzle-orm'
@@ -63,6 +64,9 @@ export const actions = {
       error(404)
     }
 
+    const localDb = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await localDb((tx) => getUser(locals.user, tx))
+
     const data = await request.formData()
 
     let values: AddRoleActionValues
@@ -73,26 +77,38 @@ export const actions = {
       return exception as ActionFailure<AddRoleActionValues>
     }
 
-    const authUserResults = await db.select().from(authUsers).where(eq(authUsers.id, values.authUserFk))
-    const authUser = authUserResults.at(0)
-    const user = await db.query.users.findFirst({ where: eq(users.authUserFk, values.authUserFk) })
+    const formAuthUserResults = await db.select().from(authUsers).where(eq(authUsers.id, values.authUserFk))
+    const formAuthUser = formAuthUserResults.at(0)
+    const formUser = await db.query.users.findFirst({ where: eq(users.authUserFk, values.authUserFk) })
 
-    if (authUser == null || user == null) {
+    if (formAuthUser == null || formUser == null) {
       return fail(404)
     }
 
     await db.insert(userRoles).values({ authUserFk: values.authUserFk, role: 'user' })
+    await localDb(async (tx) =>
+      user == null
+        ? null
+        : tx.insert(activities).values({
+            type: 'updated',
+            entityId: formUser.id,
+            entityType: 'user',
+            userFk: user.id,
+            columnName: 'role',
+            newValue: 'user',
+          }),
+    )
 
-    if (RESEND_API_KEY && RESEND_RECIPIENT_EMAIL && RESEND_SENDER_EMAIL && authUser.email != null) {
+    if (RESEND_API_KEY && RESEND_RECIPIENT_EMAIL && RESEND_SENDER_EMAIL && formAuthUser.email != null) {
       const resend = new Resend(RESEND_API_KEY)
 
       await resend.emails.send({
         from: RESEND_SENDER_EMAIL,
-        to: [authUser.email],
+        to: [formAuthUser.email],
         subject: `Your ${PUBLIC_APPLICATION_NAME} Account is Approved!`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #333; margin-bottom: 24px;">Hello ${user.username}, your account is now active!</h1>
+            <h1 style="color: #333; margin-bottom: 24px;">Hello ${formUser.username}, your account is now active!</h1>
 
             <p style="color: #666; line-height: 1.6;">
               Great news! Your ${PUBLIC_APPLICATION_NAME} account has been approved and is ready to use. You can now:

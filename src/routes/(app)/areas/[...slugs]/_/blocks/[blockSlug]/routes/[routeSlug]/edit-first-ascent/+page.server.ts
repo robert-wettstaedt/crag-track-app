@@ -1,6 +1,6 @@
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
+import { activities, ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import {
   firstAscentActionSchema,
@@ -8,7 +8,7 @@ import {
   type ActionFailure,
   type FirstAscentActionValues,
 } from '$lib/forms.server'
-import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
+import { convertAreaSlug, getRouteDbFilter, getUser } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -91,6 +91,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
@@ -114,22 +115,19 @@ export const actions = {
       year: null,
     }
 
-    // Check if the climber name is provided and not empty
-    if (values.climberName != null && values.climberName.length > 0) {
-      // Query the database to find the user with the specified climber name
-      const userResult = await db((tx) =>
-        tx.query.users.findFirst({
-          where: eq(users.username, values.climberName!),
-        }),
-      )
+    // Query the database to find the user with the specified climber name
+    const firstAscentUser = await db(async (tx) =>
+      values.climberName == null || values.climberName.length === 0
+        ? null
+        : tx.query.users.findFirst({ where: eq(users.username, values.climberName!) }),
+    )
 
-      if (userResult == null) {
-        // If the user is not found, set the climber name
-        firstAscentValue.climberName = values.climberName
-      } else {
-        // If the user is found, set the climber foreign key
-        firstAscentValue.climberFk = userResult.id
-      }
+    if (firstAscentUser == null) {
+      // If the user is not found, set the climber name
+      firstAscentValue.climberName = values.climberName
+    } else {
+      // If the user is found, set the climber foreign key
+      firstAscentValue.climberFk = firstAscentUser.id
     }
 
     // Check if the year is provided and not empty
@@ -146,6 +144,13 @@ export const actions = {
           routes: {
             // Filter the routes to find the one with the specified slug
             where: getRouteDbFilter(params.routeSlug),
+            with: {
+              firstAscent: {
+                with: {
+                  climber: true,
+                },
+              },
+            },
           },
         },
       }),
@@ -181,6 +186,32 @@ export const actions = {
         // Update the existing first ascent
         await db((tx) => tx.update(firstAscents).set(firstAscentValue).where(eq(firstAscents.id, route.firstAscentFk!)))
       }
+
+      const oldFirstAscent = [
+        route.firstAscent?.year,
+        route.firstAscent?.climber?.username ?? route.firstAscent?.climberName,
+      ]
+        .filter((d) => d != null)
+        .join(' ')
+      const newFirstAscent = [firstAscentValue.year, firstAscentUser?.username ?? firstAscentValue.climberName]
+        .filter((d) => d != null)
+        .join(' ')
+
+      await db(async (tx) =>
+        user == null || block == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'updated',
+              userFk: user.id,
+              entityId: route.id,
+              entityType: 'route',
+              columnName: 'first ascent',
+              oldValue: oldFirstAscent,
+              newValue: newFirstAscent,
+              parentEntityId: block.id,
+              parentEntityType: 'block',
+            }),
+      )
     } catch (exception) {
       // Return a 400 error if an exception occurs
       return fail(400, { ...values, error: convertException(exception) })
@@ -196,6 +227,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
@@ -208,6 +240,13 @@ export const actions = {
           routes: {
             // Filter the routes to find the one with the specified slug
             where: getRouteDbFilter(params.routeSlug),
+            with: {
+              firstAscent: {
+                with: {
+                  climber: true,
+                },
+              },
+            },
           },
         },
       }),
@@ -230,6 +269,28 @@ export const actions = {
       try {
         await db((tx) => tx.delete(firstAscents).where(eq(firstAscents.id, route.firstAscentFk!)))
         await db((tx) => tx.update(routes).set({ firstAscentFk: null }).where(eq(routes.id, route.id)))
+
+        const oldFirstAscent = [
+          route.firstAscent?.year,
+          route.firstAscent?.climber?.username ?? route.firstAscent?.climberName,
+        ]
+          .filter((d) => d != null)
+          .join(' ')
+
+        await db(async (tx) =>
+          user == null || block == null
+            ? null
+            : tx.insert(activities).values({
+                type: 'deleted',
+                userFk: user.id,
+                entityId: route.id,
+                entityType: 'route',
+                columnName: 'first ascent',
+                oldValue: oldFirstAscent,
+                parentEntityId: block.id,
+                parentEntityType: 'block',
+              }),
+        )
       } catch (error) {
         return fail(400, { error: convertException(error) })
       }

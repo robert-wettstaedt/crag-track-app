@@ -1,9 +1,10 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { createUpdateActivity } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { areas, files, generateSlug, geolocations } from '$lib/db/schema'
+import { activities, areas, files, generateSlug, geolocations } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { areaActionSchema, validateFormData, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/helper.server'
+import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -38,7 +39,17 @@ export const actions = {
       error(404)
     }
 
+    // Convert the area slug to get the areaId
+    const { areaId } = convertAreaSlug(params)
+
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
+
+    const area = await db((tx) => tx.query.areas.findFirst({ where: eq(areas.id, areaId) }))
+
+    if (area == null) {
+      return fail(404)
+    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -51,9 +62,6 @@ export const actions = {
       // If validation fails, return the exception as an AreaActionFailure
       return exception as ActionFailure<AreaActionValues>
     }
-
-    // Convert the area slug to get the areaId
-    const { areaId, areaSlug } = convertAreaSlug(params)
 
     // Generate a slug from the area name
     const slug = generateSlug(values.name)
@@ -78,6 +86,21 @@ export const actions = {
           .set({ ...values, slug })
           .where(eq(areas.id, areaId)),
       )
+
+      await db(async (tx) =>
+        user == null
+          ? null
+          : createUpdateActivity({
+              db: tx,
+              entityId: areaId,
+              entityType: 'area',
+              newEntity: values,
+              oldEntity: area,
+              userFk: user?.id,
+              parentEntityId: area.parentFk,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })
@@ -93,7 +116,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
-
+    const user = await db((tx) => getUser(locals.user, tx))
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
 
@@ -132,6 +155,19 @@ export const actions = {
       await db((tx) => tx.delete(geolocations).where(eq(geolocations.areaFk, areaId)))
       await db((tx) => tx.update(areas).set({ parentFk: null }).where(eq(areas.parentFk, areaId)))
       await db((tx) => tx.delete(areas).where(eq(areas.id, areaId)))
+      await db(async (tx) =>
+        user == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'deleted',
+              userFk: user.id,
+              entityId: areaId,
+              entityType: 'area',
+              oldValue: area.name,
+              parentEntityId: area.parentFk,
+              parentEntityType: 'area',
+            }),
+      )
     } catch (error) {
       return fail(404, { error: convertException(error) })
     }

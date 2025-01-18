@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation'
-  import { page } from '$app/stores'
   import type { File } from '$lib/db/schema'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import { createEventDispatcher } from 'svelte'
@@ -17,12 +15,13 @@
 
   let { children, file, readOnly = true, stat }: Props = $props()
 
-  const search = $derived(new URLSearchParams({ file: stat.basename }).toString())
+  let isFullscreen = $state(false)
+
   const resourcePath = $derived(`/nextcloud${stat.filename}`)
 
   const onDelete = async () => {
     await fetch(`/api/files/${file.id}`, { method: 'DELETE' })
-    goto($page.url.pathname + $page.url.hash)
+    isFullscreen = false
     dispatcher('delete')
   }
 
@@ -51,11 +50,12 @@
   }
 </script>
 
-<svelte:window onkeyup={(event) => event.key === 'Escape' && goto($page.url.pathname)} />
+<svelte:window onkeyup={(event) => event.key === 'Escape' && (isFullscreen = false)} />
 
-<a
-  class="card card-hover preset-filled-surface-200-800 overflow-hidden"
-  href={`${$page.url.pathname}/?${search}${$page.url.hash}`}
+<div
+  class="card card-hover preset-filled-surface-200-800 overflow-hidden cursor-pointer"
+  onclick={() => (isFullscreen = true)}
+  role="presentation"
 >
   <div class="relative">
     {#if mediaHasError}
@@ -84,9 +84,9 @@
       {@render children?.()}
     </div>
   {/if}
-</a>
+</div>
 
-{#if $page.url.searchParams.get('file') === stat.basename}
+{#if isFullscreen}
   <div class="fixed top-0 left-0 right-0 bottom-0 z-[5000] p-4 md:p-16 bg-black/90">
     {#if mediaHasError}
       <aside class="alert variant-filled-error">
@@ -132,13 +132,13 @@
       </button>
     {/if}
 
-    <a
+    <button
       aria-label="Close"
       class="btn btn-icon preset-filled-primary-500 fixed top-8 right-8"
-      href={$page.url.pathname + $page.url.hash}
+      onclick={() => (isFullscreen = false)}
       title="Close"
     >
       <i class="fa-solid fa-x"></i>
-    </a>
+    </button>
   </div>
 {/if}

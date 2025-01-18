@@ -14,8 +14,8 @@
   <i class="fa-solid fa-layer-group"></i>
 </Navigation.Tile>
 
-<Navigation.Tile href="/ascents" label="Ascents" selected={$page.url.pathname.startsWith('/ascents')}>
-  <i class="fa-solid fa-check-double"></i>
+<Navigation.Tile href="/feed" label="Feed" selected={$page.url.pathname.startsWith('/feed')}>
+  <i class="fa-solid fa-square-poll-horizontal"></i>
 </Navigation.Tile>
 
 <Navigation.Tile href="/routes" label="Routes" selected={$page.url.pathname.startsWith('/routes')}>

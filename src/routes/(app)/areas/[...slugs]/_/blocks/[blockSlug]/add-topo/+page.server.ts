@@ -2,10 +2,10 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
 import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { blocks, topos } from '$lib/db/schema'
+import { activities, blocks, topos } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { addFileActionSchema, validateFormData, type ActionFailure, type AddFileActionValues } from '$lib/forms.server'
-import { convertAreaSlug } from '$lib/helper.server'
+import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { createGeolocationFromFiles } from '$lib/topo-files.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
@@ -53,6 +53,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
@@ -82,15 +83,35 @@ export const actions = {
     }
 
     try {
-      const results = await db((tx) =>
+      const createdFiles = await db((tx) =>
         handleFileUpload(tx, locals.supabase, values.folderName, config.files.folders.topos, { blockFk: block.id }),
       )
 
-      const fileBuffers = results.map((result) => result.fileBuffer)
+      const fileBuffers = createdFiles.map((result) => result.fileBuffer)
 
       await db(async (tx) => (block == null ? null : createGeolocationFromFiles(tx, block, fileBuffers, 'create')))
       await db((tx) =>
-        Promise.all(results.map((result) => tx.insert(topos).values({ blockFk: block.id, fileFk: result.file.id }))),
+        Promise.all(
+          createdFiles.map((result) => tx.insert(topos).values({ blockFk: block.id, fileFk: result.file.id })),
+        ),
+      )
+
+      await db(async (tx) =>
+        Promise.all(
+          createdFiles.map(({ file }) =>
+            user == null
+              ? null
+              : tx.insert(activities).values({
+                  type: 'uploaded',
+                  userFk: user.id,
+                  entityId: file.id,
+                  entityType: 'file',
+                  columnName: 'topo image',
+                  parentEntityId: block.id,
+                  parentEntityType: 'block',
+                }),
+          ),
+        ),
       )
     } catch (exception) {
       // If an exception occurs during insertion, return a failure response with the error message

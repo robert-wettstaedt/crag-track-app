@@ -1,0 +1,268 @@
+<script lang="ts" module>
+  export interface ItemProps {
+    activity: ActivityDTO
+    withBreadcrumbs?: boolean
+  }
+</script>
+
+<script lang="ts">
+  import { page } from '$app/stores'
+  import { EDIT_PERMISSION } from '$lib/auth'
+  import type { ActivityDTO } from '$lib/components/ActivityFeed'
+  import FileViewer from '$lib/components/FileViewer'
+  import CorrectedGrade from '$lib/components/RouteGrade/components/CorrectedGrade'
+  import RouteName from '$lib/components/RouteName'
+  import { Rating } from '@skeletonlabs/skeleton-svelte'
+  import { compareAsc, format, formatDistance, formatRelative } from 'date-fns'
+  import { enGB as locale } from 'date-fns/locale'
+
+  const { activity, withBreadcrumbs = false }: ItemProps = $props()
+
+  const iconClasses = $derived.by(() => {
+    if (activity.entity.type === 'ascent' && activity.entity.object != null && activity.type === 'created') {
+      switch (activity.entity.object.type) {
+        case 'flash':
+          return 'fa-bolt-lightning text-yellow-300'
+        case 'send':
+          return 'fa-circle text-red-500'
+        case 'repeat':
+          return 'fa-repeat text-green-500'
+        default:
+          return 'fa-person-falling text-blue-300'
+      }
+    }
+
+    switch (activity.type) {
+      case 'created':
+        return 'fa-plus'
+      case 'uploaded':
+        return 'fa-upload'
+      case 'deleted':
+        return 'fa-trash'
+      default:
+        return 'fa-pen'
+    }
+  })
+</script>
+
+<div class="flex items-start gap-4">
+  <div class="w-10 h-10 rounded-full bg-surface-200-800 flex items-center justify-center flex-shrink-0">
+    <i class="fa-solid {iconClasses} text-lg"></i>
+  </div>
+
+  <div class="flex-1 min-w-0">
+    <div class="mb-2">
+      <span class="font-semibold">
+        <a class="anchor" href={`/users/${activity.user.username}`}>{activity.user.username}</a>
+      </span>
+
+      {#if activity.entity.type === 'ascent' && activity.type === 'created'}
+        <span>
+          {activity.entity.object?.type === 'flash'
+            ? 'flashed'
+            : activity.entity.object?.type === 'send'
+              ? 'sent'
+              : activity.entity.object?.type === 'repeat'
+                ? 'repeated'
+                : 'attempted'}
+
+          {#if activity.parentEntity != null}
+            <a
+              class="anchor font-medium inline-flex max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+              href={`/${activity.parentEntityType}s/${activity.parentEntityId}`}
+            >
+              {#if activity.parentEntity.type === 'route' && activity.parentEntity.object != null}
+                <RouteName route={activity.parentEntity.object} />
+              {:else}
+                {activity.parentEntityName}
+              {/if}
+            </a>
+          {/if}
+
+          {#if withBreadcrumbs && activity.parentEntity?.breadcrumb != null}
+            <span class="text-surface-500">in</span>
+
+            {#each activity.parentEntity?.breadcrumb as crumb, i}
+              <span class="inline-flex text-surface-500">{crumb}</span>
+
+              {#if i < activity.parentEntity?.breadcrumb.length - 1}
+                <span class="text-surface-500 mx-1 text-sm" aria-hidden="true">&gt;</span>
+              {/if}
+            {/each}
+          {/if}
+
+          {#if activity.entity.object != null && compareAsc(format(new Date(activity.createdAt), 'yyyy-MM-dd'), new Date(activity.entity.object.dateTime)) !== 0}
+            <span>
+              {formatDistance(new Date(activity.entity.object.dateTime), new Date(), { addSuffix: true })}
+            </span>
+          {/if}
+        </span>
+      {:else if activity.entity.type === 'user' && activity.type === 'created'}
+        has requested account approval
+      {:else if activity.entity.type === 'user' && activity.type === 'updated' && activity.columnName === 'role' && activity.newValue === 'user'}
+        has approved user
+        <a class="anchor" href={`/users/${activity.entity.object?.username}`}>{activity.entity.object?.username}</a>
+      {:else}
+        <span>
+          {activity.type}
+
+          {#if activity.entityType == 'file'}
+            a
+            {activity.columnName ?? activity.entityType}
+          {:else}
+            {#if activity.columnName == null}
+              a
+            {:else}
+              <span class="text-surface-500">the</span>
+              {activity.columnName.replace(/Fk$/, '')}
+              <span class="text-surface-500">of</span>
+            {/if}
+
+            {#if activity.entity.type === 'ascent' && activity.entity.object != null}
+              {#if activity.entity.object.createdBy === $page.data.user?.id}
+                their own
+              {:else}
+                <a class="anchor" href={`/users/${activity.entity.object.author.authUserFk}`}>
+                  {activity.entity.object.author.username}'s
+                </a>
+              {/if}
+            {/if}
+
+            {activity.entityType}
+          {/if}
+
+          {#if activity.entity.type != 'file'}
+            <a
+              class="anchor font-medium inline-flex max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+              href={`/${activity.entityType}s/${activity.entityId}`}
+            >
+              {#if activity.entity.type === 'route' && activity.entity.object != null}
+                <RouteName route={activity.entity.object} />
+              {:else}
+                {activity.entityName}
+              {/if}
+            </a>
+          {/if}
+
+          {#if activity.parentEntityType != null && activity.parentEntityId != null && activity.parentEntityName != null}
+            <span class="text-surface-500">in</span>
+            <a class="anchor inline-flex flex-wrap" href={`/${activity.parentEntityType}s/${activity.parentEntityId}`}>
+              {#if withBreadcrumbs && activity.parentEntity?.breadcrumb != null}
+                {#each activity.parentEntity?.breadcrumb as crumb, i}
+                  <span class="inline-flex text-surface-500">{crumb}</span>
+
+                  <span class="text-surface-500 mx-1 text-sm" aria-hidden="true">&gt;</span>
+                {/each}
+              {/if}
+
+              {#if activity.parentEntity?.type === 'route' && activity.parentEntity.object != null}
+                {#if withBreadcrumbs && activity.parentEntity?.breadcrumb != null}
+                  &nbsp;
+                {/if}
+
+                <RouteName route={activity.parentEntity.object} />
+              {:else}
+                {activity.parentEntityName}
+              {/if}
+            </a>
+          {/if}
+        </span>
+
+        {#if activity.oldValue != null || activity.newValue != null}
+          {#if activity.columnName === 'gradeFk'}
+            <div class="inline-flex">
+              <CorrectedGrade
+                oldGrade={activity.oldValue == null ? null : Number(activity.oldValue)}
+                newGrade={activity.newValue == null ? null : Number(activity.newValue)}
+              />
+            </div>
+          {:else}
+            <span>
+              {#if activity.oldValue != null}
+                {#if activity.columnName === 'rating'}
+                  <span class="inline-flex">
+                    <Rating count={3} readOnly value={Number(activity.oldValue)}>
+                      {#snippet iconFull()}
+                        <i class="fa-solid fa-star text-warning-500"></i>
+                      {/snippet}
+                    </Rating>
+                  </span>
+                {:else}
+                  <s class="text-red-500">
+                    "{activity.oldValue}"
+                  </s>
+                {/if}
+              {/if}
+
+              {#if activity.newValue != null}
+                <i class="fa-solid fa-arrow-right-long mx-2"></i>
+              {/if}
+
+              {#if activity.newValue != null}
+                {#if activity.columnName === 'rating'}
+                  <span class="inline-flex">
+                    <Rating count={3} readOnly value={Number(activity.newValue)}>
+                      {#snippet iconFull()}
+                        <i class="fa-solid fa-star text-warning-500"></i>
+                      {/snippet}
+                    </Rating>
+                  </span>
+                {:else}
+                  <span class="text-green-500">"{activity.newValue}"</span>
+                {/if}
+              {/if}
+            </span>
+          {/if}
+        {/if}
+      {/if}
+    </div>
+
+    <p class="text-sm text-surface-500 flex items-center justify-between">
+      {formatRelative(new Date(activity.createdAt), new Date(), { locale })}
+
+      {#if activity.entity.type === 'ascent' && activity.type === 'created' && ($page.data.session?.user?.id === activity.entity.object?.author.authUserFk || $page.data.userPermissions?.includes(EDIT_PERMISSION))}
+        <a
+          aria-label="Edit ascent"
+          class="btn-icon preset-outlined-primary-500"
+          href={`/ascents/${activity.entity.object?.id}/edit`}
+        >
+          <i class="fa-solid fa-pen"></i>
+        </a>
+      {/if}
+    </p>
+
+    {#if activity.entity.type == 'file' && activity.entity.object?.stat != null}
+      <div class="mt-4 flex flex-wrap gap-3">
+        <FileViewer file={activity.entity.object} stat={activity.entity.object.stat} />
+      </div>
+    {/if}
+
+    {#if activity.entity.type == 'ascent' && activity.entity.object != null && activity.type === 'created'}
+      {#if activity.entity.object.notes != null && activity.entity.object.notes!.length > 0}
+        <div class="rendered-markdown preset-filled-surface-200-800 p-4 mt-4">
+          {@html activity.entity.object.notes}
+        </div>
+      {/if}
+
+      {#if activity.entity.object.files.length > 0}
+        <div class="mt-4 flex flex-wrap gap-3">
+          {#each activity.entity.object.files as file}
+            {#if file.stat != null}
+              <FileViewer
+                {file}
+                stat={file.stat}
+                readOnly={!$page.data.userPermissions?.includes(EDIT_PERMISSION) ||
+                  activity.entity.object.createdBy !== $page.data.user.id}
+                on:delete={() => {
+                  if (activity.entity.type == 'ascent' && activity.entity.object != null) {
+                    activity.entity.object.files = activity.entity.object!.files.filter((_file) => file.id !== _file.id)
+                  }
+                }}
+              />
+            {/if}
+          {/each}
+        </div>
+      {/if}
+    {/if}
+  </div>
+</div>

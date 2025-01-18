@@ -2,10 +2,10 @@ import { EDIT_PERMISSION } from '$lib/auth'
 import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
 import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { ascents, blocks } from '$lib/db/schema'
+import { activities, ascents, blocks } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { addFileActionSchema, validateFormData, type ActionFailure, type AddFileActionValues } from '$lib/forms.server'
-import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
+import { convertAreaSlug, getRouteDbFilter, getUser } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
@@ -61,6 +61,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert the area slug to an area ID
     const { areaId } = convertAreaSlug(params)
@@ -103,8 +104,25 @@ export const actions = {
     }
 
     try {
-      await db((tx) =>
+      const createdFiles = await db((tx) =>
         handleFileUpload(tx, locals.supabase, values.folderName, config.files.folders.topos, { routeFk: route.id }),
+      )
+
+      await db(async (tx) =>
+        Promise.all(
+          createdFiles.map(({ file }) =>
+            user == null
+              ? null
+              : tx.insert(activities).values({
+                  type: 'uploaded',
+                  userFk: user.id,
+                  entityId: file.id,
+                  entityType: 'file',
+                  parentEntityId: route.id,
+                  parentEntityType: 'route',
+                }),
+          ),
+        ),
       )
     } catch (exception) {
       // If an exception occurs during insertion, return a 404 error with the values and converted exception message

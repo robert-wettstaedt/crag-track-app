@@ -78,6 +78,7 @@ export const load = async ({ locals, params, url }: RequestEvent): Promise<Pagin
       page: searchParams.page,
       pageSize: searchParams.pageSize,
       total: countResults[0].count,
+      totalPages: Math.ceil(countResults[0].count / searchParams.pageSize),
     },
   }
 }

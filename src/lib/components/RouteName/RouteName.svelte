@@ -2,6 +2,7 @@
   import { page } from '$app/stores'
   import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import RouteGrade from '$lib/components/RouteGrade'
+  import { config } from '$lib/config'
   import type { Ascent } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
   import { Rating } from '@skeletonlabs/skeleton-svelte'
@@ -45,7 +46,7 @@
 
     {#if route.rating != null}
       <div>
-        <Rating count={3} readOnly value={route.rating}>
+        <Rating count={3} readOnly value={route.rating} controlClasses="gap-0 md:gap-2">
           {#snippet iconFull()}
             <i class="fa-solid fa-star text-warning-500"></i>
           {/snippet}
@@ -54,7 +55,7 @@
     {/if}
 
     <div class="overflow-hidden text-ellipsis">
-      {route.name.length === 0 ? '<no name>' : route.name}
+      {route.name.length === 0 ? config.routes.defaultName : route.name}
     </div>
   </div>
 {/if}

@@ -1,6 +1,8 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { createUpdateActivity } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import {
+  activities,
   ascents,
   blocks,
   files,
@@ -16,7 +18,7 @@ import {
 } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { routeActionSchema, validateFormData, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
-import { convertAreaSlug, getRouteDbFilter } from '$lib/helper.server'
+import { convertAreaSlug, getRouteDbFilter, getUser } from '$lib/helper.server'
 import { deleteFile } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -78,6 +80,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert the area slug to get the areaId
     const { areaId } = convertAreaSlug(params)
@@ -101,6 +104,9 @@ export const actions = {
         with: {
           routes: {
             where: getRouteDbFilter(params.routeSlug),
+            with: {
+              tags: true,
+            },
           },
         },
       }),
@@ -165,6 +171,23 @@ export const actions = {
         // Insert new route-to-tag associations for the route
         await db((tx) => tx.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag }))))
       }
+
+      const oldRoute = { ...route, tags: route.tags.map((tag) => tag.tagFk) }
+
+      await db(async (tx) =>
+        user == null
+          ? null
+          : createUpdateActivity({
+              db: tx,
+              entityId: route.id,
+              entityType: 'route',
+              newEntity: values,
+              oldEntity: oldRoute,
+              userFk: user?.id,
+              parentEntityId: block.id,
+              parentEntityType: 'block',
+            }),
+      )
     } catch (exception) {
       // Return a failure if the update operation fails
       return fail(404, { ...values, error: convertException(exception) })
@@ -180,6 +203,7 @@ export const actions = {
     }
 
     const db = await createDrizzleSupabaseClient(locals.supabase)
+    const user = await db((tx) => getUser(locals.user, tx))
 
     const { areaId } = convertAreaSlug(params)
 
@@ -277,6 +301,20 @@ export const actions = {
       }
 
       await db((tx) => tx.delete(routes).where(eq(routes.id, route.id)))
+
+      await db(async (tx) =>
+        user == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'deleted',
+              userFk: user.id,
+              entityId: route.id,
+              entityType: 'route',
+              oldValue: route.name,
+              parentEntityId: block.id,
+              parentEntityType: 'block',
+            }),
+      )
     } catch (exception) {
       return fail(400, { error: convertException(exception) })
     }

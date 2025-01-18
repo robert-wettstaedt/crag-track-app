@@ -1,6 +1,6 @@
 import { RESEND_API_KEY, RESEND_RECIPIENT_EMAIL, RESEND_SENDER_EMAIL } from '$env/static/private'
 import { db } from '$lib/db/db.server'
-import { users, userSettings } from '$lib/db/schema'
+import { activities, users, userSettings } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { fail } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -42,6 +42,14 @@ export const actions = {
           .values({ userFk: createdUser.id, authUserFk: signUpData.data.user.id })
           .returning()
         await db.update(users).set({ userSettingsFk: createdUserSettings.id }).where(eq(users.id, createdUser.id))
+
+        await db.insert(activities).values({
+          type: 'created',
+          entityId: createdUser.id,
+          entityType: 'user',
+          userFk: createdUser.id,
+          newValue: createdUser.username,
+        })
       } catch (exception) {
         return fail(400, { email: data.email, username: data.username, error: convertException(exception) })
       }

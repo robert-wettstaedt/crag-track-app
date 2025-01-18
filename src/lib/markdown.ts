@@ -1,3 +1,4 @@
+import { config } from '$lib/config'
 import * as schema from '$lib/db/schema'
 import { eq } from 'drizzle-orm'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
@@ -70,7 +71,7 @@ const enrichMarkdown = async (markdown: string, db?: PostgresJsDatabase<typeof s
         reference += ' '
       }
 
-      const name = result.name.length === 0 ? '<no name>' : result.name
+      const name = result.name.length === 0 ? config.routes.defaultName : result.name
       reference += `!${type}:${id}:${btoa(name)}!`
 
       return { match, reference }

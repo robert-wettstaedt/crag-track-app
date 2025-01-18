@@ -24,8 +24,12 @@ function getSchemaShape<Output = unknown, Def extends z.ZodTypeDef = z.ZodObject
   }
 }
 
-function getItemDef(shape: z.ZodRawShape, itemName: string): z.ZodFirstPartyTypeKind {
-  const def = shape[itemName]._def
+function getItemDef(shape: z.ZodRawShape, itemName: string): z.ZodFirstPartyTypeKind | undefined {
+  const def = shape[itemName]?._def
+
+  if (def == null) {
+    return undefined
+  }
 
   if ((def as z.ZodOptionalDef).typeName === z.ZodFirstPartyTypeKind.ZodOptional) {
     return (def as z.ZodOptionalDef).innerType._def.typeName

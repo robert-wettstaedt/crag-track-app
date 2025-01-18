@@ -43,6 +43,13 @@
       "when": 1736973053484,
       "tag": "0006_perfect_squadron_supreme",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1737224060515,
+      "tag": "0007_fresh_juggernaut",
+      "breakpoints": true
     }
   ]
 }

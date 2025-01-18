@@ -8,14 +8,13 @@
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
   import { EDIT_PERMISSION } from '$lib/auth'
+  import ActivityFeed from '$lib/components/ActivityFeed'
   import AppBar from '$lib/components/AppBar'
-  import AscentTypeLabel from '$lib/components/AscentTypeLabel'
   import FileViewer from '$lib/components/FileViewer'
   import References from '$lib/components/References'
-  import RouteGrade from '$lib/components/RouteGrade'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { Accordion, ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
+  import { ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
   import { onMount } from 'svelte'
 
@@ -141,7 +140,7 @@
       {#snippet list()}
         <Tabs.Control value="#topo">Topo</Tabs.Control>
 
-        <Tabs.Control value="#ascents">Ascents</Tabs.Control>
+        <Tabs.Control value="#activity">Activity</Tabs.Control>
 
         {#if data.route.files.length > 0 || data.userPermissions?.includes(EDIT_PERMISSION)}
           <Tabs.Control value="#files">Files</Tabs.Control>
@@ -163,95 +162,13 @@
           </div>
         </Tabs.Panel>
 
-        <Tabs.Panel value="#ascents">
+        <Tabs.Panel value="#activity">
           <section class="p-2">
             <div class="flex justify-center mb-4">
               <a class="btn preset-filled-primary-500" href={`${basePath}/ascents/add`}>Log ascent</a>
             </div>
 
-            {#if data.ascents.length === 0}
-              No ascents yet
-            {:else}
-              {#each data.ascents as ascent, index}
-                <div>
-                  <div class="flex justify-between gap-2">
-                    <span>
-                      <a class="anchor" href={`/users/${ascent.author.username}`}>{ascent.author.username}</a>
-                      ticked this route on {DateTime.fromSQL(ascent.dateTime).toLocaleString(DateTime.DATE_FULL)}
-                    </span>
-
-                    {#if data.session?.user?.id === ascent.author.authUserFk || data.userPermissions?.includes(EDIT_PERMISSION)}
-                      <a
-                        aria-label="Edit ascent"
-                        class="btn-icon preset-outlined-primary-500"
-                        href={`${basePath}/ascents/${ascent.id}/edit`}
-                      >
-                        <i class="fa-solid fa-pen"></i>
-                      </a>
-                    {/if}
-                  </div>
-
-                  <div class="ms-8 mt-2">
-                    <AscentTypeLabel type={ascent.type} />
-
-                    {#if ascent.gradeFk != null}
-                      <span class="ms-2">
-                        <RouteGrade route={data.route} />
-                      </span>
-                    {/if}
-                  </div>
-
-                  {#if ascent.notes != null && ascent.notes.length > 0}
-                    <div class="rendered-markdown preset-filled-surface-200-800 p-2 ms-8 mt-4">
-                      {@html ascent.notes}
-                    </div>
-                  {/if}
-
-                  {#if ascent.files.length > 0}
-                    <div class="ms-5 mt-4">
-                      <Accordion collapsible>
-                        <Accordion.Item value="files">
-                          {#snippet lead()}
-                            <i class="fa-solid fa-file"></i>
-                          {/snippet}
-                          {#snippet control()}
-                            {ascent.files.length} files
-                          {/snippet}
-                          {#snippet panel()}
-                            <div class="flex flex-wrap gap-3">
-                              {#each ascent.files as file}
-                                {#if file.stat != null}
-                                  <FileViewer
-                                    {file}
-                                    readOnly={!data.userPermissions?.includes(EDIT_PERMISSION) &&
-                                      ascent.author.authUserFk !== data.authUser?.id}
-                                    stat={file.stat}
-                                    on:delete={() => {
-                                      ascent.files = ascent.files.filter((_file) => file.id !== _file.id)
-                                    }}
-                                  />
-                                {:else if file.error != null}
-                                  <aside class="alert variant-filled-error">
-                                    <div class="alert-message">
-                                      <h3 class="h3">Error</h3>
-                                      <p>{file.error}</p>
-                                    </div>
-                                  </aside>
-                                {/if}
-                              {/each}
-                            </div>
-                          {/snippet}
-                        </Accordion.Item>
-                      </Accordion>
-                    </div>
-                  {/if}
-                </div>
-
-                {#if index < data.ascents.length - 1}
-                  <hr class="!border-t-2 my-8 mx-2" />
-                {/if}
-              {/each}
-            {/if}
+            <ActivityFeed activities={data.feed.activities} pagination={data.feed.pagination} />
           </section>
         </Tabs.Panel>
 

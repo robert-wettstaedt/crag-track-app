@@ -1,6 +1,6 @@
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { areas, generateSlug, users, type Area } from '$lib/db/schema'
+import { activities, areas, generateSlug, users, type Area } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { areaActionSchema, validateFormData, type ActionFailure, type AreaActionValues } from '$lib/forms.server'
 import { convertAreaSlug } from '$lib/helper.server'
@@ -92,6 +92,17 @@ export const actions = {
             .returning(),
         )
       )[0]
+
+      await db((tx) =>
+        tx.insert(activities).values({
+          type: 'created',
+          userFk: user.id,
+          entityId: createdArea.id,
+          entityType: 'area',
+          parentEntityId: parentArea?.id,
+          parentEntityType: 'area',
+        }),
+      )
     } catch (exception) {
       // If an error occurs during insertion, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })
