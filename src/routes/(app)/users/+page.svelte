@@ -28,6 +28,7 @@
     {:else}
       <GenericList
         items={data.users.map((item) => ({ ...item, name: item.username, pathname: `/users/${item.username}` }))}
+        wrap={false}
       >
         {#snippet left(item)}
           {item.username}
