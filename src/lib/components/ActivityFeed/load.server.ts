@@ -8,7 +8,7 @@ import { validateObject } from '$lib/forms.server'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { getPaginationQuery, paginationParamsSchema } from '$lib/pagination.server'
-import { and, count, desc, eq, type SQLWrapper } from 'drizzle-orm'
+import { and, asc, count, desc, eq, type SQLWrapper } from 'drizzle-orm'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { z } from 'zod'
 
@@ -123,7 +123,7 @@ export const loadFeed = async ({ locals, url }: { locals: App.Locals; url: URL }
   const activities = await db((tx) =>
     tx.query.activities.findMany({
       ...getPaginationQuery(searchParams),
-      orderBy: desc(schema.activities.createdAt),
+      orderBy: [desc(schema.activities.createdAt), asc(schema.activities.id)],
       where: where,
       with: {
         user: true,

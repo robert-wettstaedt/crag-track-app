@@ -23,7 +23,7 @@ export const load = (async ({ locals, url }) => {
   const routesResult = await db((tx) =>
     tx.query.routes.findMany({
       ...getPaginationQuery(searchParams),
-      orderBy: [desc(routes.rating), asc(routes.gradeFk)],
+      orderBy: [desc(routes.rating), asc(routes.gradeFk), asc(routes.id)],
       where: isNotNull(routes.rating),
       with: {
         ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },

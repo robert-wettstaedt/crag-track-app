@@ -4,7 +4,7 @@ import { buildNestedAreaQuery, enrichAscent, type EnrichedAscent } from '$lib/db
 import { validateObject } from '$lib/forms.server'
 import { getPaginationQuery, paginationParamsSchema, type PaginatedData } from '$lib/pagination.server'
 import type { RequestEvent } from '@sveltejs/kit'
-import { and, count, desc, eq, inArray, SQL } from 'drizzle-orm'
+import { and, asc, count, desc, eq, inArray, SQL } from 'drizzle-orm'
 import { z } from 'zod'
 
 export type PaginatedAscents = PaginatedData<{ ascents: EnrichedAscent[] }>
@@ -49,7 +49,7 @@ export const load = async ({ locals, params, url }: RequestEvent): Promise<Pagin
   const ascentsResults = await db((tx) =>
     tx.query.ascents.findMany({
       ...getPaginationQuery(searchParams),
-      orderBy: desc(ascents[searchParams.orderBy as keyof Ascent]),
+      orderBy: [desc(ascents[searchParams.orderBy as keyof Ascent]), asc(ascents.id)],
       where,
       with: {
         author: true,

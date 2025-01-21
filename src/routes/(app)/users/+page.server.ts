@@ -29,7 +29,7 @@ export const load = (async ({ locals, url }) => {
   const searchParams = await validateObject(paginationParamsSchema, searchParamsObj)
 
   let usersResult: UserDTO[] = await localDb((tx) =>
-    tx.query.users.findMany({ ...getPaginationQuery(searchParams), orderBy: asc(users.username) }),
+    tx.query.users.findMany({ ...getPaginationQuery(searchParams), orderBy: [asc(users.username), asc(users.id)] }),
   )
 
   if (locals.userPermissions?.includes(EDIT_PERMISSION)) {
