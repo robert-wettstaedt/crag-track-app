@@ -34,6 +34,7 @@
     <img
       alt=""
       class="w-12 h-12 z-0 relative"
+      loading="lazy"
       src="/nextcloud{path}/preview?x={size}&y={size}&mimeFallback=true&a=0"
       use:mediaAction
     />
