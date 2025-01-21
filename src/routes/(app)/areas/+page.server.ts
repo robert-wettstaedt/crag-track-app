@@ -1,4 +1,4 @@
-import { getStatsOfAreas, nestedAreaQuery } from '$lib/blocks.server'
+import { getStatsOfArea, nestedAreaQuery } from '$lib/blocks.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas } from '$lib/db/schema'
 import { isNull } from 'drizzle-orm'
@@ -9,7 +9,7 @@ export const load = (async ({ locals, parent }) => {
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
   // Query the database to find areas where the parentFk is null, ordered by name
-  const result = await db((tx) =>
+  const areaResults = await db((tx) =>
     tx.query.areas.findMany({
       ...nestedAreaQuery,
       orderBy: areas.name,
@@ -19,6 +19,6 @@ export const load = (async ({ locals, parent }) => {
 
   // Return the result as an object with an 'areas' property
   return {
-    areas: getStatsOfAreas(result, grades, user),
+    areas: areaResults.map((area) => getStatsOfArea(area, grades, user)),
   }
 }) satisfies PageServerLoad

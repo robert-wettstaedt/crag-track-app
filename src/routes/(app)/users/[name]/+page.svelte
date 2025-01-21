@@ -63,7 +63,7 @@
 </AppBar>
 
 <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
-  <Tabs fluid bind:value={tabSet} listClasses="overflow-x-auto overflow-y-hidden">
+  <Tabs fluid bind:value={tabSet} listClasses="overflow-x-auto overflow-y-hidden pb-[1px] md:w-[500px]">
     {#snippet list()}
       <Tabs.Control value="sends">Ascents</Tabs.Control>
 

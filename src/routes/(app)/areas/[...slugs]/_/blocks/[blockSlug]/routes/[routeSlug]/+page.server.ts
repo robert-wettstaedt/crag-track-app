@@ -23,6 +23,7 @@ export const load = (async ({ locals, params, parent, url }) => {
     tx.query.blocks.findFirst({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
+        geolocation: true,
         routes: {
           where: getRouteDbFilter(params.routeSlug),
           with: {
@@ -92,6 +93,7 @@ export const load = (async ({ locals, params, parent, url }) => {
 
   // Return the enriched data
   return {
+    block,
     route: { ...route, description },
     files: routeFiles,
     references: getReferences(route.id, 'routes'),

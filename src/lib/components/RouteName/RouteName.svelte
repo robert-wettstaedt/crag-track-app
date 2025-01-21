@@ -35,7 +35,7 @@
 </script>
 
 {#if route != null}
-  <div class="flex gap-x-2 items-center {classes}">
+  <div class="flex gap-x-1 md:gap-x-2 items-center {classes}">
     {#if lastAscent != null}
       <AscentTypeLabel includeText={false} type={lastAscent.type} />
     {/if}
@@ -46,9 +46,13 @@
 
     {#if route.rating != null}
       <div>
-        <Rating count={3} readOnly value={route.rating} controlClasses="gap-0 md:gap-2">
+        <Rating count={3} readOnly value={route.rating} controlClasses="!gap-0  text-xs md:text-sm">
           {#snippet iconFull()}
             <i class="fa-solid fa-star text-warning-500"></i>
+          {/snippet}
+
+          {#snippet iconEmpty()}
+            <i class="fa-regular fa-star"></i>
           {/snippet}
         </Rating>
       </div>

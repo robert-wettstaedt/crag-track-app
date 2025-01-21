@@ -244,35 +244,40 @@ const recursive = (area: NestedArea): schema.Route[] => {
   return routes
 }
 
-export const getStatsOfAreas = (
-  areas: InferResultType<'areas'>[],
+export const getStatsOfArea = <T extends InferResultType<'areas'>>(
+  area: T,
   grades: schema.Grade[],
   user: InferResultType<'users', { userSettings: { columns: { gradingScale: true } } }> | undefined,
 ) => {
-  return areas.map((area) => {
-    const routes = recursive(area as NestedArea)
+  const routes = recursive(area as unknown as NestedArea)
 
-    const gradesObj = routes
-      .filter((route) => route.gradeFk != null)
-      .map((route) => ({
-        grade: grades.find((grade) => grade.id === route.gradeFk)?.[user?.userSettings?.gradingScale ?? 'FB'],
-      }))
+  const gradesObj = routes
+    .filter((route) => route.gradeFk != null)
+    .map((route) => ({
+      grade: grades.find((grade) => grade.id === route.gradeFk)?.[user?.userSettings?.gradingScale ?? 'FB'],
+    }))
 
-    return {
-      ...area,
-      numOfRoutes: routes.length,
-      grades: gradesObj,
-    }
-  })
+  return {
+    ...area,
+    numOfRoutes: routes.length,
+    grades: gradesObj,
+  }
 }
 
-export const getStatsOfBlocks = <T extends InferResultType<'blocks', { routes: true }>>(
+export const getStatsOfBlocks = <
+  T extends InferResultType<'blocks', { routes: true; topos: { with: { routes: true; file: true } } }>,
+>(
   blocks: T[],
   grades: schema.Grade[],
   user: InferResultType<'users', { userSettings: { columns: { gradingScale: true } } }> | undefined,
 ) => {
   return blocks.map((block) => {
     const { routes } = block
+
+    const routesWithTopo = routes.map((route) => {
+      const topo = block.topos.find((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === route.id))
+      return { ...route, topo }
+    })
 
     const gradesObj = routes
       .filter((route) => route.gradeFk != null)
@@ -284,6 +289,7 @@ export const getStatsOfBlocks = <T extends InferResultType<'blocks', { routes: t
       ...block,
       numOfRoutes: routes.length,
       grades: gradesObj,
+      routes: routesWithTopo,
     }
   })
 }

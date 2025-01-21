@@ -119,12 +119,15 @@ export const enrichAscent = (ascent: NestedAscent): EnrichedAscent => {
   }
 }
 
-export const enrichTopo = async (topo: InferResultType<'topos', { file: true; routes: true }>): Promise<TopoDTO> => {
+export const enrichTopo = async (
+  topo: InferResultType<'topos', { file: true; routes: true }>,
+  withFile = true,
+): Promise<TopoDTO> => {
   if (topo.file == null) {
     throw new Error('Topo file is required')
   }
 
-  const [file] = await loadFiles([topo.file])
+  const [file] = withFile ? await loadFiles([topo.file]) : [topo.file]
 
   const routes = topo.routes
     .map(({ path, ...route }): TopoRouteDTO => {

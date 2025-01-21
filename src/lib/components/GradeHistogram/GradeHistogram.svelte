@@ -33,7 +33,12 @@
         },
       },
       x: {
-        axis: axes ? true : null,
+        axis: axes
+          ? {
+              title: null,
+              labelExpr: "indexof(domain('x'), datum.value) % 2 === 1 ? datum.label : ''",
+            }
+          : null,
         field: 'grade',
         scale: {
           domain: $page.data.grades.map((grade) => grade[$page.data.gradingScale]),
@@ -42,7 +47,7 @@
         title: 'Grade',
       },
       y: {
-        axis: axes ? true : null,
+        axis: axes ? { title: null } : null,
         aggregate: 'count',
         field: 'grade',
         title: 'Count',

@@ -132,7 +132,7 @@ export const actions = {
     // Redirect to the specified URL after successful insertion
     redirect(
       303,
-      `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${route.slug.length === 0 ? route.id : route.slug}#files`,
+      `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${route.slug.length === 0 ? route.id : route.slug}#info`,
     )
   },
 }

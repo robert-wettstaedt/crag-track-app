@@ -1,7 +1,9 @@
-import { getStatsOfAreas, getStatsOfBlocks, nestedAreaQuery } from '$lib/blocks.server'
+import { getStatsOfArea, nestedAreaQuery } from '$lib/blocks.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { areas, blocks } from '$lib/db/schema'
+import { areas, ascents, blocks, routes } from '$lib/db/schema'
+import { enrichTopo, sortRoutesByTopo } from '$lib/db/utils'
 import { convertMarkdownToHtml } from '$lib/markdown'
+import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
 import { error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -21,7 +23,20 @@ export const load = (async ({ locals, parent }) => {
         author: true, // Include author information
         blocks: {
           orderBy: [blocks.order, blocks.name], // Order blocks by name and order
-          with: { routes: true, topos: { with: { file: true } } },
+          with: {
+            routes: {
+              orderBy: routes.gradeFk,
+              with: {
+                ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
+              },
+            },
+            topos: {
+              with: {
+                routes: true,
+                file: true,
+              },
+            },
+          },
         },
         areas: {
           ...nestedAreaQuery,
@@ -51,13 +66,29 @@ export const load = (async ({ locals, parent }) => {
     area.description == null ? null : convertMarkdownToHtml(area.description, tx),
   )
 
+  const blocksWithTopos = await Promise.all(
+    area.blocks.map(async (block) => {
+      const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, false)))
+
+      const sortedRoutes = sortRoutesByTopo(block.routes, topos).map((route) => {
+        const topo = topos.find((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === route.id))
+        return { ...route, topo }
+      })
+
+      return { ...block, routes: sortedRoutes, topos }
+    }),
+  )
+
+  const files = await loadFiles(area.files)
+
   // Return the area, enriched blocks, and processed files
   return {
     area: {
-      ...area,
-      areas: getStatsOfAreas(area.areas, grades, user),
-      blocks: getStatsOfBlocks(area.blocks, grades, user),
+      ...getStatsOfArea(area, grades, user),
+      areas: area.areas.map((area) => getStatsOfArea(area, grades, user)),
+      blocks: blocksWithTopos,
       description,
+      files,
     },
     references: getReferences(area.id, 'areas'),
   }

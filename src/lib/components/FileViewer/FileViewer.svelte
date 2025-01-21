@@ -68,13 +68,15 @@
     {:else}
       {#if mediaIsLoading}
         <div class="absolute w-full h-full flex justify-center items-center bg-black/10">
-          <ProgressRing value={null} />
+          <ProgressRing size="size-20 md:size-40" value={null} />
         </div>
       {/if}
       {#if stat.mime?.includes('image')}
-        <img alt={stat.filename} class="h-80 object-cover" src={resourcePath} height={300} use:mediaAction />
+        <img alt="" class="h-40 md:h-80 w-full object-cover" src={resourcePath} use:mediaAction />
       {:else if stat.mime?.includes('video')}
-        <i class="fa-solid fa-circle-play h-80 w-80 text-[100px] flex justify-center items-center"></i>
+        <i
+          class="fa-solid fa-circle-play h-40 md:h-80 w-full text-[48px] md:text-[96px] flex justify-center items-center"
+        ></i>
       {/if}
     {/if}
   </div>
@@ -102,7 +104,7 @@
         </div>
       {/if}
       {#if stat.mime?.includes('image')}
-        <img alt={stat.filename} class="h-full w-full object-contain" src={resourcePath} use:mediaAction />
+        <img alt="" class="h-full w-full object-contain" src={resourcePath} use:mediaAction />
       {:else if stat.mime?.includes('video')}
         <video
           autoplay

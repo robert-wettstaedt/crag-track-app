@@ -5,13 +5,15 @@
   import { fitHeightAction } from '$lib/actions/fit-height.svelte'
   import { EDIT_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
+  import FileViewer from '$lib/components/FileViewer'
   import GenericList from '$lib/components/GenericList'
   import GradeHistogram from '$lib/components/GradeHistogram'
+  import Image from '$lib/components/Image'
   import References from '$lib/components/References'
+  import RouteName from '$lib/components/RouteName'
   import type { Block } from '$lib/db/schema'
   import { convertException } from '$lib/errors'
   import { ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
-  import { DateTime } from 'luxon'
   import { onMount } from 'svelte'
 
   let { data } = $props()
@@ -20,6 +22,11 @@
   let blocks = $state(data.area.blocks)
   $effect(() => {
     blocks = data.area.blocks
+  })
+
+  let files = $state(data.area.files)
+  $effect(() => {
+    files = data.area.files
   })
 
   let basePath = $derived(`/areas/${$page.params.slugs}`)
@@ -31,10 +38,10 @@
 
   let tabValue: string | undefined = $state(undefined)
   afterNavigate(() => {
-    tabValue = $page.url.hash.length > 0 ? $page.url.hash : data.area.type === 'sector' ? '#blocks' : '#areas'
+    tabValue = $page.url.hash.length > 0 ? $page.url.hash : data.area.type === 'sector' ? '#info' : '#areas'
   })
   onMount(() => {
-    tabValue = $page.url.hash.length > 0 ? $page.url.hash : data.area.type === 'sector' ? '#blocks' : '#areas'
+    tabValue = $page.url.hash.length > 0 ? $page.url.hash : data.area.type === 'sector' ? '#info' : '#areas'
   })
   const onChangeTab: Parameters<typeof Tabs>[1]['onFocusChange'] = (event) => {
     goto($page.url.pathname + event.focusedValue, { replaceState: true })
@@ -109,6 +116,8 @@
     const res = await fetch(`/api/areas/${data.area.id}/blocks/order?${searchParams.toString()}`, { method: 'PUT' })
     await updateBlocksFromServer(res)
   }
+
+  const hasActions = $derived(data.userPermissions?.includes(EDIT_PERMISSION))
 </script>
 
 <svelte:head>
@@ -121,7 +130,7 @@
   </aside>
 {/if}
 
-<AppBar>
+<AppBar {hasActions}>
   {#snippet lead()}
     {data.area.name}
   {/snippet}
@@ -165,81 +174,104 @@
   {#snippet headline()}
     <Tabs
       fluid
-      listClasses="overflow-x-auto overflow-y-hidden"
+      listClasses="overflow-x-auto overflow-y-hidden pb-[1px] md:w-[500px]"
       listGap="0"
       onFocusChange={onChangeTab}
       value={tabValue}
     >
       {#snippet list()}
         {#if data.area.type === 'sector'}
+          <Tabs.Control value="#info">Info</Tabs.Control>
+        {/if}
+
+        {#if data.area.type === 'sector'}
           <Tabs.Control value="#blocks">Blocks</Tabs.Control>
         {:else}
           <Tabs.Control value="#areas">Areas</Tabs.Control>
         {/if}
 
-        <Tabs.Control value="#location">Location</Tabs.Control>
-
-        <Tabs.Control value="#details">Details</Tabs.Control>
+        <Tabs.Control value="#map">Map</Tabs.Control>
       {/snippet}
 
       {#snippet content()}
-        <Tabs.Panel value="#details">
-          <dl>
-            {#if data.area.description != null && data.area.description.length > 0}
-              <div class="flex p-2">
-                <span class="flex-auto">
-                  <dt>Description</dt>
-                  <dd>
-                    <div class="rendered-markdown mt-4">
-                      {@html data.area.description}
-                    </div>
-                  </dd>
-                </span>
-              </div>
-            {/if}
-
-            <div class="flex p-2">
-              <span class="flex-auto">
-                <dt>Created at</dt>
-                <dd>{DateTime.fromSQL(data.area.createdAt).toLocaleString(DateTime.DATETIME_MED)}</dd>
-              </span>
-            </div>
-
-            <div class="flex p-2">
-              <span class="flex-auto">
-                <dt>Author</dt>
-                <dd>
-                  <a class="anchor" href="/users/{data.area.author.username}">
-                    {data.area.author.username}
-                  </a>
-                </dd>
-              </span>
-            </div>
-
-            <div class="flex p-2">
-              <span class="flex-auto">
-                <dt>Type</dt>
-                <dd>{data.area.type}</dd>
-              </span>
-            </div>
-
-            {#await data.references then references}
-              {#if references.routes.length > 0}
+        {#if data.area.type === 'sector'}
+          <Tabs.Panel value="#info">
+            <dl>
+              {#if data.area.description != null && data.area.description.length > 0}
                 <div class="flex p-2">
                   <span class="flex-auto">
-                    <dt>Mentioned in</dt>
-
-                    <dd class="flex gap-1 mt-1">
-                      <References {references} />
+                    <dt>Description</dt>
+                    <dd>
+                      <div class="rendered-markdown mt-4">
+                        {@html data.area.description}
+                      </div>
                     </dd>
                   </span>
                 </div>
               {/if}
-            {/await}
-          </dl>
-        </Tabs.Panel>
 
-        <Tabs.Panel value="#location">
+              {#await data.references then references}
+                {#if references.routes.length > 0}
+                  <div class="flex p-2">
+                    <span class="flex-auto">
+                      <dt>Mentioned in</dt>
+
+                      <dd class="flex gap-1 mt-1">
+                        <References {references} />
+                      </dd>
+                    </span>
+                  </div>
+                {/if}
+              {/await}
+
+              <div class="flex p-2">
+                <span class="flex-auto">
+                  <dt>Grades</dt>
+
+                  <dd class="flex gap-1 mt-1">
+                    <GradeHistogram
+                      data={data.area.grades}
+                      spec={{
+                        width: 'container' as any,
+                      }}
+                    />
+                  </dd>
+                </span>
+              </div>
+
+              {#if files.length > 0}
+                <div class="flex p-2">
+                  <span class="flex-auto">
+                    <dt>Files</dt>
+                    <dd class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                      {#each files as file}
+                        {#if file.stat != null}
+                          <FileViewer
+                            {file}
+                            readOnly={!data.userPermissions?.includes(EDIT_PERMISSION)}
+                            stat={file.stat}
+                            on:delete={() => {
+                              files = files.filter((_file) => file.id !== _file.id)
+                            }}
+                          />
+                        {:else if file.error != null}
+                          <aside class="alert variant-filled-error">
+                            <div class="alert-message">
+                              <h3 class="h3">Error</h3>
+                              <p>{file.error}</p>
+                            </div>
+                          </aside>
+                        {/if}
+                      {/each}
+                    </dd>
+                  </span>
+                </div>
+              {/if}
+            </dl>
+          </Tabs.Panel>
+        {/if}
+
+        <Tabs.Panel value="#map">
           <div use:fitHeightAction>
             {#await import('$lib/components/BlocksMap') then BlocksMap}
               {#key data.area.id}
@@ -292,58 +324,39 @@
                 </label>
 
                 <GenericList
+                  classes="-mx-4"
+                  listClasses={orderMode ? undefined : 'mt-4 bg-surface-200-800'}
                   items={sortedBlocks.map((item) => ({ ...item, pathname: `${basePath}/_/blocks/${item.slug}` }))}
                   onConsiderSort={orderMode ? (items) => (blocks = items) : undefined}
                   onFinishSort={orderMode ? onChangeCustomSortOrder : undefined}
-                  wrap={false}
+                  wrap={!orderMode}
                 >
                   {#snippet left(item)}
-                    <div class="flex items-center gap-2">
-                      {#if item.topos[0]?.file?.path == null}
-                        <i class="fa-solid fa-image w-12 h-12 flex items-center justify-center text-white text-[3rem]"
-                        ></i>
-                      {:else}
-                        <div class="relative">
-                          <i
-                            class="absolute top-0 right-0 fa-solid fa-image w-12 h-12 flex items-center justify-center text-white text-[3rem]"
-                          >
-                          </i>
-
-                          <img
-                            alt=""
-                            class="w-12 h-12 z-0 relative"
-                            src={`/nextcloud${item.topos[0].file.path}/preview?x=32&y=32&mimeFallback=true&a=0`}
-                          />
-                        </div>
-                      {/if}
-
-                      {item.name}
-                    </div>
+                    {item.name}
                   {/snippet}
 
-                  {#snippet right(item)}
-                    <div class="flex flex-col py-2">
-                      <GradeHistogram
-                        axes={false}
-                        data={item.grades}
-                        spec={{
-                          width: 100,
-                        }}
-                        opts={{
-                          height: 38,
-                        }}
-                      />
+                  {#snippet children(item)}
+                    {#if !orderMode}
+                      <GenericList
+                        classes="w-full {item.routes.length === 0 ? 'p-4' : ''}"
+                        items={item.routes.map((route) => ({
+                          ...route,
+                          id: route.id,
+                          name: route.name,
+                          pathname: `${basePath}/_/blocks/${item.slug}/routes/${route.slug.length === 0 ? route.id : route.slug}`,
+                        }))}
+                      >
+                        {#snippet left(route)}
+                          <div class="flex items-center gap-2">
+                            <Image path={route.topo?.file?.path} size={32} />
 
-                      <div class="flex justify-end text-sm">
-                        {item.numOfRoutes}
-
-                        {#if item.numOfRoutes === 1}
-                          route
-                        {:else}
-                          routes
-                        {/if}
-                      </div>
-                    </div>
+                            <div class="w-[calc(100%-64px)]">
+                              <RouteName {route} />
+                            </div>
+                          </div>
+                        {/snippet}
+                      </GenericList>
+                    {/if}
                   {/snippet}
                 </GenericList>
               {/if}

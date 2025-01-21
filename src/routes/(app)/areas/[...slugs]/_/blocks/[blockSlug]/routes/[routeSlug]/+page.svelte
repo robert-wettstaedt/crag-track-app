@@ -15,14 +15,17 @@
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import { ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
-  import { DateTime } from 'luxon'
   import { onMount } from 'svelte'
 
   let { data } = $props()
   let basePath = $derived(
     `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`,
   )
+
   let files = $state(data.files)
+  $effect(() => {
+    files = data.files
+  })
 
   let grade = $derived(data.grades.find((grade) => grade.id === data.route.gradeFk))
 
@@ -30,18 +33,20 @@
 
   let tabValue: string | undefined = $state(undefined)
   afterNavigate(() => {
-    tabValue = $page.url.hash.length > 0 ? $page.url.hash : '#topo'
+    tabValue = $page.url.hash.length > 0 ? $page.url.hash : '#info'
     selectedRouteStore.set(data.route.id)
     highlightedRouteStore.set(null)
   })
   onMount(() => {
-    tabValue = $page.url.hash.length > 0 ? $page.url.hash : '#topo'
+    tabValue = $page.url.hash.length > 0 ? $page.url.hash : '#info'
     selectedRouteStore.set(data.route.id)
     highlightedRouteStore.set(null)
   })
   const onChangeTab: Parameters<typeof Tabs>[1]['onFocusChange'] = (event) => {
     goto($page.url.pathname + event.focusedValue, { replaceState: true })
   }
+
+  const hasActions = $derived(data.userPermissions?.includes(EDIT_PERMISSION) || data.route.externalResources != null)
 </script>
 
 <svelte:head>
@@ -53,7 +58,7 @@
   </title>
 </svelte:head>
 
-<AppBar>
+<AppBar {hasActions}>
   {#snippet lead()}
     <RouteName classes="flex-wrap" route={data.route} />
   {/snippet}
@@ -123,6 +128,14 @@
         </button>
       </form>
 
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/add-file`}>
+        <i class="fa-solid fa-cloud-arrow-up"></i>Upload file
+      </a>
+
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-first-ascent`}>
+        <i class="fa-solid fa-pen"></i>Edit FA
+      </a>
+
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen"></i>Edit route
       </a>
@@ -132,35 +145,33 @@
   {#snippet headline()}
     <Tabs
       fluid
-      listClasses="overflow-x-auto overflow-y-hidden"
+      listClasses="overflow-x-auto overflow-y-hidden pb-[1px] md:w-[500px]"
       listGap="0"
       onFocusChange={onChangeTab}
       value={tabValue}
     >
       {#snippet list()}
-        <Tabs.Control value="#topo">Topo</Tabs.Control>
+        <Tabs.Control value="#info">Info</Tabs.Control>
+
+        {#if data.topos.length > 0}
+          <Tabs.Control value="#topo">Topo</Tabs.Control>
+        {/if}
 
         <Tabs.Control value="#activity">Activity</Tabs.Control>
 
-        {#if data.route.files.length > 0 || data.userPermissions?.includes(EDIT_PERMISSION)}
-          <Tabs.Control value="#files">Files</Tabs.Control>
-        {/if}
-
-        <Tabs.Control value="#details">Details</Tabs.Control>
+        <Tabs.Control value="#map">Map</Tabs.Control>
       {/snippet}
 
       {#snippet content()}
-        <Tabs.Panel value="#topo">
-          <div class="flex">
-            {#if data.topos.length === 0}
-              <section>No topos yet</section>
-            {:else}
+        {#if data.topos.length > 0}
+          <Tabs.Panel value="#topo">
+            <div class="flex">
               <section class="w-full relative" use:fitHeightAction>
                 <TopoViewer topos={data.topos} />
               </section>
-            {/if}
-          </div>
-        </Tabs.Panel>
+            </div>
+          </Tabs.Panel>
+        {/if}
 
         <Tabs.Panel value="#activity">
           <section class="p-2">
@@ -172,76 +183,32 @@
           </section>
         </Tabs.Panel>
 
-        {#if data.route.files.length > 0 || data.userPermissions?.includes(EDIT_PERMISSION)}
-          <Tabs.Panel value="#files">
-            <section class="p-2">
-              {#if data.userPermissions?.includes(EDIT_PERMISSION)}
-                <div class="flex justify-center mb-4">
-                  <a class="btn preset-filled-primary-500" href={`${basePath}/add-file`}>Add file</a>
-                </div>
-              {/if}
+        <Tabs.Panel value="#map">
+          <div use:fitHeightAction>
+            {#await import('$lib/components/BlocksMap') then BlocksMap}
+              {#key data.block.id}
+                <BlocksMap.default blocks={data.blocks} selectedBlock={data.block} />
+              {/key}
+            {/await}
+          </div>
+        </Tabs.Panel>
 
-              {#if files.length === 0}
-                No files yet
-              {:else}
-                <div class="flex flex-wrap gap-3">
-                  {#each files as file}
-                    {#if file.stat != null}
-                      <FileViewer
-                        {file}
-                        readOnly={!data.userPermissions?.includes(EDIT_PERMISSION)}
-                        stat={file.stat}
-                        on:delete={() => {
-                          files = files.filter((_file) => file.id !== _file.id)
-                        }}
-                      />
-                    {:else if file.error != null}
-                      <aside class="alert variant-filled-error">
-                        <div class="alert-message">
-                          <h3 class="h3">Error</h3>
-                          <p>{file.error}</p>
-                        </div>
-                      </aside>
-                    {/if}
-                  {/each}
-                </div>
-              {/if}
-            </section>
-          </Tabs.Panel>
-        {/if}
-
-        <Tabs.Panel value="#details">
+        <Tabs.Panel value="#info">
           <dl>
-            <div class="flex p-2">
-              <span class="flex-auto">
-                <dt>Created at</dt>
-                <dd>{DateTime.fromSQL(data.route.createdAt).toLocaleString(DateTime.DATETIME_MED)}</dd>
-              </span>
-            </div>
-
-            <div class="flex p-2">
-              <span class="flex-auto">
-                <dt>Author</dt>
-                <dd>
-                  <a class="anchor" href={`/users/${data.route.author.username}`}>
-                    {data.route.author.username}
-                  </a>
-                </dd>
-              </span>
-            </div>
-
             <div class="flex p-2">
               <span class="flex-auto">
                 <dt>FA</dt>
                 <dd class="flex justify-between items-center">
                   <span>
-                    {#if data.route.firstAscent?.climber != null}
+                    {#if data.route.firstAscent == null}
+                      unknown
+                    {:else if data.route.firstAscent.climber != null}
                       <a class="anchor" href={`/users/${data.route.firstAscent.climber.username}`}>
                         {data.route.firstAscent.climber.username}
                       </a>
 
                       &nbsp;
-                    {:else if data.route.firstAscent?.climberName != null}
+                    {:else if data.route.firstAscent.climberName != null}
                       {data.route.firstAscent.climberName}
 
                       &nbsp;
@@ -249,12 +216,6 @@
 
                     {data.route.firstAscent?.year ?? ''}
                   </span>
-
-                  {#if data.userPermissions?.includes(EDIT_PERMISSION)}
-                    <a class="btn btn-sm preset-outlined-primary-500 ms-4" href={`${basePath}/edit-first-ascent`}>
-                      <i class="fa-solid fa-pen"></i>Edit FA
-                    </a>
-                  {/if}
                 </dd>
               </span>
             </div>
@@ -264,7 +225,7 @@
                 <span class="flex-auto">
                   <dt>Description</dt>
                   <dd>
-                    <div class="rendered-markdown mt-4">
+                    <div class="rendered-markdown">
                       {@html data.route.description}
                     </div>
                   </dd>
@@ -301,6 +262,35 @@
                 </div>
               {/if}
             {/await}
+
+            {#if files.length > 0}
+              <div class="flex p-2">
+                <span class="flex-auto">
+                  <dt>Files</dt>
+                  <dd class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                    {#each files as file}
+                      {#if file.stat != null}
+                        <FileViewer
+                          {file}
+                          readOnly={!data.userPermissions?.includes(EDIT_PERMISSION)}
+                          stat={file.stat}
+                          on:delete={() => {
+                            files = files.filter((_file) => file.id !== _file.id)
+                          }}
+                        />
+                      {:else if file.error != null}
+                        <aside class="alert variant-filled-error">
+                          <div class="alert-message">
+                            <h3 class="h3">Error</h3>
+                            <p>{file.error}</p>
+                          </div>
+                        </aside>
+                      {/if}
+                    {/each}
+                  </dd>
+                </span>
+              </div>
+            {/if}
           </dl>
         </Tabs.Panel>
       {/snippet}

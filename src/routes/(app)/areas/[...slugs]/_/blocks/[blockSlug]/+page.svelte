@@ -5,11 +5,9 @@
   import { fitHeightAction } from '$lib/actions/fit-height.svelte'
   import { EDIT_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
-  import References from '$lib/components/References'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
   import { Tabs } from '@skeletonlabs/skeleton-svelte'
-  import { DateTime } from 'luxon'
   import { onMount } from 'svelte'
 
   let { data } = $props()
@@ -27,21 +25,25 @@
   const onChangeTab: Parameters<typeof Tabs>[1]['onFocusChange'] = (event) => {
     goto($page.url.pathname + event.focusedValue, { replaceState: true })
   }
+
+  const hasActions = $derived(data.userPermissions?.includes(EDIT_PERMISSION) || data.block.topos.length > 0)
 </script>
 
 <svelte:head>
   <title>{data.block.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
-<AppBar>
+<AppBar {hasActions}>
   {#snippet lead()}
     {data.block.name}
   {/snippet}
 
   {#snippet actions()}
-    <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
-      <i class="fa-solid fa-file-export"></i>Export block preview
-    </a>
+    {#if data.block.topos.length > 0}
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
+        <i class="fa-solid fa-file-export"></i>Export block preview
+      </a>
+    {/if}
 
     {#if data.userPermissions?.includes(EDIT_PERMISSION)}
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
@@ -57,7 +59,7 @@
   {#snippet headline()}
     <Tabs
       fluid
-      listClasses="overflow-x-auto overflow-y-hidden"
+      listClasses="overflow-x-auto overflow-y-hidden pb-[1px] md:w-[500px]"
       listGap="0"
       onFocusChange={onChangeTab}
       value={tabValue}
@@ -65,9 +67,7 @@
       {#snippet list()}
         <Tabs.Control value="#topo">Topo</Tabs.Control>
 
-        <Tabs.Control value="#location">Location</Tabs.Control>
-
-        <Tabs.Control value="#details">Details</Tabs.Control>
+        <Tabs.Control value="#map">Map</Tabs.Control>
       {/snippet}
 
       {#snippet content()}
@@ -136,43 +136,7 @@
           </div>
         </Tabs.Panel>
 
-        <Tabs.Panel value="#details">
-          <dl>
-            <div class="flex p-2">
-              <span class="flex-auto">
-                <dt>Created at</dt>
-                <dd>{DateTime.fromSQL(data.block.createdAt).toLocaleString(DateTime.DATETIME_MED)}</dd>
-              </span>
-            </div>
-
-            <div class="flex p-2">
-              <span class="flex-auto">
-                <dt>Author</dt>
-                <dd>
-                  <a class="anchor" href="/users/{data.block.author.username}">
-                    {data.block.author.username}
-                  </a>
-                </dd>
-              </span>
-            </div>
-
-            {#await data.references then references}
-              {#if references.routes.length > 0}
-                <div class="flex p-2">
-                  <span class="flex-auto">
-                    <dt>Mentioned in</dt>
-
-                    <dd class="flex gap-1 mt-1">
-                      <References {references} />
-                    </dd>
-                  </span>
-                </div>
-              {/if}
-            {/await}
-          </dl>
-        </Tabs.Panel>
-
-        <Tabs.Panel value="#location">
+        <Tabs.Panel value="#map">
           <div use:fitHeightAction>
             {#await import('$lib/components/BlocksMap') then BlocksMap}
               {#key data.block.id}

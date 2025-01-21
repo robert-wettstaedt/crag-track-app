@@ -2,14 +2,17 @@
   import { AppBar, Popover } from '@skeletonlabs/skeleton-svelte'
 
   type OrigProps = Parameters<typeof AppBar>[1]
-  type Props = Omit<OrigProps, 'trail'> & { actions?: OrigProps['trail'] }
+  type Props = Omit<OrigProps, 'trail'> & {
+    actions?: OrigProps['trail']
+    hasActions?: boolean
+  }
 
-  const { actions, ...props }: Props = $props()
+  const { actions, hasActions = false, ...props }: Props = $props()
 </script>
 
 <AppBar {...props} leadClasses="flex-wrap" toolbarClasses="items-center">
   {#snippet trail()}
-    {#if actions != null}
+    {#if actions != null && hasActions}
       <div class="md:hidden">
         <Popover
           arrow
@@ -42,9 +45,10 @@
     background: none;
     border-radius: 0;
     box-shadow: none;
+    font-size: 1rem;
     height: auto;
-    width: 100%;
     justify-content: start;
+    width: 100%;
   }
 
   :global(.action-list > * .btn) {
@@ -55,7 +59,6 @@
     border-bottom: 1px solid;
     display: flex;
     padding: 1rem;
-    font-size: 1rem;
 
     &:hover {
       background: rgb(var(--color-primary-500) / var(--tw-bg-opacity, 1));

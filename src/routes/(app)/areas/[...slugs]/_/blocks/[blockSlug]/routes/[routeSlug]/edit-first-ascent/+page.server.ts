@@ -218,7 +218,7 @@ export const actions = {
     }
 
     // Redirect to the route edit page
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#details`)
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#info`)
   },
 
   removeFirstAscent: async ({ locals, params }) => {
@@ -296,6 +296,6 @@ export const actions = {
       }
     }
 
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#details`)
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#info`)
   },
 }

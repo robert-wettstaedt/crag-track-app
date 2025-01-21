@@ -232,7 +232,7 @@
     </p>
 
     {#if activity.entity.type == 'file' && activity.entity.object?.stat != null}
-      <div class="mt-4 flex flex-wrap gap-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
         <FileViewer file={activity.entity.object} stat={activity.entity.object.stat} />
       </div>
     {/if}
@@ -245,7 +245,11 @@
       {/if}
 
       {#if activity.entity.object.files.length > 0}
-        <div class="mt-4 flex flex-wrap gap-3">
+        <div
+          class="grid {activity.entity.object.files.length === 1
+            ? 'grid-cols-1 md:grid-cols-2'
+            : 'grid-cols-2 md:grid-cols-4'} gap-3 mt-4"
+        >
           {#each activity.entity.object.files as file}
             {#if file.stat != null}
               <FileViewer
