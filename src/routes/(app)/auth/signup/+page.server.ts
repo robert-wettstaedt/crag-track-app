@@ -25,6 +25,20 @@ export const actions = {
       return fail(400, { email: data.email, username: data.username, error: 'User with username already exists' })
     }
 
+    const usernameRegex = /[\\da-z][-\\da-z_]{0,38}/
+    const match = data.username.match(usernameRegex)
+    if (match?.[0] == null) {
+      return fail(400, { email: data.email, username: data.username, error: 'Invalid username' })
+    }
+
+    if (match[0].length !== data.username.length) {
+      return fail(400, {
+        email: data.email,
+        username: data.username,
+        error: `Username cannot contain character "${data.username[match[0].length]}"`,
+      })
+    }
+
     const signUpData = await supabase.auth.signUp({ email: data.email, password: data.password })
 
     if (signUpData.error != null) {
