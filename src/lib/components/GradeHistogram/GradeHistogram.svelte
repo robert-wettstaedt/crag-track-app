@@ -16,7 +16,7 @@
   spec={{
     background: 'transparent',
     data: {
-      values: data,
+      values: data.map((d) => ({ ...d, grade: d.grade ?? 'no grade' })),
     },
     mark: 'bar',
 
@@ -28,20 +28,20 @@
         legend: null,
         field: 'grade',
         scale: {
-          domain: $page.data.grades.map((grade) => grade[$page.data.gradingScale]),
-          range: $page.data.grades.map((grade) => getGradeColor(grade)),
+          domain: [...$page.data.grades.map((grade) => grade[$page.data.gradingScale]), 'no grade'],
+          range: [...$page.data.grades.map((grade) => getGradeColor(grade)), '#bcc0cc'],
         },
       },
       x: {
         axis: axes
           ? {
               title: null,
-              labelExpr: "indexof(domain('x'), datum.value) % 2 === 1 ? datum.label : ''",
+              labelExpr: "indexof(domain('x'), datum.value) % 2 === 0 ? datum.label : ''",
             }
           : null,
         field: 'grade',
         scale: {
-          domain: $page.data.grades.map((grade) => grade[$page.data.gradingScale]),
+          domain: [...$page.data.grades.map((grade) => grade[$page.data.gradingScale]), 'no grade'],
         },
         type: 'nominal',
         title: 'Grade',
