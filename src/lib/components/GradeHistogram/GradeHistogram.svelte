@@ -36,7 +36,7 @@
         axis: axes
           ? {
               title: null,
-              labelExpr: "indexof(domain('x'), datum.value) % 2 === 0 ? datum.label : ''",
+              labelExpr: "indexof(domain('x'), datum.value) % 2 === 1 ? datum.label : ''",
             }
           : null,
         field: 'grade',
