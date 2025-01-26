@@ -3,7 +3,6 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AppBar from '$lib/components/AppBar'
-  import FirstAscentFormFields from '$lib/components/FirstAscentFormFields'
   import MultiSelect from '$lib/components/MultiSelect'
   import RouteName from '$lib/components/RouteName'
   import { Popover } from '@skeletonlabs/skeleton-svelte'

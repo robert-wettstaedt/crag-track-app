@@ -107,7 +107,7 @@ describe('validateFirstAscentForm', () => {
     formData.set('year', '2021')
 
     const result = await validateFormData(firstAscentActionSchema, formData)
-    expect(result).toEqual({ climberName: 'John Doe', year: 2021 })
+    expect(result).toEqual({ climberName: ['John Doe'], year: 2021 })
   })
 
   it('should throw an error if year is not a valid number', async () => {
