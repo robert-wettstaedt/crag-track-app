@@ -28,7 +28,13 @@ export const getFromCache = <T>(type: string, id: string | number): Promise<T | 
 }
 
 export const setInCache = async <T>(type: string, id: string | number, data: T): Promise<void> => {
-  if (isDevelopment) return
+  if (
+    isDevelopment ||
+    data == null ||
+    (typeof data === 'string' && data.length === 0) ||
+    (Array.isArray(data) && data.length === 0)
+  )
+    return
   const cacheKey = getCacheKey(type, id)
   await redis!.set(cacheKey, JSON.stringify(data), { ex: CACHE_TTL })
 }
