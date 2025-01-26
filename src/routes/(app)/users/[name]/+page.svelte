@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { afterNavigate, goto } from '$app/navigation'
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import Logo27crags from '$lib/assets/27crags-logo.png'
@@ -20,10 +21,19 @@
   let loadError: string | null = $state(null)
   let loadOpts: Record<string, string> = $state({})
 
-  let tabSet: 'sends' | 'open-projects' | 'finished-projects' | 'settings' = $state('sends')
+  let tabValue: string | undefined = $state(undefined)
+  afterNavigate(() => {
+    tabValue = $page.url.hash.length > 0 ? $page.url.hash : data.requestedUser == null ? '#first-ascents' : '#sends'
+  })
+  onMount(() => {
+    tabValue = $page.url.hash.length > 0 ? $page.url.hash : data.requestedUser == null ? '#first-ascents' : '#sends'
+  })
+  const onChangeTab: Parameters<typeof Tabs>[1]['onFocusChange'] = (event) => {
+    goto($page.url.pathname + event.focusedValue, { replaceState: true })
+  }
 
   const sends = data.ascents
-    .filter((ascent) => ascent.type !== 'attempt' && ascent.type !== 'repeat')
+    ?.filter((ascent) => ascent.type !== 'attempt' && ascent.type !== 'repeat')
     .map((ascent) => {
       const grade = data.grades.find((grade) => grade.id === (ascent.gradeFk ?? ascent.route.gradeFk))
 
@@ -53,145 +63,224 @@
 </script>
 
 <svelte:head>
-  <title>Profile of {data.requestedUser.username} - {PUBLIC_APPLICATION_NAME}</title>
+  <title>Profile of {data.requestedUser?.username ?? data.firstAscensionist?.name} - {PUBLIC_APPLICATION_NAME}</title>
 </svelte:head>
 
 <AppBar>
   {#snippet lead()}
-    {data.requestedUser.username}
+    {data.requestedUser?.username ?? data.firstAscensionist?.name}
   {/snippet}
 </AppBar>
 
 <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
-  <Tabs fluid bind:value={tabSet} listClasses="overflow-x-auto overflow-y-hidden pb-[1px] md:w-[500px]">
+  <Tabs
+    fluid
+    listClasses="overflow-x-auto overflow-y-hidden pb-[1px]"
+    listGap="0"
+    onFocusChange={onChangeTab}
+    value={tabValue}
+  >
     {#snippet list()}
-      <Tabs.Control value="sends">Ascents</Tabs.Control>
+      {#if data.requestedUser != null}
+        <Tabs.Control value="#sends">Ascents</Tabs.Control>
+        <Tabs.Control value="#open-projects">Open projects</Tabs.Control>
+        <Tabs.Control value="#finished-projects">Finished projects</Tabs.Control>
+      {/if}
+      <Tabs.Control value="#first-ascents">First ascents</Tabs.Control>
 
-      <Tabs.Control value="open-projects">Open projects</Tabs.Control>
-      <Tabs.Control value="finished-projects">Finished projects</Tabs.Control>
-
-      {#if $page.data.session?.user?.id === data.requestedUser.authUserFk}
-        <Tabs.Control value="settings">Settings</Tabs.Control>
+      {#if $page.data.session?.user?.id === data.requestedUser?.authUserFk}
+        <Tabs.Control value="#settings">Settings</Tabs.Control>
       {/if}
     {/snippet}
 
     {#snippet content()}
-      <Tabs.Panel value="sends">
-        <GradeHistogram
-          data={sends}
-          spec={{
-            width: 'container' as any,
-            mark: {
-              type: 'bar',
-              stroke: 'white',
-              cursor: 'pointer',
-            },
-            params: [
-              {
-                name: 'highlight',
-                select: { type: 'point', on: 'pointerover' },
+      {#if data.requestedUser != null}
+        <Tabs.Panel value="#sends">
+          <GradeHistogram
+            data={sends ?? []}
+            spec={{
+              width: 'container' as any,
+              mark: {
+                type: 'bar',
+                stroke: 'white',
+                cursor: 'pointer',
               },
-              { name: 'select', select: 'point' },
-            ],
-            encoding: {
-              fillOpacity: {
-                condition: { param: 'select', value: 1 },
-                value: 0.3,
+              params: [
+                {
+                  name: 'highlight',
+                  select: { type: 'point', on: 'pointerover' },
+                },
+                { name: 'select', select: 'point' },
+              ],
+              encoding: {
+                fillOpacity: {
+                  condition: { param: 'select', value: 1 },
+                  value: 0.3,
+                },
+                strokeWidth: {
+                  condition: [
+                    {
+                      param: 'select',
+                      empty: false,
+                      value: 2,
+                    },
+                    {
+                      param: 'highlight',
+                      empty: false,
+                      value: 1,
+                    },
+                  ],
+                  value: 0,
+                },
               },
-              strokeWidth: {
-                condition: [
-                  {
-                    param: 'select',
-                    empty: false,
-                    value: 2,
-                  },
-                  {
-                    param: 'highlight',
-                    empty: false,
-                    value: 1,
-                  },
-                ],
-                value: 0,
-              },
-            },
-          }}
-          onEmbed={(result) => {
-            result.view.addSignalListener('chartClick', (_, datum) => {
-              const grade = data.grades.find((grade) => grade.FB === datum?.grade || grade.V === datum?.grade)
+            }}
+            onEmbed={(result) => {
+              result.view.addSignalListener('chartClick', (_, datum) => {
+                const grade = data.grades.find((grade) => grade.FB === datum?.grade || grade.V === datum?.grade)
 
-              loadOpts = grade == null ? {} : { grade: String(grade.id) }
-              loadData()
-            })
-          }}
-          opts={{
-            patch: (spec) => {
-              spec.signals?.push({
-                name: 'chartClick',
-                value: 0,
-                on: [{ events: '*:mousedown', update: 'datum' }],
-              })
-
-              return spec
-            },
-          }}
-        />
-
-        {#if loadError != null}
-          <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 whitespace-pre-line">
-            <p>{loadError}</p>
-          </aside>
-        {:else if loadedData == null}
-          <div class="flex justify-center mt-16">
-            <ProgressRing value={null} />
-          </div>
-        {:else}
-          <AscentsTable
-            ascents={loadedData.ascents}
-            pagination={loadedData.pagination}
-            paginationProps={{
-              onPageChange: (detail) => {
-                loadOpts = { ...loadOpts, page: String(detail.page) }
+                loadOpts = grade == null ? {} : { grade: String(grade.id) }
                 loadData()
+              })
+            }}
+            opts={{
+              patch: (spec) => {
+                spec.signals?.push({
+                  name: 'chartClick',
+                  value: 0,
+                  on: [{ events: '*:mousedown', update: 'datum' }],
+                })
+
+                return spec
               },
             }}
           />
-        {/if}
-      </Tabs.Panel>
 
-      <Tabs.Panel value="open-projects">
-        <GenericList
-          items={data.openProjects.map((item) => ({
-            ...item,
-            id: item.route.id,
-            name: item.route.name,
-            pathname: item.route.pathname,
-          }))}
-          leftClasses=""
-        >
+          {#if loadError != null}
+            <aside class="card preset-tonal-warning mt-8 p-2 md:p-4 whitespace-pre-line">
+              <p>{loadError}</p>
+            </aside>
+          {:else if loadedData == null}
+            <div class="flex justify-center mt-16">
+              <ProgressRing value={null} />
+            </div>
+          {:else}
+            <AscentsTable
+              ascents={loadedData.ascents}
+              pagination={loadedData.pagination}
+              paginationProps={{
+                onPageChange: (detail) => {
+                  loadOpts = { ...loadOpts, page: String(detail.page) }
+                  loadData()
+                },
+              }}
+            />
+          {/if}
+        </Tabs.Panel>
+
+        <Tabs.Panel value="#open-projects">
+          <GenericList
+            items={data.openProjects.map((item) => ({
+              ...item,
+              id: item.route.id,
+              name: item.route.name,
+              pathname: item.route.pathname,
+            }))}
+            leftClasses=""
+          >
+            {#snippet left(item)}
+              <dt>
+                <RouteName route={item.route} />
+              </dt>
+
+              <dd class="text-sm opacity-50">Sessions: {item.ascents.length}</dd>
+              <dd class="text-sm opacity-50">
+                Last session: {DateTime.fromSQL(item.ascents[0].dateTime).toLocaleString(DateTime.DATE_FULL)}
+              </dd>
+            {/snippet}
+
+            {#snippet right(item)}
+              <ol class="flex items-center gap-2 w-auto p-2">
+                <li>
+                  <a class="anchor" href={item.route.block.area.pathname}>
+                    {item.route.block.area.name}
+                  </a>
+                </li>
+
+                <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
+
+                <li>
+                  <a class="anchor" href={item.route.block.pathname}>
+                    {item.route.block.name}
+                  </a>
+                </li>
+              </ol>
+            {/snippet}
+          </GenericList>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="#finished-projects">
+          <GenericList
+            items={data.finishedProjects.map((item) => ({
+              ...item,
+              id: item.route.id,
+              name: item.route.name,
+              pathname: item.route.pathname,
+            }))}
+            leftClasses=""
+          >
+            {#snippet left(item)}
+              <dt>
+                <RouteName route={item.route} />
+              </dt>
+
+              <dd class="text-sm opacity-50">Sessions: {item.ascents.length}</dd>
+              <dd class="text-sm opacity-50">
+                Last session: {DateTime.fromSQL(item.ascents[0].dateTime).toLocaleString(DateTime.DATE_FULL)}
+              </dd>
+            {/snippet}
+
+            {#snippet right(item)}
+              <ol class="flex items-center gap-2 w-auto p-2">
+                <li>
+                  <a class="anchor" href={item.route.block.area.pathname}>
+                    {item.route.block.area.name}
+                  </a>
+                </li>
+
+                <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
+
+                <li>
+                  <a class="anchor" href={item.route.block.pathname}>
+                    {item.route.block.name}
+                  </a>
+                </li>
+              </ol>
+            {/snippet}
+          </GenericList>
+        </Tabs.Panel>
+      {/if}
+
+      <Tabs.Panel value="#first-ascents">
+        <GenericList items={data.firstAscentRoutes ?? []}>
           {#snippet left(item)}
             <dt>
-              <RouteName route={item.route} />
+              <RouteName route={item} />
             </dt>
-
-            <dd class="text-sm opacity-50">Sessions: {item.ascents.length}</dd>
-            <dd class="text-sm opacity-50">
-              Last session: {DateTime.fromSQL(item.ascents[0].dateTime).toLocaleString(DateTime.DATE_FULL)}
-            </dd>
           {/snippet}
 
           {#snippet right(item)}
             <ol class="flex items-center gap-2 w-auto p-2">
               <li>
-                <a class="anchor" href={item.route.block.area.pathname}>
-                  {item.route.block.area.name}
+                <a class="anchor" href={item.block.area.pathname}>
+                  {item.block.area.name}
                 </a>
               </li>
 
               <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
 
               <li>
-                <a class="anchor" href={item.route.block.pathname}>
-                  {item.route.block.name}
+                <a class="anchor" href={item.block.pathname}>
+                  {item.block.name}
                 </a>
               </li>
             </ol>
@@ -199,49 +288,8 @@
         </GenericList>
       </Tabs.Panel>
 
-      <Tabs.Panel value="finished-projects">
-        <GenericList
-          items={data.finishedProjects.map((item) => ({
-            ...item,
-            id: item.route.id,
-            name: item.route.name,
-            pathname: item.route.pathname,
-          }))}
-          leftClasses=""
-        >
-          {#snippet left(item)}
-            <dt>
-              <RouteName route={item.route} />
-            </dt>
-
-            <dd class="text-sm opacity-50">Sessions: {item.ascents.length}</dd>
-            <dd class="text-sm opacity-50">
-              Last session: {DateTime.fromSQL(item.ascents[0].dateTime).toLocaleString(DateTime.DATE_FULL)}
-            </dd>
-          {/snippet}
-
-          {#snippet right(item)}
-            <ol class="flex items-center gap-2 w-auto p-2">
-              <li>
-                <a class="anchor" href={item.route.block.area.pathname}>
-                  {item.route.block.area.name}
-                </a>
-              </li>
-
-              <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
-
-              <li>
-                <a class="anchor" href={item.route.block.pathname}>
-                  {item.route.block.name}
-                </a>
-              </li>
-            </ol>
-          {/snippet}
-        </GenericList>
-      </Tabs.Panel>
-
-      {#if $page.data.session?.user?.id === data.requestedUser.authUserFk}
-        <Tabs.Panel value="settings">
+      {#if $page.data.session?.user?.id === data.requestedUser?.authUserFk}
+        <Tabs.Panel value="#settings">
           <form method="POST">
             <label class="label mt-4">
               <span class="flex items-center gap-x-2">

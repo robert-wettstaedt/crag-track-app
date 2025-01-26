@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Area, Geolocation } from '$lib/db/schema'
-  import type { InferResultType, NestedArea, NestedBlock } from '$lib/db/types'
+  import type { Area, Block, Geolocation } from '$lib/db/schema'
+  import type { NestedArea } from '$lib/db/types'
   import Feature from 'ol/Feature.js'
   import OlMap from 'ol/Map.js'
   import Overlay from 'ol/Overlay.js'
@@ -19,14 +19,14 @@
   import TileWMS from 'ol/source/TileWMS.js'
   import { Fill, Style, Text } from 'ol/style.js'
   import { createEventDispatcher } from 'svelte'
-  import type { Block, GetBlockKey } from '.'
+  import type { GetBlockKey, NestedBlock } from '.'
   import Layers, { type Layer } from './Layers'
 
   const DEFAULT_ZOOM = 19
 
   interface Props {
     collapsibleAttribution?: boolean
-    blocks: Block[]
+    blocks: NestedBlock[]
     selectedArea?: Area | null
     selectedBlock?: Block | null
     heightSubtrahend?: number
@@ -202,10 +202,13 @@
     return iconFeature
   }
 
-  const createSectorLayer = (cragBlocks: Block[], cragSource: VectorSource<Feature<Geometry>>): Feature<Point>[] => {
+  const createSectorLayer = (
+    cragBlocks: NestedBlock[],
+    cragSource: VectorSource<Feature<Geometry>>,
+  ): Feature<Point>[] => {
     const allSectors = cragBlocks
       .map((block) => findArea(block.area, 'sector').at(0))
-      .filter((area) => area?.type === 'sector') as Block['area'][]
+      .filter((area) => area?.type === 'sector') as NestedBlock['area'][]
     const sectorsMap = new Map(allSectors.map((area) => [area.id, area]))
     const sectors = Array.from(sectorsMap.values())
 
@@ -247,7 +250,7 @@
     }
   }
 
-  const createCragLayer = (map: OlMap, crag: Block['area']) => {
+  const createCragLayer = (map: OlMap, crag: NestedBlock['area']) => {
     const cragBlocks = blocks.filter((block) => findArea(block.area, 'crag').at(0)?.id === crag.id)
     const vectorSource = new VectorSource<Feature<Geometry>>()
 
@@ -292,7 +295,7 @@
   const createMarkers = (map: OlMap) => {
     const allCrags = blocks
       .map((block) => findArea(block.area, 'crag').at(0))
-      .filter((d) => d != null) as Block['area'][]
+      .filter((d) => d != null) as NestedBlock['area'][]
     const cragsMap = new Map(allCrags.map((area) => [area.id, area]))
     const crags = Array.from(cragsMap.values())
 

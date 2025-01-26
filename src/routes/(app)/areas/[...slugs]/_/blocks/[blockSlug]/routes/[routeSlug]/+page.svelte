@@ -197,7 +197,7 @@
           <dl>
             <div class="flex p-2">
               <span class="flex-auto">
-                <dt>FA new</dt>
+                <dt>FA</dt>
                 <dd class="flex justify-between items-center">
                   <span class="flex flex-wrap items-center gap-2">
                     {#if data.route.firstAscents.length === 0 && data.route.firstAscentYear == null}
@@ -211,7 +211,9 @@
                             ? 'w-full md:w-auto'
                             : ''}"
                         >
-                          {firstAscent.firstAscensionist.name}
+                          <a class="anchor" href={`/users/${firstAscent.firstAscensionist.name}`}>
+                            {firstAscent.firstAscensionist.name}
+                          </a>
 
                           {#if data.user?.firstAscensionistFk == null}
                             <Popover
