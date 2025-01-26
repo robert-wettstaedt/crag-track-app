@@ -1,5 +1,6 @@
 import { UPSTASH_REDIS_REST_TOKEN, UPSTASH_REDIS_REST_URL } from '$env/static/private'
 import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
+import { config } from '$lib/config'
 import { Redis } from '@upstash/redis'
 
 const isDevelopment = process.env.NODE_ENV === 'development'
@@ -10,8 +11,6 @@ const redis = isDevelopment
       url: UPSTASH_REDIS_REST_URL,
       token: UPSTASH_REDIS_REST_TOKEN,
     })
-
-const CACHE_TTL = 60 * 5 // 5 minutes
 
 export const getCacheKey = (type: string, id: string | number) => `${PUBLIC_APPLICATION_NAME}:${type}:${id}`
 
@@ -36,7 +35,7 @@ export const setInCache = async <T>(type: string, id: string | number, data: T):
   )
     return
   const cacheKey = getCacheKey(type, id)
-  await redis!.set(cacheKey, JSON.stringify(data), { ex: CACHE_TTL })
+  await redis!.set(cacheKey, JSON.stringify(data), { ex: config.cache.ttl })
 }
 
 export const invalidateAreaCache = async (areaId: number) => {

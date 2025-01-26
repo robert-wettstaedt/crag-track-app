@@ -30,9 +30,6 @@ export const config = {
   },
   cache: {
     ttl: 1000 * 60 * 60, // 1 hour default TTL
-    queryTTL: 1000 * 60 * 5, // 5 minutes for query results
-    userTTL: 1000 * 60 * 30, // 30 minutes for user data
-    fileTTL: 1000 * 60 * 60 * 24, // 24 hours for file data
   },
   logging: {
     level: process.env.NODE_ENV === 'production' ? 'info' : 'error',
