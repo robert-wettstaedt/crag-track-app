@@ -81,12 +81,16 @@ export const users = table(
   {
     ...baseFields,
     username: text('username').notNull(),
+
     authUserFk: uuid('auth_user_fk').notNull(),
+    firstAscensionistFk: integer('first_ascentionist_fk'),
     userSettingsFk: integer('user_settings_fk'),
   },
   (table) => [
     policy(`${READ_PERMISSION} can read users`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
+    policy(`users can update own users`, getOwnEntryPolicyConfig('update')),
     index('users_auth_user_fk_idx').on(table.authUserFk),
+    index('users_first_ascentionist_fk_idx').on(table.firstAscensionistFk),
     index('users_username_idx').on(table.username),
   ],
 ).enableRLS()
@@ -95,6 +99,10 @@ export type InsertUser = InferInsertModel<typeof users>
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   authUser: one(authUsers, { fields: [users.authUserFk], references: [authUsers.id] }),
+  firstAscensionist: one(firstAscensionists, {
+    fields: [users.firstAscensionistFk],
+    references: [firstAscensionists.id],
+  }),
   userSettings: one(userSettings, { fields: [users.userSettingsFk], references: [userSettings.id] }),
 
   areas: many(areas),
@@ -196,6 +204,7 @@ export const routes = table(
 
     description: text('description'),
     rating: integer('rating'),
+    firstAscentYear: integer('first_ascent_year'),
 
     blockFk: integer('block_fk').notNull(),
     firstAscentFk: integer('first_ascent_fk'),
@@ -221,6 +230,7 @@ export const RoutesRelations = relations(routes, ({ one, many }) => ({
   }),
   grade: one(grades, { fields: [routes.gradeFk], references: [grades.id] }),
 
+  firstAscents: many(routesToFirstAscensionists),
   ascents: many(ascents),
   files: many(files),
   tags: many(routesToTags),
@@ -399,6 +409,62 @@ export type InsertFirstAscent = InferInsertModel<typeof firstAscents>
 export const firstAscentsRelations = relations(firstAscents, ({ one }) => ({
   climber: one(users, { fields: [firstAscents.climberFk], references: [users.id] }),
   route: one(routes, { fields: [firstAscents.routeFk], references: [routes.id] }),
+}))
+
+export const firstAscensionists = table(
+  'first_ascensionists',
+  {
+    id: baseFields.id,
+
+    name: text('name').notNull(),
+    userFk: integer('user_fk'),
+  },
+  (table) => [
+    policy(
+      `${READ_PERMISSION} can fully access first_ascensionists`,
+      getAuthorizedPolicyConfig('all', READ_PERMISSION),
+    ),
+    index('first_ascensionists_user_fk_idx').on(table.userFk),
+    index('first_ascensionists_name_idx').on(table.name),
+  ],
+).enableRLS()
+
+export type FirstAscensionist = InferSelectModel<typeof firstAscensionists>
+export type InsertFirstAscensionist = InferInsertModel<typeof firstAscensionists>
+
+export const firstAscensionistsRelations = relations(firstAscensionists, ({ one, many }) => ({
+  user: one(users, { fields: [firstAscensionists.userFk], references: [users.id] }),
+  routes: many(routesToFirstAscensionists),
+}))
+
+export const routesToFirstAscensionists = table(
+  'routes_to_first_ascensionists',
+  {
+    id: baseFields.id,
+
+    routeFk: integer('route_fk')
+      .notNull()
+      .references(() => routes.id),
+    firstAscensionistFk: integer('first_ascensionist_fk')
+      .notNull()
+      .references(() => firstAscensionists.id),
+  },
+  (table) => [
+    policy(
+      `${READ_PERMISSION} can fully access routes_to_first_ascensionists`,
+      getAuthorizedPolicyConfig('all', READ_PERMISSION),
+    ),
+    index('routes_to_first_ascensionists_route_fk_idx').on(table.routeFk),
+    index('routes_to_first_ascensionists_first_ascensionist_fk_idx').on(table.firstAscensionistFk),
+  ],
+).enableRLS()
+
+export const routesToFirstAscensionistsRelations = relations(routesToFirstAscensionists, ({ one }) => ({
+  route: one(routes, { fields: [routesToFirstAscensionists.routeFk], references: [routes.id] }),
+  firstAscensionist: one(firstAscensionists, {
+    fields: [routesToFirstAscensionists.firstAscensionistFk],
+    references: [firstAscensionists.id],
+  }),
 }))
 
 export const ascentTypeEnum: ['flash', 'send', 'repeat', 'attempt'] = ['flash', 'send', 'repeat', 'attempt']

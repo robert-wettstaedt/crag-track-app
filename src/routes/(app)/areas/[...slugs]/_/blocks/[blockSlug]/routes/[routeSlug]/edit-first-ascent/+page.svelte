@@ -4,6 +4,7 @@
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import AppBar from '$lib/components/AppBar'
   import FirstAscentFormFields from '$lib/components/FirstAscentFormFields'
+  import MultiSelect from '$lib/components/MultiSelect'
   import RouteName from '$lib/components/RouteName'
   import { Popover } from '@skeletonlabs/skeleton-svelte'
 
@@ -35,11 +36,27 @@
 </AppBar>
 
 <form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" action="?/updateFirstAscent" method="POST" use:enhance>
-  <FirstAscentFormFields
-    climberName={form?.climberName ?? data.route.firstAscent?.climber?.username ?? data.route.firstAscent?.climberName}
-    climbers={data.climbers}
-    year={form?.year ?? data.route.firstAscent?.year}
-  />
+  <label class="label">
+    <span>Year</span>
+    <input
+      class="input"
+      max={new Date().getFullYear()}
+      min={1970}
+      name="year"
+      placeholder="Enter year..."
+      type="number"
+      value={form?.year ?? data.route.firstAscentYear}
+    />
+  </label>
+
+  <label class="label mt-4">
+    <span>Climber</span>
+    <MultiSelect
+      name="climberName"
+      options={data.firstAscensionists.map((firstAscensionist) => firstAscensionist.name)}
+      value={form?.climberName ?? data.route.firstAscents.map((fa) => fa.firstAscensionist.name)}
+    />
+  </label>
 
   <div class="flex justify-between mt-8">
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>

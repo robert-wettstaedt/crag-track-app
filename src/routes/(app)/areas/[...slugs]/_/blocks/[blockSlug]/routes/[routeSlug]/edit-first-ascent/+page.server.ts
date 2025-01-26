@@ -1,6 +1,6 @@
 import { EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { activities, ascents, blocks, firstAscents, routes, users, type InsertFirstAscent } from '$lib/db/schema'
+import { activities, ascents, blocks, firstAscensionists, routes, routesToFirstAscensionists } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import {
   firstAscentActionSchema,
@@ -38,6 +38,15 @@ export const load = (async ({ locals, params, parent }) => {
                 climber: true,
               },
             },
+            firstAscents: {
+              with: {
+                firstAscensionist: {
+                  with: {
+                    user: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -57,30 +66,19 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple routes with slug ${params.routeSlug} found`)
   }
 
-  const firstAscentsResult = await db((tx) =>
-    tx.query.firstAscents.findMany({
-      orderBy: firstAscents.climberName,
+  const firstAscensionistsResult = await db((tx) =>
+    tx.query.firstAscensionists.findMany({
+      orderBy: firstAscensionists.name,
       with: {
-        climber: true,
+        user: true,
       },
     }),
   )
 
-  const allClimbers = firstAscentsResult
-    .map((firstAscent) => firstAscent.climber?.username ?? firstAscent.climberName)
-    .filter((d): d is string => d != null)
-  const climbersMap = allClimbers.reduce(
-    (map, climber) => {
-      return { ...map, [climber]: (map[climber] ?? 0) + 1 }
-    },
-    {} as Record<string, number>,
-  )
-  const climbers = Object.keys(climbersMap).sort((a, b) => climbersMap[b] - climbersMap[a])
-
   // Return the route and users data
   return {
     route,
-    climbers,
+    firstAscensionists: firstAscensionistsResult,
   }
 }) satisfies PageServerLoad
 
@@ -108,34 +106,6 @@ export const actions = {
       return exception as ActionFailure<FirstAscentActionValues>
     }
 
-    // Initialize the first ascent values
-    const firstAscentValue: Omit<InsertFirstAscent, 'routeFk'> = {
-      climberFk: null,
-      climberName: null,
-      year: null,
-    }
-
-    // Query the database to find the user with the specified climber name
-    const firstAscentUser = await db(async (tx) =>
-      values.climberName == null || values.climberName.length === 0
-        ? null
-        : tx.query.users.findFirst({ where: eq(users.username, values.climberName!) }),
-    )
-
-    if (firstAscentUser == null) {
-      // If the user is not found, set the climber name
-      firstAscentValue.climberName = values.climberName
-    } else {
-      // If the user is found, set the climber foreign key
-      firstAscentValue.climberFk = firstAscentUser.id
-    }
-
-    // Check if the year is provided and not empty
-    if (values.year != null && String(values.year).length > 0) {
-      // Set the year in the first ascent values
-      firstAscentValue.year = values.year
-    }
-
     // Query the database to find the block with the specified slug and areaId
     const block = await db((tx) =>
       tx.query.blocks.findFirst({
@@ -145,9 +115,9 @@ export const actions = {
             // Filter the routes to find the one with the specified slug
             where: getRouteDbFilter(params.routeSlug),
             with: {
-              firstAscent: {
+              firstAscents: {
                 with: {
-                  climber: true,
+                  firstAscensionist: true,
                 },
               },
             },
@@ -170,32 +140,37 @@ export const actions = {
     }
 
     try {
-      if (route.firstAscentFk == null) {
-        // Insert the first ascent if it does not exist
-        const firstAscentResult = await db((tx) =>
-          tx
-            .insert(firstAscents)
-            .values({ ...firstAscentValue, routeFk: route.id })
-            .returning(),
-        )
-        // Update the route with the first ascent foreign key
-        await db((tx) =>
-          tx.update(routes).set({ firstAscentFk: firstAscentResult[0].id }).where(eq(routes.id, route.id)),
-        )
-      } else {
-        // Update the existing first ascent
-        await db((tx) => tx.update(firstAscents).set(firstAscentValue).where(eq(firstAscents.id, route.firstAscentFk!)))
-      }
+      await db((tx) => tx.delete(routesToFirstAscensionists).where(eq(routesToFirstAscensionists.routeFk, route.id)))
+      await db((tx) =>
+        tx
+          .update(routes)
+          .set({ firstAscentYear: values.year ?? null })
+          .where(eq(routes.id, route.id)),
+      )
+      await db(async (tx) =>
+        values.climberName == null
+          ? null
+          : await Promise.all(
+              values.climberName.map(async (name) => {
+                let firstAscent = await tx.query.firstAscensionists.findFirst({
+                  where: eq(firstAscensionists.name, name),
+                })
 
-      const oldFirstAscent = [
-        route.firstAscent?.year,
-        route.firstAscent?.climber?.username ?? route.firstAscent?.climberName,
-      ]
-        .filter((d) => d != null)
+                if (firstAscent == null) {
+                  firstAscent = (await tx.insert(firstAscensionists).values({ name }).returning())[0]
+                }
+
+                await tx
+                  .insert(routesToFirstAscensionists)
+                  .values({ firstAscensionistFk: firstAscent.id, routeFk: route.id })
+              }),
+            ),
+      )
+
+      const oldFirstAscent = [route.firstAscentYear, ...route.firstAscents.map((fa) => fa.firstAscensionist.name)]
+        .filter(Boolean)
         .join(' ')
-      const newFirstAscent = [firstAscentValue.year, firstAscentUser?.username ?? firstAscentValue.climberName]
-        .filter((d) => d != null)
-        .join(' ')
+      const newFirstAscent = [values.year, ...(values.climberName ?? [])].filter(Boolean).join(' ')
 
       await db(async (tx) =>
         user == null || block == null
@@ -241,9 +216,9 @@ export const actions = {
             // Filter the routes to find the one with the specified slug
             where: getRouteDbFilter(params.routeSlug),
             with: {
-              firstAscent: {
+              firstAscents: {
                 with: {
-                  climber: true,
+                  firstAscensionist: true,
                 },
               },
             },
@@ -265,35 +240,30 @@ export const actions = {
       return fail(400, { error: `Multiple routes with slug ${params.routeSlug} found` })
     }
 
-    if (route.firstAscentFk != null) {
-      try {
-        await db((tx) => tx.delete(firstAscents).where(eq(firstAscents.id, route.firstAscentFk!)))
-        await db((tx) => tx.update(routes).set({ firstAscentFk: null }).where(eq(routes.id, route.id)))
+    try {
+      await db((tx) => tx.delete(routesToFirstAscensionists).where(eq(routesToFirstAscensionists.routeFk, route.id)))
+      await db((tx) => tx.update(routes).set({ firstAscentYear: null }).where(eq(routes.id, route.id)))
 
-        const oldFirstAscent = [
-          route.firstAscent?.year,
-          route.firstAscent?.climber?.username ?? route.firstAscent?.climberName,
-        ]
-          .filter((d) => d != null)
-          .join(' ')
+      const oldFirstAscent = [route.firstAscentYear, route.firstAscents.map((fa) => fa.firstAscensionist.name)]
+        .filter((d) => d != null)
+        .join(' ')
 
-        await db(async (tx) =>
-          user == null || block == null
-            ? null
-            : tx.insert(activities).values({
-                type: 'deleted',
-                userFk: user.id,
-                entityId: route.id,
-                entityType: 'route',
-                columnName: 'first ascent',
-                oldValue: oldFirstAscent,
-                parentEntityId: block.id,
-                parentEntityType: 'block',
-              }),
-        )
-      } catch (error) {
-        return fail(400, { error: convertException(error) })
-      }
+      await db(async (tx) =>
+        user == null || block == null
+          ? null
+          : tx.insert(activities).values({
+              type: 'deleted',
+              userFk: user.id,
+              entityId: route.id,
+              entityType: 'route',
+              columnName: 'first ascent',
+              oldValue: oldFirstAscent,
+              parentEntityId: block.id,
+              parentEntityType: 'block',
+            }),
+      )
+    } catch (error) {
+      return fail(400, { error: convertException(error) })
     }
 
     redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#info`)

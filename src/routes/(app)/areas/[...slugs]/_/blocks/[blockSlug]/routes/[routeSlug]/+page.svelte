@@ -14,7 +14,7 @@
   import References from '$lib/components/References'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
-  import { ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
+  import { Popover, ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
   import { onMount } from 'svelte'
 
   let { data } = $props()
@@ -197,24 +197,107 @@
           <dl>
             <div class="flex p-2">
               <span class="flex-auto">
-                <dt>FA</dt>
+                <dt>FA new</dt>
                 <dd class="flex justify-between items-center">
-                  <span>
-                    {#if data.route.firstAscent == null}
-                      unknown
-                    {:else if data.route.firstAscent.climber != null}
-                      <a class="anchor" href={`/users/${data.route.firstAscent.climber.username}`}>
-                        {data.route.firstAscent.climber.username}
-                      </a>
-
-                      &nbsp;
-                    {:else if data.route.firstAscent.climberName != null}
-                      {data.route.firstAscent.climberName}
-
-                      &nbsp;
+                  <span class="flex flex-wrap items-center gap-2">
+                    {#if data.route.firstAscents.length === 0 && data.route.firstAscentYear == null}
+                      <span>unknown</span>
                     {/if}
 
-                    {data.route.firstAscent?.year ?? ''}
+                    {#each data.route.firstAscents as firstAscent, index}
+                      {#if firstAscent.firstAscensionist.user == null}
+                        <span
+                          class="flex justify-between gap-2 {data.user?.firstAscensionistFk == null
+                            ? 'w-full md:w-auto'
+                            : ''}"
+                        >
+                          {firstAscent.firstAscensionist.name}
+
+                          {#if data.user?.firstAscensionistFk == null}
+                            <Popover
+                              arrow
+                              arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+                              contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+                              positioning={{ placement: 'top' }}
+                              triggerBase="btn btn-sm preset-outlined-primary-500 !text-white me-auto"
+                            >
+                              {#snippet trigger()}
+                                That's me!
+                              {/snippet}
+
+                              {#snippet content()}
+                                <article>
+                                  <p>
+                                    All FAs with the name {firstAscent.firstAscensionist.name} will be attributed to you.
+                                    Are you sure that this is you?
+                                  </p>
+                                </article>
+
+                                <footer class="flex justify-end">
+                                  <form action="?/claimFirstAscensionist" method="POST" use:enhance>
+                                    <input
+                                      type="hidden"
+                                      name="firstAscensionistFk"
+                                      value={firstAscent.firstAscensionist.id}
+                                    />
+
+                                    <button class="btn btn-sm preset-filled-primary-500 !text-white" type="submit">
+                                      Yes
+                                    </button>
+                                  </form>
+                                </footer>
+                              {/snippet}
+                            </Popover>
+                          {/if}
+                        </span>
+
+                        {#if index < data.route.firstAscents.length - 1}
+                          <span class="hidden md:block">|</span>
+                        {/if}
+                      {:else}
+                        <a class="anchor" href={`/users/${firstAscent.firstAscensionist.user.username}`}>
+                          {firstAscent.firstAscensionist.name}
+                        </a>
+
+                        {#if index < data.route.firstAscents.length - 1}
+                          <span>|</span>
+                        {/if}
+                      {/if}
+                    {/each}
+
+                    {#if data.route.firstAscentYear != null}
+                      <span>
+                        {data.route.firstAscentYear}
+                      </span>
+                    {/if}
+
+                    {#if data.route.firstAscents.length === 0 && data.user?.firstAscensionistFk != null}
+                      <Popover
+                        arrow
+                        arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+                        contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+                        positioning={{ placement: 'top' }}
+                        triggerBase="btn btn-sm preset-outlined-primary-500 !text-white"
+                      >
+                        {#snippet trigger()}
+                          Claim FA
+                        {/snippet}
+
+                        {#snippet content()}
+                          <article>
+                            <p>This FA will be attributed to you. Are you sure?</p>
+                          </article>
+
+                          <footer class="flex justify-end">
+                            <form action="?/claimFirstAscent" method="POST" use:enhance>
+                              <button class="btn btn-sm preset-filled-primary-500 !text-white" type="submit">
+                                Yes
+                              </button>
+                            </form>
+                          </footer>
+                        {/snippet}
+                      </Popover>
+                    {/if}
                   </span>
                 </dd>
               </span>

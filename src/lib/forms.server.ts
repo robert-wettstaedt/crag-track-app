@@ -145,7 +145,7 @@ export type RouteActionValues = z.infer<typeof routeActionSchema>
 
 export const firstAscentActionSchema = z
   .object({
-    climberName: z.string().trim().optional(),
+    climberName: z.array(z.string().trim()).optional(),
     year: z.number().min(1950).max(new Date().getFullYear()).optional(),
   })
   .refine((x) => x.climberName != null || x.year != null, { message: 'Either climberName or year must be set' })

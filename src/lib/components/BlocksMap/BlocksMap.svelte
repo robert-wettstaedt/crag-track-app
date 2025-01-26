@@ -251,10 +251,6 @@
     const cragBlocks = blocks.filter((block) => findArea(block.area, 'crag').at(0)?.id === crag.id)
     const vectorSource = new VectorSource<Feature<Geometry>>()
 
-    if (crag.id === 63) {
-      console.log(cragBlocks)
-    }
-
     const iconFeatures = createSectorLayer(cragBlocks, vectorSource)
     vectorSource.addFeatures(iconFeatures)
 
@@ -299,8 +295,6 @@
       .filter((d) => d != null) as Block['area'][]
     const cragsMap = new Map(allCrags.map((area) => [area.id, area]))
     const crags = Array.from(cragsMap.values())
-
-    console.log(crags)
 
     crags.forEach((area) => createCragLayer(map, area))
 

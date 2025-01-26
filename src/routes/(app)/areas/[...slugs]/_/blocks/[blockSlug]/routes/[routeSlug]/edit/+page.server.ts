@@ -7,13 +7,13 @@ import {
   ascents,
   blocks,
   files,
-  firstAscents,
   generateSlug,
   routeExternalResource27crags,
   routeExternalResource8a,
   routeExternalResources,
   routeExternalResourceTheCrag,
   routes,
+  routesToFirstAscensionists,
   routesToTags,
   topoRoutes,
 } from '$lib/db/schema'
@@ -226,7 +226,11 @@ export const actions = {
               },
               externalResources: true,
               files: true,
-              firstAscent: true,
+              firstAscents: {
+                with: {
+                  firstAscensionist: true,
+                },
+              },
               tags: true,
             },
           },
@@ -277,7 +281,7 @@ export const actions = {
       }
 
       await db((tx) => tx.delete(ascents).where(eq(ascents.routeFk, route.id)))
-      await db((tx) => tx.delete(firstAscents).where(eq(firstAscents.routeFk, route.id)))
+      await db((tx) => tx.delete(routesToFirstAscensionists).where(eq(routesToFirstAscensionists.routeFk, route.id)))
       await db((tx) => tx.delete(routesToTags).where(eq(routesToTags.routeFk, route.id)))
       await db((tx) => tx.delete(topoRoutes).where(eq(topoRoutes.routeFk, route.id)))
 
