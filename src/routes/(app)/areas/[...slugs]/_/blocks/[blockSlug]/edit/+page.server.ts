@@ -1,4 +1,5 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { invalidateAreaCache } from '$lib/cache.server'
 import { createUpdateActivity } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { activities, blocks, files, generateSlug, geolocations, topoRoutes, topos } from '$lib/db/schema'
@@ -120,6 +121,9 @@ export const actions = {
               parentEntityType: 'area',
             }),
       )
+
+      // Invalidate cache after successful update
+      await invalidateAreaCache(areaId)
     } catch (exception) {
       // If the update fails, return a 404 error with the exception details
       return fail(404, { ...values, error: convertException(exception) })
@@ -203,6 +207,9 @@ export const actions = {
               parentEntityType: 'area',
             }),
       )
+
+      // Invalidate cache after successful deletion
+      await invalidateAreaCache(areaId)
     } catch (error) {
       return fail(400, { error: convertException(error) })
     }

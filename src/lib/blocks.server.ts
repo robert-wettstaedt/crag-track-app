@@ -1,3 +1,4 @@
+import { getFromCache, setInCache } from '$lib/cache.server'
 import type { db } from '$lib/db/db.server'
 import * as schema from '$lib/db/schema'
 import { areas, blocks } from '$lib/db/schema'
@@ -78,7 +79,9 @@ export const getBlocksOfArea = async (areaId: number, db: PostgresJsDatabase<typ
       }
     })
 
-  return { area, blocks: enrichedBlocks }
+  const result = { area, blocks: enrichedBlocks }
+
+  return result
 }
 
 export const getToposOfArea = async (areaId: number, db: PostgresJsDatabase<typeof schema>) => {
@@ -290,4 +293,32 @@ export const getStatsOfBlocks = <
       routes: routesWithTopo,
     }
   })
+}
+
+export const getLayoutBlocks = async (
+  db: PostgresJsDatabase<typeof schema>,
+): Promise<InferResultType<'blocks', { area: { with: { parent: true } }; geolocation: true }>[]> => {
+  // Try to get from cache first
+  const cached = await getFromCache<typeof blocks>('layout', 'blocks')
+  if (cached) {
+    return cached
+  }
+
+  const blocks = await db.query.blocks.findMany({
+    where: (table, { isNotNull }) => isNotNull(table.geolocationFk),
+    with: {
+      area: {
+        with: {
+          parent: true,
+        },
+      },
+      geolocation: true,
+    },
+  })
+
+  // Cache the raw blocks data before enrichment
+  await setInCache('layout', 'blocks', blocks)
+
+  // Return the enriched blocks
+  return blocks
 }

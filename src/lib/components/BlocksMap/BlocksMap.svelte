@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Area, Geolocation } from '$lib/db/schema'
-  import type { InferResultType } from '$lib/db/types'
-  import type { EnrichedArea, EnrichedBlock } from '$lib/db/utils'
+  import type { InferResultType, NestedArea, NestedBlock } from '$lib/db/types'
   import Feature from 'ol/Feature.js'
   import OlMap from 'ol/Map.js'
   import Overlay from 'ol/Overlay.js'
@@ -20,16 +19,16 @@
   import TileWMS from 'ol/source/TileWMS.js'
   import { Fill, Style, Text } from 'ol/style.js'
   import { createEventDispatcher } from 'svelte'
-  import type { GetBlockKey } from '.'
+  import type { Block, GetBlockKey } from '.'
   import Layers, { type Layer } from './Layers'
 
   const DEFAULT_ZOOM = 19
 
   interface Props {
     collapsibleAttribution?: boolean
-    blocks: EnrichedBlock[]
+    blocks: Block[]
     selectedArea?: Area | null
-    selectedBlock?: InferResultType<'blocks', { geolocation: true }> | null
+    selectedBlock?: Block | null
     heightSubtrahend?: number
     height?: number | string | null
     zoom?: number | null
@@ -124,26 +123,26 @@
     return map
   }
 
-  const findArea = (area: EnrichedArea | null | undefined, type?: EnrichedArea['type']): EnrichedArea[] => {
+  const findArea = (area: NestedArea | null | undefined, type?: Area['type']): NestedArea[] => {
     const parents = area == null ? [] : [area]
     let current = area
 
     while (current != null && (type == null ? true : current.type !== type)) {
-      current = (current as EnrichedArea).parent as EnrichedArea | null
+      current = current.parent as NestedArea | null
       current != null && parents.unshift(current)
     }
 
     return parents
   }
 
-  const createMarker = (block: EnrichedBlock, index: number) => {
-    const parents = findArea(block.area as EnrichedArea, 'crag')
+  const createMarker = (block: (typeof blocks)[0], index: number) => {
+    const parents = findArea(block.area, 'crag')
 
     if (block.geolocation?.lat != null && block.geolocation?.long != null) {
       const iconFeature = new Feature({
         data: {
           label: parents.map((parent) => parent.name).join(' / ') + (parents.length === 0 ? '' : ' / ') + block.name,
-          pathname: block.pathname,
+          pathname: `/blocks/${block.id}`,
           priority: 1,
         } satisfies FeatureData,
         geometry: new Point(fromLonLat([block.geolocation.long, block.geolocation.lat])),
@@ -203,13 +202,10 @@
     return iconFeature
   }
 
-  const createSectorLayer = (
-    cragBlocks: EnrichedBlock[],
-    cragSource: VectorSource<Feature<Geometry>>,
-  ): Feature<Point>[] => {
+  const createSectorLayer = (cragBlocks: Block[], cragSource: VectorSource<Feature<Geometry>>): Feature<Point>[] => {
     const allSectors = cragBlocks
-      .map((block) => findArea(block.area as EnrichedArea, 'sector').at(0))
-      .filter((area) => area?.type === 'sector') as EnrichedArea[]
+      .map((block) => findArea(block.area, 'sector').at(0))
+      .filter((area) => area?.type === 'sector') as Block['area'][]
     const sectorsMap = new Map(allSectors.map((area) => [area.id, area]))
     const sectors = Array.from(sectorsMap.values())
 
@@ -217,9 +213,7 @@
       return cragBlocks.map(createMarker).filter((d) => d != null) as Feature<Point>[]
     } else {
       return sectors.flatMap((sector) => {
-        const sectorBlocks = cragBlocks.filter(
-          (block) => findArea(block.area as EnrichedArea, 'sector').at(0)?.id === sector.id,
-        )
+        const sectorBlocks = cragBlocks.filter((block) => findArea(block.area, 'sector').at(0)?.id === sector.id)
         const iconFeatures = sectorBlocks.map(createMarker).filter((d) => d != null) as Feature<Point>[]
         if (iconFeatures.length > 0) {
           const parents = findArea(sector)
@@ -240,7 +234,7 @@
             new Feature({
               data: {
                 label: parents.map((parent) => parent.name).join(' / '),
-                pathname: sector.pathname,
+                pathname: `/areas/${sector.id}`,
                 priority: 2,
               } satisfies FeatureData,
               geometry,
@@ -253,9 +247,13 @@
     }
   }
 
-  const createCragLayer = (map: OlMap, crag: EnrichedArea) => {
-    const cragBlocks = blocks.filter((block) => findArea(block.area as EnrichedArea, 'crag').at(0)?.id === crag.id)
+  const createCragLayer = (map: OlMap, crag: Block['area']) => {
+    const cragBlocks = blocks.filter((block) => findArea(block.area, 'crag').at(0)?.id === crag.id)
     const vectorSource = new VectorSource<Feature<Geometry>>()
+
+    if (crag.id === 63) {
+      console.log(cragBlocks)
+    }
 
     const iconFeatures = createSectorLayer(cragBlocks, vectorSource)
     vectorSource.addFeatures(iconFeatures)
@@ -297,10 +295,12 @@
 
   const createMarkers = (map: OlMap) => {
     const allCrags = blocks
-      .map((block) => findArea(block.area as EnrichedArea, 'crag').at(0))
-      .filter((d) => d != null) as EnrichedArea[]
+      .map((block) => findArea(block.area, 'crag').at(0))
+      .filter((d) => d != null) as Block['area'][]
     const cragsMap = new Map(allCrags.map((area) => [area.id, area]))
     const crags = Array.from(cragsMap.values())
+
+    console.log(crags)
 
     crags.forEach((area) => createCragLayer(map, area))
 
@@ -378,7 +378,7 @@
         }
 
         if (selectedArea) {
-          const parentIds = findArea(block.area as EnrichedArea).map((area) => area.id)
+          const parentIds = findArea(block.area).map((area) => area.id)
           return parentIds.includes(selectedArea.id)
         }
 

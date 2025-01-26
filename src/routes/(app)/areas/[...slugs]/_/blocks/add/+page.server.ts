@@ -1,4 +1,5 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { invalidateAreaCache } from '$lib/cache.server'
 import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
 import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
@@ -113,6 +114,9 @@ export const actions = {
               parentEntityType: 'area',
             }),
       )
+
+      // Invalidate cache after successful creation
+      await invalidateAreaCache(areaId)
     } catch (exception) {
       // If insertion fails, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })

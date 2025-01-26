@@ -1,4 +1,5 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { invalidateAreaCache } from '$lib/cache.server'
 import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { activities, blocks, generateSlug, routes, routesToTags, type Route } from '$lib/db/schema'
@@ -137,6 +138,9 @@ export const actions = {
               parentEntityType: 'block',
             }),
       )
+
+      // Invalidate cache after successful creation
+      await invalidateAreaCache(areaId)
     } catch (exception) {
       return fail(400, { ...values, error: `Unable to create route: ${convertException(exception)}` })
     }
