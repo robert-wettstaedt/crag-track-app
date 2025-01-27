@@ -1,9 +1,8 @@
 import { EDIT_PERMISSION } from '$lib/auth'
-import { invalidateAreaCache } from '$lib/cache.server'
 import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
 import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
-import { activities, areas, blocks, generateSlug, topos, users, type Block } from '$lib/db/schema'
+import { activities, areas, blocks, generateSlug, topos, type Block } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { blockActionSchema, validateFormData, type ActionFailure, type BlockActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getUser } from '$lib/helper.server'
@@ -48,6 +47,10 @@ export const actions = {
     const db = await createDrizzleSupabaseClient(locals.supabase)
     const user = await db((tx) => getUser(locals.user, tx))
 
+    if (user == null) {
+      return fail(404)
+    }
+
     // Retrieve form data from the request
     const data = await request.formData()
     let values: BlockActionValues
@@ -86,13 +89,6 @@ export const actions = {
     let block: Block | undefined
 
     try {
-      // Find the user in the database using their email
-      const user = await db((tx) => tx.query.users.findFirst({ where: eq(users.authUserFk, locals.user!.id) }))
-      if (user == null) {
-        // If the user is not found, throw an error
-        throw new Error('User not found')
-      }
-
       // Insert the new block into the database
       const blockResult = await db((tx) =>
         tx
@@ -114,9 +110,6 @@ export const actions = {
               parentEntityType: 'area',
             }),
       )
-
-      // Invalidate cache after successful creation
-      await invalidateAreaCache(areaId)
     } catch (exception) {
       // If insertion fails, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })

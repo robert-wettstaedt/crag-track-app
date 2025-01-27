@@ -33,6 +33,7 @@
     hasParent={data.parent != null}
     name={form?.name ?? ''}
     type={form?.type ?? 'area'}
+    visibility={form?.visibility ?? 'public'}
   />
 
   <div class="flex justify-between mt-8">

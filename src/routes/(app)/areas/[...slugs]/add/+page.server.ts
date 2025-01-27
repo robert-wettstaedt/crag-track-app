@@ -1,4 +1,5 @@
 import { EDIT_PERMISSION } from '$lib/auth'
+import { invalidateCache } from '$lib/cache.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { activities, areas, generateSlug, users, type Area } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
@@ -103,6 +104,9 @@ export const actions = {
           parentEntityType: 'area',
         }),
       )
+
+      // Invalidate cache after successful update
+      await invalidateCache('layout', 'blocks')
     } catch (exception) {
       // If an error occurs during insertion, return a 400 error with the exception message
       return fail(400, { ...values, error: convertException(exception) })

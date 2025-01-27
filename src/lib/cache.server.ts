@@ -37,16 +37,3 @@ export const setInCache = async <T>(type: string, id: string | number, data: T):
   const cacheKey = getCacheKey(type, id)
   await redis!.set(cacheKey, JSON.stringify(data), { ex: config.cache.ttl })
 }
-
-export const invalidateAreaCache = async (areaId: number) => {
-  await invalidateCache('area', areaId)
-}
-
-export const invalidateBlockCache = async (blockId: number) => {
-  await invalidateCache('block', blockId)
-  await invalidateCache('layout', 'blocks') // Also invalidate the layout blocks cache
-}
-
-export const invalidateRouteCache = async (routeId: number) => {
-  await invalidateCache('route', routeId)
-}

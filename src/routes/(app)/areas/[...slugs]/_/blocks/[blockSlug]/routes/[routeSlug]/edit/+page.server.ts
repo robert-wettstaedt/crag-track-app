@@ -1,5 +1,4 @@
 import { EDIT_PERMISSION } from '$lib/auth'
-import { invalidateAreaCache } from '$lib/cache.server'
 import { createUpdateActivity } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import {
@@ -189,9 +188,6 @@ export const actions = {
               parentEntityType: 'block',
             }),
       )
-
-      // Invalidate cache after successful update
-      await invalidateAreaCache(areaId)
     } catch (exception) {
       // Return a failure if the update operation fails
       return fail(404, { ...values, error: convertException(exception) })

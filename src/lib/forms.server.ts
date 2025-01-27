@@ -1,4 +1,4 @@
-import { areaTypeEnum, ascentTypeEnum, topoRouteTopTypeEnum } from '$lib/db/schema'
+import { areaTypeEnum, areaVisibilityEnum, ascentTypeEnum, topoRouteTopTypeEnum } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
 import { fail } from '@sveltejs/kit'
 import { z } from 'zod'
@@ -124,6 +124,7 @@ export const areaActionSchema = z.object({
   description: z.string().nullable().default(''),
   name: z.string().trim(),
   type: z.enum(areaTypeEnum).default('area'),
+  visibility: z.enum(areaVisibilityEnum).default('public'),
 })
 
 export type BlockActionValues = z.infer<typeof blockActionSchema>

@@ -295,11 +295,13 @@ export const getStatsOfBlocks = <
   })
 }
 
-export const getLayoutBlocks = async (
+export const getLayoutBlocks = async <
+  T extends InferResultType<'blocks', { area: { with: { parent: true } }; geolocation: true }>[],
+>(
   db: PostgresJsDatabase<typeof schema>,
-): Promise<InferResultType<'blocks', { area: { with: { parent: true } }; geolocation: true }>[]> => {
+): Promise<T> => {
   // Try to get from cache first
-  const cached = await getFromCache<typeof blocks>('layout', 'blocks')
+  const cached = await getFromCache<T>('layout', 'blocks')
   if (cached) {
     return cached
   }
@@ -307,18 +309,24 @@ export const getLayoutBlocks = async (
   const blocks = await db.query.blocks.findMany({
     where: (table, { isNotNull }) => isNotNull(table.geolocationFk),
     with: {
-      area: {
-        with: {
-          parent: true,
-        },
-      },
+      area: buildNestedAreaQuery(),
       geolocation: true,
     },
   })
 
+  const filteredBlocks = blocks.filter((block) => {
+    let current = block.area as InferResultType<'areas', { parent: true }> | null
+
+    while (current?.parent != null) {
+      current = current.parent as InferResultType<'areas', { parent: true }> | null
+    }
+
+    return current?.visibility !== 'private'
+  })
+
   // Cache the raw blocks data before enrichment
-  await setInCache('layout', 'blocks', blocks)
+  await setInCache('layout', 'blocks', filteredBlocks)
 
   // Return the enriched blocks
-  return blocks
+  return filteredBlocks as T
 }

@@ -1,7 +1,7 @@
 import { getStatsOfArea, nestedAreaQuery } from '$lib/blocks.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { areas } from '$lib/db/schema'
-import { isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
@@ -13,7 +13,7 @@ export const load = (async ({ locals, parent }) => {
     tx.query.areas.findMany({
       ...nestedAreaQuery,
       orderBy: areas.name,
-      where: isNull(areas.parentFk),
+      where: and(isNull(areas.parentFk), eq(areas.visibility, 'public')),
     }),
   )
 

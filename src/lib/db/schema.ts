@@ -151,6 +151,7 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, { fields: [userSettings.userFk], references: [users.id] }),
 }))
 
+export const areaVisibilityEnum: ['public', 'private'] = ['public', 'private']
 export const areaTypeEnum: ['area', 'crag', 'sector'] = ['area', 'crag', 'sector']
 export const areas = table(
   'areas',
@@ -160,6 +161,7 @@ export const areas = table(
 
     description: text('description'),
     type: text('type', { enum: areaTypeEnum }).notNull().default('area'),
+    visibility: text('visibility', { enum: areaVisibilityEnum }),
 
     parentFk: integer('parent_fk').references((): AnyColumn => areas.id),
   },
