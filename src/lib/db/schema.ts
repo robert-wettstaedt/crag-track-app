@@ -57,7 +57,9 @@ export const userRoles = table(
   'user_roles',
   {
     id: baseFields.id,
-    authUserFk: uuid('auth_user_fk').notNull(),
+    authUserFk: uuid('auth_user_fk')
+      .notNull()
+      .references((): AnyColumn => authUsers.id),
     role: appRole().notNull(),
   },
   () => [
@@ -82,9 +84,11 @@ export const users = table(
     ...baseFields,
     username: text('username').notNull(),
 
-    authUserFk: uuid('auth_user_fk').notNull(),
-    firstAscensionistFk: integer('first_ascentionist_fk'),
-    userSettingsFk: integer('user_settings_fk'),
+    authUserFk: uuid('auth_user_fk')
+      .notNull()
+      .references((): AnyColumn => authUsers.id),
+    firstAscensionistFk: integer('first_ascentionist_fk').references((): AnyColumn => firstAscensionists.id),
+    userSettingsFk: integer('user_settings_fk').references((): AnyColumn => userSettings.id),
   },
   (table) => [
     policy(`${READ_PERMISSION} can read users`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
@@ -116,8 +120,12 @@ export const userSettings = table(
   {
     id: baseFields.id,
 
-    authUserFk: uuid('auth_user_fk').notNull(),
-    userFk: integer('user_fk').notNull(),
+    authUserFk: uuid('auth_user_fk')
+      .notNull()
+      .references((): AnyColumn => authUsers.id),
+    userFk: integer('user_fk')
+      .notNull()
+      .references((): AnyColumn => users.id),
 
     cookie8a: text('cookie_8a'),
     cookie27crags: text('cookie_27crags'),
@@ -176,8 +184,10 @@ export const blocks = table(
     ...baseFields,
     ...baseContentFields,
 
-    areaFk: integer('area_fk').notNull(),
-    geolocationFk: integer('geolocation_fk'),
+    areaFk: integer('area_fk')
+      .notNull()
+      .references((): AnyColumn => areas.id),
+    geolocationFk: integer('geolocation_fk').references((): AnyColumn => geolocations.id),
 
     order: integer('order').notNull(),
   },
@@ -206,9 +216,11 @@ export const routes = table(
     rating: integer('rating'),
     firstAscentYear: integer('first_ascent_year'),
 
-    blockFk: integer('block_fk').notNull(),
-    externalResourcesFk: integer('external_resources_fk'),
-    gradeFk: integer('grade_fk'),
+    blockFk: integer('block_fk')
+      .notNull()
+      .references((): AnyColumn => blocks.id),
+    externalResourcesFk: integer('external_resources_fk').references((): AnyColumn => routeExternalResources.id),
+    gradeFk: integer('grade_fk').references((): AnyColumn => grades.id),
   },
   (table) => [
     ...createBasicTablePolicies('routes'),
@@ -257,11 +269,17 @@ export const routeExternalResources = table(
   {
     id: baseFields.id,
 
-    routeFk: integer('route_fk').notNull(),
+    routeFk: integer('route_fk')
+      .notNull()
+      .references((): AnyColumn => routes.id),
 
-    externalResource8aFk: integer('external_resource_8a_fk'),
-    externalResource27cragsFk: integer('external_resource_27crags_fk'),
-    externalResourceTheCragFk: integer('external_resource_the_crag_fk'),
+    externalResource8aFk: integer('external_resource_8a_fk').references((): AnyColumn => routeExternalResource8a.id),
+    externalResource27cragsFk: integer('external_resource_27crags_fk').references(
+      (): AnyColumn => routeExternalResource27crags.id,
+    ),
+    externalResourceTheCragFk: integer('external_resource_the_crag_fk').references(
+      (): AnyColumn => routeExternalResourceTheCrag.id,
+    ),
   },
 
   (table) => [
@@ -313,7 +331,9 @@ export const routeExternalResource8a = table(
 
     url: text('url'),
 
-    externalResourcesFk: integer('external_resources_fk').notNull(),
+    externalResourcesFk: integer('external_resources_fk')
+      .notNull()
+      .references((): AnyColumn => routeExternalResources.id),
   },
   () => createBasicTablePolicies('route_external_resource_8a'),
 ).enableRLS()
@@ -345,7 +365,9 @@ export const routeExternalResource27crags = table(
 
     url: text('url'),
 
-    externalResourcesFk: integer('external_resources_fk').notNull(),
+    externalResourcesFk: integer('external_resources_fk')
+      .notNull()
+      .references((): AnyColumn => routeExternalResources.id),
   },
   () => createBasicTablePolicies('route_external_resource_27crags'),
 ).enableRLS()
@@ -373,7 +395,9 @@ export const routeExternalResourceTheCrag = table(
 
     url: text('url'),
 
-    externalResourcesFk: integer('external_resources_fk').notNull(),
+    externalResourcesFk: integer('external_resources_fk')
+      .notNull()
+      .references((): AnyColumn => routeExternalResources.id),
   },
   () => createBasicTablePolicies('route_external_resource_the_crag'),
 ).enableRLS()
@@ -393,7 +417,7 @@ export const firstAscensionists = table(
     id: baseFields.id,
 
     name: text('name').notNull(),
-    userFk: integer('user_fk'),
+    userFk: integer('user_fk').references((): AnyColumn => users.id),
   },
   (table) => [
     policy(
@@ -420,10 +444,10 @@ export const routesToFirstAscensionists = table(
 
     routeFk: integer('route_fk')
       .notNull()
-      .references(() => routes.id),
+      .references((): AnyColumn => routes.id),
     firstAscensionistFk: integer('first_ascensionist_fk')
       .notNull()
-      .references(() => firstAscensionists.id),
+      .references((): AnyColumn => firstAscensionists.id),
   },
   (table) => [
     policy(
@@ -456,8 +480,10 @@ export const ascents = table(
     notes: text('notes'),
     type: text('type', { enum: ascentTypeEnum }).notNull(),
 
-    gradeFk: integer('grade_fk'),
-    routeFk: integer('route_fk').notNull(),
+    gradeFk: integer('grade_fk').references((): AnyColumn => grades.id),
+    routeFk: integer('route_fk')
+      .notNull()
+      .references((): AnyColumn => routes.id),
   },
   (table) => [
     policy(`${READ_PERMISSION} can create ascents`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
@@ -519,10 +545,10 @@ export const files = table(
 
     path: text('path').notNull(),
 
-    areaFk: integer('area_fk'),
-    ascentFk: integer('ascent_fk'),
-    routeFk: integer('route_fk'),
-    blockFk: integer('block_fk'),
+    areaFk: integer('area_fk').references((): AnyColumn => areas.id),
+    ascentFk: integer('ascent_fk').references((): AnyColumn => ascents.id),
+    routeFk: integer('route_fk').references((): AnyColumn => routes.id),
+    blockFk: integer('block_fk').references((): AnyColumn => blocks.id),
   },
   (table) => [
     policy(`${READ_PERMISSION} can create files`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
@@ -585,8 +611,8 @@ export const topos = table(
   {
     id: baseFields.id,
 
-    blockFk: integer('block_fk'),
-    fileFk: integer('file_fk'),
+    blockFk: integer('block_fk').references((): AnyColumn => blocks.id),
+    fileFk: integer('file_fk').references((): AnyColumn => files.id),
   },
   (table) => [...createBasicTablePolicies('topos'), index('topos_block_fk_idx').on(table.blockFk)],
 ).enableRLS()
@@ -609,8 +635,8 @@ export const topoRoutes = table(
     topType: text('top_type', { enum: topoRouteTopTypeEnum }).notNull(),
     path: text('path'),
 
-    routeFk: integer('route_fk'),
-    topoFk: integer('topo_fk'),
+    routeFk: integer('route_fk').references((): AnyColumn => routes.id),
+    topoFk: integer('topo_fk').references((): AnyColumn => topos.id),
   },
   (table) => [
     ...createBasicTablePolicies('topo_routes'),
@@ -645,10 +671,10 @@ export const routesToTags = table(
   {
     routeFk: integer('route_fk')
       .notNull()
-      .references(() => routes.id),
+      .references((): AnyColumn => routes.id),
     tagFk: text('tag_fk')
       .notNull()
-      .references(() => tags.id),
+      .references((): AnyColumn => tags.id),
   },
   (table) => [primaryKey({ columns: [table.routeFk, table.tagFk] }), ...createBasicTablePolicies('routes_to_tags')],
 ).enableRLS()
@@ -666,8 +692,8 @@ export const geolocations = table(
     lat: real('lat').notNull(),
     long: real('long').notNull(),
 
-    areaFk: integer('area_fk'),
-    blockFk: integer('block_fk'),
+    areaFk: integer('area_fk').references((): AnyColumn => areas.id),
+    blockFk: integer('block_fk').references((): AnyColumn => blocks.id),
   },
   (table) => [
     ...createBasicTablePolicies('geolocations'),
@@ -690,7 +716,9 @@ export const activities = table(
   {
     ...baseFields,
     type: activityTypeEnum('type').notNull(),
-    userFk: integer('user_fk').notNull(),
+    userFk: integer('user_fk')
+      .notNull()
+      .references((): AnyColumn => users.id),
     entityId: integer('entity_id').notNull(),
     entityType: text('entity_type', { enum: ['block', 'route', 'area', 'ascent', 'file', 'user'] }).notNull(),
     parentEntityId: integer('parent_entity_id'),

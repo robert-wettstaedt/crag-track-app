@@ -64,6 +64,13 @@
       "when": 1737988633291,
       "tag": "0009_gifted_doctor_doom",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1737990395490,
+      "tag": "0010_bright_viper",
+      "breakpoints": true
     }
   ]
 }
