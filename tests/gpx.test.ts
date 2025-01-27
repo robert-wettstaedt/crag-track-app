@@ -91,7 +91,7 @@ const mockDb = {
                       firstAscentFk: null,
                       externalResourcesFk: null,
                       gradeFk: null,
-                      firstAscent: null,
+                      firstAscents: [],
                       tags: [
                         {
                           routeFk: 5344,
@@ -111,7 +111,7 @@ const mockDb = {
                       firstAscentFk: null,
                       externalResourcesFk: null,
                       gradeFk: null,
-                      firstAscent: null,
+                      firstAscents: [],
                       tags: [
                         {
                           routeFk: 5345,
@@ -131,14 +131,14 @@ const mockDb = {
                       firstAscentFk: 4647,
                       externalResourcesFk: 280,
                       gradeFk: 3,
-                      firstAscent: {
-                        id: 4647,
-                        climberName: 'q',
-                        year: null,
-                        routeFk: 5347,
-                        climberFk: null,
-                        climber: null,
-                      },
+                      firstAscents: [
+                        {
+                          firstAscensionist: {
+                            id: 4647,
+                            name: 'q',
+                          },
+                        },
+                      ],
                       tags: [
                         {
                           routeFk: 5347,
@@ -162,7 +162,7 @@ const mockDb = {
                       firstAscentFk: null,
                       externalResourcesFk: null,
                       gradeFk: 6,
-                      firstAscent: null,
+                      firstAscents: [],
                       tags: [
                         {
                           routeFk: 5346,
