@@ -130,7 +130,6 @@ export const getAreaGPX = async (areaId: number, db: PostgresJsDatabase<typeof s
 const loadBlockFiles = async (
   blocks: Awaited<ReturnType<typeof getToposOfArea>>['blocks'],
   db: PostgresJsDatabase<typeof schema>,
-  session: Session,
 ) => {
   async function getTopoFile(stat: FileStat) {
     const content = await nextcloud?.getFileContents(`${NEXTCLOUD_USER_NAME}/${stat.filename}`, { details: true })
@@ -293,15 +292,15 @@ const renderRouteName = (
 }
 
 const renderRouteDescription = (
-  route: InferResultType<'routes', { firstAscent: { with: { climber: true } }; tags: true }>,
+  route: InferResultType<'routes', { firstAscents: { with: { firstAscensionist: true } }; tags: true }>,
 ): string => {
   return [
-    route.firstAscent == null
+    route.firstAscents.length === 0 && route.firstAscentYear == null
       ? null
       : `<p style="margin-top: 16px;">
-            ${(route.firstAscent.climber?.username ?? route.firstAscent.climberName) == null ? '' : `${route.firstAscent.climber?.username ?? route.firstAscent.climberName}&nbsp;`}
+            ${route.firstAscents.map((firstAscent) => firstAscent.firstAscensionist.name).join(', ')}
 
-            ${route.firstAscent.year ?? ''}
+            ${route.firstAscentYear ?? ''}
           </p>`,
 
     route.tags.length === 0

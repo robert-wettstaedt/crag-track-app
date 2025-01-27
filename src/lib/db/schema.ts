@@ -207,7 +207,6 @@ export const routes = table(
     firstAscentYear: integer('first_ascent_year'),
 
     blockFk: integer('block_fk').notNull(),
-    firstAscentFk: integer('first_ascent_fk'),
     externalResourcesFk: integer('external_resources_fk'),
     gradeFk: integer('grade_fk'),
   },
@@ -223,7 +222,6 @@ export type InsertRoute = InferInsertModel<typeof routes>
 export const RoutesRelations = relations(routes, ({ one, many }) => ({
   author: one(users, { fields: [routes.createdBy], references: [users.id] }),
   block: one(blocks, { fields: [routes.blockFk], references: [blocks.id] }),
-  firstAscent: one(firstAscents, { fields: [routes.firstAscentFk], references: [firstAscents.id] }),
   externalResources: one(routeExternalResources, {
     fields: [routes.externalResourcesFk],
     references: [routeExternalResources.id],
@@ -387,28 +385,6 @@ export const routeExternalResourceTheCragRelations = relations(routeExternalReso
     fields: [routeExternalResourceTheCrag.externalResourcesFk],
     references: [routeExternalResources.id],
   }),
-}))
-
-export const firstAscents = table(
-  'first_ascents',
-  {
-    id: baseFields.id,
-
-    climberName: text('climber_name'),
-    year: integer('year'),
-
-    routeFk: integer('route_fk').notNull(),
-    climberFk: integer('climber_fk'),
-  },
-  (table) => [...createBasicTablePolicies('first_ascents'), index('first_ascents_route_fk_idx').on(table.routeFk)],
-).enableRLS()
-
-export type FirstAscent = InferSelectModel<typeof firstAscents>
-export type InsertFirstAscent = InferInsertModel<typeof firstAscents>
-
-export const firstAscentsRelations = relations(firstAscents, ({ one }) => ({
-  climber: one(users, { fields: [firstAscents.climberFk], references: [users.id] }),
-  route: one(routes, { fields: [firstAscents.routeFk], references: [routes.id] }),
 }))
 
 export const firstAscensionists = table(

@@ -12,9 +12,9 @@ const blocksQuery: {
   geolocation: true
   routes: {
     with: {
-      firstAscent: {
+      firstAscents: {
         with: {
-          climber: true
+          firstAscensionist: true
         }
       }
       tags: true
@@ -31,9 +31,9 @@ const blocksQuery: {
   geolocation: true,
   routes: {
     with: {
-      firstAscent: {
+      firstAscents: {
         with: {
-          climber: true,
+          firstAscensionist: true,
         },
       },
       tags: true,

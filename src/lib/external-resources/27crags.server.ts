@@ -91,7 +91,7 @@ export default {
       createdBy: -1,
       description: null,
       externalResourcesFk: null,
-      firstAscentFk: null,
+      firstAscentYear: null,
       gradeFk: grade?.id ?? null,
       id: data.searchable_id ?? -1,
       name: data.name ?? '',

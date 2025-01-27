@@ -4,9 +4,9 @@
     {
       routes: {
         with: {
-          firstAscent: {
+          firstAscents: {
             with: {
-              climber: true
+              firstAscensionist: true
             }
           }
           tags: true
@@ -73,16 +73,14 @@
                 {/if}
               </h3>
 
-              {#if route.firstAscent}
+              {#if route.firstAscents.length > 0 || route.firstAscentYear != null}
                 <p class="ms-4">
                   FA:
 
-                  {#if (route.firstAscent.climber?.username ?? route.firstAscent.climberName) != null}
-                    {route.firstAscent.climber?.username ?? route.firstAscent.climberName}&nbsp;
-                  {/if}
+                  {route.firstAscents.map((firstAscent) => firstAscent.firstAscensionist.name).join(', ')}
 
-                  {#if route.firstAscent.year}
-                    {route.firstAscent.year}
+                  {#if route.firstAscentYear != null}
+                    {route.firstAscentYear}
                   {/if}
                 </p>
               {/if}

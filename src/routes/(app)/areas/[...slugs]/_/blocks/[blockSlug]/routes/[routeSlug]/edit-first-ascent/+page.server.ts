@@ -32,12 +32,6 @@ export const load = (async ({ locals, params, parent }) => {
           where: getRouteDbFilter(params.routeSlug),
           with: {
             ascents: user == null ? { limit: 0 } : { where: eq(ascents.createdBy, user.id) },
-            firstAscent: {
-              // Include the climber information in the first ascent
-              with: {
-                climber: true,
-              },
-            },
             firstAscents: {
               with: {
                 firstAscensionist: {
@@ -152,17 +146,17 @@ export const actions = {
           ? null
           : await Promise.all(
               values.climberName.map(async (name) => {
-                let firstAscent = await tx.query.firstAscensionists.findFirst({
+                let firstAscensionist = await tx.query.firstAscensionists.findFirst({
                   where: eq(firstAscensionists.name, name),
                 })
 
-                if (firstAscent == null) {
-                  firstAscent = (await tx.insert(firstAscensionists).values({ name }).returning())[0]
+                if (firstAscensionist == null) {
+                  firstAscensionist = (await tx.insert(firstAscensionists).values({ name }).returning())[0]
                 }
 
                 await tx
                   .insert(routesToFirstAscensionists)
-                  .values({ firstAscensionistFk: firstAscent.id, routeFk: route.id })
+                  .values({ firstAscensionistFk: firstAscensionist.id, routeFk: route.id })
               }),
             ),
       )

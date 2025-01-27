@@ -51,7 +51,7 @@ export const GET = async ({ locals, url }) => {
     createdBy: -1,
     description: route8a?.description ?? route27crags?.description ?? routeTheCrag?.description ?? null,
     externalResourcesFk: null,
-    firstAscentFk: null,
+    firstAscentYear: null,
     gradeFk: gradeIndicesMean < 0 ? null : grades[gradeIndicesMean].id,
     name: route8a?.name ?? route27crags?.name ?? routeTheCrag?.name ?? query,
     rating: ratingMean,

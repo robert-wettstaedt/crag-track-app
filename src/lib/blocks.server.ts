@@ -90,9 +90,9 @@ export const getToposOfArea = async (areaId: number, db: PostgresJsDatabase<type
     geolocation: true
     routes: {
       with: {
-        firstAscent: {
+        firstAscents: {
           with: {
-            climber: true
+            firstAscensionist: true
           }
         }
         tags: true
@@ -109,9 +109,9 @@ export const getToposOfArea = async (areaId: number, db: PostgresJsDatabase<type
     geolocation: true,
     routes: {
       with: {
-        firstAscent: {
+        firstAscents: {
           with: {
-            climber: true,
+            firstAscensionist: true,
           },
         },
         tags: true,

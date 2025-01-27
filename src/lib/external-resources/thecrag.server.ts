@@ -104,7 +104,7 @@ export default {
       createdBy: -1,
       description: data.description ?? null,
       externalResourcesFk: null,
-      firstAscentFk: null,
+      firstAscentYear: null,
       gradeFk: grade?.id ?? null,
       id: data.node ?? -1,
       name: data.name ?? '',
