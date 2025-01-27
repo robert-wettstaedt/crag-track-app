@@ -60,7 +60,11 @@ export const load = (async ({ locals, params, parent, url }) => {
         topos: {
           with: {
             file: true,
-            routes: true,
+            routes: {
+              with: {
+                route: true,
+              },
+            },
           },
         },
       },

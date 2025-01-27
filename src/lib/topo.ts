@@ -8,7 +8,7 @@ export interface PointDTO {
   y: number
 }
 
-export interface TopoRouteDTO extends Omit<InferResultType<'topoRoutes'>, 'path'> {
+export interface TopoRouteDTO extends Omit<InferResultType<'topoRoutes', { route: true }>, 'path'> {
   points: PointDTO[]
 }
 

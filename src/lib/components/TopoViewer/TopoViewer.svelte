@@ -4,6 +4,7 @@
     editable?: boolean
     getRouteKey?: ((route: TopoRouteDTO, index: number) => number) | null
     height?: number
+    initialRouteId?: number
     limitImgHeight?: boolean
     onChange?: (value: TopoDTO[], changedRoute: TopoRouteDTO) => void
     onLoad?: () => void
@@ -13,6 +14,7 @@
 </script>
 
 <script lang="ts">
+  import RouteName from '$lib/components/RouteName'
   import type { PointDTO, TopoDTO, TopoRouteDTO } from '$lib/topo'
   import * as d3 from 'd3'
   import { onMount, type Snippet } from 'svelte'
@@ -26,6 +28,7 @@
     editable = false,
     getRouteKey = null,
     height: elementHeight,
+    initialRouteId,
     limitImgHeight = true,
     onChange,
     onLoad,
@@ -44,6 +47,8 @@
   let selectedPoint: PointDTO | undefined = undefined
   let svg: SVGSVGElement | undefined = $state()
   let clicked = false
+  let linesVisible = $state(true)
+  let isFullscreen = $state(false)
 
   let zoom: d3.ZoomBehavior<Element, unknown> | null = $state(null)
   let zoomTransform: d3.ZoomTransform | undefined = $state()
@@ -68,7 +73,7 @@
     topos.flatMap((topo) => topo.routes).find((route) => route.routeFk === $selectedRouteStore),
   )
 
-  selectedRouteStore.subscribe(() => {
+  selectedRouteStore.subscribe((newSelectedRoute) => {
     $selectedPointTypeStore = null
     selectedPoint = undefined
 
@@ -198,6 +203,22 @@
     zoomTransform = undefined
   }
 
+  const onToggleLines = () => {
+    linesVisible = !linesVisible
+  }
+
+  const onToggleFullscreen = async () => {
+    try {
+      if (isFullscreen) {
+        await document.exitFullscreen()
+      } else {
+        await imgWrapper?.requestFullscreen()
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const onLoadImage = () => {
     getDimensions()
     onLoad?.()
@@ -223,6 +244,8 @@
     }).observe(imgWrapper)
   })
 </script>
+
+<svelte:document onfullscreenchange={() => (isFullscreen = document.fullscreenElement != null)} />
 
 {#if editable}
   <div class="flex justify-between p-2 preset-filled-surface-100-900">
@@ -302,7 +325,7 @@
   {/each}
 
   <div
-    class="absolute z-20"
+    class="absolute z-20 {linesVisible ? 'opacity-100' : 'opacity-0'}"
     style={`left: ${translateX}px; right: ${translateX}px; top: ${translateY}px; bottom: ${translateY}px`}
   >
     {#if selectedTopo != null}
@@ -332,7 +355,7 @@
     {/if}
   </div>
 
-  <div class="flex flex-col items-end gap-4 absolute top-2 right-2 z-30" id="topo-controls">
+  <div class="flex flex-col items-end gap-4 absolute top-2 right-2 z-30 topo-controls">
     {#if topos.length > 1}
       <div class="flex gap-1">
         <button
@@ -364,10 +387,36 @@
       <i class="fa-solid fa-rotate-right"></i>
     </button>
 
+    <button
+      aria-label="Toggle lines"
+      class="btn-icon {linesVisible ? 'preset-filled' : 'preset-filled-secondary-500'}"
+      onclick={onToggleLines}
+    >
+      <i class="fa-solid {linesVisible ? 'fa-eye-slash' : 'fa-eye'}"></i>
+    </button>
+
+    <button
+      aria-label="Fullscreen"
+      class="btn-icon {isFullscreen ? 'preset-filled-secondary-500' : 'preset-filled'}"
+      onclick={onToggleFullscreen}
+    >
+      <i class="fa-solid {isFullscreen ? 'fa-compress' : 'fa-expand'}"></i>
+    </button>
+
     {#if actions != null}
       {@render actions()}
     {/if}
   </div>
+
+  {#if selectedTopoRoute?.route != null && selectedTopoRoute.route.id !== initialRouteId}
+    <a
+      class="anchor absolute z-20 bg-primary-50 px-3 py-2 rounded shadow top-1 z-30 text-overflow-ellipsis whitespace-nowrap overflow-hidden max-w-full topo-controls"
+      href={`/routes/${selectedTopoRoute.route.id}`}
+      onclick={() => (isFullscreen ? onToggleFullscreen() : undefined)}
+    >
+      <RouteName route={selectedTopoRoute.route} />
+    </a>
+  {/if}
 </div>
 
 <style>
@@ -376,7 +425,7 @@
       max-height: none;
     }
 
-    #topo-controls {
+    .topo-controls {
       display: none;
     }
 

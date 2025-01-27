@@ -167,7 +167,7 @@
           <Tabs.Panel value="#topo">
             <div class="flex">
               <section class="w-full relative" use:fitHeightAction>
-                <TopoViewer topos={data.topos} />
+                <TopoViewer initialRouteId={data.route.id} topos={data.topos} />
               </section>
             </div>
           </Tabs.Panel>
