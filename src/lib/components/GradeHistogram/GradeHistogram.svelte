@@ -52,18 +52,6 @@
         field: 'grade',
         title: 'Count',
       },
-      tooltip: [
-        {
-          field: 'grade',
-          type: 'nominal',
-          title: 'Grade',
-        },
-        {
-          aggregate: 'count',
-          field: 'grade',
-          title: 'Count',
-        },
-      ],
     },
   }}
   opts={{
