@@ -209,16 +209,20 @@
     linesVisible = !linesVisible
   }
 
-  const onToggleFullscreen = async () => {
-    try {
-      if (isFullscreen) {
-        await document.exitFullscreen()
-      } else {
-        await imgWrapper?.requestFullscreen()
-      }
-    } catch (error) {
-      console.error(error)
+  const onToggleFullscreen = (value?: boolean) => {
+    isFullscreen = value ?? !isFullscreen
+
+    if (document.scrollingElement instanceof HTMLElement) {
+      document.scrollingElement.style.overflow = isFullscreen ? 'hidden' : ''
     }
+
+    requestAnimationFrame(() => {
+      getDimensions()
+
+      if (zoom == null) {
+        initZoom()
+      }
+    })
   }
 
   const onLoadImage = () => {
@@ -247,7 +251,13 @@
   })
 </script>
 
-<svelte:document onfullscreenchange={() => (isFullscreen = document.fullscreenElement != null)} />
+<svelte:document
+  onkeydown={(event) => {
+    if (event.key === 'Escape') {
+      onToggleFullscreen(false)
+    }
+  }}
+/>
 
 {#if editable}
   <div class="flex justify-between p-2 preset-filled-surface-100-900">
@@ -295,7 +305,9 @@
 
 <div
   bind:this={imgWrapper}
-  class="relative overflow-hidden h-full w-full flex items-center justify-center"
+  class="relative overflow-hidden h-full w-full flex items-center justify-center {isFullscreen
+    ? '!fixed top-0 left-0 !z-[1000]'
+    : ''}"
   style={elementHeight == null ? undefined : `min-height: ${elementHeight}px`}
 >
   {#each topos as topo, index}
@@ -401,7 +413,7 @@
       <button
         aria-label="Fullscreen"
         class="btn-icon {isFullscreen ? 'preset-filled-secondary-500' : 'preset-filled'}"
-        onclick={onToggleFullscreen}
+        onclick={() => onToggleFullscreen()}
       >
         <i class="fa-solid {isFullscreen ? 'fa-compress' : 'fa-expand'}"></i>
       </button>
