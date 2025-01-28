@@ -22,6 +22,15 @@
     `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`,
   )
 
+  let selectedTopoIndex = $derived.by(() => {
+    const index = data.topos.findIndex((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === data.route.id))
+    if (index === -1) {
+      return null
+    }
+
+    return index
+  })
+
   let files = $state(data.files)
   $effect(() => {
     files = data.files
@@ -167,7 +176,7 @@
           <Tabs.Panel value="#topo">
             <div class="flex">
               <section class="w-full relative" use:fitHeightAction>
-                <TopoViewer initialRouteId={data.route.id} topos={data.topos} />
+                <TopoViewer {selectedTopoIndex} initialRouteId={data.route.id} topos={data.topos} />
               </section>
             </div>
           </Tabs.Panel>
