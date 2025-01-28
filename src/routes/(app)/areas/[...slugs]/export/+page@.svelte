@@ -8,6 +8,7 @@
   import nc from '$lib/assets/nc.svg'
   import sa from '$lib/assets/sa.svg'
   import AreaBlockListing from '$lib/components/AreaBlockListing'
+  import { selectedRouteStore } from '$lib/components/TopoViewer'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
   import '../../../../../app.postcss'
@@ -30,6 +31,8 @@
   let loadedMaps = $state(0)
 
   const onLoad = () => {
+    selectedRouteStore.set(null)
+
     if (loadedTopos === noTopos && loadedMaps === noMaps) {
       if (!DEBUG) {
         window.print()

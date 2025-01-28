@@ -7,6 +7,7 @@
   import nc from '$lib/assets/nc.svg'
   import sa from '$lib/assets/sa.svg'
   import BlockEntry from '$lib/components/AreaBlockListing/components/BlockEntry'
+  import { selectedRouteStore } from '$lib/components/TopoViewer'
   import { convertException } from '$lib/errors'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
@@ -25,6 +26,8 @@
   let error: string | null = $state(null)
 
   const onLoadTopo = async () => {
+    selectedRouteStore.set(null)
+
     if (++loadedTopos === data.block.topos.length) {
       const dataUrl = await domtoimage.domToBlob(dom)
 
