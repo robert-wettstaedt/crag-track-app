@@ -276,6 +276,6 @@
   </div>
 
   <section class="w-full" use:fitHeightAction>
-    <TopoViewer editable={true} bind:selectedTopoIndex bind:topos onChange={onChangeTopo} />
+    <TopoViewer editable={true} bind:selectedTopoIndex bind:topos onChange={onChangeTopo} showControls={false} />
   </section>
 </div>

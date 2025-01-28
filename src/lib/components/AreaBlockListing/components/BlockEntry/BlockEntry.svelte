@@ -105,7 +105,13 @@
         {#if topo.file?.stat == null}
           <p class="text-center w-full">Error loading file: {topo.file?.error ?? ''}</p>
         {:else}
-          <TopoViewer {...topoViewerProps} getRouteKey={(_, index) => index + 1} onLoad={onLoadTopo} topos={[topo]} />
+          <TopoViewer
+            {...topoViewerProps}
+            getRouteKey={(_, index) => index + 1}
+            onLoad={onLoadTopo}
+            showControls={false}
+            topos={[topo]}
+          />
         {/if}
 
         {#if block.geolocation?.lat != null && block.geolocation?.long != null}

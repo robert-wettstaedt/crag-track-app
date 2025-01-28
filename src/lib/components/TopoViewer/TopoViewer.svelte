@@ -9,6 +9,7 @@
     onChange?: (value: TopoDTO[], changedRoute: TopoRouteDTO) => void
     onLoad?: () => void
     selectedTopoIndex?: number
+    showControls?: boolean
     topos: TopoDTO[]
   }
 </script>
@@ -33,6 +34,7 @@
     onChange,
     onLoad,
     selectedTopoIndex = $bindable(0),
+    showControls = true,
     topos = $bindable(),
   }: TopoViewerProps = $props()
 
@@ -355,58 +357,60 @@
     {/if}
   </div>
 
-  <div class="flex flex-col items-end gap-4 absolute top-2 right-2 z-30 topo-controls">
-    {#if topos.length > 1}
-      <div class="flex gap-1">
-        <button
-          aria-label="Previous Topo"
-          class="btn-icon preset-filled"
-          disabled={selectedTopoIndex <= 0}
-          onclick={onPrevTopo}
-        >
-          <i class="fa-solid fa-caret-left"></i>
-        </button>
+  {#if showControls}
+    <div class="flex flex-col items-end gap-4 absolute top-2 right-2 z-30 topo-controls">
+      {#if topos.length > 1}
+        <div class="flex gap-1">
+          <button
+            aria-label="Previous Topo"
+            class="btn-icon preset-filled"
+            disabled={selectedTopoIndex <= 0}
+            onclick={onPrevTopo}
+          >
+            <i class="fa-solid fa-caret-left"></i>
+          </button>
 
-        <button
-          aria-label="Next Topo"
-          class="btn-icon preset-filled"
-          disabled={selectedTopoIndex >= topos.length - 1}
-          onclick={onNextTopo}
-        >
-          <i class="fa-solid fa-caret-right"></i>
-        </button>
-      </div>
-    {/if}
+          <button
+            aria-label="Next Topo"
+            class="btn-icon preset-filled"
+            disabled={selectedTopoIndex >= topos.length - 1}
+            onclick={onNextTopo}
+          >
+            <i class="fa-solid fa-caret-right"></i>
+          </button>
+        </div>
+      {/if}
 
-    <button
-      aria-label="Reset zoom"
-      class="btn-icon preset-filled"
-      disabled={zoomTransform == null}
-      onclick={onResetZoom}
-    >
-      <i class="fa-solid fa-rotate-right"></i>
-    </button>
+      <button
+        aria-label="Reset zoom"
+        class="btn-icon preset-filled"
+        disabled={zoomTransform == null}
+        onclick={onResetZoom}
+      >
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
 
-    <button
-      aria-label="Toggle lines"
-      class="btn-icon {linesVisible ? 'preset-filled' : 'preset-filled-secondary-500'}"
-      onclick={onToggleLines}
-    >
-      <i class="fa-solid {linesVisible ? 'fa-eye-slash' : 'fa-eye'}"></i>
-    </button>
+      <button
+        aria-label="Toggle lines"
+        class="btn-icon {linesVisible ? 'preset-filled' : 'preset-filled-secondary-500'}"
+        onclick={onToggleLines}
+      >
+        <i class="fa-solid {linesVisible ? 'fa-eye-slash' : 'fa-eye'}"></i>
+      </button>
 
-    <button
-      aria-label="Fullscreen"
-      class="btn-icon {isFullscreen ? 'preset-filled-secondary-500' : 'preset-filled'}"
-      onclick={onToggleFullscreen}
-    >
-      <i class="fa-solid {isFullscreen ? 'fa-compress' : 'fa-expand'}"></i>
-    </button>
+      <button
+        aria-label="Fullscreen"
+        class="btn-icon {isFullscreen ? 'preset-filled-secondary-500' : 'preset-filled'}"
+        onclick={onToggleFullscreen}
+      >
+        <i class="fa-solid {isFullscreen ? 'fa-compress' : 'fa-expand'}"></i>
+      </button>
 
-    {#if actions != null}
-      {@render actions()}
-    {/if}
-  </div>
+      {#if actions != null}
+        {@render actions()}
+      {/if}
+    </div>
+  {/if}
 
   {#if selectedTopoRoute?.route != null && selectedTopoRoute.route.id !== initialRouteId}
     <a
