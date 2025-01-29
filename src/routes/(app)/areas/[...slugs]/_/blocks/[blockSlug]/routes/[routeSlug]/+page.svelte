@@ -22,14 +22,7 @@
     `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`,
   )
 
-  let selectedTopoIndex = $derived.by(() => {
-    const index = data.topos.findIndex((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === data.route.id))
-    if (index === -1) {
-      return null
-    }
-
-    return index
-  })
+  let selectedTopoIndex = $state<number | undefined>(undefined)
 
   let files = $state(data.files)
   $effect(() => {
@@ -45,6 +38,9 @@
     tabValue = $page.url.hash.length > 0 ? $page.url.hash : '#info'
     selectedRouteStore.set(data.route.id)
     highlightedRouteStore.set(null)
+
+    const index = data.topos.findIndex((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === data.route.id))
+    selectedTopoIndex = index === -1 ? undefined : index
   })
   onMount(() => {
     tabValue = $page.url.hash.length > 0 ? $page.url.hash : '#info'
