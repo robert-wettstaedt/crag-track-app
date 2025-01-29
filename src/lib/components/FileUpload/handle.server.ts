@@ -5,6 +5,7 @@ import { getNextcloud, mkDir } from '$lib/nextcloud/nextcloud.server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { eq } from 'drizzle-orm'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import convert from 'heic-convert'
 import sharp from 'sharp'
 
 export const handleFileUpload = async (
@@ -56,7 +57,13 @@ export const handleFileUpload = async (
           throw downloadResult.error
         }
 
-        const fileBuffer = await downloadResult.data.arrayBuffer()
+        let fileBuffer = await downloadResult.data.arrayBuffer()
+
+        if (supabaseFile.metadata.mimetype === 'image/heic') {
+          // https://github.com/catdad-experiments/heic-convert/issues/34
+          const buffer = new Uint8Array(fileBuffer) as unknown as ArrayBufferLike
+          fileBuffer = await convert({ buffer, format: 'JPEG', quality: 1 })
+        }
 
         if (typeof supabaseFile.metadata.mimetype === 'string' && supabaseFile.metadata.mimetype.startsWith('image/')) {
           const image = sharp(fileBuffer)
