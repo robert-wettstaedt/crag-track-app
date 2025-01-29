@@ -40,6 +40,14 @@ export interface UserEntity extends BaseEntity {
 
 export type Entity = AreaEntity | BlockEntity | RouteEntity | AscentEntity | FileEntity | UserEntity
 
+export interface ActivityGroup {
+  items: ActivityDTO[]
+  user: ActivityDTO['user']
+  parentEntity: ActivityDTO['parentEntity']
+  entity: ActivityDTO['entity']
+  latestDate: Date
+}
+
 export interface ActivityDTO extends InferResultType<'activities', { user: true }> {
   entityName?: string | null
   entity: Entity

@@ -2,6 +2,7 @@
   export interface ItemProps {
     activity: ActivityDTO
     withBreadcrumbs?: boolean
+    withDetails?: boolean
   }
 </script>
 
@@ -16,7 +17,7 @@
   import { compareAsc, format, formatDistance, formatRelative } from 'date-fns'
   import { enGB as locale } from 'date-fns/locale'
 
-  const { activity, withBreadcrumbs = false }: ItemProps = $props()
+  const { activity, withBreadcrumbs = false, withDetails = false }: ItemProps = $props()
 
   const iconClasses = $derived.by(() => {
     if (activity.entity.type === 'ascent' && activity.entity.object != null && activity.type === 'created') {
@@ -52,9 +53,11 @@
 
   <div class="flex-1 min-w-0">
     <div class="mb-2">
-      <span class="font-semibold">
-        <a class="anchor" href={`/users/${activity.user.username}`}>{activity.user.username}</a>
-      </span>
+      {#if withDetails}
+        <span class="font-semibold">
+          <a class="anchor" href={`/users/${activity.user.username}`}>{activity.user.username}</a>
+        </span>
+      {/if}
 
       {#if activity.entity.type === 'ascent' && activity.type === 'created'}
         <span>
@@ -144,7 +147,7 @@
             </a>
           {/if}
 
-          {#if activity.parentEntityType != null && activity.parentEntityId != null && activity.parentEntityName != null}
+          {#if activity.parentEntityType != null && activity.parentEntityId != null && activity.parentEntityName != null && withDetails}
             <span class="text-surface-500">in</span>
             <a class="anchor inline-flex flex-wrap" href={`/${activity.parentEntityType}s/${activity.parentEntityId}`}>
               {#if withBreadcrumbs && activity.parentEntity?.breadcrumb != null}
@@ -218,7 +221,9 @@
     </div>
 
     <p class="text-sm text-surface-500 flex items-center justify-between">
-      {formatRelative(new Date(activity.createdAt), new Date(), { locale })}
+      {#if withDetails}
+        {formatRelative(new Date(activity.createdAt), new Date(), { locale })}
+      {/if}
 
       {#if activity.entity.type === 'ascent' && activity.type === 'created' && ($page.data.session?.user?.id === activity.entity.object?.author.authUserFk || $page.data.userPermissions?.includes(EDIT_PERMISSION))}
         <a

@@ -1,4 +1,4 @@
-import type { ActivityDTO, Entity } from '$lib/components/ActivityFeed'
+import type { ActivityDTO, ActivityGroup, Entity } from '$lib/components/ActivityFeed'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import type { InsertActivity } from '$lib/db/schema'
 import * as schema from '$lib/db/schema'
@@ -108,6 +108,55 @@ const searchParamsSchema = z.intersection(
   paginationParamsSchema,
 )
 
+const groupActivities = (activities: ActivityDTO[]): ActivityGroup[] => {
+  const groups: Map<string, ActivityGroup> = new Map()
+
+  for (const activity of activities) {
+    // For activities without a parent, use the entity itself as the grouping key
+    const entityKey =
+      activity.parentEntityId != null
+        ? `${activity.userFk}-${activity.parentEntityId}`
+        : `${activity.userFk}-${activity.entityType}-${activity.entityId}`
+    let foundGroup = false
+
+    // Try to find an existing group that this activity belongs to
+    for (const [, group] of groups.entries()) {
+      const firstActivity = group.items[0]
+      const timeDiff = Math.abs(new Date(activity.createdAt).getTime() - new Date(firstActivity.createdAt).getTime())
+
+      // For activities without a parent, match on entity instead of parent
+      const sameTarget =
+        activity.parentEntityId != null
+          ? activity.parentEntityId === firstActivity.parentEntityId
+          : activity.entityId === firstActivity.entityId && activity.entityType === firstActivity.entityType
+
+      if (activity.userFk === firstActivity.userFk && sameTarget && timeDiff <= 30 * 60 * 1000) {
+        group.items.push(activity)
+        // Update latest date if this activity is newer
+        const activityDate = new Date(activity.createdAt)
+        if (activityDate > group.latestDate) {
+          group.latestDate = activityDate
+        }
+        foundGroup = true
+        break
+      }
+    }
+
+    // If no matching group was found, create a new one
+    if (!foundGroup) {
+      groups.set(`${entityKey}-${groups.size}`, {
+        items: [activity],
+        user: activity.user,
+        parentEntity: activity.parentEntity,
+        entity: activity.entity,
+        latestDate: new Date(activity.createdAt),
+      })
+    }
+  }
+
+  return Array.from(groups.values())
+}
+
 export const loadFeed = async ({ locals, url }: { locals: App.Locals; url: URL }, queries?: SQLWrapper[]) => {
   const searchParamsObj = Object.fromEntries(url.searchParams.entries())
   const searchParams = await validateObject(searchParamsSchema, searchParamsObj)
@@ -120,6 +169,7 @@ export const loadFeed = async ({ locals, url }: { locals: App.Locals; url: URL }
         : and(...queries)
 
   const db = await createDrizzleSupabaseClient(locals.supabase)
+
   const activities = await db((tx) =>
     tx.query.activities.findMany({
       ...getPaginationQuery(searchParams),
@@ -164,9 +214,10 @@ export const loadFeed = async ({ locals, url }: { locals: App.Locals; url: URL }
   })
 
   const countResults = await db((tx) => tx.select({ count: count() }).from(schema.activities).where(and(where)))
+  const groupedActivities = groupActivities(activitiesDTOs)
 
   return {
-    activities: activitiesDTOs,
+    activities: groupedActivities,
     pagination: {
       page: searchParams.page,
       pageSize: searchParams.pageSize,
