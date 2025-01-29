@@ -57,6 +57,18 @@
   {/snippet}
 
   {#snippet headline()}
+    {#if data.block.geolocationFk == null}
+      <aside class="card flex items-center gap-2 preset-tonal-warning mb-4 p-2 md:p-4 whitespace-pre-line">
+        <i class="fa-solid fa-exclamation-triangle text-warning-800-200"></i>
+
+        <p>
+          The geolocation of this block is missing. Do you know where it is?
+
+          <a class="anchor" href={`${basePath}/edit-location`}>Add location</a>
+        </p>
+      </aside>
+    {/if}
+
     <Tabs
       fluid
       listClasses="overflow-x-auto overflow-y-hidden pb-[1px] md:w-[500px]"
@@ -72,67 +84,63 @@
 
       {#snippet content()}
         <Tabs.Panel value="#topo">
-          <div class="card mt-4 preset-filled-surface-100-900">
-            <div class="flex flex-wrap md:flex-nowrap gap-2">
-              {#if data.topos.length > 0}
-                <section class="w-full md:w-2/4 relative" use:fitHeightAction>
-                  <TopoViewer topos={data.topos}>
-                    {#snippet actions()}
-                      {#if data.userPermissions?.includes(EDIT_PERMISSION)}
-                        <a aria-label="Edit topo" class="btn-icon preset-filled" href={`${basePath}/draw-topo`}>
-                          <i class="fa-solid fa-pen"></i>
-                        </a>
-                      {/if}
-                    {/snippet}
-                  </TopoViewer>
-                </section>
-              {:else if data.userPermissions?.includes(EDIT_PERMISSION)}
-                <div class="flex w-full justify-center mt-4">
-                  <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
+          <div class="flex flex-wrap md:flex-nowrap gap-2">
+            {#if data.topos.length > 0}
+              <section class="w-full md:w-2/4 relative" use:fitHeightAction>
+                <TopoViewer topos={data.topos}>
+                  {#snippet actions()}
+                    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
+                      <a aria-label="Edit topo" class="btn-icon preset-filled" href={`${basePath}/draw-topo`}>
+                        <i class="fa-solid fa-pen"></i>
+                      </a>
+                    {/if}
+                  {/snippet}
+                </TopoViewer>
+              </section>
+            {:else if data.userPermissions?.includes(EDIT_PERMISSION)}
+              <div class="flex w-full justify-center mt-4">
+                <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
+              </div>
+            {/if}
+
+            <section class={`mt-4 md:mt-0 w-full ${data.topos.length === 0 ? '' : 'md:w-2/4'}`}>
+              {#if data.userPermissions?.includes(EDIT_PERMISSION)}
+                <div class="flex justify-center mb-4">
+                  <a class="btn preset-filled-primary-500" href={`${basePath}/routes/add`}>Add route</a>
                 </div>
               {/if}
 
-              <section class={`mt-4 md:mt-0 w-full ${data.topos.length === 0 ? '' : 'md:w-2/4'}`}>
-                {#if data.userPermissions?.includes(EDIT_PERMISSION)}
-                  <div class="flex justify-center mb-4">
-                    <a class="btn preset-filled-primary-500" href={`${basePath}/routes/add`}>Add route</a>
-                  </div>
-                {/if}
-
-                {#if data.block.routes.length === 0}
-                  No routes yet
-                {:else}
-                  <nav class="list-nav">
-                    <ul>
-                      {#each data.block.routes as route}
-                        <li
-                          class={`py-2 whitespace-nowrap ${
-                            [$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(route.id)
-                              ? 'preset-filled-primary-100-900'
-                              : ''
-                          }`}
+              {#if data.block.routes.length === 0}
+                No routes yet
+              {:else}
+                <nav class="list-nav">
+                  <ul>
+                    {#each data.block.routes as route}
+                      <li
+                        class={`py-2 whitespace-nowrap ${
+                          [$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(route.id)
+                            ? 'preset-filled-primary-100-900'
+                            : ''
+                        }`}
+                      >
+                        <a
+                          class={[$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(route.id)
+                            ? 'text-white'
+                            : 'text-primary-500'}
+                          href={`${basePath}/routes/${route.slug.length === 0 ? route.id : route.slug}`}
+                          onmouseenter={() => highlightedRouteStore.set(route.id)}
+                          onmouseleave={() => highlightedRouteStore.set(null)}
+                          onclick={() => selectedRouteStore.set(route.id)}
+                          onkeydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
                         >
-                          <a
-                            class={[$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(
-                              route.id,
-                            )
-                              ? 'text-white'
-                              : 'text-primary-500'}
-                            href={`${basePath}/routes/${route.slug.length === 0 ? route.id : route.slug}`}
-                            onmouseenter={() => highlightedRouteStore.set(route.id)}
-                            onmouseleave={() => highlightedRouteStore.set(null)}
-                            onclick={() => selectedRouteStore.set(route.id)}
-                            onkeydown={(event) => event.key === 'Enter' && selectedRouteStore.set(route.id)}
-                          >
-                            <RouteName {route} />
-                          </a>
-                        </li>
-                      {/each}
-                    </ul>
-                  </nav>
-                {/if}
-              </section>
-            </div>
+                          <RouteName {route} />
+                        </a>
+                      </li>
+                    {/each}
+                  </ul>
+                </nav>
+              {/if}
+            </section>
           </div>
         </Tabs.Panel>
 

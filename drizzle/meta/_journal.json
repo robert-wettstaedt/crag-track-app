@@ -78,6 +78,13 @@
       "when": 1737997366668,
       "tag": "0011_brown_dracula",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1738161740369,
+      "tag": "0012_glossy_longshot",
+      "breakpoints": true
     }
   ]
 }

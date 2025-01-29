@@ -16,7 +16,10 @@
   )
   let tabSet = $state('map')
 
-  const onChange = ({ detail }: CustomEvent<Coordinate>) => (coordinate = detail)
+  const onChange = ({ detail }: CustomEvent<Coordinate>) => {
+    coordinate = detail
+    document.scrollingElement?.scrollTo({ top: document.scrollingElement.scrollHeight, behavior: 'smooth' })
+  }
 
   const getValue: ChangeEventHandler<HTMLInputElement> = (event): number => {
     return Number((event.target as HTMLInputElement).value)
@@ -42,7 +45,12 @@
   {/snippet}
 </AppBar>
 
-<form class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900" action="?/updateLocation" method="POST" use:enhance>
+<form
+  class="card mt-4 md:mt-8 p-2 md:p-4 preset-filled-surface-100-900"
+  action="?/updateLocation"
+  method="POST"
+  use:enhance
+>
   <Tabs bind:value={tabSet}>
     {#snippet list()}
       <Tabs.Control value="map">Map</Tabs.Control>
@@ -86,29 +94,31 @@
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
 
     <div class="flex flex-col-reverse gap-8 md:flex-row md:gap-4">
-      <Popover
-        arrow
-        arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-        contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
-        positioning={{ placement: 'top' }}
-        triggerBase="btn preset-filled-error-500 !text-white"
-      >
-        {#snippet trigger()}
-          <i class="fa-solid fa-trash"></i>Delete geolocation
-        {/snippet}
+      {#if data.block.geolocationFk != null}
+        <Popover
+          arrow
+          arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+          contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+          positioning={{ placement: 'top' }}
+          triggerBase="btn preset-filled-error-500 !text-white"
+        >
+          {#snippet trigger()}
+            <i class="fa-solid fa-trash"></i>Delete geolocation
+          {/snippet}
 
-        {#snippet content()}
-          <article>
-            <p>Are you sure you want to delete the geolocation of this block?</p>
-          </article>
+          {#snippet content()}
+            <article>
+              <p>Are you sure you want to delete the geolocation of this block?</p>
+            </article>
 
-          <footer class="flex justify-end">
-            <form method="POST" action="?/removeGeolocation" use:enhance>
-              <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
-            </form>
-          </footer>
-        {/snippet}
-      </Popover>
+            <footer class="flex justify-end">
+              <form method="POST" action="?/removeGeolocation" use:enhance>
+                <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+              </form>
+            </footer>
+          {/snippet}
+        </Popover>
+      {/if}
 
       <button class="btn preset-filled-primary-500" disabled={coordinate == null} type="submit">
         Update geolocation

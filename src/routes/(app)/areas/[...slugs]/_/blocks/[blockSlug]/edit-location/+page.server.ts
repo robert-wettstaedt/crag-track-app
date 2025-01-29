@@ -11,10 +11,6 @@ import { and, eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params, parent }) => {
-  if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
-    error(404)
-  }
-
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
   // Retrieve areaId and areaSlug from the parent function
@@ -43,6 +39,10 @@ export const load = (async ({ locals, params, parent }) => {
     error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
   }
 
+  if (!locals.userPermissions?.includes(EDIT_PERMISSION) && block.geolocationFk != null) {
+    error(404)
+  }
+
   // Return the block and the enriched geolocation blocks
   return {
     block: enrichBlock(block),
@@ -51,15 +51,24 @@ export const load = (async ({ locals, params, parent }) => {
 
 export const actions = {
   updateLocation: async ({ locals, params, request }) => {
-    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
-      error(404)
-    }
-
     const db = await createDrizzleSupabaseClient(locals.supabase)
     const user = await db((tx) => getUser(locals.user, tx))
 
     // Convert area slug to areaId
     const { areaId } = convertAreaSlug(params)
+
+    // Query the database for blocks matching the given slug and areaId
+    const blocksResult = await db((tx) =>
+      tx.query.blocks.findMany({
+        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
+      }),
+    )
+    // Get the first block from the result
+    const block = blocksResult.at(0)
+
+    if (block == null || (!locals.userPermissions?.includes(EDIT_PERMISSION) && block.geolocationFk != null)) {
+      return fail(404)
+    }
 
     // Retrieve form data from the request
     const data = await request.formData()
@@ -93,20 +102,6 @@ export const actions = {
     // Check if the longitude is a valid number
     if (Number.isNaN(long)) {
       return fail(400, { ...values, error: 'long is not a valid Longitude' })
-    }
-
-    // Query the database for blocks matching the given slug and areaId
-    const blocksResult = await db((tx) =>
-      tx.query.blocks.findMany({
-        where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      }),
-    )
-    // Get the first block from the result
-    const block = blocksResult.at(0)
-
-    // If no block is found, throw a 404 error
-    if (block == null) {
-      return fail(404, { ...values, error: 'Block not found' })
     }
 
     try {
@@ -163,13 +158,13 @@ export const actions = {
     }
 
     try {
+      // Update the block to remove the geolocation foreign key
+      await db((tx) => tx.update(blocks).set({ geolocationFk: null }).where(eq(blocks.id, block.id)))
+
       // If the block has a geolocation, delete the geolocation record
       if (block.geolocationFk != null) {
         await db((tx) => tx.delete(geolocations).where(eq(geolocations.id, block.geolocationFk!)))
       }
-
-      // Update the block to remove the geolocation foreign key
-      await db((tx) => tx.update(blocks).set({ geolocationFk: null }).where(eq(blocks.id, block.id)))
 
       await db(async (tx) =>
         user == null
@@ -192,6 +187,6 @@ export const actions = {
     }
 
     // Redirect to the block's page after a successful update
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}#location`)
+    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}#map`)
   },
 }

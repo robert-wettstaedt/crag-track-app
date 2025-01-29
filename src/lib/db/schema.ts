@@ -193,7 +193,11 @@ export const blocks = table(
 
     order: integer('order').notNull(),
   },
-  (table) => [...createBasicTablePolicies('blocks'), index('blocks_slug_idx').on(table.slug)],
+  (table) => [
+    ...createBasicTablePolicies('blocks'),
+    index('blocks_slug_idx').on(table.slug),
+    policy(`${READ_PERMISSION} can update blocks`, getAuthorizedPolicyConfig('update', READ_PERMISSION)),
+  ],
 ).enableRLS()
 export type Block = InferSelectModel<typeof blocks>
 export type InsertBlock = InferInsertModel<typeof blocks>
@@ -699,6 +703,7 @@ export const geolocations = table(
   },
   (table) => [
     ...createBasicTablePolicies('geolocations'),
+    policy(`${READ_PERMISSION} can create geolocations`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
     index('geolocations_area_fk_idx').on(table.areaFk),
     index('geolocations_block_fk_idx').on(table.blockFk),
   ],

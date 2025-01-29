@@ -332,6 +332,10 @@
                   wrap={!orderMode}
                 >
                   {#snippet left(item)}
+                    {#if item.geolocationFk == null}
+                      <i class="fa-solid fa-exclamation-triangle text-warning-800-200"></i>
+                    {/if}
+
                     {item.name}
                   {/snippet}
 
