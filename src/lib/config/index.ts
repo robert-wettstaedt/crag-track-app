@@ -35,6 +35,9 @@ export const config = {
     level: process.env.NODE_ENV === 'production' ? 'info' : 'error',
     format: process.env.NODE_ENV === 'production' ? 'json' : 'pretty',
   },
+  activityFeed: {
+    groupTimeLimit: 3 * 60 * 60 * 1000, // 3 hours in milliseconds
+  },
 } as const
 
 export type Config = typeof config

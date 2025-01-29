@@ -1,4 +1,5 @@
 import type { ActivityDTO, ActivityGroup, Entity } from '$lib/components/ActivityFeed'
+import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import type { InsertActivity } from '$lib/db/schema'
 import * as schema from '$lib/db/schema'
@@ -108,49 +109,79 @@ const searchParamsSchema = z.intersection(
   paginationParamsSchema,
 )
 
-const groupActivities = (activities: ActivityDTO[]): ActivityGroup[] => {
+export const groupActivities = (activities: ActivityDTO[]): ActivityGroup[] => {
   const groups: Map<string, ActivityGroup> = new Map()
+  const entityToGroupKey: Map<string, string> = new Map()
 
   for (const activity of activities) {
-    // For activities without a parent, use the entity itself as the grouping key
-    const entityKey =
-      activity.parentEntityId != null
-        ? `${activity.userFk}-${activity.parentEntityId}`
-        : `${activity.userFk}-${activity.entityType}-${activity.entityId}`
+    const activityDate = new Date(activity.createdAt)
+    const entityKey = `${activity.userFk}-${activity.entityType}-${activity.entityId}`
+    const parentKey = activity.parentEntityId
+      ? `${activity.userFk}-${activity.parentEntityType}-${activity.parentEntityId}`
+      : null
+
     let foundGroup = false
+    const newGroupKey = `group-${groups.size}`
 
     // Try to find an existing group that this activity belongs to
-    for (const [, group] of groups.entries()) {
+    for (const [groupKey, group] of groups.entries()) {
       const firstActivity = group.items[0]
-      const timeDiff = Math.abs(new Date(activity.createdAt).getTime() - new Date(firstActivity.createdAt).getTime())
+      const timeDiff = Math.abs(activityDate.getTime() - new Date(firstActivity.createdAt).getTime())
 
-      // For activities without a parent, match on entity instead of parent
-      const sameTarget =
-        activity.parentEntityId != null
-          ? activity.parentEntityId === firstActivity.parentEntityId
-          : activity.entityId === firstActivity.entityId && activity.entityType === firstActivity.entityType
+      if (activity.userFk === firstActivity.userFk && timeDiff <= config.activityFeed.groupTimeLimit) {
+        const firstActivityEntityKey = `${firstActivity.userFk}-${firstActivity.entityType}-${firstActivity.entityId}`
+        const firstActivityParentKey = firstActivity.parentEntityId
+          ? `${firstActivity.userFk}-${firstActivity.parentEntityType}-${firstActivity.parentEntityId}`
+          : null
 
-      if (activity.userFk === firstActivity.userFk && sameTarget && timeDiff <= 30 * 60 * 1000) {
-        group.items.push(activity)
-        // Update latest date if this activity is newer
-        const activityDate = new Date(activity.createdAt)
-        if (activityDate > group.latestDate) {
-          group.latestDate = activityDate
+        // Check if this activity shares either entity or parent with the group
+        const isConnected =
+          entityKey === firstActivityEntityKey ||
+          (parentKey && parentKey === firstActivityParentKey) ||
+          // Check if the current activity's entity is connected to this group
+          entityToGroupKey.get(entityKey) === groupKey ||
+          // Check if the current activity's parent is connected to this group
+          (parentKey && entityToGroupKey.get(parentKey) === groupKey) ||
+          // Check if the first activity's entity is connected to the same group as current activity
+          entityToGroupKey.get(firstActivityEntityKey) === entityToGroupKey.get(entityKey) ||
+          // Check if the first activity's parent is connected to the same group as current activity
+          (firstActivityParentKey && entityToGroupKey.get(firstActivityParentKey) === entityToGroupKey.get(entityKey))
+
+        if (isConnected) {
+          group.items.push(activity)
+          if (activityDate > group.latestDate) {
+            group.latestDate = activityDate
+            group.entity = activity.entity
+            group.parentEntity = activity.parentEntity
+          }
+
+          // Update entity to group mappings
+          entityToGroupKey.set(entityKey, groupKey)
+          if (parentKey) {
+            entityToGroupKey.set(parentKey, groupKey)
+          }
+
+          foundGroup = true
+          break
         }
-        foundGroup = true
-        break
       }
     }
 
     // If no matching group was found, create a new one
     if (!foundGroup) {
-      groups.set(`${entityKey}-${groups.size}`, {
+      groups.set(newGroupKey, {
         items: [activity],
         user: activity.user,
         parentEntity: activity.parentEntity,
         entity: activity.entity,
-        latestDate: new Date(activity.createdAt),
+        latestDate: activityDate,
       })
+
+      // Initialize entity to group mappings
+      entityToGroupKey.set(entityKey, newGroupKey)
+      if (parentKey) {
+        entityToGroupKey.set(parentKey, newGroupKey)
+      }
     }
   }
 
