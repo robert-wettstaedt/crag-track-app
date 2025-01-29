@@ -337,25 +337,35 @@
 
                   {#snippet children(item)}
                     {#if !orderMode}
-                      <GenericList
-                        classes="w-full {item.routes.length === 0 ? 'p-4' : ''}"
-                        items={item.routes.map((route) => ({
-                          ...route,
-                          id: route.id,
-                          name: route.name,
-                          pathname: `${basePath}/_/blocks/${item.slug}/routes/${route.slug.length === 0 ? route.id : route.slug}`,
-                        }))}
-                      >
-                        {#snippet left(route)}
-                          <div class="flex items-center gap-2">
-                            <Image path={route.topo?.file?.path} size={32} />
+                      {#if item.routes.length === 0}
+                        <div class="flex items-center gap-2 px-2 md:px-4 py-3">
+                          {#if item.topos?.[0]?.file?.path != null}
+                            <Image path={item.topos?.[0]?.file?.path} size={32} />
+                          {/if}
 
-                            <div class="w-[calc(100%-64px)]">
-                              <RouteName {route} />
+                          <div class="w-[calc(100%-64px)]">No routes yet</div>
+                        </div>
+                      {:else}
+                        <GenericList
+                          classes="w-full"
+                          items={item.routes.map((route) => ({
+                            ...route,
+                            id: route.id,
+                            name: route.name,
+                            pathname: `${basePath}/_/blocks/${item.slug}/routes/${route.slug.length === 0 ? route.id : route.slug}`,
+                          }))}
+                        >
+                          {#snippet left(route)}
+                            <div class="flex items-center gap-2">
+                              <Image path={route.topo?.file?.path} size={32} />
+
+                              <div class="w-[calc(100%-64px)]">
+                                <RouteName {route} />
+                              </div>
                             </div>
-                          </div>
-                        {/snippet}
-                      </GenericList>
+                          {/snippet}
+                        </GenericList>
+                      {/if}
                     {/if}
                   {/snippet}
                 </GenericList>
