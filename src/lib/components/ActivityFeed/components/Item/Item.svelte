@@ -3,6 +3,7 @@
     activity: ActivityDTO
     withBreadcrumbs?: boolean
     withDetails?: boolean
+    withFiles?: boolean
   }
 </script>
 
@@ -17,7 +18,7 @@
   import { compareAsc, format, formatDistance, formatRelative } from 'date-fns'
   import { enGB as locale } from 'date-fns/locale'
 
-  const { activity, withBreadcrumbs = false, withDetails = false }: ItemProps = $props()
+  const { activity, withBreadcrumbs = false, withDetails = false, withFiles = false }: ItemProps = $props()
 
   const iconClasses = $derived.by(() => {
     if (activity.entity.type === 'ascent' && activity.entity.object != null && activity.type === 'created') {
@@ -242,7 +243,7 @@
       </div>
     {/if}
 
-    {#if activity.entity.type == 'ascent' && activity.entity.object != null && activity.type === 'created'}
+    {#if withFiles && activity.entity.type == 'ascent' && activity.entity.object != null && activity.type === 'created'}
       {#if activity.entity.object.notes != null && activity.entity.object.notes!.length > 0}
         <div class="rendered-markdown preset-filled-surface-200-800 p-4 mt-4">
           {@html activity.entity.object.notes}

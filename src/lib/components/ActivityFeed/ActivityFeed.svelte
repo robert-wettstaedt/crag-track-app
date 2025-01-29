@@ -1,11 +1,14 @@
 <script lang="ts">
   import { afterNavigate, goto } from '$app/navigation'
   import { page } from '$app/stores'
+  import { EDIT_PERMISSION } from '$lib/auth'
+  import FileViewer from '$lib/components/FileViewer/FileViewer.svelte'
   import RouteName from '$lib/components/RouteName/RouteName.svelte'
+  import type { FileDTO } from '$lib/nextcloud'
   import type { Pagination } from '$lib/pagination.server'
   import { formatRelative } from 'date-fns'
   import { enGB as locale } from 'date-fns/locale'
-  import type { ActivityGroup } from '.'
+  import type { ActivityDTO, ActivityGroup } from '.'
   import type { ItemProps } from './components/Item'
   import Item from './components/Item'
 
@@ -15,8 +18,6 @@
   }
 
   const { activities, pagination, ...rest }: Props = $props()
-
-  console.log(activities)
 
   let activityPages = $state<(typeof activities)[]>([])
   let prevPage = $state(1)
@@ -38,6 +39,51 @@
     prevPage = pagination.page
     activityType = $page.url.searchParams.get('type') ?? 'all'
   })
+
+  function getUniqueFiles(group: ActivityGroup): FileDTO[] {
+    return group.items
+      .filter(
+        (
+          activity,
+        ): activity is ActivityDTO & {
+          entity: {
+            type: 'ascent'
+            object: {
+              files: FileDTO[]
+              createdBy: number
+            }
+          }
+        } =>
+          activity.entity.type === 'ascent' &&
+          activity.entity.object != null &&
+          'files' in activity.entity.object &&
+          Array.isArray(activity.entity.object.files),
+      )
+      .flatMap((activity) => activity.entity.object.files)
+      .filter((file, index, self) => index === self.findIndex((f: FileDTO) => f.id === file.id))
+  }
+
+  function findAscentForFile(group: ActivityGroup, fileId: number) {
+    const activity = group.items.find(
+      (
+        activity,
+      ): activity is ActivityDTO & {
+        entity: {
+          type: 'ascent'
+          object: {
+            files: FileDTO[]
+            createdBy: number
+          }
+        }
+      } =>
+        activity.entity.type === 'ascent' &&
+        activity.entity.object != null &&
+        'files' in activity.entity.object &&
+        Array.isArray(activity.entity.object.files) &&
+        activity.entity.object.files.some((f: FileDTO) => f.id === fileId),
+    )
+    return activity
+  }
 </script>
 
 <label class="label flex flex-col sm:flex-row sm:items-center gap-2">
@@ -72,7 +118,7 @@
       <div class="space-y-8">
         {#each activities as group}
           {#if group.items.length === 1}
-            <Item activity={group.items[0]} withDetails {...rest} />
+            <Item activity={group.items[0]} withDetails withFiles={true} {...rest} />
           {:else}
             <div class="card bg-base-200 group/feed-group hover:bg-base-300 transition-colors">
               <div class="card-body">
@@ -131,13 +177,39 @@
                       {formatRelative(new Date(group.latestDate), new Date(), { locale })}
                     </p>
 
+                    {#if group.items.some((activity) => activity.entity.type === 'ascent' && activity.entity.object?.files != null && activity.entity.object.files.length > 0)}
+                      <div class="mt-4">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {#each getUniqueFiles(group) as file}
+                            {#if file.stat != null}
+                              {@const ascentActivity = findAscentForFile(group, file.id)}
+
+                              <FileViewer
+                                {file}
+                                stat={file.stat}
+                                readOnly={!$page.data.userPermissions?.includes(EDIT_PERMISSION) ||
+                                  ascentActivity?.entity.object?.createdBy !== $page.data.user?.id}
+                                on:delete={() => {
+                                  if (ascentActivity?.entity.object != null) {
+                                    ascentActivity.entity.object.files = ascentActivity.entity.object.files.filter(
+                                      (f) => f.id !== file.id,
+                                    )
+                                  }
+                                }}
+                              />
+                            {/if}
+                          {/each}
+                        </div>
+                      </div>
+                    {/if}
+
                     <details class="mt-4">
                       <summary class="cursor-pointer hover:text-primary-500 transition-colors">
                         Show {group.items.length} changes
                       </summary>
                       <div class="space-y-4 mt-4 pl-2 border-l-2 border-surface-200-800">
                         {#each group.items as activity}
-                          <Item {activity} />
+                          <Item {activity} withFiles={false} />
                         {/each}
                       </div>
                     </details>
