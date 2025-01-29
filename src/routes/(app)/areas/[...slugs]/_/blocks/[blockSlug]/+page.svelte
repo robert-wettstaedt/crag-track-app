@@ -117,7 +117,7 @@
                   <ul>
                     {#each data.block.routes as route}
                       <li
-                        class={`py-2 whitespace-nowrap ${
+                        class={`p-2 whitespace-nowrap ${
                           [$selectedRouteStore, $highlightedRouteStore, ...highlightedRoutes].includes(route.id)
                             ? 'preset-filled-primary-100-900'
                             : ''
