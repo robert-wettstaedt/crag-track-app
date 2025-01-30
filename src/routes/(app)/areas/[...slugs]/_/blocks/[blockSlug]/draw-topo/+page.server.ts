@@ -225,17 +225,14 @@ export const actions = {
     }
 
     try {
+      await db((tx) => tx.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)))
+      await db((tx) => tx.delete(topos).where(eq(topos.id, id)))
+
       const filesToDelete = await db(async (tx) =>
         topo.fileFk == null ? null : tx.delete(files).where(eq(files.id, topo.fileFk)).returning(),
       )
 
-      await db((tx) =>
-        Promise.all([
-          ...(filesToDelete ?? []).map((file) => deleteFile(file)),
-          tx.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)),
-          tx.delete(topos).where(eq(topos.id, id)),
-        ]),
-      )
+      await Promise.all([...(filesToDelete ?? []).map((file) => deleteFile(file))])
 
       await db(async (tx) =>
         user == null || topo.blockFk == null
