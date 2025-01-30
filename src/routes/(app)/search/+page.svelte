@@ -8,16 +8,8 @@
   import type { SearchResults } from '$lib/search.server'
   import { Tabs } from '@skeletonlabs/skeleton-svelte'
   import { onMount } from 'svelte'
-  import type { Snapshot } from './$types'
 
   let { data } = $props()
-
-  export const snapshot: Snapshot = {
-    capture: () => searchQuery,
-    restore: (value) => {
-      searchQuery = value
-    },
-  }
 
   let searchQuery = $state($page.url.searchParams.get('q') ?? '')
   let element: HTMLInputElement | null = $state(null)
@@ -61,7 +53,22 @@
   </label>
 </form>
 
-{#if data.searchResults != null}
+{#if data.searchResults == null}
+  {#if data.recentSearch != null && data.recentSearch.length > 0}
+    <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900 flex flex-col">
+      <div class="text-center text-sm text-surface-500-900 mb-2">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        Recent searches
+      </div>
+
+      {#each data.recentSearch as item}
+        <a class="anchor py-2" href={`/search?q=${item}`}>
+          {item}
+        </a>
+      {/each}
+    </div>
+  {/if}
+{:else}
   <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
     {#if tabValue == null}
       <div class="text-center text-sm text-surface-500-900">No results found</div>
