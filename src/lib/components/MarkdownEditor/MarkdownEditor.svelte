@@ -142,6 +142,11 @@
         keymap.of([indentWithTab]),
         theme,
         markdown(),
+        EditorView.contentAttributes.of({
+          autocorrect: 'on',
+          autocapitalize: 'on',
+          spellcheck: 'true',
+        }),
         autocompletion({
           override: [(...args) => debouncedCompletion.apply(null, args) ?? null],
         }),
