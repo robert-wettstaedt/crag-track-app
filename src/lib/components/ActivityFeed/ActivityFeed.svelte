@@ -1,7 +1,7 @@
 <script lang="ts">
   import { afterNavigate, goto } from '$app/navigation'
   import { page } from '$app/stores'
-  import { EDIT_PERMISSION } from '$lib/auth'
+  import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
   import FileViewer from '$lib/components/FileViewer/FileViewer.svelte'
   import RouteName from '$lib/components/RouteName/RouteName.svelte'
   import type { FileDTO } from '$lib/nextcloud'
@@ -187,7 +187,7 @@
                               <FileViewer
                                 {file}
                                 stat={file.stat}
-                                readOnly={!$page.data.userPermissions?.includes(EDIT_PERMISSION) ||
+                                readOnly={!$page.data.userPermissions?.includes(DELETE_PERMISSION) ||
                                   ascentActivity?.entity.object?.createdBy !== $page.data.user?.id}
                                 on:delete={() => {
                                   if (ascentActivity?.entity.object != null) {

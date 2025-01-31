@@ -13,12 +13,16 @@ declare global {
       safeGetSession: () => Promise<{
         session: Session | null
         user: AuthUser | null
-        userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION> | undefined
+        userPermissions:
+          | Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION | typeof DELETE_PERMISSION | typeof EXPORT_PERMISSION>
+          | undefined
         userRole: string | undefined
       }>
       session: Session | null
       user: AuthUser | null
-      userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION> | undefined
+      userPermissions:
+        | Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION | typeof DELETE_PERMISSION | typeof EXPORT_PERMISSION>
+        | undefined
       userRole: string | undefined
     }
     interface PageData {
@@ -27,7 +31,7 @@ declare global {
       gradingScale: 'FB' | 'V'
       session: Session | null
       user: User
-      userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION> | undefined
+      userPermissions: Array<typeof READ_PERMISSION | typeof EDIT_PERMISSION | typeof DELETE_PERMISSION> | undefined
       userRole: string | undefined
     }
     // interface PageState {}

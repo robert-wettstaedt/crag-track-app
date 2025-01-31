@@ -1,4 +1,4 @@
-import { EDIT_PERMISSION } from '$lib/auth'
+import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { activities, files, users, type User } from '$lib/db/schema'
 import type { InferResultType } from '$lib/db/types'
@@ -50,7 +50,10 @@ export async function DELETE({ locals, params }) {
   const entityType =
     file?.routeFk != null ? 'route' : file?.ascentFk != null ? 'ascent' : file?.blockFk != null ? 'block' : 'area'
 
-  if (!locals.userPermissions?.includes(EDIT_PERMISSION) && authorId !== user?.id) {
+  if (
+    (!locals.userPermissions?.includes(EDIT_PERMISSION) || !locals.userPermissions?.includes(DELETE_PERMISSION)) &&
+    authorId !== user?.id
+  ) {
     error(404)
   }
 

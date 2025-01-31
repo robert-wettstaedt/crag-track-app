@@ -9,7 +9,7 @@
 
 <script lang="ts">
   import { page } from '$app/stores'
-  import { EDIT_PERMISSION } from '$lib/auth'
+  import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
   import type { ActivityDTO } from '$lib/components/ActivityFeed'
   import FileViewer from '$lib/components/FileViewer'
   import CorrectedGrade from '$lib/components/RouteGrade/components/CorrectedGrade'
@@ -261,7 +261,7 @@
               <FileViewer
                 {file}
                 stat={file.stat}
-                readOnly={!$page.data.userPermissions?.includes(EDIT_PERMISSION) ||
+                readOnly={!$page.data.userPermissions?.includes(DELETE_PERMISSION) ||
                   activity.entity.object.createdBy !== $page.data.user.id}
                 on:delete={() => {
                   if (activity.entity.type == 'ascent' && activity.entity.object != null) {

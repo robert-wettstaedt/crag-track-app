@@ -1,3 +1,4 @@
+import { EXPORT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient, db } from '$lib/db/db.server'
 import { areas, blocks, users, type UserSettings } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
@@ -48,6 +49,10 @@ const blocksQuery: {
 }
 
 export const load = (async ({ locals, params }) => {
+  if (!locals.userPermissions?.includes(EXPORT_PERMISSION)) {
+    error(404)
+  }
+
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
   const { areaId } = convertAreaSlug(params)

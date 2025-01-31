@@ -1,4 +1,4 @@
-import { EDIT_PERMISSION } from '$lib/auth'
+import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
 import { invalidateCache } from '$lib/cache.server'
 import { createUpdateActivity } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
@@ -115,7 +115,7 @@ export const actions = {
   },
 
   removeArea: async ({ locals, params }) => {
-    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION) || !locals.userPermissions?.includes(DELETE_PERMISSION)) {
       error(404)
     }
 

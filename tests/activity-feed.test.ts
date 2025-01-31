@@ -481,18 +481,6 @@ describe('Activity Feed', () => {
 
       const result = groupActivities(activities)
 
-      // Log the actual grouping for debugging
-      console.log(
-        'Groups:',
-        result.map((group) => ({
-          items: group.items.map((item) => ({
-            id: item.id,
-            createdAt: item.createdAt,
-            parentEntityId: item.parentEntityId,
-          })),
-        })),
-      )
-
       // Test that activities within time limit and same parent are grouped together
       const groups = result.map((group) => group.items.map((item) => new Date(item.createdAt).getTime()))
 

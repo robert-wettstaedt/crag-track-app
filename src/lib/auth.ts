@@ -1,7 +1,9 @@
 import { jwtDecode, type JwtPayload } from 'jwt-decode'
 
-export const READ_PERMISSION = 'data.read'
+export const DELETE_PERMISSION = 'data.delete'
 export const EDIT_PERMISSION = 'data.edit'
+export const EXPORT_PERMISSION = 'data.export'
+export const READ_PERMISSION = 'data.read'
 
 export interface SupabaseToken extends JwtPayload {
   iss?: string

@@ -1,4 +1,4 @@
-import { EDIT_PERMISSION } from '$lib/auth'
+import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
 import { createUpdateActivity } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import {
@@ -198,7 +198,7 @@ export const actions = {
   },
 
   removeRoute: async ({ locals, params }) => {
-    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION) || !locals.userPermissions?.includes(DELETE_PERMISSION)) {
       error(404)
     }
 
@@ -319,9 +319,6 @@ export const actions = {
               parentEntityType: 'block',
             }),
       )
-
-      // Invalidate cache after successful deletion
-      await invalidateAreaCache(areaId)
     } catch (exception) {
       return fail(400, { error: convertException(exception) })
     }

@@ -7,7 +7,7 @@
   import Logo27crags from '$lib/assets/27crags-logo.png'
   import Logo8a from '$lib/assets/8a-logo.png'
   import LogoTheCrag from '$lib/assets/thecrag-logo.png'
-  import { EDIT_PERMISSION } from '$lib/auth'
+  import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
   import ActivityFeed from '$lib/components/ActivityFeed'
   import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
@@ -18,9 +18,8 @@
   import { onMount } from 'svelte'
 
   let { data } = $props()
-  let basePath = $derived(
-    `/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}/routes/${$page.params.routeSlug}`,
-  )
+  let blockPath = $derived(`/areas/${$page.params.slugs}/_/blocks/${$page.params.blockSlug}`)
+  let basePath = $derived(`${blockPath}/routes/${$page.params.routeSlug}`)
 
   let selectedTopoIndex = $state<number | undefined>(undefined)
 
@@ -122,11 +121,13 @@
           }
         }}
       >
-        <button class="btn btn-sm preset-filled-primary-500" disabled={syncing} type="submit">
+        <button class="btn btn-sm preset-outlined-primary-500" disabled={syncing} type="submit">
           {#if syncing}
             <span class="me-2">
               <ProgressRing size="size-sm" value={null} />
             </span>
+          {:else}
+            <i class="fa-solid fa-sync"></i>
           {/if}
 
           Sync external resources
@@ -172,7 +173,15 @@
           <Tabs.Panel value="#topo">
             <div class="flex">
               <section class="w-full relative" use:fitHeightAction>
-                <TopoViewer {selectedTopoIndex} initialRouteId={data.route.id} topos={data.topos} />
+                <TopoViewer {selectedTopoIndex} initialRouteId={data.route.id} topos={data.topos}>
+                  {#snippet actions()}
+                    {#if data.userPermissions?.includes(EDIT_PERMISSION)}
+                      <a aria-label="Edit topo" class="btn-icon preset-filled" href={`${blockPath}/draw-topo`}>
+                        <i class="fa-solid fa-pen"></i>
+                      </a>
+                    {/if}
+                  {/snippet}
+                </TopoViewer>
               </section>
             </div>
           </Tabs.Panel>
@@ -362,7 +371,7 @@
                       {#if file.stat != null}
                         <FileViewer
                           {file}
-                          readOnly={!data.userPermissions?.includes(EDIT_PERMISSION)}
+                          readOnly={!data.userPermissions?.includes(DELETE_PERMISSION)}
                           stat={file.stat}
                           on:delete={() => {
                             files = files.filter((_file) => file.id !== _file.id)

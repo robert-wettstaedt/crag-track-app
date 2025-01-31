@@ -85,6 +85,20 @@
       "when": 1738161740369,
       "tag": "0012_glossy_longshot",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1738334693731,
+      "tag": "0013_open_maria_hill",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1738344707826,
+      "tag": "0014_dark_mole_man",
+      "breakpoints": true
     }
   ]
 }

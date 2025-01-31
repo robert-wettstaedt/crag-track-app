@@ -1,9 +1,10 @@
 import { NEXTCLOUD_URL, NEXTCLOUD_USER_NAME, NEXTCLOUD_USER_PASSWORD } from '$env/static/private'
+import { READ_PERMISSION } from '$lib/auth'
 import { searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { type Headers } from 'webdav'
 
 export async function GET({ locals, request, params, url }) {
-  if (!locals.userPermissions?.includes('data.read')) {
+  if (!locals.userPermissions?.includes(READ_PERMISSION)) {
     return new Response(null, { status: 404 })
   }
 

@@ -3,6 +3,7 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { fitHeightAction } from '$lib/actions/fit-height.svelte'
+  import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
   import { Popover, Tabs } from '@skeletonlabs/skeleton-svelte'
   import type { Coordinate } from 'ol/coordinate'
@@ -84,29 +85,31 @@
     <button class="btn preset-outlined-primary-500" onclick={() => history.back()} type="button">Cancel</button>
 
     <div class="flex flex-col-reverse gap-8 md:flex-row md:gap-4">
-      <Popover
-        arrow
-        arrowBackground="!bg-surface-200 dark:!bg-surface-800"
-        contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
-        positioning={{ placement: 'top' }}
-        triggerBase="btn preset-filled-error-500 !text-white"
-      >
-        {#snippet trigger()}
-          <i class="fa-solid fa-trash"></i>Delete parking location
-        {/snippet}
+      {#if data.userPermissions?.includes(DELETE_PERMISSION)}
+        <Popover
+          arrow
+          arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+          contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px]"
+          positioning={{ placement: 'top' }}
+          triggerBase="btn preset-filled-error-500 !text-white"
+        >
+          {#snippet trigger()}
+            <i class="fa-solid fa-trash"></i>Delete parking location
+          {/snippet}
 
-        {#snippet content()}
-          <article>
-            <p>Are you sure you want to delete this parking location?</p>
-          </article>
+          {#snippet content()}
+            <article>
+              <p>Are you sure you want to delete this parking location?</p>
+            </article>
 
-          <footer class="flex justify-end">
-            <form method="POST" action="?/removeParkingLocation" use:enhance>
-              <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
-            </form>
-          </footer>
-        {/snippet}
-      </Popover>
+            <footer class="flex justify-end">
+              <form method="POST" action="?/removeParkingLocation" use:enhance>
+                <button class="btn btn-sm preset-filled-error-500 !text-white" type="submit">Yes</button>
+              </form>
+            </footer>
+          {/snippet}
+        </Popover>
+      {/if}
 
       <button class="btn preset-filled-primary-500" disabled={coordinate == null} type="submit">
         Update parking location

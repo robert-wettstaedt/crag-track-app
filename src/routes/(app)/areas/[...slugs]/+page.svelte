@@ -3,7 +3,7 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { fitHeightAction } from '$lib/actions/fit-height.svelte'
-  import { EDIT_PERMISSION } from '$lib/auth'
+  import { DELETE_PERMISSION, EDIT_PERMISSION, EXPORT_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
   import FileViewer from '$lib/components/FileViewer'
   import GenericList from '$lib/components/GenericList'
@@ -117,7 +117,9 @@
     await updateBlocksFromServer(res)
   }
 
-  const hasActions = $derived(data.userPermissions?.includes(EDIT_PERMISSION))
+  const hasActions = $derived(
+    data.userPermissions?.includes(EDIT_PERMISSION) || data.userPermissions?.includes(EXPORT_PERMISSION),
+  )
 </script>
 
 <svelte:head>
@@ -136,34 +138,34 @@
   {/snippet}
 
   {#snippet actions()}
+    {#if data.userPermissions?.includes(EXPORT_PERMISSION) && data.area.type === 'sector'}
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
+        <i class="fa-solid fa-file-export"></i>Export PDF
+      </a>
+
+      <button class="btn btn-sm preset-outlined-primary-500" disabled={loadingDownload} onclick={onDownloadGpx}>
+        {#if loadingDownload}
+          <span>
+            <ProgressRing size="size-4" value={null} />
+          </span>
+        {:else}
+          <i class="fa-solid fa-map-location-dot"></i>
+        {/if}
+
+        Export GPX
+      </button>
+    {/if}
+
     {#if data.userPermissions?.includes(EDIT_PERMISSION)}
-      {#if data.area.type === 'sector'}
-        <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/export`}>
-          <i class="fa-solid fa-file-export"></i>Export PDF
-        </a>
-
-        <button class="btn btn-sm preset-outlined-primary-500" disabled={loadingDownload} onclick={onDownloadGpx}>
-          {#if loadingDownload}
-            <span>
-              <ProgressRing size="size-4" value={null} />
-            </span>
-          {:else}
-            <i class="fa-solid fa-map-location-dot"></i>
-          {/if}
-
-          Export GPX
-        </button>
-      {/if}
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/sync-external-resources`}>
+        <i class="fa-solid fa-sync"></i>Sync external resources
+      </a>
 
       {#if data.area.type !== 'area'}
         <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-parking-location`}>
           <i class="fa-solid fa-parking"></i>Add parking location
         </a>
       {/if}
-
-      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/sync-external-resources`}>
-        <i class="fa-solid fa-sync"></i>Sync external resources
-      </a>
 
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
         <i class="fa-solid fa-pen"></i>Edit area
@@ -248,7 +250,7 @@
                         {#if file.stat != null}
                           <FileViewer
                             {file}
-                            readOnly={!data.userPermissions?.includes(EDIT_PERMISSION)}
+                            readOnly={!data.userPermissions?.includes(DELETE_PERMISSION)}
                             stat={file.stat}
                             on:delete={() => {
                               files = files.filter((_file) => file.id !== _file.id)

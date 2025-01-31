@@ -1,3 +1,4 @@
+import { EXPORT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { convertException } from '$lib/errors'
 import { getAreaGPX } from '$lib/gpx.server'
@@ -5,6 +6,10 @@ import { convertAreaSlug } from '$lib/helper.server'
 import { error } from '@sveltejs/kit'
 
 export async function GET({ locals, params }) {
+  if (!locals.userPermissions?.includes(EXPORT_PERMISSION)) {
+    error(404)
+  }
+
   try {
     const db = await createDrizzleSupabaseClient(locals.supabase)
 

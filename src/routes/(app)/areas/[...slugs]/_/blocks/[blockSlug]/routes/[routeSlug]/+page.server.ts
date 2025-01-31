@@ -3,16 +3,15 @@ import { loadFeed } from '$lib/components/ActivityFeed/load.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { activities, ascents, blocks, firstAscensionists, routesToFirstAscensionists, users } from '$lib/db/schema'
 import { enrichTopo } from '$lib/db/utils'
+import { convertException } from '$lib/errors'
 import { insertExternalResources } from '$lib/external-resources/index.server'
 import { convertAreaSlug, getRouteDbFilter, getUser } from '$lib/helper.server'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { loadFiles } from '$lib/nextcloud/nextcloud.server'
 import { getReferences } from '$lib/references.server'
-import { error } from '@sveltejs/kit'
+import { error, fail } from '@sveltejs/kit'
 import { and, desc, eq, or } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
-import { fail } from '@sveltejs/kit'
-import { convertException } from '$lib/errors'
 
 export const load = (async ({ locals, params, parent, url }) => {
   const db = await createDrizzleSupabaseClient(locals.supabase)

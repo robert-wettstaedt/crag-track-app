@@ -3,7 +3,7 @@
   import { page } from '$app/stores'
   import { PUBLIC_APPLICATION_NAME } from '$env/static/public'
   import { fitHeightAction } from '$lib/actions/fit-height.svelte'
-  import { EDIT_PERMISSION } from '$lib/auth'
+  import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
   import AppBar from '$lib/components/AppBar'
   import RouteName from '$lib/components/RouteName'
   import TopoViewer, { highlightedRouteStore, selectedRouteStore } from '$lib/components/TopoViewer'
@@ -46,12 +46,12 @@
     {/if}
 
     {#if data.userPermissions?.includes(EDIT_PERMISSION)}
-      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
-        <i class="fa-solid fa-pen"></i>Edit block
-      </a>
-
       <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit-location`}>
         <i class="fa-solid fa-location-dot"></i>Edit geolocation
+      </a>
+
+      <a class="btn btn-sm preset-outlined-primary-500" href={`${basePath}/edit`}>
+        <i class="fa-solid fa-pen"></i>Edit block
       </a>
     {/if}
   {/snippet}
@@ -99,7 +99,7 @@
               </section>
             {:else if data.userPermissions?.includes(EDIT_PERMISSION)}
               <div class="flex w-full justify-center mt-4">
-                <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}> Add topos </a>
+                <a class="btn preset-filled-primary-500" href={`${basePath}/add-topo`}>Add topos</a>
               </div>
             {/if}
 

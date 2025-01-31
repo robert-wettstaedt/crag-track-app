@@ -1,4 +1,4 @@
-import { EDIT_PERMISSION } from '$lib/auth'
+import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
 import { createUpdateActivity } from '$lib/components/ActivityFeed/load.server'
 import { handleFileUpload } from '$lib/components/FileUpload/handle.server'
 import { config } from '$lib/config'
@@ -155,9 +155,11 @@ export const actions = {
 
     if (
       ascent == null ||
-      (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes(EDIT_PERMISSION))
+      (locals.user?.id !== ascent.author.authUserFk &&
+        !locals.userPermissions?.includes(EDIT_PERMISSION) &&
+        !locals.userPermissions?.includes(DELETE_PERMISSION))
     ) {
-      return fail(404, { error: `Ascent not found ${params.ascentId}` })
+      return fail(404)
     }
 
     try {

@@ -1,4 +1,4 @@
-import { EDIT_PERMISSION } from '$lib/auth'
+import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { routesToTags, tags } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
@@ -19,7 +19,7 @@ export const load = (async ({ locals }) => {
 
 export const actions = {
   delete: async ({ locals, request }) => {
-    if (!locals.userPermissions?.includes(EDIT_PERMISSION)) {
+    if (!locals.userPermissions?.includes(EDIT_PERMISSION) && !locals.userPermissions?.includes(DELETE_PERMISSION)) {
       error(404)
     }
 

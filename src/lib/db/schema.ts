@@ -16,7 +16,7 @@ import {
   type PgPolicyConfig,
 } from 'drizzle-orm/pg-core'
 import { authUsers, supabaseAuthAdminRole } from 'drizzle-orm/supabase'
-import { EDIT_PERMISSION, READ_PERMISSION } from '../auth'
+import { DELETE_PERMISSION, EDIT_PERMISSION, EXPORT_PERMISSION, READ_PERMISSION } from '../auth'
 import { createBasicTablePolicies, getAuthorizedPolicyConfig, getOwnEntryPolicyConfig, getPolicyConfig } from './policy'
 
 export const generateSlug = (name: string): string =>
@@ -50,8 +50,13 @@ const READ_AUTH_ADMIN_POLICY_CONFIG: PgPolicyConfig = {
   using: sql`true`,
 }
 
-export const appPermission = pgEnum('app_permission', [READ_PERMISSION, EDIT_PERMISSION])
-export const appRole = pgEnum('app_role', ['user', 'maintainer'])
+export const appPermission = pgEnum('app_permission', [
+  READ_PERMISSION,
+  EDIT_PERMISSION,
+  DELETE_PERMISSION,
+  EXPORT_PERMISSION,
+])
+export const appRole = pgEnum('app_role', ['user', 'maintainer', 'admin'])
 
 export const userRoles = table(
   'user_roles',
@@ -75,7 +80,7 @@ export const rolePermissions = table(
     role: appRole().notNull(),
     permission: appPermission().notNull(),
   },
-  () => [policy('Authenticated users can read role_permissions', getPolicyConfig('select', sql`true`))],
+  () => [policy('authenticated users can read role_permissions', getPolicyConfig('select', sql`true`))],
 )
 
 export const users = table(
@@ -136,7 +141,7 @@ export const userSettings = table(
       .default('FB'),
   },
   (table) => [
-    policy(`users can create own users_settings`, getOwnEntryPolicyConfig('insert')),
+    policy(`users can insert own users_settings`, getOwnEntryPolicyConfig('insert')),
     policy(`users can read own users_settings`, getOwnEntryPolicyConfig('select')),
     policy(`users can update own users_settings`, getOwnEntryPolicyConfig('update')),
     index('user_settings_auth_user_fk_idx').on(table.authUserFk),
@@ -260,7 +265,7 @@ export const grades = table(
     FB: text('FB'),
     V: text('V'),
   },
-  () => [policy('Authenticated users can fully access grades', getPolicyConfig('all', sql`true`))],
+  () => [policy('authenticated users can fully access grades', getPolicyConfig('all', sql`true`))],
 ).enableRLS()
 export type Grade = InferSelectModel<typeof grades>
 export type InsertGrade = InferInsertModel<typeof grades>
@@ -492,7 +497,7 @@ export const ascents = table(
       .references((): AnyColumn => routes.id),
   },
   (table) => [
-    policy(`${READ_PERMISSION} can create ascents`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
+    policy(`${READ_PERMISSION} can insert ascents`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
     policy(`${READ_PERMISSION} can read ascents`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
     policy(
       `${READ_PERMISSION} can update their own ascents`,
@@ -528,7 +533,8 @@ export const ascents = table(
         `),
       ),
     ),
-    policy(`${EDIT_PERMISSION} can fully access ascents`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
+    policy(`${EDIT_PERMISSION} can update ascents`, getAuthorizedPolicyConfig('update', EDIT_PERMISSION)),
+    policy(`${DELETE_PERMISSION} can delete ascents`, getAuthorizedPolicyConfig('delete', DELETE_PERMISSION)),
     index('ascents_created_by_idx').on(table.createdBy),
     index('ascents_route_fk_idx').on(table.routeFk),
   ],
@@ -557,7 +563,7 @@ export const files = table(
     blockFk: integer('block_fk').references((): AnyColumn => blocks.id),
   },
   (table) => [
-    policy(`${READ_PERMISSION} can create files`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
+    policy(`${READ_PERMISSION} can insert files`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
     policy(`${READ_PERMISSION} can read files`, getAuthorizedPolicyConfig('select', READ_PERMISSION)),
     policy(
       `${READ_PERMISSION} can update files belonging to their own ascents`,
@@ -595,7 +601,8 @@ export const files = table(
         `),
       ),
     ),
-    policy(`${EDIT_PERMISSION} can fully access files`, getAuthorizedPolicyConfig('all', EDIT_PERMISSION)),
+    policy(`${EDIT_PERMISSION} can update files`, getAuthorizedPolicyConfig('update', EDIT_PERMISSION)),
+    policy(`${DELETE_PERMISSION} can delete files`, getAuthorizedPolicyConfig('delete', DELETE_PERMISSION)),
     index('files_area_fk_idx').on(table.areaFk),
     index('files_ascent_fk_idx').on(table.ascentFk),
     index('files_block_fk_idx').on(table.blockFk),
@@ -703,7 +710,7 @@ export const geolocations = table(
   },
   (table) => [
     ...createBasicTablePolicies('geolocations'),
-    policy(`${READ_PERMISSION} can create geolocations`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
+    policy(`${READ_PERMISSION} can insert geolocations`, getAuthorizedPolicyConfig('insert', READ_PERMISSION)),
     index('geolocations_area_fk_idx').on(table.areaFk),
     index('geolocations_block_fk_idx').on(table.blockFk),
   ],
@@ -736,8 +743,8 @@ export const activities = table(
     newValue: text('new_value'), // Only populated for 'updated' activities
   },
   (table) => [
-    policy('Authenticated users can read activities', getPolicyConfig('select', sql`true`)),
-    policy('Users can create activities', getPolicyConfig('insert', sql`true`)),
+    policy('authenticated users can read activities', getPolicyConfig('select', sql`true`)),
+    policy('users can insert activities', getPolicyConfig('insert', sql`true`)),
     index('activities_created_at_idx').on(table.createdAt),
     index('activities_type_idx').on(table.type),
     index('activities_user_fk_idx').on(table.userFk),
