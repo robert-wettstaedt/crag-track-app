@@ -689,7 +689,11 @@ export const routesToTags = table(
       .notNull()
       .references((): AnyColumn => tags.id),
   },
-  (table) => [primaryKey({ columns: [table.routeFk, table.tagFk] }), ...createBasicTablePolicies('routes_to_tags')],
+  (table) => [
+    primaryKey({ columns: [table.routeFk, table.tagFk] }),
+    ...createBasicTablePolicies('routes_to_tags'),
+    policy(`${EDIT_PERMISSION} can delete routes_to_tags`, getAuthorizedPolicyConfig('delete', EDIT_PERMISSION)),
+  ],
 ).enableRLS()
 
 export const routesToTagsRelations = relations(routesToTags, ({ one }) => ({
