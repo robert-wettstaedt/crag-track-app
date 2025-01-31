@@ -63,7 +63,7 @@
 
 <p>Name</p>
 <div class="input-group input-group-divider grid-cols-[1fr_auto]">
-  <input class="input" name="name" type="text" placeholder="Enter name..." value={name} onchange={onChangeName} />
+  <input class="input" name="name" type="text" placeholder="Enter name..." value={name} />
 
   {#if loading}
     <div class="btn-icon">

@@ -3,7 +3,6 @@ import { config } from '$lib/config'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { activities, blocks, generateSlug, routes, routesToTags, type Route } from '$lib/db/schema'
 import { convertException } from '$lib/errors'
-import { insertExternalResources } from '$lib/external-resources/index.server'
 import { routeActionSchema, validateFormData, type ActionFailure, type RouteActionValues } from '$lib/forms.server'
 import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { error, fail, redirect } from '@sveltejs/kit'
@@ -150,7 +149,7 @@ export const actions = {
     }
 
     try {
-      await insertExternalResources(route, block, locals)
+      // await insertExternalResources(route, block, locals)
     } catch (exception) {
       return fail(400, {
         ...values,
