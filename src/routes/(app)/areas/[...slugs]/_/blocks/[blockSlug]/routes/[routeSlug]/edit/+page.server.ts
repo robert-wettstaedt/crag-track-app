@@ -92,6 +92,7 @@ export const actions = {
     try {
       // Validate the form data
       values = await validateFormData(routeActionSchema, data)
+      values.tags = values.tags?.toSorted((a, b) => a.localeCompare(b))
     } catch (exception) {
       // Return the validation failure
       return exception as ActionFailure<RouteActionValues>
@@ -172,7 +173,7 @@ export const actions = {
         await db((tx) => tx.insert(routesToTags).values(tags.map((tag) => ({ routeFk: route.id, tagFk: tag }))))
       }
 
-      const oldRoute = { ...route, tags: route.tags.map((tag) => tag.tagFk) }
+      const oldRoute = { ...route, tags: route.tags.map((tag) => tag.tagFk).toSorted((a, b) => a.localeCompare(b)) }
 
       await db(async (tx) =>
         user == null
