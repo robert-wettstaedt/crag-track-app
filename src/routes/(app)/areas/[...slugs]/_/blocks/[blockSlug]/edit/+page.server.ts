@@ -175,23 +175,24 @@ export const actions = {
     }
 
     try {
+      const toposToDelete = await db((tx) => tx.query.topos.findMany({ where: eq(topos.blockFk, block.id) }))
+      await db((tx) =>
+        tx.delete(topoRoutes).where(
+          inArray(
+            topoRoutes.topoFk,
+            toposToDelete.map((topo) => topo.id),
+          ),
+        ),
+      )
+
+      await db((tx) => tx.delete(topos).where(eq(topos.blockFk, block.id)))
+
       const filesToDelete = await db((tx) => tx.delete(files).where(eq(files.blockFk, block.id)).returning())
       await Promise.all(filesToDelete.map((file) => deleteFile(file)))
 
-      const deletedTopos = await db((tx) => tx.delete(topos).where(eq(topos.blockFk, block.id)).returning())
-
-      if (deletedTopos.length > 0) {
-        await db((tx) =>
-          tx.delete(topoRoutes).where(
-            inArray(
-              topoRoutes.topoFk,
-              deletedTopos.map((topo) => topo.id),
-            ),
-          ),
-        )
-      }
-
+      await db((tx) => tx.update(blocks).set({ geolocationFk: null }).where(eq(blocks.id, block.id)))
       await db((tx) => tx.delete(geolocations).where(eq(geolocations.blockFk, block.id)))
+
       await db((tx) => tx.delete(blocks).where(eq(blocks.id, block.id)))
 
       await db(async (tx) =>
