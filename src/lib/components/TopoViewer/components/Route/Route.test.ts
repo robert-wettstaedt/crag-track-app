@@ -7,8 +7,28 @@ import RouteView from './Route.svelte'
 
 // Mock d3 functionality
 vi.mock('d3', () => {
-  const dragBehavior = {
-    on: vi.fn((event, handler) => {
+  interface DragEvent {
+    dx: number
+    dy: number
+    sourceEvent: {
+      preventDefault: () => void
+      target?: {
+        attributes: {
+          getNamedItem: (name: string) => { value: string } | null
+        }
+      }
+      type: string
+    }
+  }
+
+  interface DragBehavior {
+    on: (event: string, handler: (event: DragEvent) => void) => DragBehavior
+    dragHandler?: (event: DragEvent) => void
+    subject: () => DragBehavior
+  }
+
+  const dragBehavior: DragBehavior = {
+    on: vi.fn((event: string, handler: (event: DragEvent) => void) => {
       if (event === 'drag') {
         dragBehavior.dragHandler = handler
       }
@@ -17,13 +37,20 @@ vi.mock('d3', () => {
     subject: vi.fn().mockReturnThis(),
   }
 
+  interface D3Selection {
+    call: (drag: unknown) => void
+    _drag?: unknown
+  }
+
   return {
-    select: vi.fn((element) => ({
-      call: vi.fn((drag) => {
-        // Store the drag behavior for testing
-        element._drag = drag
-      }),
-    })),
+    select: vi.fn((element: Element) => {
+      const selection: D3Selection = {
+        call: (drag: unknown) => {
+          ;(element as unknown as D3Selection)._drag = drag
+        },
+      }
+      return selection
+    }),
     drag: vi.fn(() => dragBehavior),
   }
 })
@@ -34,6 +61,19 @@ describe('RouteView Component', () => {
     topType: 'top',
     routeFk: 1,
     topoFk: 1,
+    route: {
+      id: 1,
+      name: 'Test Route',
+      slug: 'test-route',
+      createdAt: '2021-01-01',
+      description: 'Test Description',
+      createdBy: 1,
+      gradeFk: 1,
+      rating: 4.5,
+      firstAscentYear: 2020,
+      blockFk: 1,
+      externalResourcesFk: 1,
+    },
     points: [
       { id: '1', type: 'start', x: 100, y: 200 },
       { id: '2', type: 'middle', x: 150, y: 150 },
@@ -129,15 +169,17 @@ describe('RouteView Component', () => {
       expect(group).not.toBeNull()
 
       // Get the d3 drag behavior
-      const dragBehavior = (group as any)._drag
+      type MockDragBehavior = {
+        dragHandler?: (event: DragEvent) => void
+        on: (event: string, handler: (event: DragEvent) => void) => MockDragBehavior
+      }
+
+      const typedGroup = group as unknown as { _drag: MockDragBehavior }
+      const dragBehavior = typedGroup._drag
       expect(dragBehavior).toBeDefined()
 
       // Simulate drag event
-      dragBehavior.dragHandler({
-        dx: 10,
-        dy: 10,
-        sourceEvent: { preventDefault: vi.fn() },
-      })
+      dragBehavior.dragHandler?.({ x: 10, y: 10 } as unknown as DragEvent)
 
       expect(onChange).toHaveBeenCalled()
     })
@@ -184,16 +226,39 @@ describe('RouteView Component', () => {
       expect(group).not.toBeNull()
 
       // Simulate drag start event to trigger selection
-      const dragBehavior = (group as any)._drag
+      type DragMock = {
+        on: {
+          mock: {
+            calls: Array<
+              [
+                string,
+                (event: {
+                  sourceEvent: {
+                    preventDefault: () => void
+                    target: { attributes: { getNamedItem: () => { value: string } } }
+                    type: string
+                  }
+                }) => void,
+              ]
+            >
+          }
+        }
+      }
+
+      const typedGroup = group as unknown as { _drag: DragMock }
+      const dragBehavior = typedGroup._drag
       expect(dragBehavior).toBeDefined()
 
-      dragBehavior.on.mock.calls.find(([event]) => event === 'start')[1]({
-        sourceEvent: {
-          preventDefault: vi.fn(),
-          target: { attributes: { getNamedItem: () => ({ value: '1' }) } },
-          type: '',
-        },
-      })
+      const startHandler = dragBehavior.on.mock.calls.find(([event]) => event === 'start')?.[1]
+      if (startHandler) {
+        startHandler({
+          sourceEvent: {
+            preventDefault: vi.fn(),
+            target: { attributes: { getNamedItem: () => ({ value: '1' }) } },
+            type: '',
+          },
+        })
+      }
 
       expect(get(selectedRouteStore)).toBe(1)
     })

@@ -2,7 +2,7 @@ import { DELETE_PERMISSION, EDIT_PERMISSION } from '$lib/auth'
 import { invalidateCache } from '$lib/cache.server'
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import { activities, blocks, geolocations } from '$lib/db/schema'
-import { buildNestedAreaQuery, enrichBlock } from '$lib/db/utils'
+import { buildNestedAreaQuery, enrichBlock, type EnrichedBlock } from '$lib/db/utils'
 import { convertException } from '$lib/errors'
 import { convertAreaSlug, getUser } from '$lib/helper.server'
 import { createOrUpdateGeolocation } from '$lib/topo-files.server'
@@ -44,7 +44,7 @@ export const load = (async ({ locals, params, parent }) => {
 
     // Return the block and the enriched geolocation blocks
     return {
-      block: enrichBlock(block),
+      block: enrichBlock(block as EnrichedBlock),
     }
   })
 }) satisfies PageServerLoad

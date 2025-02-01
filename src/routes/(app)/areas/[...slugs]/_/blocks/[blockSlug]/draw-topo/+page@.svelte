@@ -159,8 +159,8 @@
                   return async ({ result, update }) => {
                     isSaving = false
 
-                    if (result?.error == null) {
-                      dirtyRoutes = dirtyRoutes.filter((routeId) => routeId !== result.data)
+                    if (result.type === 'success') {
+                      dirtyRoutes = dirtyRoutes.filter((routeId) => routeId !== result.data?.routeFk)
                     }
 
                     return update()

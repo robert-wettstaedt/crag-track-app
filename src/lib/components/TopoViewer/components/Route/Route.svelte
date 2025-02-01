@@ -154,7 +154,7 @@
           selectedPoint = undefined
         })
 
-      d3.select(group).call(drag)
+      d3.select(group).call(drag as any)
     }
   })
 </script>

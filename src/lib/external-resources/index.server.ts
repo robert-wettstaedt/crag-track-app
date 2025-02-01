@@ -1,6 +1,5 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import * as schema from '$lib/db/schema'
-import { geolocations, routes, type Area, type Ascent, type Block, type Route, type UserSettings } from '$lib/db/schema'
 import type { NestedArea } from '$lib/db/types'
 import { buildNestedAreaQuery } from '$lib/db/utils'
 import { eq } from 'drizzle-orm'
@@ -15,18 +14,18 @@ export interface ExternalResourceHandler<ExternalResource, SessionReturnType> {
     blockId: number,
     cragName: string | null | undefined,
     sectorName: string | null | undefined,
-    userSettings: UserSettings | null | undefined,
+    userSettings: schema.UserSettings | null | undefined,
   ) => Promise<ExternalResource | null>
-  convertToRoute: (data: ExternalResource, grades: schema.Grade[]) => Route
+  convertToRoute: (data: ExternalResource, grades: schema.Grade[]) => schema.Route
   checkSession: (
     externalResourceId: number | null,
-    userSettings: UserSettings,
+    userSettings: schema.UserSettings,
     locals: App.Locals,
   ) => Promise<SessionReturnType | null>
   logAscent: (
-    ascent: Ascent,
+    ascent: schema.Ascent,
     externalResourceId: number | null,
-    userSettings: UserSettings,
+    userSettings: schema.UserSettings,
     session: SessionReturnType,
     locals: App.Locals,
   ) => Promise<void>
@@ -64,8 +63,8 @@ export const queryExternalResource = async (query: string, blockId: number, loca
         }),
   )
 
-  let sector: Area | null = null
-  let crag: Area | null = null
+  let sector: schema.Area | null = null
+  let crag: schema.Area | null = null
 
   let area = block.area as NestedArea
   while (area != null) {
@@ -91,7 +90,7 @@ export const queryExternalResource = async (query: string, blockId: number, loca
   return { data8a, data27crags, dataTheCrag }
 }
 
-export const insertExternalResources = async (route: Route, block: Block, locals: App.Locals) => {
+export const insertExternalResources = async (route: schema.Route, block: schema.Block, locals: App.Locals) => {
   if (route.name.length === 0) {
     return
   }
@@ -133,7 +132,9 @@ export const insertExternalResources = async (route: Route, block: Block, locals
 
   if (resource == null) {
     ;[resource] = await db((tx) => tx.insert(schema.routeExternalResources).values({ routeFk: route.id }).returning())
-    await db((tx) => tx.update(routes).set({ externalResourcesFk: resource!.id }).where(eq(routes.id, route.id)))
+    await db((tx) =>
+      tx.update(schema.routes).set({ externalResourcesFk: resource!.id }).where(eq(schema.routes.id, route.id)),
+    )
   }
 
   const resource8a = await (async () => {
@@ -235,11 +236,11 @@ export const insertExternalResources = async (route: Route, block: Block, locals
   ) {
     const [geolocation] = await db((tx) =>
       tx
-        .insert(geolocations)
+        .insert(schema.geolocations)
         .values({
           blockFk: block.id,
-          lat: externalResources.data27crags!.latitude,
-          long: externalResources.data27crags!.longitude,
+          lat: externalResources.data27crags!.latitude!,
+          long: externalResources.data27crags!.longitude!,
         })
         .returning(),
     )
@@ -249,7 +250,7 @@ export const insertExternalResources = async (route: Route, block: Block, locals
   }
 }
 
-export const checkExternalSessions = async (route: Route, locals: App.Locals) => {
+export const checkExternalSessions = async (route: schema.Route, locals: App.Locals) => {
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
   const routeExternalResource = await db((tx) =>
@@ -288,7 +289,7 @@ export const checkExternalSessions = async (route: Route, locals: App.Locals) =>
 }
 
 export const logExternalAscent = async (
-  ascent: Ascent,
+  ascent: schema.Ascent,
   opts: Awaited<ReturnType<typeof checkExternalSessions>>,
   locals: App.Locals,
 ) => {

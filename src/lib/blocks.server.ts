@@ -1,4 +1,5 @@
 import { getFromCache, setInCache } from '$lib/cache.server'
+import type { NestedBlock } from '$lib/components/BlocksMap'
 import type { db } from '$lib/db/db.server'
 import * as schema from '$lib/db/schema'
 import { areas, blocks } from '$lib/db/schema'
@@ -295,13 +296,9 @@ export const getStatsOfBlocks = <
   })
 }
 
-export const getLayoutBlocks = async <
-  T extends InferResultType<'blocks', { area: { with: { parent: true } }; geolocation: true }>[],
->(
-  db: PostgresJsDatabase<typeof schema>,
-): Promise<T> => {
+export const getLayoutBlocks = async <T extends NestedBlock>(db: PostgresJsDatabase<typeof schema>): Promise<T[]> => {
   // Try to get from cache first
-  const cached = await getFromCache<T>('layout', 'blocks')
+  const cached = await getFromCache<T[]>('layout', 'blocks')
   if (cached) {
     return cached
   }
@@ -328,5 +325,5 @@ export const getLayoutBlocks = async <
   await setInCache('layout', 'blocks', filteredBlocks)
 
   // Return the enriched blocks
-  return filteredBlocks as T
+  return filteredBlocks as T[]
 }

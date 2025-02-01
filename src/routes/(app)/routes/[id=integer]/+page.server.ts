@@ -1,5 +1,6 @@
 import { createDrizzleSupabaseClient } from '$lib/db/db.server'
 import * as schema from '$lib/db/schema'
+import type { NestedArea } from '$lib/db/types'
 import { buildNestedAreaQuery } from '$lib/db/utils'
 import { error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
@@ -23,7 +24,7 @@ export const load = async ({ locals, params }) => {
     let parent = route?.block?.area
     while (parent != null) {
       path.unshift(`${parent.slug}-${parent.id}`)
-      parent = parent.parent
+      parent = (parent as NestedArea).parent ?? undefined
     }
 
     if (route == null || path.length === 0) {

@@ -4,6 +4,7 @@ import { getAreaGPX } from '$lib/gpx.server'
 import type { FileDTO } from '$lib/nextcloud'
 import type { Session } from '@supabase/supabase-js'
 import { render } from '@testing-library/svelte'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import sharp from 'sharp'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -231,8 +232,11 @@ const mockDb = {
       findMany: vi.fn(() => [
         {
           id: 1,
+          areaFk: null,
+          ascentFk: null,
+          blockFk: null,
+          routeFk: null,
           path: '',
-          type: 'attempt',
         } as schema.File,
       ]),
     },
@@ -240,13 +244,13 @@ const mockDb = {
       findFirst: vi.fn(() => ({}) as schema.User),
     },
   },
-}
+} as unknown as PostgresJsDatabase<typeof schema>
 
-const mockSession: Session = {
+const mockSession = {
   user: {
     id: 'test-user',
   },
-}
+} as unknown as Session
 
 describe('GPX Generation', () => {
   beforeEach(() => {
@@ -259,9 +263,12 @@ describe('GPX Generation', () => {
         {
           id: 1,
           path: '/path/to/file',
-          type: 'topo',
-          stat: { basename: 'txt', filename: 'file', size: 1000 },
-        } as FileDTO,
+          stat: { basename: 'txt', filename: 'file', size: 1000, lastmod: '2024-01-01', type: 'file', etag: '123' },
+          areaFk: null,
+          ascentFk: null,
+          blockFk: null,
+          routeFk: null,
+        } satisfies FileDTO,
       ]),
     }))
 
@@ -274,7 +281,9 @@ describe('GPX Generation', () => {
     }))
 
     vi.mock('svelte/server', () => ({
-      render: vi.fn((...args) => ({ body: render(...args).baseElement.innerHTML })),
+      render: vi.fn((component: Parameters<typeof render>[0], props: Parameters<typeof render>[1]) => ({
+        body: render(component, props).baseElement.innerHTML,
+      })),
     }))
   })
 
@@ -333,7 +342,7 @@ describe('GPX Generation', () => {
           findMany: vi.fn().mockRejectedValue(new Error('Database error')),
         },
       },
-    }
+    } as unknown as PostgresJsDatabase<typeof schema>
 
     expect(getAreaGPX(1, _mockDb, mockSession)).rejects.toThrowError()
   })

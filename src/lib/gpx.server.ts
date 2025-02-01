@@ -5,7 +5,7 @@ import Labels from '$lib/components/TopoViewer/components/Labels'
 import Route from '$lib/components/TopoViewer/components/Route'
 import { config } from '$lib/config'
 import * as schema from '$lib/db/schema'
-import type { InferResultType } from '$lib/db/types'
+import type { InferResultType, NestedArea } from '$lib/db/types'
 import { convertMarkdownToHtml } from '$lib/markdown'
 import { getNextcloud, searchNextcloudFile } from '$lib/nextcloud/nextcloud.server'
 import { type TopoRouteDTO } from '$lib/topo'
@@ -52,7 +52,7 @@ export const getAreaGPX = async (areaId: number, db: PostgresJsDatabase<typeof s
 
   const gradingScale = user?.userSettings?.gradingScale ?? 'FB'
 
-  const enrichedBlocks = await loadBlockFiles(blocks, db, session)
+  const enrichedBlocks = await loadBlockFiles(blocks, db)
 
   const xml = `<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
   <gpx
@@ -81,7 +81,7 @@ export const getAreaGPX = async (areaId: number, db: PostgresJsDatabase<typeof s
       return `
     <wpt lat="${block.geolocation!.lat}" lon="${block.geolocation!.long}">
       <time>${encodeHtml(DateTime.fromSQL(block.createdAt).toISO())}</time>
-      <name>${encodeHtml([block.area.parent.name, block.area.name, block.name].join(' / '))}</name>
+      <name>${encodeHtml([(block.area as NestedArea).parent?.name, block.area.name, block.name].join(' / '))}</name>
       <desc>${prepareHtml(renderBlockHtml(block, grades, gradingScale))}</desc>
       <extensions>
         <osmand:color>${block.color}</osmand:color>
@@ -187,7 +187,14 @@ const loadBlockFiles = async (
           const description =
             route.description == null ? null : await convertMarkdownToHtml(route.description, db, 'strong')
 
-          return { ...route, description, files: topoFiles }
+          return {
+            ...(route as InferResultType<
+              'routes',
+              { firstAscents: { with: { firstAscensionist: true } }; tags: true }
+            >),
+            description,
+            files: topoFiles,
+          }
         }),
       )
 
@@ -243,7 +250,7 @@ const renderRouteHtml = (
   gradingScale: schema.UserSettings['gradingScale'],
 ): string => {
   return `
-    <h4>${[block.area.parent.name, block.area.name, block.name].join(' / ')}</h4>
+    <h4>${[(block.area as NestedArea).parent?.name, block.area.name, block.name].join(' / ')}</h4>
     <h3>${renderRouteName(route, grades, gradingScale)}</h3>
     <div style="margin-top: 16px; position: relative;">
       ${block.topos
@@ -316,7 +323,7 @@ const renderRouteDescription = (
 }
 
 const renderRoute = (
-  route: InferResultType<'routes', { firstAscent: { with: { climber: true } }; tags: true }>,
+  route: InferResultType<'routes', { firstAscents: { with: { firstAscensionist: true } }; tags: true }>,
   grades: schema.Grade[],
   gradingScale: schema.UserSettings['gradingScale'],
   key?: number,

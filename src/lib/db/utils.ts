@@ -131,7 +131,7 @@ export const enrichTopo = async (
 
   const routes = topo.routes
     .map(({ path, ...route }): TopoRouteDTO => {
-      return { ...route, points: convertPathToPoints(path ?? '') }
+      return { ...route, points: convertPathToPoints(path ?? '') } as TopoRouteDTO
     })
     .toSorted((a, b) => {
       const meanA = calcMiddlePoint(a.points)?.x ?? 0

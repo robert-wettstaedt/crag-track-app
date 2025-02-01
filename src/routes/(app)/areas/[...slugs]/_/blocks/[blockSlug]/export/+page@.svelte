@@ -8,6 +8,7 @@
   import sa from '$lib/assets/sa.svg'
   import BlockEntry from '$lib/components/AreaBlockListing/components/BlockEntry'
   import { selectedRouteStore } from '$lib/components/TopoViewer'
+  import type { NestedArea } from '$lib/db/types'
   import { convertException } from '$lib/errors'
   import '@fortawesome/fontawesome-free/css/all.css'
   import { ProgressRing } from '@skeletonlabs/skeleton-svelte'
@@ -123,11 +124,11 @@
 
   <section bind:this={dom} class="p-2 bg-surface-50-950">
     <div class="flex justify-between mb-4">
-      <img src={logo} class="w-16" />
+      <img alt={PUBLIC_APPLICATION_NAME} src={logo} class="w-16" />
 
       <div class="flex items-center">
         <h1 class="text-2xl text-ellipsis overflow-hidden w-[150mm] whitespace-nowrap">
-          {data.block.area.parent?.name} / {data.block.area.name}
+          {(data.block.area as NestedArea).parent?.name} / {data.block.area.name}
         </h1>
       </div>
 

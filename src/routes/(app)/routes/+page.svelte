@@ -5,6 +5,7 @@
   import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
+  import type { EnrichedBlock } from '$lib/db/utils'
   import { Pagination } from '@skeletonlabs/skeleton-svelte'
 
   let { data } = $props()
@@ -24,7 +25,7 @@
   <GenericList
     items={data.routes}
     rightContent={(item) => item.block.name}
-    rightPathname={(item) => item.block.pathname}
+    rightPathname={(item) => (item.block as EnrichedBlock).pathname}
   >
     {#snippet left(item)}
       <RouteName route={item} />

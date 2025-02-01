@@ -10,6 +10,19 @@ describe('Labels Component', () => {
       topType: 'top',
       routeFk: 1,
       topoFk: 1,
+      route: {
+        id: 1,
+        name: 'Route 1',
+        slug: 'route-1',
+        createdAt: '2021-01-01',
+        description: 'Route 1 description',
+        createdBy: 1,
+        gradeFk: 1,
+        rating: 1,
+        firstAscentYear: 2021,
+        blockFk: 1,
+        externalResourcesFk: 1,
+      },
       points: [
         { id: '1', type: 'start', x: 100, y: 200 },
         { id: '2', type: 'middle', x: 150, y: 150 },
@@ -21,6 +34,19 @@ describe('Labels Component', () => {
       topType: 'topout',
       routeFk: 2,
       topoFk: 1,
+      route: {
+        id: 1,
+        name: 'Route 1',
+        slug: 'route-1',
+        createdAt: '2021-01-01',
+        description: 'Route 1 description',
+        createdBy: 1,
+        gradeFk: 1,
+        rating: 1,
+        firstAscentYear: 2021,
+        blockFk: 1,
+        externalResourcesFk: 1,
+      },
       points: [
         { id: '4', type: 'start', x: 300, y: 200 },
         { id: '5', type: 'top', x: 350, y: 100 },
@@ -34,7 +60,7 @@ describe('Labels Component', () => {
         props: {
           routes: mockRoutes,
           scale: 1,
-          getRouteKey: (route) => route.routeFk,
+          getRouteKey: (route) => route.routeFk ?? 0,
         },
       })
 
@@ -47,7 +73,7 @@ describe('Labels Component', () => {
         props: {
           routes: [mockRoutes[0]], // Using only first route
           scale: 1,
-          getRouteKey: (route) => route.routeFk,
+          getRouteKey: (route) => route.routeFk ?? 0,
         },
       })
 
@@ -62,7 +88,7 @@ describe('Labels Component', () => {
         props: {
           routes: mockRoutes,
           scale: 1,
-          getRouteKey: (route) => route.routeFk * 10,
+          getRouteKey: (route) => (route.routeFk ?? 0) * 10,
         },
       })
 
@@ -90,7 +116,7 @@ describe('Labels Component', () => {
         props: {
           routes: mockRoutes,
           scale,
-          getRouteKey: (route) => route.routeFk,
+          getRouteKey: (route) => route.routeFk ?? 0,
         },
       })
 
@@ -107,7 +133,7 @@ describe('Labels Component', () => {
         props: {
           routes: [mockRoutes[0]],
           scale: 1,
-          getRouteKey: (route) => route.routeFk,
+          getRouteKey: (route) => route.routeFk ?? 0,
         },
       })
 
@@ -129,13 +155,13 @@ describe('Labels Component', () => {
             { id: '7', type: 'top', x: 250, y: 100 },
           ],
         },
-      ]
+      ] as TopoRouteDTO[]
 
       const { container } = render(Labels, {
         props: {
           routes: routesWithSharedStart,
           scale: 1,
-          getRouteKey: (route) => route.routeFk,
+          getRouteKey: (route) => route.routeFk ?? 0,
         },
       })
 
@@ -154,7 +180,7 @@ describe('Labels Component', () => {
         props: {
           routes: [routeWithoutPoints],
           scale: 1,
-          getRouteKey: (route) => route.routeFk,
+          getRouteKey: (route) => route.routeFk ?? 0,
         },
       })
 

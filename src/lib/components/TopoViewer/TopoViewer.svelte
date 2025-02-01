@@ -197,7 +197,7 @@
         zoomTransform = event.transform
       })
 
-    d3.select(svg).call(zoom)
+    d3.select(svg).call(zoom as any)
   }
 
   const onResetZoom = () => {

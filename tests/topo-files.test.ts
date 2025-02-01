@@ -39,12 +39,6 @@ vi.mock('exifr', () => ({
   },
 }))
 
-// Get the mocked functions for assertions
-const nextcloudMock = await import('$lib/nextcloud/nextcloud.server')
-const mockExists = vi.mocked(nextcloudMock.getNextcloud()).exists
-const mockPutFileContents = vi.mocked(nextcloudMock.getNextcloud()).putFileContents
-const mockMoveFile = vi.mocked(nextcloudMock.getNextcloud()).moveFile
-
 // Mock data
 const mockBlock = {
   id: 1,
@@ -138,7 +132,7 @@ describe('Topo Files', () => {
 
   describe('createGeolocationFromFiles', () => {
     it('should extract GPS data and create geolocation', async () => {
-      const buffers = [Buffer.from('test-image-1'), Buffer.from('test-image-2')]
+      const buffers = [Buffer.from('test-image-1').buffer, Buffer.from('test-image-2').buffer]
       await createGeolocationFromFiles(mockDb, mockBlock, buffers)
 
       expect(exif.gps).toHaveBeenCalledTimes(2)
@@ -148,7 +142,7 @@ describe('Topo Files', () => {
     it('should handle files without GPS data', async () => {
       // @ts-expect-error - We want to test the null case
       vi.mocked(exif.gps).mockResolvedValueOnce(undefined)
-      const buffers = [Buffer.from('test-image')]
+      const buffers = [Buffer.from('test-image').buffer]
       await createGeolocationFromFiles(mockDb, mockBlock, buffers)
 
       expect(mockDb.insert).not.toHaveBeenCalled()
@@ -156,7 +150,7 @@ describe('Topo Files', () => {
 
     it('should pass operation parameter to createOrUpdateGeolocation', async () => {
       const blockWithGeo = { ...mockBlock, geolocationFk: 1 }
-      const buffers = [Buffer.from('test-image')]
+      const buffers = [Buffer.from('test-image').buffer]
       vi.mocked(exif.gps).mockResolvedValueOnce({ latitude: 47.123, longitude: 8.456 })
 
       await createGeolocationFromFiles(mockDb, blockWithGeo, buffers, 'update')

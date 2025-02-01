@@ -1,5 +1,6 @@
 import type { User } from '$lib/db/schema'
 import * as schema from '$lib/db/schema'
+import type { NestedBlock } from '$lib/db/types'
 import type { EnrichedArea, EnrichedBlock, EnrichedRoute } from '$lib/db/utils'
 import { buildNestedAreaQuery, enrichArea, enrichBlock, enrichRoute } from '$lib/db/utils'
 import { eq, ilike } from 'drizzle-orm'
@@ -67,7 +68,7 @@ export const searchResources = async (
   return {
     searchResults: {
       routes: routesResult.map((route) => enrichRoute(route)), // Enrich routes with additional data
-      blocks: blocksResult.map(enrichBlock), // Enrich blocks with additional data
+      blocks: blocksResult.map((block) => enrichBlock(block as NestedBlock)), // Enrich blocks with additional data
       areas: areasResult.map(enrichArea), // Enrich areas with additional data
       users: usersResult, // Return users as is
     },

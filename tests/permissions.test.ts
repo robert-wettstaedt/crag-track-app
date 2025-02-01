@@ -100,7 +100,7 @@ describe('Permission Tests', () => {
       const mockData = {
         areas: [],
         userPermissions: [READ_PERMISSION, EDIT_PERMISSION],
-      }
+      } as unknown as Parameters<typeof AreasPage>[1]['data']
 
       render(AreasPage, { data: mockData })
 
@@ -112,7 +112,7 @@ describe('Permission Tests', () => {
       const mockData = {
         areas: [],
         userPermissions: [READ_PERMISSION],
-      }
+      } as unknown as Parameters<typeof AreasPage>[1]['data']
 
       render(AreasPage, { data: mockData })
 
@@ -127,7 +127,7 @@ describe('Permission Tests', () => {
           { id: 2, name: 'Test Area 2', slug: 'test-area-2' },
         ],
         userPermissions: [READ_PERMISSION],
-      }
+      } as unknown as Parameters<typeof AreasPage>[1]['data']
 
       render(AreasPage, { data: mockData })
 
@@ -139,7 +139,7 @@ describe('Permission Tests', () => {
       const mockData = {
         areas: [],
         userPermissions: [READ_PERMISSION],
-      }
+      } as unknown as Parameters<typeof AreasPage>[1]['data']
 
       render(AreasPage, { data: mockData })
 

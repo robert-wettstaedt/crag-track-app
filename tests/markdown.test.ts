@@ -1,11 +1,13 @@
+import * as schema from '$lib/db/schema'
 import { convertMarkdownToHtml } from '$lib/markdown'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { describe, expect, it, vi } from 'vitest'
 
 const mockDb = {
   select: vi.fn(() => ({
     from: vi.fn(() => ({ where: vi.fn(() => [{ name: 'foo' }]) })),
   })),
-}
+} as unknown as PostgresJsDatabase<typeof schema>
 
 describe('Markdown Conversion', () => {
   it('should convert basic markdown to HTML', async () => {
@@ -92,7 +94,7 @@ describe('Markdown Conversion', () => {
       select: vi.fn(() => ({
         from: vi.fn(() => ({ where: vi.fn(() => []) })),
       })),
-    }
+    } as unknown as PostgresJsDatabase<typeof schema>
 
     const markdown = '!routes:123!'
     const html = await convertMarkdownToHtml(markdown, mockDb)
@@ -120,7 +122,7 @@ describe('Markdown Conversion', () => {
           }),
         })),
       })),
-    }
+    } as unknown as PostgresJsDatabase<typeof schema>
 
     const markdown = '!routes:123!!'
     expect(convertMarkdownToHtml(markdown, mockDb)).rejects.toThrowError()

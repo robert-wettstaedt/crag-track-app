@@ -11,6 +11,7 @@
   import GenericList from '$lib/components/GenericList'
   import GradeHistogram from '$lib/components/GradeHistogram'
   import RouteName from '$lib/components/RouteName'
+  import type { EnrichedArea, EnrichedBlock } from '$lib/db/utils'
   import { ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
   import { DateTime } from 'luxon'
   import { onMount } from 'svelte'
@@ -201,7 +202,7 @@
             {#snippet right(item)}
               <ol class="flex items-center gap-2 w-auto p-2">
                 <li>
-                  <a class="anchor" href={item.route.block.area.pathname}>
+                  <a class="anchor" href={(item.route.block.area as EnrichedArea).pathname}>
                     {item.route.block.area.name}
                   </a>
                 </li>
@@ -209,7 +210,7 @@
                 <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
 
                 <li>
-                  <a class="anchor" href={item.route.block.pathname}>
+                  <a class="anchor" href={(item.route.block as EnrichedBlock).pathname}>
                     {item.route.block.name}
                   </a>
                 </li>
@@ -242,7 +243,7 @@
             {#snippet right(item)}
               <ol class="flex items-center gap-2 w-auto p-2">
                 <li>
-                  <a class="anchor" href={item.route.block.area.pathname}>
+                  <a class="anchor" href={(item.route.block.area as EnrichedArea).pathname}>
                     {item.route.block.area.name}
                   </a>
                 </li>
@@ -250,7 +251,7 @@
                 <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
 
                 <li>
-                  <a class="anchor" href={item.route.block.pathname}>
+                  <a class="anchor" href={(item.route.block as EnrichedBlock).pathname}>
                     {item.route.block.name}
                   </a>
                 </li>
@@ -271,7 +272,7 @@
           {#snippet right(item)}
             <ol class="flex items-center gap-2 w-auto p-2">
               <li>
-                <a class="anchor" href={item.block.area.pathname}>
+                <a class="anchor" href={(item.block.area as EnrichedArea).pathname}>
                   {item.block.area.name}
                 </a>
               </li>
@@ -279,7 +280,7 @@
               <li class="opacity-50" aria-hidden={true}>&rsaquo;</li>
 
               <li>
-                <a class="anchor" href={item.block.pathname}>
+                <a class="anchor" href={(item.block as EnrichedBlock).pathname}>
                   {item.block.name}
                 </a>
               </li>

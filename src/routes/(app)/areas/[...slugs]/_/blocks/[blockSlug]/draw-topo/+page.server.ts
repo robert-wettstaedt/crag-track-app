@@ -126,7 +126,7 @@ export const actions = {
         parentEntityType: 'block',
       })
 
-      return values.routeFk
+      return { routeFk: values.routeFk }
     })
   },
 
@@ -221,7 +221,7 @@ export const actions = {
 
       const topo = await db.query.topos.findFirst({ where: eq(topos.id, id), with: { file: true } })
 
-      if (topo == null) {
+      if (topo == null || topo.blockFk == null) {
         return fail(404, { error: `Topo with id ${id} not found` })
       }
 

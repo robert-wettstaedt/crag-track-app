@@ -12,7 +12,7 @@ import { unified, type Plugin } from 'unified'
 type EncloseOptions = 'anchor' | 'strong'
 
 export const convertMarkdownToHtml = async (
-  markdown: string,
+  markdown: string | null | undefined,
   db?: PostgresJsDatabase<typeof schema>,
   encloseReferences?: EncloseOptions,
 ): Promise<string> => {

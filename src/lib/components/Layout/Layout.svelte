@@ -1,3 +1,15 @@
+<script lang="ts" module>
+  export interface Data extends Omit<App.Locals, 'safeGetSession' | 'user'> {
+    user: InferResultType<'users', { userSettings: { columns: { gradingScale: true } } }> | null | undefined
+  }
+
+  export interface LayoutProps {
+    children: Snippet
+    data: Data
+    form: any
+  }
+</script>
+
 <script lang="ts">
   import { afterNavigate, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
@@ -12,17 +24,7 @@
   import { onMount, type Snippet } from 'svelte'
   import '../../../app.postcss'
 
-  interface Data extends Omit<App.Locals, 'safeGetSession' | 'user'> {
-    user: InferResultType<'users', { userSettings: { columns: { gradingScale: true } } }> | null | undefined
-  }
-
-  interface Props {
-    children: Snippet
-    data: Data
-    form: any
-  }
-
-  let { data, form, children }: Props = $props()
+  let { data, form, children }: LayoutProps = $props()
 
   onMount(() => {
     const value = data.supabase.auth.onAuthStateChange((_, newSession) => {

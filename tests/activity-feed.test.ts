@@ -655,7 +655,7 @@ describe('Activity Feed', () => {
       expect(result[0].items).toHaveLength(2)
       expect(result[0].parentEntity).toBeDefined()
       const parentEntity = result[0].parentEntity
-      expect(parentEntity?.object.id).toBe(100)
+      expect(parentEntity?.object?.id).toBe(100)
     })
   })
 

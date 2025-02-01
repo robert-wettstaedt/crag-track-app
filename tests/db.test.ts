@@ -1,5 +1,13 @@
+import type { Area } from '$lib/db/schema'
 import type { NestedArea, NestedBlock, NestedRoute } from '$lib/db/types'
-import { buildNestedAreaQuery, enrichArea, enrichBlock, enrichRoute } from '$lib/db/utils'
+import {
+  buildNestedAreaQuery,
+  enrichArea,
+  enrichBlock,
+  enrichRoute,
+  type EnrichedArea,
+  type EnrichedBlock,
+} from '$lib/db/utils'
 import { describe, expect, it } from 'vitest'
 
 describe('buildNestedAreaQuery', () => {
@@ -57,17 +65,18 @@ describe('buildNestedAreaQuery', () => {
 
 describe('enrichArea', () => {
   it('should enrich a NestedArea object with a pathname', () => {
-    const area: NestedArea = {
+    const area = {
       id: 1,
       slug: 'test-area',
       parent: null,
-    }
+    } as unknown as NestedArea
+
     const enrichedArea = enrichArea(area)
     expect(enrichedArea.pathname).toBe('/areas/test-area-1')
   })
 
   it('should recursively enrich a NestedArea object with a pathname', () => {
-    const area: NestedArea = {
+    const area = {
       id: 1,
       slug: 'child-area',
       parent: {
@@ -75,13 +84,13 @@ describe('enrichArea', () => {
         slug: 'parent-area',
         parent: null,
       },
-    }
+    } as unknown as NestedArea
     const enrichedArea = enrichArea(area)
     expect(enrichedArea.pathname).toBe('/areas/parent-area-2/child-area-1')
   })
 
   it('should handle deeply nested areas', () => {
-    const area: NestedArea = {
+    const area = {
       id: 1,
       slug: 'child-area',
       parent: {
@@ -97,20 +106,21 @@ describe('enrichArea', () => {
           },
         },
       },
-    }
+    } as unknown as NestedArea
     const enrichedArea = enrichArea(area)
     expect(enrichedArea.pathname).toBe('/areas/great-grandparent-area-4/grandparent-area-3/parent-area-2/child-area-1')
   })
 
   it('should preserve all area properties when enriching', () => {
-    const area: NestedArea = {
+    const area = {
       id: 1,
       slug: 'test-area',
       parent: null,
       name: 'Test Area',
       type: 'crag',
-      createdAt: new Date(),
-    }
+      createdAt: new Date().toISOString(),
+    } as unknown as NestedArea
+
     const enrichedArea = enrichArea(area)
     expect(enrichedArea).toEqual({
       ...area,
@@ -121,7 +131,7 @@ describe('enrichArea', () => {
 
 describe('enrichBlock', () => {
   it('should enrich a NestedBlock object with a pathname and enriched area', () => {
-    const block: NestedBlock = {
+    const block = {
       id: 1,
       slug: 'test-block',
       area: {
@@ -129,14 +139,15 @@ describe('enrichBlock', () => {
         slug: 'test-area',
         parent: null,
       },
-    }
+    } as unknown as NestedBlock
+
     const enrichedBlock = enrichBlock(block)
     expect(enrichedBlock.pathname).toBe('/areas/test-area-2/_/blocks/test-block')
-    expect(enrichedBlock.area.pathname).toBe('/areas/test-area-2')
+    expect((enrichedBlock.area as EnrichedArea).pathname).toBe('/areas/test-area-2')
   })
 
   it('should handle blocks in nested areas', () => {
-    const block: NestedBlock = {
+    const block = {
       id: 1,
       slug: 'test-block',
       area: {
@@ -148,25 +159,27 @@ describe('enrichBlock', () => {
           parent: null,
         },
       },
-    }
+    } as unknown as NestedBlock
+
     const enrichedBlock = enrichBlock(block)
     expect(enrichedBlock.pathname).toBe('/areas/parent-area-3/child-area-2/_/blocks/test-block')
-    expect(enrichedBlock.area.pathname).toBe('/areas/parent-area-3/child-area-2')
+    expect((enrichedBlock.area as EnrichedArea).pathname).toBe('/areas/parent-area-3/child-area-2')
   })
 
   it('should preserve all block properties when enriching', () => {
-    const block: NestedBlock = {
+    const block = {
       id: 1,
       slug: 'test-block',
       name: 'Test Block',
       description: 'Test Description',
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
       area: {
         id: 2,
         slug: 'test-area',
         parent: null,
       },
-    }
+    } as unknown as NestedBlock
+
     const enrichedBlock = enrichBlock(block)
     expect(enrichedBlock).toEqual({
       ...block,
@@ -193,15 +206,16 @@ describe('enrichRoute', () => {
           parent: null,
         },
       },
-    }
+    } as unknown as NestedRoute
+
     const enrichedRoute = enrichRoute(route)
     expect(enrichedRoute.pathname).toBe('/areas/test-area-3/_/blocks/test-block/routes/test-route')
-    expect(enrichedRoute.block.pathname).toBe('/areas/test-area-3/_/blocks/test-block')
-    expect(enrichedRoute.block.area.pathname).toBe('/areas/test-area-3')
+    expect((enrichedRoute.block as EnrichedBlock).pathname).toBe('/areas/test-area-3/_/blocks/test-block')
+    expect((enrichedRoute.block.area as EnrichedArea).pathname).toBe('/areas/test-area-3')
   })
 
   it('should handle routes in blocks in nested areas', () => {
-    const route: NestedRoute = {
+    const route = {
       id: 1,
       slug: 'test-route',
       block: {
@@ -213,35 +227,37 @@ describe('enrichRoute', () => {
           parent: {
             id: 4,
             slug: 'parent-area',
-            parent: null,
           },
         },
       },
-    }
+    } as unknown as NestedRoute
+
     const enrichedRoute = enrichRoute(route)
     expect(enrichedRoute.pathname).toBe('/areas/parent-area-4/child-area-3/_/blocks/test-block/routes/test-route')
-    expect(enrichedRoute.block.pathname).toBe('/areas/parent-area-4/child-area-3/_/blocks/test-block')
-    expect(enrichedRoute.block.area.pathname).toBe('/areas/parent-area-4/child-area-3')
+    expect((enrichedRoute.block as EnrichedBlock).pathname).toBe(
+      '/areas/parent-area-4/child-area-3/_/blocks/test-block',
+    )
+    expect((enrichedRoute.block.area as EnrichedArea).pathname).toBe('/areas/parent-area-4/child-area-3')
   })
 
   it('should preserve all route properties when enriching', () => {
-    const route: NestedRoute = {
+    const route = {
       id: 1,
       slug: 'test-route',
       name: 'Test Route',
       description: 'Test Description',
-      grade: 'V5',
-      createdAt: new Date(),
+      gradeFk: 1,
+      createdAt: new Date().toISOString(),
       block: {
         id: 2,
         slug: 'test-block',
         area: {
           id: 3,
           slug: 'test-area',
-          parent: null,
-        },
-      },
-    }
+        } as Area,
+      } as NestedBlock,
+    } as unknown as NestedRoute
+
     const enrichedRoute = enrichRoute(route)
     expect(enrichedRoute).toEqual({
       ...route,

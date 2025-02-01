@@ -3,11 +3,11 @@
   import FileUpload, { type FileUploadProps } from '$lib/components/FileUpload'
 
   interface Props {
-    name: Block['name']
+    name: Block['name'] | undefined | null
     fileUploadProps?: FileUploadProps
   }
 
-  let { name, fileUploadProps }: Props = $props()
+  let { name = '', fileUploadProps }: Props = $props()
 </script>
 
 <label class="label">

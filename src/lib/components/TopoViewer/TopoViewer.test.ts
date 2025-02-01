@@ -1,4 +1,4 @@
-import type { TopoDTO } from '$lib/topo'
+import type { TopoDTO, TopoRouteDTO } from '$lib/topo'
 import { fireEvent, render, screen } from '@testing-library/svelte'
 import * as d3 from 'd3'
 import { get } from 'svelte/store'
@@ -20,7 +20,7 @@ global.ResizeObserver = ResizeObserverMock
 vi.mock('d3', async (importOriginal) => {
   const actual = await importOriginal()
   return {
-    ...actual,
+    ...(actual as object),
     zoom: vi.fn(() => ({
       extent: vi.fn().mockReturnThis(),
       translateExtent: vi.fn().mockReturnThis(),
@@ -45,7 +45,10 @@ describe('TopoViewer Component', () => {
       file: {
         id: 1,
         path: '/test/path1.jpg',
-        type: 'topo',
+        areaFk: 1,
+        ascentFk: 1,
+        routeFk: 1,
+        blockFk: 1,
         stat: {
           filename: '/test/path1.jpg',
           basename: 'path1.jpg',
@@ -66,7 +69,7 @@ describe('TopoViewer Component', () => {
             { id: '2', type: 'middle' as const, x: 150, y: 150 },
             { id: '3', type: 'top' as const, x: 200, y: 100 },
           ],
-        },
+        } as TopoRouteDTO,
       ],
     },
     {
@@ -76,7 +79,10 @@ describe('TopoViewer Component', () => {
       file: {
         id: 2,
         path: '/test/path2.jpg',
-        type: 'topo',
+        areaFk: 1,
+        ascentFk: 1,
+        routeFk: 1,
+        blockFk: 1,
         stat: {
           filename: '/test/path2.jpg',
           basename: 'path2.jpg',

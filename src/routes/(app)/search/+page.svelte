@@ -5,6 +5,7 @@
   import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
+  import type { EnrichedBlock } from '$lib/db/utils'
   import type { SearchResults } from '$lib/search.server'
   import { Tabs } from '@skeletonlabs/skeleton-svelte'
   import { onMount } from 'svelte'
@@ -125,7 +126,7 @@
             <GenericList
               items={data.searchResults.routes}
               rightContent={(item) => item.block.name}
-              rightPathname={(item) => item.block.pathname}
+              rightPathname={(item) => (item.block as EnrichedBlock).pathname}
             >
               {#snippet left(item)}
                 <RouteName route={item} />

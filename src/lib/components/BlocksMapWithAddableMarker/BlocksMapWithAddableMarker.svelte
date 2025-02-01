@@ -1,8 +1,7 @@
 <script lang="ts">
-  import BlocksMap from '$lib/components/BlocksMap'
+  import BlocksMap, { type NestedBlock } from '$lib/components/BlocksMap'
   import type { Area } from '$lib/db/schema'
   import type { InferResultType } from '$lib/db/types'
-  import type { EnrichedBlock } from '$lib/db/utils'
   import Feature from 'ol/Feature.js'
   import Map from 'ol/Map.js'
   import type { Coordinate } from 'ol/coordinate'
@@ -13,7 +12,7 @@
   import { createEventDispatcher } from 'svelte'
 
   interface Props {
-    blocks: EnrichedBlock[]
+    blocks: NestedBlock[]
     selectedArea?: Area | null
     selectedBlock?: InferResultType<'blocks', { geolocation: true }> | null
   }

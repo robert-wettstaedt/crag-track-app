@@ -1,4 +1,6 @@
 import { EXPORT_PERMISSION } from '$lib/auth'
+import type { Block } from '$lib/components/AreaBlockListing/components/BlockEntry'
+import type { NestedBlock } from '$lib/components/BlocksMap'
 import { createDrizzleSupabaseClient, db } from '$lib/db/db.server'
 import { areas, blocks, users, type UserSettings } from '$lib/db/schema'
 import { buildNestedAreaQuery, enrichBlock, enrichTopo } from '$lib/db/utils'
@@ -109,7 +111,7 @@ export const load = (async ({ locals, params }) => {
     const allBlocks = [...area.blocks, ...area.areas.flatMap((area) => area.blocks)]
 
     const enrichedBlocks = await Promise.all(
-      allBlocks.map(async (block) => {
+      allBlocks.map(async (block): Promise<NestedBlock & Block> => {
         const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
         const enrichedBlock = enrichBlock(block)
 
@@ -126,7 +128,7 @@ export const load = (async ({ locals, params }) => {
           ...enrichedBlock,
           routes: enrichedRoutes,
           topos: toposResult,
-        }
+        } as NestedBlock & Block
       }),
     )
 

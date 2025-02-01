@@ -120,40 +120,10 @@ const mock8aRouteResponse: QueryResponse8a = {
   ],
 }
 
-// Mock database responses
-const mockDbResponses = {
-  routeExternalResources: [
-    {
-      id: 789,
-      routeFk: 1,
-      external27cragsId: 123,
-      external8aId: 456,
-      externalTheCragId: 789,
-    },
-  ],
-  routes: [
-    {
-      id: 1,
-      name: 'Test Route',
-      gradeFk: 1,
-      description: 'Test Description',
-    },
-  ],
-}
-
 // Setup mocks
 beforeEach(() => {
   // Mock global fetch
   global.fetch = vi.fn()
-
-  // Mock database client responses
-  const mockDb = createDrizzleSupabaseClient()
-  // vi.mocked(mockDb.query).mockResolvedValue(mockDbResponses.routes)
-  // vi.mocked(mockDb.select).mockReturnValue({
-  //   from: vi.fn().mockReturnValue({
-  //     where: vi.fn().mockResolvedValue(mockDbResponses.routeExternalResources),
-  //   }),
-  // })
 })
 
 afterEach(() => {
@@ -161,12 +131,12 @@ afterEach(() => {
 })
 
 describe('27crags Handler', () => {
-  const externalRoute: RouteExternalResource27crags = {
+  const externalRoute = {
     ...mock27cragsRouteResponse.search_keys.at(0),
     externalResourcesFk: -1,
     id: -1,
     url: `https://27crags.com/${mock27cragsRouteResponse.search_keys.at(0)?.path}`,
-  }
+  } as unknown as RouteExternalResource27crags
 
   it('should query route information', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
@@ -212,12 +182,12 @@ describe('27crags Handler', () => {
 })
 
 describe('8a Handler', () => {
-  const externalRoute: RouteExternalResource8a = {
+  const externalRoute = {
     ...mock8aRouteResponse.items.at(0),
     externalResourcesFk: -1,
     id: -1,
     url: `https://www.8a.nu/crags/bouldering///sectors//routes/${mock8aRouteResponse.items.at(0)?.zlaggableSlug}`,
-  }
+  } as unknown as RouteExternalResource8a
 
   it('should query route information', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
@@ -230,10 +200,10 @@ describe('8a Handler', () => {
   })
 
   it('should convert external data to route format', () => {
-    const result = handler8a.convertToRoute(mock8aRouteResponse, mockGrades)
+    const result = handler8a.convertToRoute(externalRoute, mockGrades)
     expect(result).toMatchObject({
-      gradeFk: null,
-      name: '',
+      gradeFk: 2,
+      name: 'Test Route',
     })
   })
 

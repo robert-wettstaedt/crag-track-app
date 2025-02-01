@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { GetBlockKey } from '$lib/components/BlocksMap'
+  import type { GetBlockKey, NestedBlock } from '$lib/components/BlocksMap'
   import BlockEntry, { type Block } from './components/BlockEntry'
 
   interface Props {
-    blocks: Block[]
+    blocks: Array<NestedBlock & Block>
     getBlockKey?: GetBlockKey
     itemClass?: string
     name: string
