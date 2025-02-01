@@ -44,10 +44,44 @@
 
   let lines = $derived(calcLines(route.points))
 
-  const onContextMenu = (event: MouseEvent) => {
+  let longPressTimer: ReturnType<typeof setTimeout> | undefined = $state()
+  let longPressCoords: Coordinates | undefined = $state()
+  const LONG_PRESS_DURATION = 500
+
+  function handleTouchStart(event: PointerEvent) {
+    longPressTimer = setTimeout(() => {
+      onContextMenu(event)
+    }, LONG_PRESS_DURATION)
+    longPressCoords = { x: event.clientX, y: event.clientY }
+  }
+
+  function handleTouchMove(event: PointerEvent) {
+    if (longPressCoords) {
+      const distance = Math.sqrt(
+        Math.pow(event.clientX - longPressCoords.x, 2) + Math.pow(event.clientY - longPressCoords.y, 2),
+      )
+
+      console.log(distance)
+
+      if (distance > 8) {
+        handleTouchEnd()
+      }
+    }
+  }
+
+  function handleTouchEnd() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer)
+      longPressTimer = undefined
+      longPressCoords = undefined
+    }
+  }
+
+  const onContextMenu = (event: MouseEvent | PointerEvent) => {
     event.preventDefault()
 
-    const targetId = (event.target as HTMLElement).attributes.getNamedItem('data-id')?.value
+    const target = event.target as HTMLElement
+    const targetId = target.attributes.getNamedItem('data-id')?.value
     const point = route.points.find((point) => point.id === targetId)
 
     if (!selected || point == null || !editable) {
@@ -125,7 +159,15 @@
   })
 </script>
 
-<g bind:this={group} class="cursor-pointer" oncontextmenu={onContextMenu} role="presentation">
+<g
+  bind:this={group}
+  class="cursor-pointer select-none"
+  oncontextmenu={onContextMenu}
+  onpointerdown={handleTouchStart}
+  onpointermove={handleTouchMove}
+  onpointerup={handleTouchEnd}
+  role="presentation"
+>
   {#each lines as line}
     <line
       data-id="line"
