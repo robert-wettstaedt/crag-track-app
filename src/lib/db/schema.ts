@@ -170,7 +170,11 @@ export const areas = table(
 
     parentFk: integer('parent_fk').references((): AnyColumn => areas.id),
   },
-  (table) => [...createBasicTablePolicies('areas'), index('areas_slug_idx').on(table.slug)],
+  (table) => [
+    ...createBasicTablePolicies('areas'),
+    index('areas_description_idx').on(table.description),
+    index('areas_slug_idx').on(table.slug),
+  ],
 ).enableRLS()
 export type Area = InferSelectModel<typeof areas>
 export type InsertArea = InferInsertModel<typeof areas>
@@ -235,8 +239,9 @@ export const routes = table(
   },
   (table) => [
     ...createBasicTablePolicies('routes'),
-    index('routes_slug_idx').on(table.slug),
     index('routes_block_fk_idx').on(table.blockFk),
+    index('routes_description_idx').on(table.description),
+    index('routes_slug_idx').on(table.slug),
   ],
 ).enableRLS()
 export type Route = InferSelectModel<typeof routes>
@@ -536,6 +541,7 @@ export const ascents = table(
     policy(`${EDIT_PERMISSION} can update ascents`, getAuthorizedPolicyConfig('update', EDIT_PERMISSION)),
     policy(`${DELETE_PERMISSION} can delete ascents`, getAuthorizedPolicyConfig('delete', DELETE_PERMISSION)),
     index('ascents_created_by_idx').on(table.createdBy),
+    index('ascents_notes_idx').on(table.notes),
     index('ascents_route_fk_idx').on(table.routeFk),
   ],
 ).enableRLS()
