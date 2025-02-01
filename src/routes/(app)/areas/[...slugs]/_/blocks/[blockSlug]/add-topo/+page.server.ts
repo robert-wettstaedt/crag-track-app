@@ -16,34 +16,34 @@ export const load = (async ({ locals, params, parent }) => {
     error(404)
   }
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  // Retrieve areaId and areaSlug from the parent function
-  const { areaId, areaSlug } = await parent()
+  return await rls(async (db) => {
+    // Retrieve areaId and areaSlug from the parent function
+    const { areaId, areaSlug } = await parent()
 
-  // Query the database to find blocks matching the given slug and areaId
-  const blocksResult = await db((tx) =>
-    tx.query.blocks.findMany({
+    // Query the database to find blocks matching the given slug and areaId
+    const blocksResult = await db.query.blocks.findMany({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-    }),
-  )
-  // Get the first block from the result
-  const block = blocksResult.at(0)
+    })
+    // Get the first block from the result
+    const block = blocksResult.at(0)
 
-  // If no block is found, throw a 404 error
-  if (block == null) {
-    error(404)
-  }
+    // If no block is found, throw a 404 error
+    if (block == null) {
+      error(404)
+    }
 
-  // If multiple blocks are found, throw a 400 error with a descriptive message
-  if (blocksResult.length > 1) {
-    error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
-  }
+    // If multiple blocks are found, throw a 400 error with a descriptive message
+    if (blocksResult.length > 1) {
+      error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
+    }
 
-  // Return the block data
-  return {
-    block: block,
-  }
+    // Return the block data
+    return {
+      block: block,
+    }
+  })
 }) satisfies PageServerLoad
 
 export const actions = {
@@ -52,73 +52,75 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    // Convert the area slug to get the areaId
-    const { areaId } = convertAreaSlug(params)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
 
-    // Query the database to find the first block matching the given slug and areaId
-    const block = await db((tx) =>
-      tx.query.blocks.findFirst({
+      // Convert the area slug to get the areaId
+      const { areaId } = convertAreaSlug(params)
+
+      // Query the database to find the first block matching the given slug and areaId
+      const block = await db.query.blocks.findFirst({
         where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      }),
-    )
+      })
 
-    // If no block is found, throw a 404 error
-    if (block == null) {
-      error(404)
-    }
+      // If no block is found, throw a 404 error
+      if (block == null) {
+        error(404)
+      }
 
-    // Retrieve form data from the request
-    const data = await request.formData()
-    let values: AddFileActionValues
+      // Retrieve form data from the request
+      const data = await request.formData()
+      let values: AddFileActionValues
 
-    try {
-      // Validate the form data
-      values = await validateFormData(addFileActionSchema, data)
-    } catch (exception) {
-      // If validation fails, return the exception as BlockActionFailure
-      return exception as ActionFailure<AddFileActionValues>
-    }
+      try {
+        // Validate the form data
+        values = await validateFormData(addFileActionSchema, data)
+      } catch (exception) {
+        // If validation fails, return the exception as BlockActionFailure
+        return exception as ActionFailure<AddFileActionValues>
+      }
 
-    try {
-      const createdFiles = await db((tx) =>
-        handleFileUpload(tx, locals.supabase, values.folderName, config.files.folders.topos, { blockFk: block.id }),
-      )
+      try {
+        const createdFiles = await handleFileUpload(
+          db,
+          locals.supabase,
+          values.folderName,
+          config.files.folders.topos,
+          { blockFk: block.id },
+        )
 
-      const fileBuffers = createdFiles.map((result) => result.fileBuffer)
+        const fileBuffers = createdFiles.map((result) => result.fileBuffer)
 
-      await db(async (tx) => (block == null ? null : createGeolocationFromFiles(tx, block, fileBuffers, 'create')))
-      await db((tx) =>
-        Promise.all(
-          createdFiles.map((result) => tx.insert(topos).values({ blockFk: block.id, fileFk: result.file.id })),
-        ),
-      )
+        await createGeolocationFromFiles(db, block, fileBuffers, 'create')
+        await Promise.all(
+          createdFiles.map((result) => db.insert(topos).values({ blockFk: block.id, fileFk: result.file.id })),
+        )
 
-      await db(async (tx) =>
-        Promise.all(
+        await Promise.all(
           createdFiles.map(({ file }) =>
-            user == null
-              ? null
-              : tx.insert(activities).values({
-                  type: 'uploaded',
-                  userFk: user.id,
-                  entityId: file.id,
-                  entityType: 'file',
-                  columnName: 'topo image',
-                  parentEntityId: block.id,
-                  parentEntityType: 'block',
-                }),
+            db.insert(activities).values({
+              type: 'uploaded',
+              userFk: user.id,
+              entityId: file.id,
+              entityType: 'file',
+              columnName: 'topo image',
+              parentEntityId: block.id,
+              parentEntityType: 'block',
+            }),
           ),
-        ),
-      )
-    } catch (exception) {
-      // If an exception occurs during insertion, return a failure response with the error message
-      return fail(404, { ...values, error: convertException(exception) })
-    }
+        )
+      } catch (exception) {
+        // If an exception occurs during insertion, return a failure response with the error message
+        return fail(404, { ...values, error: convertException(exception) })
+      }
 
-    // Redirect to the block page after successful insertion
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}#topo`)
+      // Redirect to the block page after successful insertion
+      redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}#topo`)
+    })
   },
 }

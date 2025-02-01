@@ -189,34 +189,32 @@ export const groupActivities = (activities: ActivityDTO[]): ActivityGroup[] => {
 }
 
 export const loadFeed = async ({ locals, url }: { locals: App.Locals; url: URL }, queries?: SQLWrapper[]) => {
-  const searchParamsObj = Object.fromEntries(url.searchParams.entries())
-  const searchParams = await validateObject(searchParamsSchema, searchParamsObj)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const where =
-    searchParams.type === 'ascents'
-      ? and(eq(schema.activities.entityType, 'ascent'), eq(schema.activities.type, 'created'), ...(queries ?? []))
-      : queries == null
-        ? undefined
-        : and(...queries)
+  return await rls(async (db) => {
+    const searchParamsObj = Object.fromEntries(url.searchParams.entries())
+    const searchParams = await validateObject(searchParamsSchema, searchParamsObj)
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+    const where =
+      searchParams.type === 'ascents'
+        ? and(eq(schema.activities.entityType, 'ascent'), eq(schema.activities.type, 'created'), ...(queries ?? []))
+        : queries == null
+          ? undefined
+          : and(...queries)
 
-  const activities = await db((tx) =>
-    tx.query.activities.findMany({
+    const activities = await db.query.activities.findMany({
       ...getPaginationQuery(searchParams),
       orderBy: [desc(schema.activities.createdAt), asc(schema.activities.id)],
       where: where,
       with: {
         user: true,
       },
-    }),
-  )
+    })
 
-  const activitiesDTOs = await db((tx) => {
-    return Promise.all(
+    const activitiesDTOs = await Promise.all(
       activities.map(async (activity): Promise<ActivityDTO> => {
-        const query = getQuery(tx, activity.entityType)
-        const parentQuery = activity.parentEntityType == null ? null : getQuery(tx, activity.parentEntityType)
+        const query = getQuery(db, activity.entityType)
+        const parentQuery = activity.parentEntityType == null ? null : getQuery(db, activity.parentEntityType)
 
         const entity = await query.findFirst({
           where: (table) => eq(table.id, activity.entityId),
@@ -232,30 +230,30 @@ export const loadFeed = async ({ locals, url }: { locals: App.Locals; url: URL }
 
         return {
           ...activity,
-          entity: await postProcessEntity(tx, activity.entityType, entity),
+          entity: await postProcessEntity(db, activity.entityType, entity),
           entityName: entity?.name,
           parentEntity:
             activity.parentEntityType == null || parentEntity == null
               ? undefined
-              : await postProcessEntity(tx, activity.parentEntityType, parentEntity),
+              : await postProcessEntity(db, activity.parentEntityType, parentEntity),
           parentEntityName: parentEntity?.name,
         }
       }),
     )
+
+    const countResults = await db.select({ count: count() }).from(schema.activities).where(and(where))
+    const groupedActivities = groupActivities(activitiesDTOs)
+
+    return {
+      activities: groupedActivities,
+      pagination: {
+        page: searchParams.page,
+        pageSize: searchParams.pageSize,
+        total: countResults[0].count,
+        totalPages: Math.ceil(countResults[0].count / searchParams.pageSize),
+      },
+    }
   })
-
-  const countResults = await db((tx) => tx.select({ count: count() }).from(schema.activities).where(and(where)))
-  const groupedActivities = groupActivities(activitiesDTOs)
-
-  return {
-    activities: groupedActivities,
-    pagination: {
-      page: searchParams.page,
-      pageSize: searchParams.pageSize,
-      total: countResults[0].count,
-      totalPages: Math.ceil(countResults[0].count / searchParams.pageSize),
-    },
-  }
 }
 
 interface HandleOpts

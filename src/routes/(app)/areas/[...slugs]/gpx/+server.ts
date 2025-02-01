@@ -10,19 +10,21 @@ export async function GET({ locals, params }) {
     error(404)
   }
 
-  try {
-    const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    const { areaId } = convertAreaSlug(params)
+  return await rls(async (db) => {
+    try {
+      const { areaId } = convertAreaSlug(params)
 
-    const xml = await db((tx) => getAreaGPX(areaId, tx, locals.session))
+      const xml = await getAreaGPX(areaId, db, locals.session)
 
-    return new Response(xml, {
-      headers: {
-        'Content-Type': 'application/xml',
-      },
-    })
-  } catch (exception) {
-    error(404, `Unable to export GPX: ${convertException(exception)}`)
-  }
+      return new Response(xml, {
+        headers: {
+          'Content-Type': 'application/xml',
+        },
+      })
+    } catch (exception) {
+      error(404, `Unable to export GPX: ${convertException(exception)}`)
+    }
+  })
 }

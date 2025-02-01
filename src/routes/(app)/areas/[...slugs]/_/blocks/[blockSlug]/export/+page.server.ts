@@ -13,13 +13,13 @@ export const load = (async (event) => {
 
   const layoutData = await loadLayout(event)
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const { areaId, areaSlug } = convertAreaSlug(params)
+  return await rls(async (db) => {
+    const { areaId, areaSlug } = convertAreaSlug(params)
 
-  // Query the database for blocks matching the given slug and areaId
-  const blocksResult = await db((tx) =>
-    tx.query.blocks.findMany({
+    // Query the database for blocks matching the given slug and areaId
+    const blocksResult = await db.query.blocks.findMany({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
         area: {
@@ -45,41 +45,39 @@ export const load = (async (event) => {
           },
         },
       },
-    }),
-  )
+    })
 
-  // Get the first block from the result
-  const block = blocksResult.at(0)
+    // Get the first block from the result
+    const block = blocksResult.at(0)
 
-  // If no block is found, throw a 404 error
-  if (block == null) {
-    error(404)
-  }
+    // If no block is found, throw a 404 error
+    if (block == null) {
+      error(404)
+    }
 
-  // If more than one block is found, throw a 400 error
-  if (blocksResult.length > 1) {
-    error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
-  }
+    // If more than one block is found, throw a 400 error
+    if (blocksResult.length > 1) {
+      error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
+    }
 
-  const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
-  const enrichedBlock = enrichBlock(block)
+    const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
+    const enrichedBlock = enrichBlock(block)
 
-  const enrichedRoutes = await Promise.all(
-    block.routes.map(async (route) => ({
-      ...route,
-      description: await db(async (tx) =>
-        route.description == null ? null : convertMarkdownToHtml(route.description, tx, 'strong'),
-      ),
-    })),
-  )
+    const enrichedRoutes = await Promise.all(
+      block.routes.map(async (route) => ({
+        ...route,
+        description: route.description == null ? null : await convertMarkdownToHtml(route.description, db, 'strong'),
+      })),
+    )
 
-  return {
-    ...layoutData,
-    block: {
-      ...block,
-      ...enrichedBlock,
-      routes: enrichedRoutes,
-      topos: toposResult,
-    },
-  }
+    return {
+      ...layoutData,
+      block: {
+        ...block,
+        ...enrichedBlock,
+        routes: enrichedRoutes,
+        topos: toposResult,
+      },
+    }
+  })
 }) satisfies PageServerLoad

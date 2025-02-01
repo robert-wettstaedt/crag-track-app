@@ -18,14 +18,14 @@ export const load = (async ({ locals, params, parent }) => {
     error(404)
   }
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  // Retrieve the areaId from the parent function
-  const { areaId, user } = await parent()
+  return await rls(async (db) => {
+    // Retrieve the areaId from the parent function
+    const { areaId, user } = await parent()
 
-  // Query the database to find the block with the specified slug and areaId
-  const block = await db((tx) =>
-    tx.query.blocks.findFirst({
+    // Query the database to find the block with the specified slug and areaId
+    const block = await db.query.blocks.findFirst({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
         routes: {
@@ -44,36 +44,34 @@ export const load = (async ({ locals, params, parent }) => {
           },
         },
       },
-    }),
-  )
+    })
 
-  // Get the first route from the block's routes
-  const route = block?.routes?.at(0)
+    // Get the first route from the block's routes
+    const route = block?.routes?.at(0)
 
-  // Throw a 404 error if the route is not found
-  if (route == null) {
-    error(404)
-  }
+    // Throw a 404 error if the route is not found
+    if (route == null) {
+      error(404)
+    }
 
-  // Throw a 400 error if multiple routes with the same slug are found
-  if (block != null && block.routes.length > 1) {
-    error(400, `Multiple routes with slug ${params.routeSlug} found`)
-  }
+    // Throw a 400 error if multiple routes with the same slug are found
+    if (block != null && block.routes.length > 1) {
+      error(400, `Multiple routes with slug ${params.routeSlug} found`)
+    }
 
-  const firstAscensionistsResult = await db((tx) =>
-    tx.query.firstAscensionists.findMany({
+    const firstAscensionistsResult = await db.query.firstAscensionists.findMany({
       orderBy: firstAscensionists.name,
       with: {
         user: true,
       },
-    }),
-  )
+    })
 
-  // Return the route and users data
-  return {
-    route,
-    firstAscensionists: firstAscensionistsResult,
-  }
+    // Return the route and users data
+    return {
+      route,
+      firstAscensionists: firstAscensionistsResult,
+    }
+  })
 }) satisfies PageServerLoad
 
 export const actions = {
@@ -82,27 +80,31 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    // Convert the area slug to get the areaId
-    const { areaId } = convertAreaSlug(params)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
 
-    // Get the form data from the request
-    const data = await request.formData()
-    let values: FirstAscentActionValues
+      // Convert the area slug to get the areaId
+      const { areaId } = convertAreaSlug(params)
 
-    try {
-      // Validate the form data
-      values = await validateFormData(firstAscentActionSchema, data)
-    } catch (exception) {
-      // Return the validation failure
-      return exception as ActionFailure<FirstAscentActionValues>
-    }
+      // Get the form data from the request
+      const data = await request.formData()
+      let values: FirstAscentActionValues
 
-    // Query the database to find the block with the specified slug and areaId
-    const block = await db((tx) =>
-      tx.query.blocks.findFirst({
+      try {
+        // Validate the form data
+        values = await validateFormData(firstAscentActionSchema, data)
+      } catch (exception) {
+        // Return the validation failure
+        return exception as ActionFailure<FirstAscentActionValues>
+      }
+
+      // Query the database to find the block with the specified slug and areaId
+      const block = await db.query.blocks.findFirst({
         where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
         with: {
           routes: {
@@ -117,77 +119,74 @@ export const actions = {
             },
           },
         },
-      }),
-    )
+      })
 
-    // Get the first route from the block's routes
-    const route = block?.routes?.at(0)
+      // Get the first route from the block's routes
+      const route = block?.routes?.at(0)
 
-    // Return a 404 error if the route is not found
-    if (route == null) {
-      return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
-    }
+      // Return a 404 error if the route is not found
+      if (route == null) {
+        return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
+      }
 
-    // Return a 400 error if multiple routes with the same slug are found
-    if (block != null && block.routes.length > 1) {
-      return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
-    }
+      // Return a 404 error if the block is not found
+      if (block == null) {
+        return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
+      }
 
-    try {
-      await db((tx) => tx.delete(routesToFirstAscensionists).where(eq(routesToFirstAscensionists.routeFk, route.id)))
-      await db((tx) =>
-        tx
+      // Return a 400 error if multiple routes with the same slug are found
+      if (block != null && block.routes.length > 1) {
+        return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
+      }
+
+      try {
+        await db.delete(routesToFirstAscensionists).where(eq(routesToFirstAscensionists.routeFk, route.id))
+        await db
           .update(routes)
           .set({ firstAscentYear: values.year ?? null })
-          .where(eq(routes.id, route.id)),
-      )
-      await db(async (tx) =>
-        values.climberName == null
-          ? null
-          : await Promise.all(
-              values.climberName.map(async (name) => {
-                let firstAscensionist = await tx.query.firstAscensionists.findFirst({
-                  where: eq(firstAscensionists.name, name),
-                })
+          .where(eq(routes.id, route.id))
+        if (values.climberName != null) {
+          await Promise.all(
+            values.climberName.map(async (name) => {
+              let firstAscensionist = await db.query.firstAscensionists.findFirst({
+                where: eq(firstAscensionists.name, name),
+              })
 
-                if (firstAscensionist == null) {
-                  firstAscensionist = (await tx.insert(firstAscensionists).values({ name }).returning())[0]
-                }
+              if (firstAscensionist == null) {
+                firstAscensionist = (await db.insert(firstAscensionists).values({ name }).returning())[0]
+              }
 
-                await tx
-                  .insert(routesToFirstAscensionists)
-                  .values({ firstAscensionistFk: firstAscensionist.id, routeFk: route.id })
-              }),
-            ),
-      )
-
-      const oldFirstAscent = [route.firstAscentYear, ...route.firstAscents.map((fa) => fa.firstAscensionist.name)]
-        .filter(Boolean)
-        .join(' ')
-      const newFirstAscent = [values.year, ...(values.climberName ?? [])].filter(Boolean).join(' ')
-
-      await db(async (tx) =>
-        user == null || block == null
-          ? null
-          : tx.insert(activities).values({
-              type: 'updated',
-              userFk: user.id,
-              entityId: route.id,
-              entityType: 'route',
-              columnName: 'first ascent',
-              oldValue: oldFirstAscent,
-              newValue: newFirstAscent,
-              parentEntityId: block.id,
-              parentEntityType: 'block',
+              await db
+                .insert(routesToFirstAscensionists)
+                .values({ firstAscensionistFk: firstAscensionist.id, routeFk: route.id })
             }),
-      )
-    } catch (exception) {
-      // Return a 400 error if an exception occurs
-      return fail(400, { ...values, error: convertException(exception) })
-    }
+          )
+        }
 
-    // Redirect to the route edit page
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#info`)
+        const oldFirstAscent = [route.firstAscentYear, ...route.firstAscents.map((fa) => fa.firstAscensionist.name)]
+          .filter(Boolean)
+          .join(' ')
+        const newFirstAscent = [values.year, ...(values.climberName ?? [])].filter(Boolean).join(' ')
+
+        await db.insert(activities).values({
+          type: 'updated',
+          userFk: user.id,
+          entityId: route.id,
+          entityType: 'route',
+          columnName: 'first ascent',
+          oldValue: oldFirstAscent,
+          newValue: newFirstAscent,
+          parentEntityId: block.id,
+          parentEntityType: 'block',
+        })
+      } catch (exception) {
+        // Return a 400 error if an exception occurs
+        return fail(400, { ...values, error: convertException(exception) })
+      }
+
+      // Redirect to the route edit page
+      redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#info`)
+    })
   },
 
   removeFirstAscent: async ({ locals, params }) => {
@@ -195,15 +194,19 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    // Convert the area slug to get the areaId
-    const { areaId } = convertAreaSlug(params)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
 
-    // Query the database to find the block with the specified slug and areaId
-    const block = await db((tx) =>
-      tx.query.blocks.findFirst({
+      // Convert the area slug to get the areaId
+      const { areaId } = convertAreaSlug(params)
+
+      // Query the database to find the block with the specified slug and areaId
+      const block = await db.query.blocks.findFirst({
         where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
         with: {
           routes: {
@@ -218,48 +221,49 @@ export const actions = {
             },
           },
         },
-      }),
-    )
+      })
 
-    // Get the first route from the block's routes
-    const route = block?.routes?.at(0)
+      // Get the first route from the block's routes
+      const route = block?.routes?.at(0)
 
-    // Return a 404 error if the route is not found
-    if (route == null) {
-      return fail(404, { error: `Route not found ${params.routeSlug}` })
-    }
+      // Return a 404 error if the route is not found
+      if (route == null) {
+        return fail(404, { error: `Route not found ${params.routeSlug}` })
+      }
 
-    // Return a 400 error if multiple routes with the same slug are found
-    if (block != null && block.routes.length > 1) {
-      return fail(400, { error: `Multiple routes with slug ${params.routeSlug} found` })
-    }
+      // Return a 404 error if the block is not found
+      if (block == null) {
+        return fail(404, { error: `Route not found ${params.routeSlug}` })
+      }
 
-    try {
-      await db((tx) => tx.delete(routesToFirstAscensionists).where(eq(routesToFirstAscensionists.routeFk, route.id)))
-      await db((tx) => tx.update(routes).set({ firstAscentYear: null }).where(eq(routes.id, route.id)))
+      // Return a 400 error if multiple routes with the same slug are found
+      if (block != null && block.routes.length > 1) {
+        return fail(400, { error: `Multiple routes with slug ${params.routeSlug} found` })
+      }
 
-      const oldFirstAscent = [route.firstAscentYear, route.firstAscents.map((fa) => fa.firstAscensionist.name)]
-        .filter((d) => d != null)
-        .join(' ')
+      try {
+        await db.delete(routesToFirstAscensionists).where(eq(routesToFirstAscensionists.routeFk, route.id))
+        await db.update(routes).set({ firstAscentYear: null }).where(eq(routes.id, route.id))
 
-      await db(async (tx) =>
-        user == null || block == null
-          ? null
-          : tx.insert(activities).values({
-              type: 'deleted',
-              userFk: user.id,
-              entityId: route.id,
-              entityType: 'route',
-              columnName: 'first ascent',
-              oldValue: oldFirstAscent,
-              parentEntityId: block.id,
-              parentEntityType: 'block',
-            }),
-      )
-    } catch (error) {
-      return fail(400, { error: convertException(error) })
-    }
+        const oldFirstAscent = [route.firstAscentYear, route.firstAscents.map((fa) => fa.firstAscensionist.name)]
+          .filter((d) => d != null)
+          .join(' ')
 
-    redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#info`)
+        await db.insert(activities).values({
+          type: 'deleted',
+          userFk: user.id,
+          entityId: route.id,
+          entityType: 'route',
+          columnName: 'first ascent',
+          oldValue: oldFirstAscent,
+          parentEntityId: block.id,
+          parentEntityType: 'block',
+        })
+      } catch (error) {
+        return fail(400, { error: convertException(error) })
+      }
+
+      redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${params.routeSlug}#info`)
+    })
   },
 }

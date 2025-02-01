@@ -10,14 +10,14 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, parent }) => {
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  // Retrieve the areaId from the parent context
-  const { areaSlug, areaId, grades, path, user } = await parent()
+  return await rls(async (db) => {
+    // Retrieve the areaId from the parent context
+    const { areaSlug, areaId, grades, path, user } = await parent()
 
-  // Query the database for areas with the specified areaId
-  const areasResult = await db((tx) =>
-    tx.query.areas.findMany({
+    // Query the database for areas with the specified areaId
+    const areasResult = await db.query.areas.findMany({
       where: eq(areas.id, areaId),
       with: {
         author: true, // Include author information
@@ -45,51 +45,49 @@ export const load = (async ({ locals, parent }) => {
         files: true, // Include files associated with the area
         parkingLocations: true,
       },
-    }),
-  )
+    })
 
-  // Get the last area from the result
-  const area = areasResult.at(-1)
+    // Get the last area from the result
+    const area = areasResult.at(-1)
 
-  // If no area is found, throw a 404 error
-  if (area == null) {
-    error(404)
-  }
+    // If no area is found, throw a 404 error
+    if (area == null) {
+      error(404)
+    }
 
-  if (area.slug !== areaSlug) {
-    const newPath = path.map((segment) => segment.replace(`${areaSlug}-${areaId}`, `${area.slug}-${area.id}`))
-    redirect(302, `/areas/${newPath.join('/')}`)
-  }
+    if (area.slug !== areaSlug) {
+      const newPath = path.map((segment) => segment.replace(`${areaSlug}-${areaId}`, `${area.slug}-${area.id}`))
+      redirect(302, `/areas/${newPath.join('/')}`)
+    }
 
-  // Process area description from markdown to HTML if description is present
-  const description = await db(async (tx) =>
-    area.description == null ? null : convertMarkdownToHtml(area.description, tx),
-  )
+    // Process area description from markdown to HTML if description is present
+    const description = area.description == null ? null : await convertMarkdownToHtml(area.description, db)
 
-  const blocksWithTopos = await Promise.all(
-    area.blocks.map(async (block) => {
-      const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, false)))
+    const blocksWithTopos = await Promise.all(
+      area.blocks.map(async (block) => {
+        const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo, false)))
 
-      const sortedRoutes = sortRoutesByTopo(block.routes, topos).map((route) => {
-        const topo = topos.find((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === route.id))
-        return { ...route, topo }
-      })
+        const sortedRoutes = sortRoutesByTopo(block.routes, topos).map((route) => {
+          const topo = topos.find((topo) => topo.routes.some((topoRoute) => topoRoute.routeFk === route.id))
+          return { ...route, topo }
+        })
 
-      return { ...block, routes: sortedRoutes, topos }
-    }),
-  )
+        return { ...block, routes: sortedRoutes, topos }
+      }),
+    )
 
-  const files = await loadFiles(area.files)
+    const files = await loadFiles(area.files)
 
-  // Return the area, enriched blocks, and processed files
-  return {
-    area: {
-      ...getStatsOfArea(area, grades, user),
-      areas: area.areas.map((area) => getStatsOfArea(area, grades, user)),
-      blocks: blocksWithTopos,
-      description,
-      files,
-    },
-    references: getReferences(area.id, 'areas'),
-  }
+    // Return the area, enriched blocks, and processed files
+    return {
+      area: {
+        ...getStatsOfArea(area, grades, user),
+        areas: area.areas.map((area) => getStatsOfArea(area, grades, user)),
+        blocks: blocksWithTopos,
+        description,
+        files,
+      },
+      references: getReferences(area.id, 'areas'),
+    }
+  })
 }) satisfies PageServerLoad

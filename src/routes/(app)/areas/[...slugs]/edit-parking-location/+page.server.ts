@@ -12,25 +12,24 @@ export const load = (async ({ locals, parent }) => {
     error(404)
   }
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  // Retrieve the areaId from the parent function
-  const { areaId } = await parent()
+  return await rls(async (db) => {
+    // Retrieve the areaId from the parent function
+    const { areaId } = await parent()
 
-  // Query the database to find the area with the given areaId
-  const areasResult = await db((tx) =>
-    tx.query.areas.findMany({
-      where: eq(areas.id, areaId),
-    }),
-  )
-  const area = areasResult.at(0)
+    // Query the database to find the area with the given areaId
+    const areasResult = await db.query.areas.findMany({ where: eq(areas.id, areaId) })
 
-  // If the area is not found, throw a 404 error
-  if (area == null || area.type === 'area') {
-    error(404)
-  }
+    const area = areasResult.at(0)
 
-  return area
+    // If the area is not found, throw a 404 error
+    if (area == null || area.type === 'area') {
+      error(404)
+    }
+
+    return area
+  })
 }) satisfies PageServerLoad
 
 export const actions = {
@@ -39,76 +38,78 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    // Convert area slug to areaId
-    const { areaId } = convertAreaSlug(params)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
 
-    // Retrieve form data from the request
-    const data = await request.formData()
+      // Convert area slug to areaId
+      const { areaId } = convertAreaSlug(params)
 
-    // Extract latitude and longitude from the form data
-    const rawLat = data.get('lat')
-    const rawLong = data.get('long')
+      // Retrieve form data from the request
+      const data = await request.formData()
 
-    // Store the raw latitude and longitude values
-    const values = { lat: rawLat, long: rawLong }
+      // Extract latitude and longitude from the form data
+      const rawLat = data.get('lat')
+      const rawLong = data.get('long')
 
-    // Validate the latitude value
-    if (typeof rawLat !== 'string' || rawLat.length === 0) {
-      return fail(400, { ...values, error: 'lat is required' })
-    }
+      // Store the raw latitude and longitude values
+      const values = { lat: rawLat, long: rawLong }
 
-    // Validate the longitude value
-    if (typeof rawLong !== 'string' || rawLong.length === 0) {
-      return fail(400, { ...values, error: 'long is required' })
-    }
+      // Validate the latitude value
+      if (typeof rawLat !== 'string' || rawLat.length === 0) {
+        return fail(400, { ...values, error: 'lat is required' })
+      }
 
-    // Convert latitude and longitude to numbers
-    const lat = Number(rawLat)
-    const long = Number(rawLong)
+      // Validate the longitude value
+      if (typeof rawLong !== 'string' || rawLong.length === 0) {
+        return fail(400, { ...values, error: 'long is required' })
+      }
 
-    // Check if the latitude is a valid number
-    if (Number.isNaN(lat)) {
-      return fail(400, { ...values, error: 'lat is not a valid Latitude' })
-    }
+      // Convert latitude and longitude to numbers
+      const lat = Number(rawLat)
+      const long = Number(rawLong)
 
-    // Check if the longitude is a valid number
-    if (Number.isNaN(long)) {
-      return fail(400, { ...values, error: 'long is not a valid Longitude' })
-    }
+      // Check if the latitude is a valid number
+      if (Number.isNaN(lat)) {
+        return fail(400, { ...values, error: 'lat is not a valid Latitude' })
+      }
 
-    // Query the database to find the area with the given areaId
-    const areasResult = await db((tx) => tx.query.areas.findMany({ where: eq(areas.id, areaId) }))
-    const area = areasResult.at(0)
+      // Check if the longitude is a valid number
+      if (Number.isNaN(long)) {
+        return fail(400, { ...values, error: 'long is not a valid Longitude' })
+      }
 
-    // If the area is not found, throw a 404 error
-    if (area == null || area.type === 'area') {
-      error(400, 'Area is not a crag')
-    }
+      // Query the database to find the area with the given areaId
+      const areasResult = await db.query.areas.findMany({ where: eq(areas.id, areaId) })
+      const area = areasResult.at(0)
 
-    try {
-      await db((tx) => tx.insert(geolocations).values({ lat, long, areaFk: area.id }))
-      await db(async (tx) =>
-        user == null
-          ? null
-          : tx.insert(activities).values({
-              type: 'updated',
-              userFk: user.id,
-              entityId: area.id,
-              entityType: 'area',
-              columnName: 'parking location',
-              parentEntityId: area.parentFk,
-              parentEntityType: 'area',
-            }),
-      )
-    } catch (exception) {
-      // Handle any exceptions that occur during the update
-      return fail(404, { ...values, error: convertException(exception) })
-    }
+      // If the area is not found, throw a 404 error
+      if (area == null || area.type === 'area') {
+        error(400, 'Area is not a crag')
+      }
 
-    redirect(303, `/areas/${params.slugs}`)
+      try {
+        await db.insert(geolocations).values({ lat, long, areaFk: area.id })
+        await db.insert(activities).values({
+          type: 'updated',
+          userFk: user.id,
+          entityId: area.id,
+          entityType: 'area',
+          columnName: 'parking location',
+          parentEntityId: area.parentFk,
+          parentEntityType: 'area',
+        })
+      } catch (exception) {
+        // Handle any exceptions that occur during the update
+        return fail(404, { ...values, error: convertException(exception) })
+      }
+
+      redirect(303, `/areas/${params.slugs}`)
+    })
   },
 
   removeParkingLocation: async ({ locals, params }) => {
@@ -116,44 +117,42 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    // Convert area slug to areaId
-    const { areaId } = convertAreaSlug(params)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
 
-    // Query the database to find the area with the given areaId
-    const areasResult = await db((tx) =>
-      tx.query.areas.findMany({
-        where: eq(areas.id, areaId),
-      }),
-    )
-    const area = areasResult.at(0)
+      // Convert area slug to areaId
+      const { areaId } = convertAreaSlug(params)
 
-    // If the area is not found, throw a 404 error
-    if (area == null) {
-      error(404)
-    }
+      // Query the database to find the area with the given areaId
+      const areasResult = await db.query.areas.findMany({ where: eq(areas.id, areaId) })
+      const area = areasResult.at(0)
 
-    try {
-      await db((tx) => tx.delete(geolocations).where(eq(geolocations.areaFk, area.id)))
-      await db(async (tx) =>
-        user == null
-          ? null
-          : tx.insert(activities).values({
-              type: 'deleted',
-              userFk: user.id,
-              entityId: area.id,
-              entityType: 'area',
-              columnName: 'parking location',
-              parentEntityId: area.parentFk,
-              parentEntityType: 'area',
-            }),
-      )
-    } catch (error) {
-      return fail(404, { error: convertException(error) })
-    }
+      // If the area is not found, throw a 404 error
+      if (area == null) {
+        error(404)
+      }
 
-    redirect(303, `/areas/${params.slugs}`)
+      try {
+        await db.delete(geolocations).where(eq(geolocations.areaFk, area.id))
+        await db.insert(activities).values({
+          type: 'deleted',
+          userFk: user.id,
+          entityId: area.id,
+          entityType: 'area',
+          columnName: 'parking location',
+          parentEntityId: area.parentFk,
+          parentEntityType: 'area',
+        })
+      } catch (error) {
+        return fail(404, { error: convertException(error) })
+      }
+
+      redirect(303, `/areas/${params.slugs}`)
+    })
   },
 }

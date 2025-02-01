@@ -11,22 +11,22 @@ export const load = (async ({ locals, parent }) => {
     error(404)
   }
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  // Retrieve the areaId from the parent function
-  const { areaId } = await parent()
+  return await rls(async (db) => {
+    // Retrieve the areaId from the parent function
+    const { areaId } = await parent()
 
-  if (locals.user == null) {
-    // If the user is not authenticated, throw a 401 error
-    error(401)
-  }
+    if (locals.user == null) {
+      // If the user is not authenticated, throw a 401 error
+      error(401)
+    }
 
-  const { area, blocks } = await db((tx) => getBlocksOfArea(areaId, tx))
+    const { area, blocks } = await getBlocksOfArea(areaId, db)
 
-  const routes = blocks.flatMap((block) => block.routes)
+    const routes = blocks.flatMap((block) => block.routes)
 
-  const externalResources = await db((tx) =>
-    tx.query.routeExternalResources.findMany({
+    const externalResources = await db.query.routeExternalResources.findMany({
       where: inArray(
         routeExternalResources.routeFk,
         routes.map((route) => route.id),
@@ -36,8 +36,8 @@ export const load = (async ({ locals, parent }) => {
         externalResource27crags: true,
         externalResourceTheCrag: true,
       },
-    }),
-  )
+    })
 
-  return { area, blocks, externalResources }
+    return { area, blocks, externalResources }
+  })
 }) satisfies PageServerLoad

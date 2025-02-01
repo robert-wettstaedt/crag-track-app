@@ -53,17 +53,17 @@ export const load = (async ({ locals, params }) => {
     error(404)
   }
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const { areaId } = convertAreaSlug(params)
+  return await rls(async (db) => {
+    const { areaId } = convertAreaSlug(params)
 
-  const grades = await db((tx) => tx.query.grades.findMany())
+    const grades = await db.query.grades.findMany()
 
-  let gradingScale: UserSettings['gradingScale'] = 'FB'
+    let gradingScale: UserSettings['gradingScale'] = 'FB'
 
-  if (locals.user != null) {
-    const user = await db((tx) =>
-      tx.query.users.findFirst({
+    if (locals.user != null) {
+      const user = await db.query.users.findFirst({
         where: eq(users.authUserFk, locals.user!.id),
         with: {
           userSettings: {
@@ -72,14 +72,12 @@ export const load = (async ({ locals, params }) => {
             },
           },
         },
-      }),
-    )
+      })
 
-    gradingScale = user?.userSettings?.gradingScale ?? gradingScale
-  }
+      gradingScale = user?.userSettings?.gradingScale ?? gradingScale
+    }
 
-  const areasResult = await db((tx) =>
-    tx.query.areas.findMany({
+    const areasResult = await db.query.areas.findMany({
       where: eq(areas.id, areaId),
       with: {
         author: true,
@@ -98,59 +96,56 @@ export const load = (async ({ locals, params }) => {
         },
         parkingLocations: true,
       },
-    }),
-  )
+    })
 
-  // Get the last area from the result
-  const area = areasResult.at(-1)
+    // Get the last area from the result
+    const area = areasResult.at(-1)
 
-  // If no area is found, throw a 404 error
-  if (area == null) {
-    error(404)
-  }
+    // If no area is found, throw a 404 error
+    if (area == null) {
+      error(404)
+    }
 
-  const allBlocks = [...area.blocks, ...area.areas.flatMap((area) => area.blocks)]
+    const allBlocks = [...area.blocks, ...area.areas.flatMap((area) => area.blocks)]
 
-  const enrichedBlocks = await Promise.all(
-    allBlocks.map(async (block) => {
-      const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
-      const enrichedBlock = enrichBlock(block)
+    const enrichedBlocks = await Promise.all(
+      allBlocks.map(async (block) => {
+        const toposResult = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
+        const enrichedBlock = enrichBlock(block)
 
-      const enrichedRoutes = await Promise.all(
-        block.routes.map(async (route) => ({
-          ...route,
-          description: await db(async (tx) =>
-            route.description == null ? null : convertMarkdownToHtml(route.description, tx, 'strong'),
-          ),
-        })),
-      )
+        const enrichedRoutes = await Promise.all(
+          block.routes.map(async (route) => ({
+            ...route,
+            description:
+              route.description == null ? null : await convertMarkdownToHtml(route.description, db, 'strong'),
+          })),
+        )
 
-      return {
-        ...block,
-        ...enrichedBlock,
-        routes: enrichedRoutes,
-        topos: toposResult,
-      }
-    }),
-  )
-
-  const description = await db(async (tx) =>
-    area.description == null ? null : convertMarkdownToHtml(area.description, tx, 'strong'),
-  )
-
-  return {
-    area: {
-      ...area,
-      description,
-      blocks: enrichedBlocks,
-      areas: area.areas.map((area) => {
         return {
-          ...area,
-          blocks: enrichedBlocks.filter((block) => block.areaFk === area.id),
+          ...block,
+          ...enrichedBlock,
+          routes: enrichedRoutes,
+          topos: toposResult,
         }
       }),
-    },
-    grades,
-    gradingScale,
-  }
+    )
+
+    const description = area.description == null ? null : await convertMarkdownToHtml(area.description, db, 'strong')
+
+    return {
+      area: {
+        ...area,
+        description,
+        blocks: enrichedBlocks,
+        areas: area.areas.map((area) => {
+          return {
+            ...area,
+            blocks: enrichedBlocks.filter((block) => block.areaFk === area.id),
+          }
+        }),
+      },
+      grades,
+      gradingScale,
+    }
+  })
 }) satisfies PageServerLoad

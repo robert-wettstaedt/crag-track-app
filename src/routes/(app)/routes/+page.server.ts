@@ -9,19 +9,18 @@ import type { PageServerLoad } from './$types'
 export const load = (async ({ locals, url }) => {
   const db = await createDrizzleSupabaseClient(locals.supabase)
 
-  const user = await db(async (tx) =>
-    locals.user == null
-      ? null
-      : tx.query.users.findFirst({
-          where: eq(users.authUserFk, locals.user.id),
-        }),
-  )
+  return await db(async (db) => {
+    const user =
+      locals.user == null
+        ? null
+        : await db.query.users.findFirst({
+            where: eq(users.authUserFk, locals.user.id),
+          })
 
-  const searchParamsObj = Object.fromEntries(url.searchParams.entries())
-  const searchParams = await validateObject(paginationParamsSchema, searchParamsObj)
+    const searchParamsObj = Object.fromEntries(url.searchParams.entries())
+    const searchParams = await validateObject(paginationParamsSchema, searchParamsObj)
 
-  const routesResult = await db((tx) =>
-    tx.query.routes.findMany({
+    const routesResult = await db.query.routes.findMany({
       ...getPaginationQuery(searchParams),
       orderBy: [desc(routes.rating), asc(routes.gradeFk), asc(routes.id)],
       where: isNotNull(routes.rating),
@@ -33,18 +32,18 @@ export const load = (async ({ locals, url }) => {
           },
         },
       },
-    }),
-  )
+    })
 
-  const countResults = await db((tx) => tx.select({ count: count() }).from(routes).where(isNotNull(routes.rating)))
-  const enrichedRoutes = routesResult.map((route) => ({ ...enrichRoute(route), ascents: route.ascents }))
+    const countResults = await db.select({ count: count() }).from(routes).where(isNotNull(routes.rating))
+    const enrichedRoutes = routesResult.map((route) => ({ ...enrichRoute(route), ascents: route.ascents }))
 
-  return {
-    routes: enrichedRoutes,
-    pagination: {
-      page: searchParams.page,
-      pageSize: searchParams.pageSize,
-      total: countResults[0].count,
-    },
-  }
+    return {
+      routes: enrichedRoutes,
+      pagination: {
+        page: searchParams.page,
+        pageSize: searchParams.pageSize,
+        total: countResults[0].count,
+      },
+    }
+  })
 }) satisfies PageServerLoad

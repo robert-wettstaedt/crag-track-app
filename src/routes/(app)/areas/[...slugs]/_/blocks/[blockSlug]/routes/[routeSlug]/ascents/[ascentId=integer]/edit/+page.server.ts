@@ -13,11 +13,11 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals, params }) => {
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  // Query the database to find the ascent with the given id
-  const ascent = await db((tx) =>
-    tx.query.ascents.findFirst({
+  return await rls(async (db) => {
+    // Query the database to find the ascent with the given id
+    const ascent = await db.query.ascents.findFirst({
       where: eq(ascents.id, Number(params.ascentId)),
       with: {
         author: true,
@@ -27,165 +27,160 @@ export const load = (async ({ locals, params }) => {
           },
         },
       },
-    }),
-  )
-
-  if (
-    ascent == null ||
-    (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes(EDIT_PERMISSION))
-  ) {
-    error(404)
-  }
-
-  // Return the ascent and route data
-  return {
-    ascent,
-  }
-}) satisfies PageServerLoad
-
-export const actions = {
-  updateAscent: async ({ locals, params, request }) => {
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
-
-    // Get form data from the request
-    const data = await request.formData()
-    let values: AscentActionValues
-
-    // Validate the ascent form data
-    try {
-      values = await validateFormData(ascentActionSchema, data)
-    } catch (exception) {
-      return exception as ActionFailure<AscentActionValues>
-    }
-
-    const ascent = await db((tx) =>
-      tx.query.ascents.findFirst({
-        where: eq(ascents.id, Number(params.ascentId)),
-        with: {
-          author: true,
-          route: true,
-        },
-      }),
-    )
+    })
 
     if (
       ascent == null ||
       (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes(EDIT_PERMISSION))
     ) {
-      return fail(404, { ...values, error: `Ascent not found ${params.ascentId}` })
+      error(404)
     }
 
-    try {
-      // Update the ascent in the database
-      await db((tx) =>
-        tx
+    // Return the ascent and route data
+    return {
+      ascent,
+    }
+  })
+}) satisfies PageServerLoad
+
+export const actions = {
+  updateAscent: async ({ locals, params, request }) => {
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
+
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
+
+      // Get form data from the request
+      const data = await request.formData()
+      let values: AscentActionValues
+
+      // Validate the ascent form data
+      try {
+        values = await validateFormData(ascentActionSchema, data)
+      } catch (exception) {
+        return exception as ActionFailure<AscentActionValues>
+      }
+
+      const ascent = await db.query.ascents.findFirst({
+        where: eq(ascents.id, Number(params.ascentId)),
+        with: {
+          author: true,
+          route: true,
+        },
+      })
+
+      if (
+        ascent == null ||
+        (locals.user?.id !== ascent.author.authUserFk && !locals.userPermissions?.includes(EDIT_PERMISSION))
+      ) {
+        return fail(404, { ...values, error: `Ascent not found ${params.ascentId}` })
+      }
+
+      try {
+        // Update the ascent in the database
+        await db
           .update(ascents)
           .set({ ...values, routeFk: ascent.route.id })
-          .where(eq(ascents.id, ascent.id)),
-      )
+          .where(eq(ascents.id, ascent.id))
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { folderName, ...rest } = values
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { folderName, ...rest } = values
 
-      await db(async (tx) =>
-        user == null
-          ? null
-          : createUpdateActivity({
-              db: tx,
-              entityId: ascent.id,
-              entityType: 'ascent',
-              newEntity: rest,
-              oldEntity: ascent,
-              userFk: user?.id,
-              parentEntityId: ascent.route.id,
-              parentEntityType: 'route',
-            }),
-      )
-    } catch (exception) {
-      return fail(400, { ...values, error: convertException(exception) })
-    }
-
-    if (values.folderName != null) {
-      try {
-        const dstFolder = `${config.files.folders.userContent}/${locals.user?.id}`
-        const createdFiles = await db((tx) =>
-          handleFileUpload(tx, locals.supabase, values.folderName!, dstFolder, { ascentFk: ascent.id }),
-        )
-
-        await db(async (tx) =>
-          Promise.all(
-            createdFiles.map(({ file }) =>
-              user == null
-                ? null
-                : tx.insert(activities).values({
-                    type: 'uploaded',
-                    userFk: user.id,
-                    entityId: file.id,
-                    entityType: 'file',
-                    columnName: 'file',
-                    parentEntityId: ascent.routeFk,
-                    parentEntityType: 'route',
-                  }),
-            ),
-          ),
-        )
+        await createUpdateActivity({
+          db,
+          entityId: ascent.id,
+          entityType: 'ascent',
+          newEntity: rest,
+          oldEntity: ascent,
+          userFk: user?.id,
+          parentEntityId: ascent.route.id,
+          parentEntityType: 'route',
+        })
       } catch (exception) {
-        // Return a 400 failure if file insertion fails
         return fail(400, { ...values, error: convertException(exception) })
       }
-    }
 
-    // Redirect to the merged path
-    const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
-    redirect(303, '/' + mergedPath + '#activity')
+      if (values.folderName != null) {
+        try {
+          const dstFolder = `${config.files.folders.userContent}/${locals.user?.id}`
+          const createdFiles = await handleFileUpload(db, locals.supabase, values.folderName!, dstFolder, {
+            ascentFk: ascent.id,
+          })
+
+          await Promise.all(
+            createdFiles.map(({ file }) =>
+              db.insert(activities).values({
+                type: 'uploaded',
+                userFk: user.id,
+                entityId: file.id,
+                entityType: 'file',
+                columnName: 'file',
+                parentEntityId: ascent.routeFk,
+                parentEntityType: 'route',
+              }),
+            ),
+          )
+        } catch (exception) {
+          // Return a 400 failure if file insertion fails
+          return fail(400, { ...values, error: convertException(exception) })
+        }
+      }
+
+      // Redirect to the merged path
+      const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
+      redirect(303, '/' + mergedPath + '#activity')
+    })
   },
 
   removeAscent: async ({ locals, params }) => {
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
-    const ascent = await db((tx) =>
-      tx.query.ascents.findFirst({
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
+
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
+
+      const ascent = await db.query.ascents.findFirst({
         where: eq(ascents.id, Number(params.ascentId)),
         with: {
           author: true,
         },
-      }),
-    )
+      })
 
-    if (
-      ascent == null ||
-      (locals.user?.id !== ascent.author.authUserFk &&
-        !locals.userPermissions?.includes(EDIT_PERMISSION) &&
-        !locals.userPermissions?.includes(DELETE_PERMISSION))
-    ) {
-      return fail(404)
-    }
+      if (
+        ascent == null ||
+        (locals.user?.id !== ascent.author.authUserFk &&
+          !locals.userPermissions?.includes(EDIT_PERMISSION) &&
+          !locals.userPermissions?.includes(DELETE_PERMISSION))
+      ) {
+        return fail(404)
+      }
 
-    try {
-      await db((tx) => tx.delete(ascents).where(eq(ascents.id, ascent.id)))
-      const filesToDelete = await db((tx) => tx.delete(files).where(eq(files.ascentFk, ascent.id)).returning())
-      await Promise.all(filesToDelete.map((file) => deleteFile(file)))
+      try {
+        await db.delete(ascents).where(eq(ascents.id, ascent.id))
+        const filesToDelete = await db.delete(files).where(eq(files.ascentFk, ascent.id)).returning()
+        await Promise.all(filesToDelete.map((file) => deleteFile(file)))
 
-      await db(async (tx) =>
-        user == null
-          ? null
-          : tx.insert(activities).values({
-              type: 'deleted',
-              userFk: user.id,
-              entityId: ascent.id,
-              entityType: 'ascent',
-              oldValue: ascent.type,
-              parentEntityId: ascent.routeFk,
-              parentEntityType: 'route',
-            }),
-      )
-    } catch (error) {
-      return fail(400, { error: convertException(error) })
-    }
+        await db.insert(activities).values({
+          type: 'deleted',
+          userFk: user.id,
+          entityId: ascent.id,
+          entityType: 'ascent',
+          oldValue: ascent.type,
+          parentEntityId: ascent.routeFk,
+          parentEntityType: 'route',
+        })
+      } catch (error) {
+        return fail(400, { error: convertException(error) })
+      }
 
-    // Redirect to the merged path
-    const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
-    redirect(303, '/' + mergedPath + '#activity')
+      // Redirect to the merged path
+      const mergedPath = ['areas', params.slugs, '_', 'blocks', params.blockSlug, 'routes', params.routeSlug].join('/')
+      redirect(303, '/' + mergedPath + '#activity')
+    })
   },
 }

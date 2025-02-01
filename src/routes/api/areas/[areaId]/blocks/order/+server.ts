@@ -12,22 +12,23 @@ export const PUT = async ({ locals, params, url }) => {
   const { areaId } = params
   const ids = url.searchParams.getAll('id')
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  await db((tx) =>
-    Promise.all(
+  return await rls(async (db) => {
+    await Promise.all(
       ids.map((id, index) =>
-        tx
+        db
           .update(blocks)
           .set({ order: index })
           .where(and(eq(blocks.areaFk, Number(areaId)), eq(blocks.id, Number(id)))),
       ),
-    ),
-  )
+    )
 
-  const updatedBlocks = await db((tx) =>
-    tx.query.blocks.findMany({ orderBy: [blocks.order, blocks.name], where: eq(blocks.areaFk, Number(areaId)) }),
-  )
+    const updatedBlocks = await db.query.blocks.findMany({
+      orderBy: [blocks.order, blocks.name],
+      where: eq(blocks.areaFk, Number(areaId)),
+    })
 
-  return new Response(JSON.stringify({ blocks: updatedBlocks }))
+    return new Response(JSON.stringify({ blocks: updatedBlocks }))
+  })
 }

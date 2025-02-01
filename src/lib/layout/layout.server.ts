@@ -8,9 +8,12 @@ export const load = async ({ locals, cookies }: ServerLoadEvent) => {
   const { session, user: authUser } = await locals.safeGetSession()
   const grades = await db.query.grades.findMany()
   const localDb = await createDrizzleSupabaseClient(locals.supabase)
-  const user = await localDb((tx) => getUser(locals.user, tx))
+  const { blocks, user } = await localDb(async (db) => {
+    const user = await getUser(locals.user, db)
+    const blocks = await getLayoutBlocks(db)
+    return { user, blocks }
+  })
   const gradingScale: UserSettings['gradingScale'] = user?.userSettings?.gradingScale ?? 'FB'
-  const blocks = await localDb((tx) => getLayoutBlocks(tx))
 
   return {
     authUser,

@@ -27,12 +27,12 @@ export const load = (async (event) => {
     error(404)
   }
 
-  const localDb = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const { areaId, areaSlug } = convertAreaSlug(params)
+  return await rls(async (db) => {
+    const { areaId, areaSlug } = convertAreaSlug(params)
 
-  const blocksResult = await localDb((tx) =>
-    tx.query.blocks.findMany({
+    const blocksResult = await db.query.blocks.findMany({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
         routes: {
@@ -48,32 +48,32 @@ export const load = (async (event) => {
           },
         },
       },
-    }),
-  )
-  const block = blocksResult.at(0)
+    })
+    const block = blocksResult.at(0)
 
-  if (block?.topos == null) {
-    error(404)
-  }
+    if (block?.topos == null) {
+      error(404)
+    }
 
-  if (blocksResult.length > 1) {
-    error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
-  }
+    if (blocksResult.length > 1) {
+      error(400, `Multiple blocks with slug ${params.blockSlug} in ${areaSlug} found`)
+    }
 
-  const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
+    const topos = await Promise.all(block.topos.map((topo) => enrichTopo(topo)))
 
-  const enrichedRoutes = block.routes.map((route) => {
+    const enrichedRoutes = block.routes.map((route) => {
+      return {
+        ...route,
+        hasTopo: topos.flatMap((topo) => topo.routes).some((topoRoute) => topoRoute.routeFk === route.id),
+      }
+    })
+
     return {
-      ...route,
-      hasTopo: topos.flatMap((topo) => topo.routes).some((topoRoute) => topoRoute.routeFk === route.id),
+      ...layoutData,
+      block: { ...block, routes: enrichedRoutes },
+      topos,
     }
   })
-
-  return {
-    ...layoutData,
-    block: { ...block, routes: enrichedRoutes },
-    topos,
-  }
 }) satisfies PageServerLoad
 
 export const actions = {
@@ -82,29 +82,31 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    const { areaId } = convertAreaSlug(params)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
 
-    const block = await db((tx) =>
-      tx.query.blocks.findFirst({
+      const { areaId } = convertAreaSlug(params)
+
+      const block = await db.query.blocks.findFirst({
         where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      }),
-    )
+      })
 
-    const data = await request.formData()
+      const data = await request.formData()
 
-    let values: SaveTopoActionValues
+      let values: SaveTopoActionValues
 
-    try {
-      values = await validateFormData(saveTopoActionSchema, data)
-    } catch (exception) {
-      return exception as ActionFailure<SaveTopoActionValues>
-    }
+      try {
+        values = await validateFormData(saveTopoActionSchema, data)
+      } catch (exception) {
+        return exception as ActionFailure<SaveTopoActionValues>
+      }
 
-    await db((tx) =>
-      tx
+      await db
         .update(topoRoutes)
         .set({
           path: values.path,
@@ -112,24 +114,20 @@ export const actions = {
           topoFk: Number(values.topoFk),
           topType: values.topType,
         })
-        .where(eq(topoRoutes.id, Number(values.id))),
-    )
+        .where(eq(topoRoutes.id, Number(values.id)))
 
-    await db(async (tx) =>
-      user == null
-        ? null
-        : tx.insert(activities).values({
-            type: 'updated',
-            userFk: user.id,
-            entityId: values.routeFk,
-            entityType: 'route',
-            columnName: 'topo',
-            parentEntityId: block?.id,
-            parentEntityType: 'block',
-          }),
-    )
+      await db.insert(activities).values({
+        type: 'updated',
+        userFk: user.id,
+        entityId: values.routeFk,
+        entityType: 'route',
+        columnName: 'topo',
+        parentEntityId: block?.id,
+        parentEntityType: 'block',
+      })
 
-    return values.routeFk
+      return values.routeFk
+    })
   },
 
   addRoute: async ({ locals, request }) => {
@@ -137,24 +135,24 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    // Get form data from the request
-    const data = await request.formData()
-    let values: AddTopoActionValues
+    return await rls(async (db) => {
+      // Get form data from the request
+      const data = await request.formData()
+      let values: AddTopoActionValues
 
-    // Validate the ascent form data
-    try {
-      values = await validateFormData(addTopoActionSchema, data)
-    } catch (exception) {
-      return exception as ActionFailure<AddTopoActionValues>
-    }
+      // Validate the ascent form data
+      try {
+        values = await validateFormData(addTopoActionSchema, data)
+      } catch (exception) {
+        return exception as ActionFailure<AddTopoActionValues>
+      }
 
-    await db((tx) =>
-      tx
+      await db
         .insert(topoRoutes)
-        .values({ topType: 'topout', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) }),
-    )
+        .values({ topType: 'topout', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) })
+    })
   },
 
   removeRoute: async ({ locals, request, params }) => {
@@ -162,47 +160,45 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    const { areaId } = convertAreaSlug(params)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
 
-    const block = await db((tx) =>
-      tx.query.blocks.findFirst({
+      const { areaId } = convertAreaSlug(params)
+
+      const block = await db.query.blocks.findFirst({
         where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
-      }),
-    )
+      })
 
-    // Get form data from the request
-    const data = await request.formData()
-    let values: AddTopoActionValues
+      // Get form data from the request
+      const data = await request.formData()
+      let values: AddTopoActionValues
 
-    // Validate the ascent form data
-    try {
-      values = await validateFormData(addTopoActionSchema, data)
-    } catch (exception) {
-      return exception as ActionFailure<AddTopoActionValues>
-    }
+      // Validate the ascent form data
+      try {
+        values = await validateFormData(addTopoActionSchema, data)
+      } catch (exception) {
+        return exception as ActionFailure<AddTopoActionValues>
+      }
 
-    await db((tx) =>
-      tx
+      await db
         .delete(topoRoutes)
-        .where(and(eq(topoRoutes.routeFk, Number(values.routeFk)), eq(topoRoutes.topoFk, Number(values.topoFk)))),
-    )
+        .where(and(eq(topoRoutes.routeFk, Number(values.routeFk)), eq(topoRoutes.topoFk, Number(values.topoFk))))
 
-    await db(async (tx) =>
-      user == null
-        ? null
-        : tx.insert(activities).values({
-            type: 'deleted',
-            userFk: user.id,
-            entityId: values.routeFk,
-            entityType: 'route',
-            columnName: 'topo',
-            parentEntityId: block?.id,
-            parentEntityType: 'block',
-          }),
-    )
+      await db.insert(activities).values({
+        type: 'deleted',
+        userFk: user.id,
+        entityId: values.routeFk,
+        entityType: 'route',
+        columnName: 'topo',
+        parentEntityId: block?.id,
+        parentEntityType: 'block',
+      })
+    })
   },
 
   removeTopo: async ({ locals, params, request }) => {
@@ -210,52 +206,53 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    const { areaId } = convertAreaSlug(params)
-
-    const data = await request.formData()
-    const id = Number(data.get('id'))
-
-    const topo = await db((tx) => tx.query.topos.findFirst({ where: eq(topos.id, id), with: { file: true } }))
-
-    if (topo == null) {
-      return fail(404, { error: `Topo with id ${id} not found` })
-    }
-
-    try {
-      await db((tx) => tx.delete(topoRoutes).where(eq(topoRoutes.topoFk, id)))
-      await db((tx) => tx.delete(topos).where(eq(topos.id, id)))
-
-      const filesToDelete = await db(async (tx) =>
-        topo.fileFk == null ? null : tx.delete(files).where(eq(files.id, topo.fileFk)).returning(),
-      )
-
-      await Promise.all([...(filesToDelete ?? []).map((file) => deleteFile(file))])
-
-      await db(async (tx) =>
-        user == null || topo.blockFk == null
-          ? null
-          : tx.insert(activities).values({
-              type: 'deleted',
-              userFk: user.id,
-              entityId: topo.blockFk,
-              entityType: 'block',
-              columnName: 'topo image',
-              parentEntityId: areaId,
-              parentEntityType: 'area',
-            }),
-      )
-    } catch (exception) {
-      return fail(400, { error: convertException(exception) })
-    }
-
-    if (topo.blockFk != null) {
-      const remainingTopos = await db((tx) => tx.query.topos.findMany({ where: eq(topos.blockFk, topo.blockFk!) }))
-      if (remainingTopos.length === 0) {
-        redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
       }
-    }
+
+      const { areaId } = convertAreaSlug(params)
+
+      const data = await request.formData()
+      const id = Number(data.get('id'))
+
+      const topo = await db.query.topos.findFirst({ where: eq(topos.id, id), with: { file: true } })
+
+      if (topo == null) {
+        return fail(404, { error: `Topo with id ${id} not found` })
+      }
+
+      try {
+        await db.delete(topoRoutes).where(eq(topoRoutes.topoFk, id))
+        await db.delete(topos).where(eq(topos.id, id))
+
+        const filesToDelete =
+          topo.fileFk == null ? [] : await db.delete(files).where(eq(files.id, topo.fileFk)).returning()
+
+        await Promise.all([...filesToDelete.map((file) => deleteFile(file))])
+
+        await db.insert(activities).values({
+          type: 'deleted',
+          userFk: user.id,
+          entityId: topo.blockFk,
+          entityType: 'block',
+          columnName: 'topo image',
+          parentEntityId: areaId,
+          parentEntityType: 'area',
+        })
+      } catch (exception) {
+        return fail(400, { error: convertException(exception) })
+      }
+
+      if (topo.blockFk != null) {
+        const remainingTopos = await db.query.topos.findMany({ where: eq(topos.blockFk, topo.blockFk!) })
+        if (remainingTopos.length === 0) {
+          redirect(303, `/areas/${params.slugs}/_/blocks/${params.blockSlug}`)
+        }
+      }
+    })
   },
 }

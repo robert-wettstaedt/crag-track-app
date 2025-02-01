@@ -5,10 +5,10 @@ import { error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 
 export const load = async ({ locals, params }) => {
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const ascent = await db((tx) =>
-    tx.query.ascents.findFirst({
+  return await rls(async (db) => {
+    const ascent = await db.query.ascents.findFirst({
       where: eq(schema.ascents.id, Number(params.id)),
       with: {
         route: {
@@ -21,32 +21,32 @@ export const load = async ({ locals, params }) => {
           },
         },
       },
-    }),
-  )
+    })
 
-  const path = []
-  let parent = ascent?.route?.block?.area
-  while (parent != null) {
-    path.unshift(`${parent.slug}-${parent.id}`)
-    parent = parent.parent
-  }
+    const path = []
+    let parent = ascent?.route?.block?.area
+    while (parent != null) {
+      path.unshift(`${parent.slug}-${parent.id}`)
+      parent = parent.parent
+    }
 
-  if (ascent == null || path.length === 0) {
-    error(404, 'Not found')
-  }
+    if (ascent == null || path.length === 0) {
+      error(404, 'Not found')
+    }
 
-  const mergedPath = [
-    'areas',
-    ...path,
-    '_',
-    'blocks',
-    ascent.route?.block?.slug,
-    'routes',
-    ascent.route?.slug.length === 0 ? ascent.route?.id : ascent.route?.slug,
-    'ascents',
-    ascent.id,
-    'edit',
-  ].join('/')
+    const mergedPath = [
+      'areas',
+      ...path,
+      '_',
+      'blocks',
+      ascent.route?.block?.slug,
+      'routes',
+      ascent.route?.slug.length === 0 ? ascent.route?.id : ascent.route?.slug,
+      'ascents',
+      ascent.id,
+      'edit',
+    ].join('/')
 
-  redirect(301, '/' + mergedPath)
+    redirect(301, '/' + mergedPath)
+  })
 }

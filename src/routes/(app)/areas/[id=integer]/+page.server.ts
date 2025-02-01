@@ -5,29 +5,29 @@ import { error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 
 export const load = async ({ locals, params }) => {
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const area = await db((tx) =>
-    tx.query.areas.findFirst({
+  return await rls(async (db) => {
+    const area = await db.query.areas.findFirst({
       where: eq(schema.areas.id, Number(params.id)),
       with: {
         parent: buildNestedAreaQuery(),
       },
-    }),
-  )
+    })
 
-  const path = []
-  let parent = area
-  while (parent != null) {
-    path.unshift(`${parent.slug}-${parent.id}`)
-    parent = parent.parent
-  }
+    const path = []
+    let parent = area
+    while (parent != null) {
+      path.unshift(`${parent.slug}-${parent.id}`)
+      parent = parent.parent
+    }
 
-  if (area == null || path.length === 0) {
-    error(404, 'Not found')
-  }
+    if (area == null || path.length === 0) {
+      error(404, 'Not found')
+    }
 
-  const mergedPath = ['areas', ...path].join('/')
+    const mergedPath = ['areas', ...path].join('/')
 
-  redirect(301, '/' + mergedPath)
+    redirect(301, '/' + mergedPath)
+  })
 }

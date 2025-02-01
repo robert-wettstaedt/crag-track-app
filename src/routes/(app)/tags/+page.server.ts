@@ -8,13 +8,15 @@ import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ locals }) => {
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const result = await db((tx) => tx.query.tags.findMany())
+  return await rls(async (db) => {
+    const tags = await db.query.tags.findMany()
 
-  return {
-    tags: result,
-  }
+    return {
+      tags,
+    }
+  })
 }) satisfies PageServerLoad
 
 export const actions = {
@@ -23,25 +25,27 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    const data = await request.formData()
+    return await rls(async (db) => {
+      const data = await request.formData()
 
-    let values: TagActionValues
+      let values: TagActionValues
 
-    try {
-      // Validate the form data
-      values = await validateFormData(tagActionSchema, data)
-    } catch (exception) {
-      // If validation fails, return the exception as TagActionFailure
-      return exception as ActionFailure<TagActionValues>
-    }
+      try {
+        // Validate the form data
+        values = await validateFormData(tagActionSchema, data)
+      } catch (exception) {
+        // If validation fails, return the exception as TagActionFailure
+        return exception as ActionFailure<TagActionValues>
+      }
 
-    try {
-      await db((tx) => tx.delete(tags).where(eq(tags.id, values.id)))
-      await db((tx) => tx.delete(routesToTags).where(eq(routesToTags.tagFk, values.id)))
-    } catch (exception) {
-      return fail(400, { ...values, error: convertException(exception) })
-    }
+      try {
+        await db.delete(tags).where(eq(tags.id, values.id))
+        await db.delete(routesToTags).where(eq(routesToTags.tagFk, values.id))
+      } catch (exception) {
+        return fail(400, { ...values, error: convertException(exception) })
+      }
+    })
   },
 }

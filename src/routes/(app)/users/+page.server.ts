@@ -23,39 +23,42 @@ interface UserDTO extends User {
 }
 
 export const load = (async ({ locals, url }) => {
-  const localDb = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const searchParamsObj = Object.fromEntries(url.searchParams.entries())
-  const searchParams = await validateObject(paginationParamsSchema, searchParamsObj)
+  return await rls(async (tx) => {
+    const searchParamsObj = Object.fromEntries(url.searchParams.entries())
+    const searchParams = await validateObject(paginationParamsSchema, searchParamsObj)
 
-  let usersResult: UserDTO[] = await localDb((tx) =>
-    tx.query.users.findMany({ ...getPaginationQuery(searchParams), orderBy: [asc(users.username), asc(users.id)] }),
-  )
-
-  if (locals.userPermissions?.includes(EDIT_PERMISSION)) {
-    const userRolesResult = await db.query.userRoles.findMany({
-      where: inArray(
-        userRoles.authUserFk,
-        usersResult.map((user) => user.authUserFk),
-      ),
+    let usersResult: UserDTO[] = await tx.query.users.findMany({
+      ...getPaginationQuery(searchParams),
+      orderBy: [asc(users.username), asc(users.id)],
     })
 
-    usersResult = usersResult.map((user) => ({
-      ...user,
-      role: userRolesResult.find((role) => role.authUserFk === user.authUserFk)?.role,
-    }))
-  }
+    if (locals.userPermissions?.includes(EDIT_PERMISSION)) {
+      const userRolesResult = await db.query.userRoles.findMany({
+        where: inArray(
+          userRoles.authUserFk,
+          usersResult.map((user) => user.authUserFk),
+        ),
+      })
 
-  const countResults = await localDb((tx) => tx.select({ count: count() }).from(users))
+      usersResult = usersResult.map((user) => ({
+        ...user,
+        role: userRolesResult.find((role) => role.authUserFk === user.authUserFk)?.role,
+      }))
+    }
 
-  return {
-    users: usersResult,
-    pagination: {
-      page: searchParams.page,
-      pageSize: searchParams.pageSize,
-      total: countResults[0].count,
-    },
-  }
+    const countResults = await tx.select({ count: count() }).from(users)
+
+    return {
+      users: usersResult,
+      pagination: {
+        page: searchParams.page,
+        pageSize: searchParams.pageSize,
+        total: countResults[0].count,
+      },
+    }
+  })
 }) satisfies PageServerLoad
 
 export const actions = {
@@ -64,49 +67,50 @@ export const actions = {
       error(404)
     }
 
-    const localDb = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await localDb((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    const data = await request.formData()
+    return await rls(async (tx) => {
+      const user = await getUser(locals.user, tx)
+      if (user == null) {
+        return fail(404)
+      }
 
-    let values: AddRoleActionValues
+      const data = await request.formData()
 
-    try {
-      values = await validateFormData(addRoleActionSchema, data)
-    } catch (exception) {
-      return exception as ActionFailure<AddRoleActionValues>
-    }
+      let values: AddRoleActionValues
 
-    const formAuthUserResults = await db.select().from(authUsers).where(eq(authUsers.id, values.authUserFk))
-    const formAuthUser = formAuthUserResults.at(0)
-    const formUser = await db.query.users.findFirst({ where: eq(users.authUserFk, values.authUserFk) })
+      try {
+        values = await validateFormData(addRoleActionSchema, data)
+      } catch (exception) {
+        return exception as ActionFailure<AddRoleActionValues>
+      }
 
-    if (formAuthUser == null || formUser == null) {
-      return fail(404)
-    }
+      const formAuthUserResults = await db.select().from(authUsers).where(eq(authUsers.id, values.authUserFk))
+      const formAuthUser = formAuthUserResults.at(0)
+      const formUser = await db.query.users.findFirst({ where: eq(users.authUserFk, values.authUserFk) })
 
-    await db.insert(userRoles).values({ authUserFk: values.authUserFk, role: 'user' })
-    await localDb(async (tx) =>
-      user == null
-        ? null
-        : tx.insert(activities).values({
-            type: 'updated',
-            entityId: formUser.id,
-            entityType: 'user',
-            userFk: user.id,
-            columnName: 'role',
-            newValue: 'user',
-          }),
-    )
+      if (formAuthUser == null || formUser == null) {
+        return fail(404)
+      }
 
-    if (RESEND_API_KEY && RESEND_RECIPIENT_EMAIL && RESEND_SENDER_EMAIL && formAuthUser.email != null) {
-      const resend = new Resend(RESEND_API_KEY)
+      await db.insert(userRoles).values({ authUserFk: values.authUserFk, role: 'user' })
+      await tx.insert(activities).values({
+        type: 'updated',
+        entityId: formUser.id,
+        entityType: 'user',
+        userFk: user.id,
+        columnName: 'role',
+        newValue: 'user',
+      })
 
-      await resend.emails.send({
-        from: RESEND_SENDER_EMAIL,
-        to: [formAuthUser.email],
-        subject: `Your ${PUBLIC_APPLICATION_NAME} Account is Approved!`,
-        html: `
+      if (RESEND_API_KEY && RESEND_RECIPIENT_EMAIL && RESEND_SENDER_EMAIL && formAuthUser.email != null) {
+        const resend = new Resend(RESEND_API_KEY)
+
+        await resend.emails.send({
+          from: RESEND_SENDER_EMAIL,
+          to: [formAuthUser.email],
+          subject: `Your ${PUBLIC_APPLICATION_NAME} Account is Approved!`,
+          html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #333; margin-bottom: 24px;">Hello ${formUser.username}, your account is now active!</h1>
 
@@ -136,7 +140,8 @@ export const actions = {
             </p>
           </div>
         `,
-      })
-    }
+        })
+      }
+    })
   },
 }

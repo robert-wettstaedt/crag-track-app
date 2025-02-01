@@ -13,43 +13,46 @@ export async function POST({ locals, params, request }) {
 
   const { areaId } = convertAreaSlug(params)
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
-  const { blocks } = await db((tx) => getBlocksOfArea(areaId, tx))
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  const routes = blocks.flatMap((block) => block.routes.map((route) => ({ route, block })))
+  return await rls(async (db) => {
+    const { blocks } = await getBlocksOfArea(areaId, db)
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      for await (const { block, route } of routes) {
-        if (request.signal.aborted) {
-          controller.close()
-          return
+    const routes = blocks.flatMap((block) => block.routes.map((route) => ({ route, block })))
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const { block, route } of routes) {
+          if (request.signal.aborted) {
+            controller.close()
+            return
+          }
+
+          const data = await queryExternalResource(route.name, block.id, locals)
+
+          const dto: InferResultType<
+            'routeExternalResources',
+            { externalResource8a: true; externalResource27crags: true; externalResourceTheCrag: true }
+          > = {
+            id: -1,
+            routeFk: route.id,
+            externalResource8a: data.data8a,
+            externalResource8aFk: null,
+            externalResource27crags: data.data27crags,
+            externalResource27cragsFk: null,
+            externalResourceTheCrag: data.dataTheCrag,
+            externalResourceTheCragFk: null,
+          }
+
+          await insertExternalResources(route, block, locals)
+
+          controller.enqueue(JSON.stringify(dto) + '\n')
         }
 
-        const data = await queryExternalResource(route.name, block.id, locals)
+        controller.close()
+      },
+    })
 
-        const dto: InferResultType<
-          'routeExternalResources',
-          { externalResource8a: true; externalResource27crags: true; externalResourceTheCrag: true }
-        > = {
-          id: -1,
-          routeFk: route.id,
-          externalResource8a: data.data8a,
-          externalResource8aFk: null,
-          externalResource27crags: data.data27crags,
-          externalResource27cragsFk: null,
-          externalResourceTheCrag: data.dataTheCrag,
-          externalResourceTheCragFk: null,
-        }
-
-        await insertExternalResources(route, block, locals)
-
-        controller.enqueue(JSON.stringify(dto) + '\n')
-      }
-
-      controller.close()
-    },
+    return new Response(stream)
   })
-
-  return new Response(stream)
 }

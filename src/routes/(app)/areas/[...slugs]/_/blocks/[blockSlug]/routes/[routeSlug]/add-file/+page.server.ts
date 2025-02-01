@@ -15,14 +15,14 @@ export const load = (async ({ locals, params, parent }) => {
     error(404)
   }
 
-  const db = await createDrizzleSupabaseClient(locals.supabase)
+  const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-  // Retrieve the areaId from the parent function
-  const { areaId, user } = await parent()
+  return await rls(async (db) => {
+    // Retrieve the areaId from the parent function
+    const { areaId, user } = await parent()
 
-  // Query the database to find the block with the specified slug and areaId
-  const block = await db((tx) =>
-    tx.query.blocks.findFirst({
+    // Query the database to find the block with the specified slug and areaId
+    const block = await db.query.blocks.findFirst({
       where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
       with: {
         routes: {
@@ -32,26 +32,26 @@ export const load = (async ({ locals, params, parent }) => {
           },
         },
       },
-    }),
-  )
+    })
 
-  // Get the first route from the block's routes
-  const route = block?.routes?.at(0)
+    // Get the first route from the block's routes
+    const route = block?.routes?.at(0)
 
-  // If no route is found, throw a 404 error
-  if (route == null) {
-    error(404)
-  }
+    // If no route is found, throw a 404 error
+    if (route == null) {
+      error(404)
+    }
 
-  // If multiple routes with the same slug are found, throw a 400 error
-  if (block != null && block.routes.length > 1) {
-    error(400, `Multiple routes with slug ${params.routeSlug} found`)
-  }
+    // If multiple routes with the same slug are found, throw a 400 error
+    if (block != null && block.routes.length > 1) {
+      error(400, `Multiple routes with slug ${params.routeSlug} found`)
+    }
 
-  // Return the found route
-  return {
-    route,
-  }
+    // Return the found route
+    return {
+      route,
+    }
+  })
 }) satisfies PageServerLoad
 
 export const actions = {
@@ -60,79 +60,83 @@ export const actions = {
       error(404)
     }
 
-    const db = await createDrizzleSupabaseClient(locals.supabase)
-    const user = await db((tx) => getUser(locals.user, tx))
+    const rls = await createDrizzleSupabaseClient(locals.supabase)
 
-    // Convert the area slug to an area ID
-    const { areaId } = convertAreaSlug(params)
+    return await rls(async (db) => {
+      const user = await getUser(locals.user, db)
+      if (user == null) {
+        return fail(404)
+      }
 
-    // Retrieve form data from the request
-    const data = await request.formData()
-    let values: AddFileActionValues
+      // Convert the area slug to an area ID
+      const { areaId } = convertAreaSlug(params)
 
-    try {
-      // Validate the form data
-      values = await validateFormData(addFileActionSchema, data)
-    } catch (exception) {
-      // If validation fails, return the exception as BlockActionFailure
-      return exception as ActionFailure<AddFileActionValues>
-    }
+      // Retrieve form data from the request
+      const data = await request.formData()
+      let values: AddFileActionValues
 
-    // Query the database to find the block with the specified slug and areaId
-    const block = await db((tx) =>
-      tx.query.blocks.findFirst({
+      try {
+        // Validate the form data
+        values = await validateFormData(addFileActionSchema, data)
+      } catch (exception) {
+        // If validation fails, return the exception as BlockActionFailure
+        return exception as ActionFailure<AddFileActionValues>
+      }
+
+      // Query the database to find the block with the specified slug and areaId
+      const block = await db.query.blocks.findFirst({
         where: and(eq(blocks.slug, params.blockSlug), eq(blocks.areaFk, areaId)),
         with: {
           routes: {
             where: getRouteDbFilter(params.routeSlug),
           },
         },
-      }),
-    )
+      })
 
-    // Get the first route from the block's routes
-    const route = block?.routes?.at(0)
+      // Get the first route from the block's routes
+      const route = block?.routes?.at(0)
 
-    // If no route is found, return a 404 error with the values and error message
-    if (route == null) {
-      return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
-    }
+      // If no route is found, return a 404 error with the values and error message
+      if (route == null) {
+        return fail(404, { ...values, error: `Route not found ${params.routeSlug}` })
+      }
 
-    // If multiple routes with the same slug are found, return a 400 error with the values and error message
-    if (block != null && block.routes.length > 1) {
-      return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
-    }
+      // If multiple routes with the same slug are found, return a 400 error with the values and error message
+      if (block != null && block.routes.length > 1) {
+        return fail(400, { ...values, error: `Multiple routes with slug ${params.routeSlug} found` })
+      }
 
-    try {
-      const createdFiles = await db((tx) =>
-        handleFileUpload(tx, locals.supabase, values.folderName, config.files.folders.topos, { routeFk: route.id }),
-      )
+      try {
+        const createdFiles = await handleFileUpload(
+          db,
+          locals.supabase,
+          values.folderName,
+          config.files.folders.topos,
+          { routeFk: route.id },
+        )
 
-      await db(async (tx) =>
-        Promise.all(
+        await Promise.all(
           createdFiles.map(({ file }) =>
-            user == null
-              ? null
-              : tx.insert(activities).values({
-                  type: 'uploaded',
-                  userFk: user.id,
-                  entityId: file.id,
-                  entityType: 'file',
-                  parentEntityId: route.id,
-                  parentEntityType: 'route',
-                }),
+            db.insert(activities).values({
+              type: 'uploaded',
+              userFk: user.id,
+              entityId: file.id,
+              entityType: 'file',
+              parentEntityId: route.id,
+              parentEntityType: 'route',
+            }),
           ),
-        ),
-      )
-    } catch (exception) {
-      // If an exception occurs during insertion, return a 404 error with the values and converted exception message
-      return fail(404, { ...values, error: convertException(exception) })
-    }
+        )
+      } catch (exception) {
+        // If an exception occurs during insertion, return a 404 error with the values and converted exception message
+        return fail(404, { ...values, error: convertException(exception) })
+      }
 
-    // Redirect to the specified URL after successful insertion
-    redirect(
-      303,
-      `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${route.slug.length === 0 ? route.id : route.slug}#info`,
-    )
+      // Redirect to the specified URL after successful insertion
+      redirect(
+        303,
+        `/areas/${params.slugs}/_/blocks/${params.blockSlug}/routes/${route.slug.length === 0 ? route.id : route.slug}#info`,
+      )
+    })
   },
 }
