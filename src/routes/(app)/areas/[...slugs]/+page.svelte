@@ -11,9 +11,11 @@
   import Image from '$lib/components/Image'
   import References from '$lib/components/References'
   import RouteName from '$lib/components/RouteName'
+  import RoutesFilter from '$lib/components/RoutesFilter'
   import type { Block } from '$lib/db/schema'
+  import type { EnrichedBlock } from '$lib/db/utils'
   import { convertException } from '$lib/errors'
-  import { ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
+  import { Pagination, ProgressRing, Tabs } from '@skeletonlabs/skeleton-svelte'
   import { onMount } from 'svelte'
 
   let { data } = $props()
@@ -193,6 +195,8 @@
         {/if}
 
         <Tabs.Control value="#map">Map</Tabs.Control>
+
+        <Tabs.Control value="#routes">Routes</Tabs.Control>
       {/snippet}
 
       {#snippet content()}
@@ -427,6 +431,40 @@
             </section>
           </Tabs.Panel>
         {/if}
+
+        <Tabs.Panel value="#routes">
+          <div class="mt-8">
+            <RoutesFilter />
+          </div>
+
+          <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
+            <GenericList
+              items={data.routes.routes}
+              rightContent={(item) => item.block.name}
+              rightPathname={(item) => (item.block as EnrichedBlock).pathname}
+            >
+              {#snippet left(item)}
+                <RouteName route={item} />
+              {/snippet}
+            </GenericList>
+          </div>
+
+          <div class="my-8 flex justify-end">
+            <Pagination
+              buttonClasses="btn-sm md:btn-md"
+              count={data.routes.pagination.total}
+              data={[]}
+              page={data.routes.pagination.page}
+              pageSize={data.routes.pagination.pageSize}
+              siblingCount={0}
+              onPageChange={(detail) => {
+                const url = new URL($page.url)
+                url.searchParams.set('page', String(detail.page))
+                goto(url)
+              }}
+            />
+          </div>
+        </Tabs.Panel>
       {/snippet}
     </Tabs>
   {/snippet}

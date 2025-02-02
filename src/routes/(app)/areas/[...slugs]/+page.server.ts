@@ -8,8 +8,13 @@ import { getReferences } from '$lib/references.server'
 import { error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
+import { load as routesFilterLoad } from '$lib/components/RoutesFilter/handle.server'
 
-export const load = (async ({ locals, parent }) => {
+export const load = (async (event) => {
+  const filteredRoutes = await routesFilterLoad(event)
+
+  const { locals, parent } = event
+
   const rls = await createDrizzleSupabaseClient(locals.supabase)
 
   return await rls(async (db) => {
@@ -88,6 +93,7 @@ export const load = (async ({ locals, parent }) => {
         files,
       },
       references: getReferences(area.id, 'areas'),
+      routes: filteredRoutes,
     }
   })
 }) satisfies PageServerLoad

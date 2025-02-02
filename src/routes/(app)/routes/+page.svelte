@@ -5,6 +5,7 @@
   import AppBar from '$lib/components/AppBar'
   import GenericList from '$lib/components/GenericList'
   import RouteName from '$lib/components/RouteName'
+  import RoutesFilter from '$lib/components/RoutesFilter'
   import type { EnrichedBlock } from '$lib/db/utils'
   import { Pagination } from '@skeletonlabs/skeleton-svelte'
 
@@ -20,6 +21,10 @@
     Routes
   {/snippet}
 </AppBar>
+
+<div class="mt-8">
+  <RoutesFilter />
+</div>
 
 <div class="card mt-8 p-2 md:p-4 preset-filled-surface-100-900">
   <GenericList
