@@ -59,6 +59,7 @@
   }: Props = $props()
 
   interface FeatureData {
+    className?: string
     label: string
     pathname: string
     priority: number
@@ -185,7 +186,26 @@
   }
 
   const createParkingMarker = (parkingLocation: Geolocation) => {
+    // Create fallback URLs for different platforms
+    const coords = `${parkingLocation.lat},${parkingLocation.long}`
+    const geoUrl = `geo:${coords}`
+    const googleMapsUrl = `https://www.google.com/maps?q=${coords}`
+    const appleMapsUrl = `maps://maps.apple.com/?q=${coords}`
+
+    // Detect platform
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const isAndroid = /Android/.test(navigator.userAgent)
+
+    // Choose appropriate URL
+    const navigationUrl = isIOS ? appleMapsUrl : isAndroid ? geoUrl : googleMapsUrl
+
     const iconFeature = new Feature({
+      data: {
+        className: 'btn preset-filled-primary-500',
+        label: '<i class="fa-solid fa-diamond-turn-right"></i>Directions',
+        pathname: navigationUrl,
+        priority: 1,
+      } satisfies FeatureData,
       geometry: new Point(fromLonLat([parkingLocation.long, parkingLocation.lat])),
     })
 
@@ -344,7 +364,9 @@
         popup.setPosition(undefined)
       } else {
         popup.setPosition(event.coordinate)
-        element.innerHTML = `<a class="anchor" href="${data.pathname}">${data.label}</a>`
+        const target = data.pathname.startsWith('/') ? '_self' : '_blank'
+        const className = data.className ?? 'anchor'
+        element.innerHTML = `<a class="${className}" href="${data.pathname}" target="${target}">${data.label}</a>`
       }
     })
 
