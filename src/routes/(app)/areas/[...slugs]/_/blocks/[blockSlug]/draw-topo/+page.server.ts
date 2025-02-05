@@ -149,6 +149,14 @@ export const actions = {
         return exception as ActionFailure<AddTopoActionValues>
       }
 
+      const existingTopoRoute = await db.query.topoRoutes.findFirst({
+        where: and(eq(topoRoutes.routeFk, Number(values.routeFk)), eq(topoRoutes.topoFk, Number(values.topoFk))),
+      })
+
+      if (existingTopoRoute != null) {
+        return fail(400, { error: 'Topo for this route already exists' })
+      }
+
       await db
         .insert(topoRoutes)
         .values({ topType: 'topout', routeFk: Number(values.routeFk), topoFk: Number(values.topoFk) })
